@@ -1769,8 +1769,21 @@ if ($Paths.Count -eq 0) {
     Add-Gap 'empty-changed-path-set'
 }
 
+$PublisherCurrentObjectInputs = @(
+    'Tools/Native/Build-Current-Publisher-Object-Tools.mjs',
+    'Linker/Windvale/Native-Current-Publisher-Object-Admission.wv',
+    'Linker/Windvale/Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wv',
+    'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wvproj',
+    'Tests/Fixtures/Native-X64/Current-Publisher-Object-Self-Test.wv',
+    'Projects/Tests/Windvale-Native-Test-Current-Publisher-Object.wvproj',
+    'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Current-Object-Admission.md'
+)
 foreach ($Path in $Paths) {
     $script:CurrentChangedPath = $Path
+    if ($Path -cin $PublisherCurrentObjectInputs) {
+        Add-Suite 'hosted-verifier-publisher-files'
+        continue
+    }
     $IsDocumentationCatalogPath = (
         $Path.StartsWith('Documents/Evidence/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Specifications/Indexes/', [StringComparison]::Ordinal) -or
@@ -4782,6 +4795,16 @@ $PublisherCurrentSourceInputs = @(
 $UsePublisherCurrentSourceDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('hosted-verifier-publisher-files') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCurrentSourceInputs }).Count -eq 0
+$UsePublisherCurrentObjectDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('hosted-verifier-publisher-files') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCurrentObjectInputs }).Count -eq 0
+if ($UsePublisherCurrentObjectDevelopment) {
+    $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'hosted-verifier-publisher-files'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 180)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 480)
+}
 if ($UsePublisherCurrentSourceDevelopment) {
     $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'hosted-verifier-publisher-files'
@@ -5175,6 +5198,8 @@ if (!$Quiet) {
         $UseStreamingSha256Development.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-source development: ' +
         $UsePublisherCurrentSourceDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Publisher current-object development: ' +
+        $UsePublisherCurrentObjectDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
         Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
         Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
@@ -5256,6 +5281,7 @@ if ($PassThru) {
         UseFoundationBorrowComponentsDevelopment = $UseFoundationBorrowComponentsDevelopment
         UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
+        UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount

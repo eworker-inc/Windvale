@@ -56,6 +56,23 @@ publication work must preserve native validation, transaction state, and failure
 guarantees while connecting that current verifier. See the
 [publisher validation boundary evidence](../Evidence/2026-09-09-Current-Publisher-Validation-Boundary.json).
 
+The maintainer has approved
+[bounded current-source publisher construction](../Decisions/0962-Construct-Current-Source-Wvb-Publishers.md):
+checked identities, named symbols and typed relocations, existing segmented
+native images, and the shared native transaction state. Frozen release products
+remain unchanged. Implementation must still connect and test an actual publisher
+before the Project 4 launchers can use it.
+
+The first construction stage now checks the six small native publisher objects
+by named imports/exports and typed relocation structure. Its focused Windows
+owner passes; the same bytecode, cross-packaged for Linux, passes native execution
+on Debian. This is not an independent Linux source rebuild. Exact evidence and
+limits are in the [object-admission checkpoint](../Evidence/2026-09-09-Current-Publisher-Object-Admission.json).
+The next stages are module/producer identity binding, dynamic attachment of the
+segmented verifier image, and actual native transaction tests. The current Debian
+compiler cache is absent and requires separately budgeted reconstruction before
+the full current-source owner can run there.
+
 ## Current boundary
 
 [Project 3](../../Specifications/Windvale-Project.md#project-3-text-format)

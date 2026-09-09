@@ -1,6 +1,7 @@
 module Linkerˉnativeˉhostedˉverifierˉpublisherˉstructureˉrequestˉtool profile hosted;
 
 import Linkerˉnativeˉhostedˉverifierˉpublisherˉstructureˉrequest as Request;
+import Linkerˉnativeˉcurrentˉpublisherˉobjectˉadmission as Current;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -23,10 +24,35 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
 
 fn Usage() -> i32 {
     diagnostic.write_line("Usage: wvhostverifierstructure <identity.wvpi> <structure.wvps>");
+    diagnostic.write_line("   or: wvhostverifierstructure --current-object <role-1-through-6> <object.wvo>");
     return 64;
 }
 
+fn Inspectˉcurrentˉobject() -> i32 {
+    if !Pathsˉareˉequal(process.argument(0u32), "--current-object") { return Usage(); }
+    let Roleˉbytes: bytes = Textˉtoˉutf8(process.argument(1u32));
+    if Bytesˉlength(Roleˉbytes) != 1u32 { return Usage(); }
+    let Digit: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Roleˉbytes, 0u32));
+    if Digit < 49u32 || Digit > 54u32 { return Usage(); }
+    let Role: u32 = Digit - 48u32;
+    let Inspection: Current.Publisherˉobjectˉinspection =
+        Current.Publisherˉcurrentˉobjectˉinspect(file.read_bytes(process.argument(2u32)), Role);
+    if !Inspection.Valid {
+        diagnostic.write_line("publisher current object status=Rejected");
+        return 2;
+    }
+    var Report: text = Textˉconcat("publisher current object status=Valid format=1 role=", U32ˉformat(Role));
+    Report = Textˉconcat(Report, Textˉconcat(" code-bytes=", U32ˉformat(Inspection.Codeˉbytes)));
+    Report = Textˉconcat(Report, Textˉconcat(" read-only-bytes=", U32ˉformat(Inspection.Readˉonlyˉbytes)));
+    Report = Textˉconcat(Report, Textˉconcat(" entry-offset=", U32ˉformat(Inspection.Entryˉoffset)));
+    Report = Textˉconcat(Report, Textˉconcat(" secondary-offset=", U32ˉformat(Inspection.Secondaryˉoffset)));
+    Report = Textˉconcat(Report, Textˉconcat(" imports=", U32ˉformat(Inspection.Imports)));
+    console.write_line(Report);
+    return 0;
+}
+
 export fn Main() -> i32 {
+    if process.argument_count() == 3u32 { return Inspectˉcurrentˉobject(); }
     if process.argument_count() != 2u32 { return Usage(); }
     let Inputˉpath: text = process.argument(0u32);
     let Outputˉpath: text = process.argument(1u32);

@@ -354,6 +354,13 @@ if ($Plan.Scope -eq 'website') {
                     'Native owner wvb-runner-reconstruction ' +
                     'mode=development-candidate-smoke')
             } elseif ($Suite -eq 'hosted-verifier-publisher-files' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UsePublisherCurrentObjectDevelopment) {
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.$OwnerExtension")
+                $OwnerArguments = @('--current-objects')
+                $OwnerMessage = 'Native owner hosted-verifier-publisher-files mode=current-objects cases=1 expected-seconds=180'
+            } elseif ($Suite -eq 'hosted-verifier-publisher-files' -and
                 $Plan.Scope -eq 'development' -and $NativePlan.UsePublisherCurrentSourceDevelopment) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
                 $OwnerCommand = Join-Path $RepositoryRoot (

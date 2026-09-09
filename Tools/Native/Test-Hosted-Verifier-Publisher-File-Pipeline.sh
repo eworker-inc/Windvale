@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -gt 1 || (${1-} != '' && ${1-} != '--current-source') ]]; then
-    echo 'Usage: ./Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh [--current-source]' >&2
+if [[ $# -gt 1 || (${1-} != '' && ${1-} != '--current-source' && ${1-} != '--current-objects') ]]; then
+    echo 'Usage: ./Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh [--current-source|--current-objects]' >&2
     exit 64
 fi
 current_source_only=false
 if [[ ${1-} == '--current-source' ]]; then current_source_only=true; fi
+current_objects_only=false
+if [[ ${1-} == '--current-objects' ]]; then current_objects_only=true; fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
@@ -117,7 +119,38 @@ fail() {
     exit 1
 }
 
-total=$((total + 1))
+current_objects() {
+    phase='current-source publisher object admission'
+    echo 'START hosted-verifier publisher files step=current-objects item=1/3'
+    node "$script_directory/Build-Current-Publisher-Object-Tools.mjs" "$test_directory" || return 1
+    echo 'START hosted-verifier publisher files step=current-objects item=2/3'
+    local objects="$repository_root/Linker/Reference/Consumers"
+    "$test_directory/Current-Objects.elf" "$objects/Windows-X64-Wvb-Publisher.wvo" "$objects/Linux-X64-Wvb-Publisher.wvo" "$objects/Windows-X64-Wvb-Publication-Adapter.wvo" "$objects/Linux-X64-Wvb-Publication-Adapter.wvo" "$objects/X64-Wvb-Publication-Sha256.wvo" "$objects/X64-Publication-Transaction-State.wvo"
+    local object_test_result=$?
+    if [[ $object_test_result -ne 42 ]]; then
+        echo "Current publisher object self-test exit=$object_test_result" >&2
+        return 1
+    fi
+    echo 'START hosted-verifier publisher files step=current-objects item=3/3'
+    "$test_directory/Current-Structure.elf" --current-object 6 "$objects/X64-Publication-Transaction-State.wvo" >"$test_directory/Current-Object-Report.txt" || return 1
+    grep -q '^publisher current object status=Valid format=1 role=6 code-bytes=' "$test_directory/Current-Object-Report.txt" || return 1
+    "$test_directory/Current-Structure.elf" --current-object 5 "$objects/X64-Publication-Transaction-State.wvo" >"$test_directory/Current-Object-Reject.txt" 2>"$test_directory/Current-Object-Reject.err"
+    [[ $? -eq 2 ]] || return 1
+    check_empty "$test_directory/Current-Object-Reject.txt" 'rejected current object wrote success output' || return 1
+    grep -qx 'publisher current object status=Rejected' "$test_directory/Current-Object-Reject.err" || return 1
+}
+
+if [[ $current_source_only == false ]]; then
+    total=$((total + 1))
+    current_objects || fail
+fi
+if [[ $current_objects_only == true ]]; then
+    pass 'current-source named publisher object admission'
+    echo "Tests: $total, Passed: $passed, Failed: 0"
+    exit 0
+fi
+
+if [[ $current_source_only == true ]]; then total=$((total + 1)); fi
 if [[ $current_source_only == false ]]; then
 check_file "$construction/SHA256SUMS" 5064 \
     15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 \

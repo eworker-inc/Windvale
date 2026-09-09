@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-09-current-publisher-object-admission",
+  "date": "2026-09-09",
+  "subject": "Bounded named-object admission for current-source publisher construction",
+  "claim": "The read-only current-object admission stage accepts all six maintained native publisher objects, discovers moved startup entries, and rejects the selected malformed objects. The focused Windows owner passes. The same Windows-built test and structure-tool WVBs, packaged for Linux, execute successfully on real Debian. This is an object admission checkpoint, not a completed current-source transactional publisher.",
+  "source": {
+    "kind": "Other",
+    "value": "Task changes over b02afa16, identified by source digests below. The existing package migration and Project 4 launcher working tree was preserved and is not promoted by this record."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Current native publisher-object admission and structure-tool command",
+      "tool": "Verify-Changed.ps1; existing hosted-verifier-publisher-files owner, --current-objects",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPath Linker/Windvale/Native-Current-Publisher-Object-Admission.wv -SkipDocumentationVerification. PlanOnly was reviewed first: one owner, expected 180 seconds, maximum 480 seconds. Final run returned 0, Tests: 1, Passed: 1, Failed: 0. Native self-test returned 42; CLI success returned 0 and wrong-role rejection returned 2.",
+      "result": "Passed",
+      "inputs": [
+        { "path": "Linker/Windvale/Native-Current-Publisher-Object-Admission.wv", "size": 9735, "sha256": "677a11bf38475fcc661ea76170fac47f92f661f57f3f7d82d9fd27bb13bfe276" },
+        { "path": "Tests/Fixtures/Native-X64/Current-Publisher-Object-Self-Test.wv", "size": 8083, "sha256": "a920ae6fd8fd1a80163f0002e93ddee40399b61426681b36c66594183ad91e97" },
+        { "path": "Linker/Windvale/Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wv", "size": 3312, "sha256": "af7f505ba28b2c6b5447897e49f48394cc7f89af988dfdb7af4cbf1fc3d0b8f1" }
+      ],
+      "outputs": [
+        { "path": "Artifacts/Work/Current-Publisher-Object-Development/Current-Objects.wvb", "size": 57307, "sha256": "4fe6bc758e3584308e34ff4c43d612147d3036922a21bab381b16e15247f8b42" },
+        { "path": "Artifacts/Work/Current-Publisher-Object-Development/Current-Objects.exe", "size": 633856, "sha256": "e88c448572de9bf5055a12281854263b06166e5760c8b46e74f5a9c979c03ed0" },
+        { "path": "Artifacts/Work/Current-Publisher-Object-Development/Current-Structure.wvb", "size": 73212, "sha256": "e81681432e04e3292549d574a4a3263a01aa6fa9f57fd68de5a5b412e09864da" },
+        { "path": "Artifacts/Work/Current-Publisher-Object-Development/Current-Structure.exe", "size": 718848, "sha256": "8936a35b88380c385ccfd0dc2ec1d96768480eef642432fe85252b80c79dc022" }
+      ]
+    },
+    {
+      "host": "Windows x64 construction; Debian WSL native execution",
+      "target": "Linux x64",
+      "tool": "Package-Hosted-Wvb.cmd profile 7, target linux; retained Current-Objects.elf and Current-Structure.elf",
+      "command": "Package each recorded WVB for Linux with a 120000ms construction deadline. On Debian, run Current-Objects.elf with the six maintained Linker/Reference/Consumers WVOs under timeout 90s; observed exit 42 and the six-role/moved-entry/oversized success report. Run Current-Structure.elf --current-object 6 with the shared transaction object: exit 0 and entry-offset=0 secondary-offset=3. The same object with role 5 returns 2.",
+      "result": "Passed",
+      "outputs": [
+        { "path": "Artifacts/Work/Current-Publisher-Object-Development/Current-Objects.elf", "size": 634880, "sha256": "6bd35a92c57a6c90afa0f4fa907dc5b23f1c3bb3e4e0d5860b4ecac225be5b86" },
+        { "path": "Artifacts/Work/Current-Publisher-Object-Development/Current-Structure.elf", "size": 720896, "sha256": "f9a59ae13c5de6245199be720f7f915f62db51b134139a2c4d6011e83019ab6d" }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "No complete current-source publisher was linked or installed. Module/producer identity binding, dynamic segmented-image attachment, checked resolved relocation values, and transactional publication tests remain unfinished.",
+    "Object admission establishes structure and named ABI membership, not machine-code authenticity or behavioral correctness. No frozen artifact, pin, or serialized release request was changed.",
+    "The existing general WVO reader is reused under smaller preflight bounds. This checkpoint does not requalify the general reader or all native linker behavior.",
+    "The complete 16-case frozen publisher owner, broad changed-file selection, package conformance, installed toolchain checks, and cold cross-host qualification were not run. The focused selector extends the existing owner rather than adding a coordinator.",
+    "The final Windows run reused exact current-compiler and native product caches. Earlier development attempts exposed a duplicate local name, the old compiler's rejection, an incorrect SHA read-only alignment assumption, and Windows findstr exact-line handling of LF diagnostics; none was counted as passing evidence.",
+    "Linux products were cross-built from the recorded Windows WVBs. Debian execution is not independent source reconstruction. A read-only lookup found the current Debian compiler cache key absent; no cold reconstruction was started inside the focused check."
+  ],
+  "related": [
+    "Documents/Decisions/0962-Construct-Current-Source-Wvb-Publishers.md",
+    "Specifications/Windvale-Native-Hosted-Verifier-Publisher-Current-Object-Admission.md",
+    "Documents/Evidence/2026-09-09-Current-Publisher-Validation-Boundary.json",
+    "Documents/Evidence/2026-09-09-Project4-Current-Compiler-Reconstruction.json",
+    "Documents/Project/Target-Aware-Project-Admission-Plan.md"
+  ]
+}

@@ -25,7 +25,7 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 | [Language and compiler](Indexes/language-and-compiler.md) | Source syntax, semantics, Foundation contracts, analysis, and compiler inputs. | 43 |
 | [Bytecode, runtime, and user tools](Indexes/bytecode-runtime-and-tools.md) | Portable bytecode, execution, command-line behavior, WebAssembly, and inspection tools. | 9 |
 | [Assembly, objects, and linking](Indexes/assembly-object-and-linking.md) | Textual assembly, object records, relocation, linking, and native image construction. | 9 |
-| [Native toolchain](Indexes/native-toolchain.md) | Windvale-owned native compilers, publishers, runtime services, and their focused verification. | 95 |
+| [Native toolchain](Indexes/native-toolchain.md) | Windvale-owned native compilers, publishers, runtime services, and their focused verification. | 96 |
 | [Packages, capabilities, and services](Indexes/packages-capabilities-and-services.md) | Projects, packages, installation, applications, capabilities, storage, and service contracts. | 33 |
 | [Database](Indexes/database.md) | WVDB data, query, transaction, storage, durability, and hosted service contracts. | 48 |
 | [Operating system](Indexes/operating-system.md) | Boot, kernel, memory, processes, drivers, filesystems, and Windvale OS services. | 98 |
@@ -36,7 +36,7 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 | Search status | Specifications |
 | --- | ---: |
 | Candidate | 56 |
-| Current | 26 |
+| Current | 27 |
 | Documented | 226 |
 | Experimental | 3 |
 | Implemented | 37 |

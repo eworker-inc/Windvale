@@ -1,10 +1,12 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-if not "%~1"=="" if not "%~1"=="--current-source" goto :usage
+if not "%~1"=="" if not "%~1"=="--current-source" if not "%~1"=="--current-objects" goto :usage
 if not "%~2"=="" goto :usage
 set "CurrentSourceOnly=0"
 if "%~1"=="--current-source" set "CurrentSourceOnly=1"
+set "CurrentObjectsOnly=0"
+if "%~1"=="--current-objects" set "CurrentObjectsOnly=1"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -25,8 +27,17 @@ set /a Passed=0
 set "Result=1"
 set "Phase=initialization"
 
+if "%CurrentSourceOnly%"=="0" (
+    set /a Total+=1
+    call :current_objects
+    if errorlevel 1 goto :failed
+)
+if "%CurrentObjectsOnly%"=="1" (
+    call :pass "current-source named publisher object admission"
+    set "Result=0"
+    goto :cleanup
+)
 if "%CurrentSourceOnly%"=="1" goto :current_source
-set /a Total+=1
 call :check_file "%Construction%\SHA256SUMS" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
@@ -442,8 +453,33 @@ set "Result=0"
 goto :cleanup
 
 :usage
->&2 echo Usage: Tools\Native\Test-Hosted-Verifier-Publisher-File-Pipeline.cmd [--current-source]
+>&2 echo Usage: Tools\Native\Test-Hosted-Verifier-Publisher-File-Pipeline.cmd [--current-source^|--current-objects]
 exit /b 64
+
+:current_objects
+set "Phase=current-source publisher object admission"
+echo START hosted-verifier publisher files step=current-objects item=1/3
+node "%RepositoryRoot%\Tools\Native\Build-Current-Publisher-Object-Tools.mjs" "%TestDirectory%"
+if errorlevel 1 exit /b 1
+echo START hosted-verifier publisher files step=current-objects item=2/3
+set "Objects=%RepositoryRoot%\Linker\Reference\Consumers"
+"%TestDirectory%\Current-Objects.exe" "%Objects%\Windows-X64-Wvb-Publisher.wvo" "%Objects%\Linux-X64-Wvb-Publisher.wvo" "%Objects%\Windows-X64-Wvb-Publication-Adapter.wvo" "%Objects%\Linux-X64-Wvb-Publication-Adapter.wvo" "%Objects%\X64-Wvb-Publication-Sha256.wvo" "%Objects%\X64-Publication-Transaction-State.wvo"
+set "ObjectTestResult=%ERRORLEVEL%"
+if not "%ObjectTestResult%"=="42" (
+    >&2 echo Current publisher object self-test exit=%ObjectTestResult%
+    exit /b 1
+)
+echo START hosted-verifier publisher files step=current-objects item=3/3
+"%TestDirectory%\Current-Structure.exe" --current-object 6 "%Objects%\X64-Publication-Transaction-State.wvo" >"%TestDirectory%\Current-Object-Report.txt"
+if errorlevel 1 exit /b 1
+findstr /b /c:"publisher current object status=Valid format=1 role=6 code-bytes=" "%TestDirectory%\Current-Object-Report.txt" >nul || exit /b 1
+"%TestDirectory%\Current-Structure.exe" --current-object 5 "%Objects%\X64-Publication-Transaction-State.wvo" >"%TestDirectory%\Current-Object-Reject.txt" 2>"%TestDirectory%\Current-Object-Reject.err"
+if not "%ERRORLEVEL%"=="2" exit /b 1
+call :check_empty "%TestDirectory%\Current-Object-Reject.txt" "rejected current object wrote success output"
+if errorlevel 1 exit /b 1
+node -e "if (require('node:fs').readFileSync(process.argv[1], 'utf8').replace(/\r\n/g, '\n') !== 'publisher current object status=Rejected\n') process.exit(1);" "%TestDirectory%\Current-Object-Reject.err"
+if errorlevel 1 exit /b 1
+exit /b 0
 
 :pass
 set /a Passed+=1

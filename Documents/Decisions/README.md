@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 352 |
+| Accepted | 353 |
 | Implemented | 499 |
 | Proposed | 4 |
 | Qualified | 95 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Construct current-source WVB publishers](0962-Construct-Current-Source-Wvb-Publishers.md) | Accepted |
 | [Require an explicit target in Project 4](0961-Require-An-Explicit-Target-In-Project-4.md) | Accepted |
 | [Decision 0960: admit verified Foundation borrows in the host scalar runner](0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md) | Implemented |
 | [Decision 0959: Windvale-owned native model chat](0959-Windvale-Owned-Native-Model-Chat.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0940: separate the Profile 8 compiler-scale instruction ceiling](0940-Separate-The-Profile-8-Compiler-Scale-Instruction-Ceiling.md) | Accepted |
 | [Decision 0939: raise native x64 static-data capacity for compiler convergence](0939-Raise-Native-X64-Static-Data-Capacity-For-Compiler-Convergence.md) | Accepted |
 | [Decision 0938: lower authenticated WVB 1.38 Foreign calls through the native x64 ABI](0938-Lower-Authenticated-WVB-1.38-Foreign-Calls-Through-The-Native-X64-ABI.md) | Accepted |
-| [Decision 0937: execute authenticated WVB 1.38 Foreign calls in the bounded scalar provider](0937-Execute-Authenticated-WVB-1.38-Foreign-Calls-In-The-Bounded-Scalar-Provider.md) | Accepted |
 
 ## Superseded or historical records
 

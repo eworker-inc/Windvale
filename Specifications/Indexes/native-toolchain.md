@@ -62,6 +62,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native hosted-verifier publisher application admission](../Windvale-Native-Hosted-Verifier-Publisher-Application-Admission.md) | Documented |
 | [Windvale native hosted-verifier publisher base construction](../Windvale-Native-Hosted-Verifier-Publisher-Base-Construction.md) | Documented |
 | [Windvale native hosted-verifier publisher construction requests](../Windvale-Native-Hosted-Verifier-Publisher-Construction-Requests.md) | Documented |
+| [Windvale native hosted-verifier publisher current object admission](../Windvale-Native-Hosted-Verifier-Publisher-Current-Object-Admission.md) | Current |
 | [Windvale native hosted-verifier publisher file pipeline](../Windvale-Native-Hosted-Verifier-Publisher-File-Pipeline.md) | Documented |
 | [Windvale native hosted-verifier publisher Linux materialization](../Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.md) | Documented |
 | [Windvale native hosted-verifier publisher object instantiation](../Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.md) | Documented |

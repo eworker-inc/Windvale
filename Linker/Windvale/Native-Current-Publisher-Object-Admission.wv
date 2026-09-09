@@ -1,0 +1,214 @@
+module Linkerˉnativeˉcurrentˉpublisherˉobjectˉadmission profile portable;
+
+import Wvoˉobjectˉverification as Wvo;
+
+export record Publisherˉobjectˉinspection {
+    Valid: bool;
+    Codeˉbytes: u32;
+    Readˉonlyˉbytes: u32;
+    Entryˉoffset: u32;
+    Secondaryˉoffset: u32;
+    Imports: u32;
+}
+
+fn Rejected() -> Publisherˉobjectˉinspection {
+    return Publisherˉobjectˉinspection(false, 0u32, 0u32, 0u32, 0u32, 0u32);
+}
+
+fn Nameˉis(Input: bytes, Offset: u32, Length: u32, Name: text) -> bool {
+    let Expected: bytes = Textˉtoˉutf8(Name);
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Symbolˉis(Input: bytes, Symbol: Wvo.Wvoˉsymbolˉview, Name: text) -> bool {
+    return Nameˉis(Input, Symbol.Nameˉoffset, Symbol.Nameˉlength, Name);
+}
+
+fn Commonˉimportˉkind(Input: bytes, Symbol: Wvo.Wvoˉsymbolˉview) -> u32 {
+    if Symbolˉis(Input, Symbol, "Native_main") ||
+        Symbolˉis(Input, Symbol, "Native_publication_apply") ||
+        Symbolˉis(Input, Symbol, "Native_publication_begin") ||
+        Symbolˉis(Input, Symbol, "Service_console_write") ||
+        Symbolˉis(Input, Symbol, "Service_diagnostic_write") ||
+        Symbolˉis(Input, Symbol, "Service_file_read") ||
+        Symbolˉis(Input, Symbol, "Service_process_argument") ||
+        Symbolˉis(Input, Symbol, "Service_process_argument_count") ||
+        Symbolˉis(Input, Symbol, "Service_utf8") ||
+        Symbolˉis(Input, Symbol, "X64_wvb_publication_sha256_hex") ||
+        Symbolˉis(Input, Symbol, "X64_wvb_publication_u32_hex8") {
+        return 1u32;
+    }
+    if Symbolˉis(Input, Symbol, "Argument_bytes") ||
+        Symbolˉis(Input, Symbol, "Argument_table") ||
+        Symbolˉis(Input, Symbol, "Data_arena") ||
+        Symbolˉis(Input, Symbol, "Execution_context") ||
+        Symbolˉis(Input, Symbol, "File_input_scratch") ||
+        Symbolˉis(Input, Symbol, "File_input_table") ||
+        Symbolˉis(Input, Symbol, "Name_arena") ||
+        Symbolˉis(Input, Symbol, "Output_table") ||
+        Symbolˉis(Input, Symbol, "Record_arena") ||
+        Symbolˉis(Input, Symbol, "Service_table") ||
+        Symbolˉis(Input, Symbol, "Snapshot_table") ||
+        Symbolˉis(Input, Symbol, "Text_arena") ||
+        Symbolˉis(Input, Symbol, "X64_wvb_publication_report_newline") ||
+        Symbolˉis(Input, Symbol, "X64_wvb_publication_report_prefix") ||
+        Symbolˉis(Input, Symbol, "X64_wvb_publication_report_separator") {
+        return 2u32;
+    }
+    return 0u32;
+}
+
+fn Windowsˉimport(Input: bytes, Symbol: Wvo.Wvoˉsymbolˉview) -> bool {
+    return Symbolˉis(Input, Symbol, "Windows_close_handle_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_command_line_to_argv_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_create_file_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_flush_file_buffers_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_get_command_line_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_get_file_information_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_get_file_size_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_get_last_error_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_get_std_handle_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_local_free_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_multi_byte_to_wide_char_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_nt_set_file_information_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_read_file_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_set_file_information_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_set_file_pointer_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_wide_char_to_multi_byte_iat") ||
+        Symbolˉis(Input, Symbol, "Windows_write_file_iat");
+}
+
+fn Importˉkind(Input: bytes, Symbol: Wvo.Wvoˉsymbolˉview, Role: u32) -> u32 {
+    if Role == 1u32 && Symbolˉis(Input, Symbol, "Windows_wvb_publisher_run") {
+        return 1u32;
+    }
+    if Role == 2u32 && Symbolˉis(Input, Symbol, "Linux_wvb_publisher_run") {
+        return 1u32;
+    }
+    if Role == 3u32 || Role == 4u32 {
+        let Common: u32 = Commonˉimportˉkind(Input, Symbol);
+        if Common != 0u32 { return Common; }
+        if Role == 3u32 && Windowsˉimport(Input, Symbol) { return 2u32; }
+    }
+    return 0u32;
+}
+
+fn Exportˉslot(Input: bytes, Symbol: Wvo.Wvoˉsymbolˉview, Role: u32) -> u32 {
+    if Role == 1u32 && Symbolˉis(Input, Symbol, "Windows_wvb_publisher_startup") {
+        return 1u32;
+    }
+    if Role == 2u32 && Symbolˉis(Input, Symbol, "Linux_wvb_publisher_startup") {
+        return 1u32;
+    }
+    if Role == 3u32 && Symbolˉis(Input, Symbol, "Windows_wvb_publisher_run") {
+        return 1u32;
+    }
+    if Role == 4u32 && Symbolˉis(Input, Symbol, "Linux_wvb_publisher_run") {
+        return 1u32;
+    }
+    if Role == 5u32 {
+        if Symbolˉis(Input, Symbol, "X64_wvb_publication_sha256_hex") { return 1u32; }
+        if Symbolˉis(Input, Symbol, "X64_wvb_publication_u32_hex8") { return 2u32; }
+        if Symbolˉis(Input, Symbol, "X64_wvb_publication_report_newline") { return 3u32; }
+        if Symbolˉis(Input, Symbol, "X64_wvb_publication_report_prefix") { return 4u32; }
+        if Symbolˉis(Input, Symbol, "X64_wvb_publication_report_separator") { return 5u32; }
+    }
+    if Role == 6u32 {
+        if Symbolˉis(Input, Symbol, "Native_publication_begin") { return 1u32; }
+        if Symbolˉis(Input, Symbol, "Native_publication_apply") { return 2u32; }
+    }
+    return 0u32;
+}
+
+export fn Publisherˉcurrentˉobjectˉinspect(
+    Input: bytes,
+    Role: u32
+) -> Publisherˉobjectˉinspection {
+    // These are small adapter objects, not the segmented compiler image. Bound
+    // counts before the shared reader's duplicate-name scans perform any work.
+    if Role < 1u32 || Role > 6u32 || Bytesˉlength(Input) < 24u32 ||
+        Bytesˉlength(Input) > 65536u32 { return Rejected(); }
+    let Sections: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Symbols: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Relocations: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    var Expectedˉsections: u32 = 1u32;
+    if Role == 5u32 { Expectedˉsections = 2u32; }
+    if Sections != Expectedˉsections || Symbols > 64u32 || Relocations > 256u32 {
+        return Rejected();
+    }
+    let Inspection: Wvo.Wvoˉinspection = Wvo.Inspectˉobject(Input);
+    if Inspection.Status != Wvo.Wvoˉstatus.Valid { return Rejected(); }
+    let Code: Wvo.Wvoˉsectionˉview = Wvo.Findˉsection(Input, 24u32, Sections, 0u32);
+    if Code.Kind != 1u32 || Code.Alignment != 16u32 || Code.Dataˉlength == 0u32 ||
+        !Nameˉis(Input, Code.Nameˉoffset, Code.Nameˉlength, ".text") {
+        return Rejected();
+    }
+    var Readˉonlyˉbytes: u32 = 0u32;
+    var Symbolˉstart: u32 = Code.Cursor;
+    if Role == 5u32 {
+        let Data: Wvo.Wvoˉsectionˉview = Wvo.Findˉsection(Input, 24u32, Sections, 1u32);
+        if Data.Kind != 2u32 || Data.Alignment != 4u32 || Data.Dataˉlength == 0u32 ||
+            !Nameˉis(Input, Data.Nameˉoffset, Data.Nameˉlength, ".rodata") {
+            return Rejected();
+        }
+        Readˉonlyˉbytes = Data.Dataˉlength;
+        Symbolˉstart = Data.Cursor;
+    }
+    var Cursor: u32 = Symbolˉstart;
+    var Index: u32 = 0u32;
+    var Imports: u32 = 0u32;
+    var Exports: u32 = 0u32;
+    var Entry: u32 = 0u32;
+    var Secondary: u32 = 0u32;
+    while Index < Symbols {
+        // Full validation above makes the single-record view safe and avoids
+        // rescanning every earlier symbol merely to discover the next record.
+        let Symbol: Wvo.Wvoˉsymbolˉview = Wvo.Findˉsymbol(Input, Cursor, 1u32, 0u32);
+        if Symbol.Binding == 3u32 {
+            let Importˉtype: u32 = Importˉkind(Input, Symbol, Role);
+            if Importˉtype == 0u32 || Symbol.Kind != Importˉtype { return Rejected(); }
+            Imports = Imports + 1u32;
+        }
+        if Symbol.Binding == 2u32 {
+            let Slot: u32 = Exportˉslot(Input, Symbol, Role);
+            var Exportˉtype: u32 = 1u32;
+            if Slot >= 3u32 { Exportˉtype = 2u32; }
+            if Slot == 0u32 || Symbol.Kind != Exportˉtype || Symbol.Size == 0u32 {
+                return Rejected();
+            }
+            if Slot == 1u32 { Entry = Symbol.Offset; }
+            if Slot == 2u32 { Secondary = Symbol.Offset; }
+            Exports = Exports + 1u32;
+        }
+        Cursor = Symbol.Cursor;
+        Index = Index + 1u32;
+    }
+    var Expectedˉimports: u32 = 0u32;
+    var Expectedˉexports: u32 = 1u32;
+    if Role <= 2u32 { Expectedˉimports = 1u32; }
+    if Role == 3u32 { Expectedˉimports = 43u32; }
+    if Role == 4u32 { Expectedˉimports = 26u32; }
+    if Role == 5u32 { Expectedˉexports = 5u32; }
+    if Role == 6u32 { Expectedˉexports = 2u32; }
+    // The shared reader rejects duplicate names. Exact counts plus membership
+    // therefore prove the complete required import/export sets, not a subset.
+    if Imports != Expectedˉimports || Exports != Expectedˉexports { return Rejected(); }
+    Index = 0u32;
+    while Index < Relocations {
+        let Relocation: Wvo.Wvoˉrelocationˉview = Wvo.Findˉrelocation(Input, Cursor, Index);
+        if Relocation.Kind != 2u32 || Relocation.Sectionˉindex != 0u32 ||
+            Relocation.Addend != -4 { return Rejected(); }
+        Index = Index + 1u32;
+    }
+    return Publisherˉobjectˉinspection(
+        true, Code.Dataˉlength, Readˉonlyˉbytes, Entry, Secondary, Imports
+    );
+}

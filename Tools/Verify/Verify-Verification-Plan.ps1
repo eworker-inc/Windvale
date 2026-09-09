@@ -5829,6 +5829,30 @@ foreach ($PublisherPath in @(
         throw "The current-source publisher selection differs for '$PublisherPath'."
     }
 }
+foreach ($CurrentObjectPath in @(
+    'Tools/Native/Build-Current-Publisher-Object-Tools.mjs',
+    'Linker/Windvale/Native-Current-Publisher-Object-Admission.wv',
+    'Linker/Windvale/Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wv',
+    'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wvproj',
+    'Tests/Fixtures/Native-X64/Current-Publisher-Object-Self-Test.wv',
+    'Projects/Tests/Windvale-Native-Test-Current-Publisher-Object.wvproj',
+    'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Current-Object-Admission.md'
+)) {
+    $ObjectPlan = & $NativePlanner -ChangedPath @($CurrentObjectPath) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$ObjectPlan.UsePublisherCurrentObjectDevelopment -or
+        $ObjectPlan.UsePublisherCurrentSourceDevelopment -or
+        $ObjectPlan.Suites.Count -ne 1 -or $ObjectPlan.Gaps.Count -ne 0 -or
+        $ObjectPlan.ExpectedSeconds -ne 180 -or $ObjectPlan.MaximumSeconds -ne 480) {
+        throw "The current publisher object selection differs for '$CurrentObjectPath'."
+    }
+    $MixedObjectPlan = & $NativePlanner -ChangedPath @(
+        $CurrentObjectPath, 'Linker/Startup/Windows-X64-Wvb-Publication-Adapter.wva'
+    ) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+    if ($MixedObjectPlan.UsePublisherCurrentObjectDevelopment) {
+        throw 'Publisher adapter implementation changes were narrowed to structural admission.'
+    }
+}
 foreach ($OtherPublisherPath in @(
     'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.cmd',
     'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh',

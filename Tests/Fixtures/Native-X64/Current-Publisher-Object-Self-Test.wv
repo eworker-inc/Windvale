@@ -1,0 +1,153 @@
+module Testˉcurrentˉpublisherˉobject profile hosted;
+
+import Linkerˉnativeˉcurrentˉpublisherˉobjectˉadmission as Current;
+import Wvoˉobjectˉverification as Wvo;
+
+capability console.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Bytesˉfromˉu32ˉlittle(Value)),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Rejects(Input: bytes, Role: u32) -> bool {
+    let Result: Current.Publisherˉobjectˉinspection =
+        Current.Publisherˉcurrentˉobjectˉinspect(Input, Role);
+    return !Result.Valid && Result.Codeˉbytes == 0u32 &&
+        Result.Readˉonlyˉbytes == 0u32 && Result.Entryˉoffset == 0u32 &&
+        Result.Secondaryˉoffset == 0u32 && Result.Imports == 0u32;
+}
+
+fn Checkˉobject(Input: bytes, Role: u32) -> i32 {
+    let Result: Current.Publisherˉobjectˉinspection =
+        Current.Publisherˉcurrentˉobjectˉinspect(Input, Role);
+    if !Result.Valid || Result.Codeˉbytes == 0u32 ||
+        Result.Entryˉoffset >= Result.Codeˉbytes { return 11; }
+    var Other: u32 = 0u32;
+    while Other <= 7u32 {
+        if Other != Role && !Rejects(Input, Other) { return 12; }
+        Other = Other + 1u32;
+    }
+    if !Rejects(Bytesˉslice(Input, 0u32, 0u32), Role) { return 13; }
+    var Length: u32 = 1u32;
+    while Length < 24u32 {
+        if !Rejects(Bytesˉslice(Input, 0u32, Length), Role) { return 14; }
+        Length = Length + 1u32;
+    }
+    if !Rejects(Bytesˉslice(Input, 0u32, Bytesˉlength(Input) - 1u32), Role) { return 15; }
+    if !Rejects(Bytesˉconcat(Input, Bytesˉfromˉu8(0u8)), Role) { return 16; }
+    if !Rejects(Replaceˉu32(Input, 0u32, 0u32), Role) { return 17; }
+    if !Rejects(Replaceˉu32(Input, 4u32, 2u32), Role) { return 18; }
+    if !Rejects(Replaceˉu32(Input, 8u32, 257u32), Role) { return 19; }
+    if !Rejects(Replaceˉu32(Input, 12u32, 4294967295u32), Role) { return 20; }
+    if !Rejects(Replaceˉu32(Input, 16u32, 65u32), Role) { return 21; }
+    if !Rejects(Replaceˉu32(Input, 20u32, 257u32), Role) { return 22; }
+    if !Rejects(Replaceˉu32(Input, 28u32, 8u32), Role) { return 23; }
+    if !Rejects(Replaceˉu32(Input, 32u32, 4294967295u32), Role) { return 24; }
+    if !Rejects(Replaceˉu32(Input, 36u32, 4294967295u32), Role) { return 25; }
+    if !Rejects(Replaceˉu32(Input, 40u32, 4294967295u32), Role) { return 26; }
+
+    let Sections: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Symbols: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Symbolˉstart: u32 = Wvo.Sectionˉrecordsˉend(Input, Sections);
+    var Cursor: u32 = Symbolˉstart;
+    var Index: u32 = 0u32;
+    var Checkedˉfunctionˉimport: bool = false;
+    var Checkedˉdataˉimport: bool = false;
+    while Index < Symbols {
+        let Symbol: Wvo.Wvoˉsymbolˉview = Wvo.Findˉsymbol(Input, Cursor, 1u32, 0u32);
+        if Symbol.Binding == 2u32 {
+            if !Rejects(Replaceˉu32(Input, Cursor + 8u32, 4294967295u32), Role) { return 27; }
+            if !Rejects(Replaceˉu32(Input, Cursor + 12u32, 0u32), Role) { return 28; }
+            let Name: bytes = Bytesˉconcat(
+                Bytesˉconcat(Bytesˉslice(Input, 0u32, Symbol.Nameˉoffset), Bytesˉfromˉu8(90u8)),
+                Bytesˉslice(Input, Symbol.Nameˉoffset + 1u32, Bytesˉlength(Input) - Symbol.Nameˉoffset - 1u32)
+            );
+            if !Rejects(Name, Role) { return 29; }
+        }
+        if Symbol.Binding == 3u32 &&
+            ((Symbol.Kind == 1u32 && !Checkedˉfunctionˉimport) ||
+                (Symbol.Kind == 2u32 && !Checkedˉdataˉimport)) {
+            var Wrongˉkind: u32 = 259u32;
+            if Symbol.Kind == 1u32 { Wrongˉkind = 515u32; }
+            if !Rejects(Replaceˉu32(Input, Cursor, Wrongˉkind), Role) { return 30; }
+            if !Rejects(Replaceˉu32(Input, Cursor + 4u32, 0u32), Role) { return 31; }
+            let Unknown: bytes = Bytesˉconcat(
+                Bytesˉconcat(Bytesˉslice(Input, 0u32, Symbol.Nameˉoffset), Bytesˉfromˉu8(90u8)),
+                Bytesˉslice(Input, Symbol.Nameˉoffset + 1u32, Bytesˉlength(Input) - Symbol.Nameˉoffset - 1u32)
+            );
+            if !Rejects(Unknown, Role) { return 39; }
+            if Symbol.Kind == 1u32 { Checkedˉfunctionˉimport = true; }
+            if Symbol.Kind == 2u32 { Checkedˉdataˉimport = true; }
+        }
+        Cursor = Symbol.Cursor;
+        Index = Index + 1u32;
+    }
+    let Relocations: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Relocations != 0u32 {
+        if !Rejects(Replaceˉu32(Input, Cursor, 1u32), Role) { return 32; }
+        if !Rejects(Replaceˉu32(Input, Cursor + 8u32, 4294967295u32), Role) { return 33; }
+        if !Rejects(Replaceˉu32(Input, Cursor + 12u32, Symbols), Role) { return 34; }
+        if !Rejects(Replaceˉu32(Input, Cursor + 16u32, 0u32), Role) { return 35; }
+        let Relocation: Wvo.Wvoˉrelocationˉview = Wvo.Findˉrelocation(Input, Cursor, 0u32);
+        let Section: Wvo.Wvoˉsectionˉview = Wvo.Findˉsection(Input, 24u32, Sections, Relocation.Sectionˉindex);
+        if !Rejects(Replaceˉu32(Input, Section.Dataˉoffset + Relocation.Offset, 1u32), Role) { return 36; }
+    }
+    return 0;
+}
+
+fn Moveˉstartupˉentry(Input: bytes, Padding: bytes) -> bytes {
+    let Code: Wvo.Wvoˉsectionˉview = Wvo.Findˉsection(Input, 24u32, 1u32, 0u32);
+    let Extra: u32 = Bytesˉlength(Padding);
+    var Moved: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Code.Dataˉoffset), Padding),
+        Bytesˉslice(Input, Code.Dataˉoffset, Bytesˉlength(Input) - Code.Dataˉoffset)
+    );
+    Moved = Replaceˉu32(Moved, 32u32, Code.Dataˉlength + Extra);
+    Moved = Replaceˉu32(Moved, 36u32, Code.Dataˉlength + Extra);
+    let Symbolˉstart: u32 = Code.Cursor + Extra;
+    Moved = Replaceˉu32(Moved, Symbolˉstart + 8u32, Extra);
+    let Relocationˉstart: u32 = Wvo.Symbolˉrecordsˉend(Moved, Symbolˉstart, 2u32);
+    return Replaceˉu32(Moved, Relocationˉstart + 8u32, Extra + 1u32);
+}
+
+fn Checkˉmovedˉentry(Input: bytes, Role: u32) -> bool {
+    let Moved: bytes = Moveˉstartupˉentry(Input, Bytesˉfromˉu32ˉlittle(2425393296u32));
+    let Code: Wvo.Wvoˉsectionˉview = Wvo.Findˉsection(Input, 24u32, 1u32, 0u32);
+    let Result: Current.Publisherˉobjectˉinspection =
+        Current.Publisherˉcurrentˉobjectˉinspect(Moved, Role);
+    return Result.Valid && Result.Entryˉoffset == 4u32 &&
+        Result.Codeˉbytes == Code.Dataˉlength + 4u32 && Result.Imports == 1u32;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 6u32 { return 64; }
+    var Role: u32 = 1u32;
+    while Role <= 6u32 {
+        console.write_line(Textˉconcat("publisher object tests step=role item=", U32ˉformat(Role)));
+        let Input: bytes = file.read_bytes(process.argument(Role - 1u32));
+        let Status: i32 = Checkˉobject(Input, Role);
+        if Status != 0 { return Status; }
+        if Role <= 2u32 && !Checkˉmovedˉentry(Input, Role) { return 37; }
+        Role = Role + 1u32;
+    }
+    var Padding: bytes = Bytesˉfromˉu8(0u8);
+    var Power: u32 = 0u32;
+    while Power < 16u32 {
+        Padding = Bytesˉconcat(Padding, Padding);
+        Power = Power + 1u32;
+    }
+    let Startup: bytes = file.read_bytes(process.argument(0u32));
+    let Maximum: bytes = Moveˉstartupˉentry(Startup, Bytesˉslice(Padding, 0u32, 65536u32 - Bytesˉlength(Startup)));
+    let Maximumˉinspection: Current.Publisherˉobjectˉinspection = Current.Publisherˉcurrentˉobjectˉinspect(Maximum, 1u32);
+    if Bytesˉlength(Maximum) != 65536u32 || !Maximumˉinspection.Valid { return 40; }
+    let Oversized: bytes = Moveˉstartupˉentry(Startup, Bytesˉslice(Padding, 0u32, 65537u32 - Bytesˉlength(Startup)));
+    if !Rejects(Oversized, 1u32) { return 38; }
+    console.write_line("publisher object tests status=Passed roles=6 moved-entries=2 oversized=Rejected");
+    return 42;
+}
