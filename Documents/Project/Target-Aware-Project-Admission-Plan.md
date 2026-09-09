@@ -46,6 +46,16 @@ installer inventories still select the older build driver. Retained diagnostic
 executables must not be substituted into those inventories or labeled current
 solely because selected consumer tests pass.
 
+Publication is a separate integration dependency: both frozen native publishers
+reject the migrated package test bytecode, while a rebuilt current publisher's
+validation-only executable accepts it. Generic hosted packaging does not provide
+the native transactional publication adapter. The specialized constructor remains
+tied to fixed old artifacts and function offsets; its current-source check stops
+at reproducible native images, not a current publishing executable. The next
+publication work must preserve native validation, transaction state, and failure
+guarantees while connecting that current verifier. See the
+[publisher validation boundary evidence](../Evidence/2026-09-09-Current-Publisher-Validation-Boundary.json).
+
 ## Current boundary
 
 [Project 3](../../Specifications/Windvale-Project.md#project-3-text-format)

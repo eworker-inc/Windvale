@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-09-current-publisher-validation-boundary",
+  "date": "2026-09-09",
+  "subject": "Current WVB publisher verifier versus frozen native publisher products",
+  "claim": "The current publisher source builds through the current split compiler and its validation-only Windows executable accepts the migrated Canonical-Package-Text test WVB. The frozen front-door and newer frozen candidate publishers reject that same WVB at semantic validation. The validation-only executable does not publish a destination. This distinguishes working current semantic validation from unfinished transactional publisher construction.",
+  "source": {
+    "kind": "Other",
+    "value": "Publisher project/source at 22d02e4c; current split compiler products from the related reconstruction evidence, acquired through the uncommitted Project 4 launcher integration. The migrated test WVB comes from the preserved package working tree, not a committed package release."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Current publisher WVB and validation-only hosted executable",
+      "tool": "Build-Current-Split-Project-Wvb.mjs and Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "Build current Projects/Tools/Windvale-Wvb-Publisher.wvproj to Project4-Current-Publisher.wvb with a 180000ms command deadline, then package profile 7 as Project4-Current-Publisher-Validation.exe with a separate 180000ms command deadline; both completed.",
+      "result": "Passed",
+      "inputs": [
+        { "path": "Projects/Tools/Windvale-Wvb-Publisher.wvproj", "size": 633, "sha256": "2993cc5babc311452f4673bb6790ba62f80abe1620fd312b5b8e140292933f4d" },
+        { "path": "Tools/Windvale.Publish/Wvb-Publisher-Tool.wv", "size": 2976, "sha256": "3b3bf18c4c7fca629ec39bd800e8e0a7a3586d21ec49fad49d8289a867ebba85" }
+      ],
+      "outputs": [
+        { "path": "Artifacts/Work/Project4-Current-Publisher.wvb", "size": 569364, "sha256": "aa5a28656176f20f2f723a396acdd73839d0c610691c07869e9d1289a7a2ce98" },
+        { "path": "Artifacts/Work/Project4-Current-Publisher-Validation.exe", "size": 4865536, "sha256": "d26e0cfd8f36e93033ca010a49f418d521e43fa4da871789683805d23a62741e" }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "One migrated package test WVB",
+      "tool": "Current validation-only publisher, frozen front-door publisher, frozen candidate publisher",
+      "command": "Invoke each product with the same candidate and a distinct absent destination. Current validation-only product returned 0 and created no destination. Both frozen publishers returned 1 with publication status=Rejected phase=semantic and created no destination.",
+      "result": "Passed",
+      "inputs": [
+        { "path": "Artifacts/Work/Project4-Maintained-Tests-Canonical-Package-Text.wvb", "size": 25471, "sha256": "088909e65eff5c4449a9a9a911f1fefabc7418e722aa9df00f242769ecad05ea" },
+        { "path": "Artifacts/Native-Front-Door/windows-x64/wvpublish.exe", "size": 1371136, "sha256": "b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421" },
+        { "path": "Artifacts/Native-Wvb-Publisher-Candidate/windows-x64-wvpublish.exe", "size": 1544192, "sha256": "0fdb432aa54cc7b9cc4a1d42a438d2b56a29695e06b2369540dac845989751c1" }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "This is a diagnostic result for one valid input on Windows, not publisher qualification, malformed-input coverage, full package conformance, or a new Debian result.",
+    "Generic profile-7 packaging exercises the publisher Main's candidate validation only. It does not attach the specialized native publication startup, adapter, and transaction state; it must not replace a real publisher.",
+    "The existing specialized construction path pins old WVB/WVO/image identities and exact Main/begin/apply offsets. Its current-source test reconstructs and compares WVB/WVOP/WVLI, then exits without constructing a current transactional executable.",
+    "No publication pin or installed artifact was changed. The Project 4 launcher changes remain uncommitted and their five-case test remains incomplete after an eight-minute preparation timeout.",
+    "The broad changed-file plan, full hosted publisher owner, and cold cross-host qualification were not run. Prior cache evidence was reused only through existing exact-input cache checks."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-09-Project4-Current-Compiler-Reconstruction.json",
+    "Documents/Project/Target-Aware-Project-Admission-Plan.md",
+    "Projects/Tools/Windvale-Wvb-Publisher.wvproj"
+  ]
+}
