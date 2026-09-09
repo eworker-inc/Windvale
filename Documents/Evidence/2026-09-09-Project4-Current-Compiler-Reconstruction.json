@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-09-project4-current-compiler-reconstruction",
+  "date": "2026-09-09",
+  "subject": "Current-source compiler cache and native manifest-reader bytecode construction",
+  "claim": "The existing current split-project build command completed all 13 steps on Windows and published a current-source analyzer/emitter checkpoint plus the maintained manifest-reader project's WVB. The emitter was compiled through symbol analysis, WIR analysis, and emission; its WVB and executable match the earlier read-through-tested emitter. The final manifest-reader WVB also matches the earlier Project 4 reader. Exact matching intermediate and native-image caches were reused, not relabeled as cold reconstruction.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "e3377bc3bdb39808641e098d372369c520774fbe"
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Current split-compiler development checkpoint and Seed bootstrap manifest-reader project",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Project-Manifest.wvproj Artifacts/Work/Project4-Current-Manifest-Reader.wvb (Run_development_command total deadline 1800000ms, explicitly approved)",
+      "result": "Passed",
+      "inputs": [
+        { "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs", "size": 10331, "sha256": "af177f7e76898db949236d110c0f3847820fb9f98600f6d51270a01227b6a92b" },
+        { "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs", "size": 15235, "sha256": "b4b5a2dae3627a67930e9ee5a4c65c956e5c93e9eb51a9ca0ef1202347f57f28" },
+        { "path": "Tools/Native/Development-Command-Core.mjs", "size": 3714, "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8" },
+        { "path": "Projects/Tools/Windvale-Project-Manifest.wvproj", "size": 140, "sha256": "9acfb04111021b7d24003597da22934169c6dbc30dc247399c324d3d673eb5f5" }
+      ],
+      "outputs": [
+        { "path": "current-split-compiler-v1/win32-x64/9f2ef857988129056bcb22c89ecb466b8235916ed35ac4bfaba37919b1cc8a98/Analyzer.exe", "size": 54543360, "sha256": "c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1" },
+        { "path": "current-split-compiler-v1/win32-x64/9f2ef857988129056bcb22c89ecb466b8235916ed35ac4bfaba37919b1cc8a98/Analyzer.identity", "size": 177, "sha256": "6c24b7bfdace9f0fefc78f496fbfe49b272954490e6710a9a785f91e08fb062b" },
+        { "path": "current-split-compiler-v1/win32-x64/9f2ef857988129056bcb22c89ecb466b8235916ed35ac4bfaba37919b1cc8a98/Emitter.exe", "size": 32662528, "sha256": "149cc58fe1d6e6537edc4689596dd2c810e3bff3e497bb60c9848e1cb1d22d30" },
+        { "path": "current-split-compiler-v1/win32-x64/9f2ef857988129056bcb22c89ecb466b8235916ed35ac4bfaba37919b1cc8a98/Emitter.identity", "size": 183, "sha256": "3d5f135acf3a90185a280126be8bb76931a89db1261b6da65a0ef805d21ad9b1" },
+        { "path": "Artifacts/Work/Project4-Current-Manifest-Reader.wvb", "size": 40574, "sha256": "f80225c3924eadf412f040e6e25912d4f5ff15b70376f1f5a3db12386af7d5cb" }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "This is a Windows development construction checkpoint, not cold double-build, independent reproduction, new Debian qualification, installed promotion, or full compiler/library conformance.",
+    "The analyzer WVB and final reader analysis were exact cache hits. Bootstrap analyzer packaging reused the successful product from a prior five-minute attempt; that prior attempt timed out before completing the compiler set.",
+    "The approved run completed in approximately twelve minutes. Per-step measurements were available, but exact total wall time and peak working set were not recorded. The two construction branches ran concurrently.",
+    "Existing package migration working-tree edits and standalone Project 4 parser fixtures were not inputs to these compiler/reader projects and were not committed or qualified by this run.",
+    "The manifest reader was built as WVB, not newly packaged and executed. Equality with earlier reader bytecode is identity evidence, not a new runtime test.",
+    "Normal Build-Wvb routing, acquisition of the other admission products, Project 4 build-result caching, and installed toolchain delivery remain unfinished. No production artifact pin was changed."
+  ],
+  "related": [
+    "Documents/Project/Target-Aware-Project-Admission-Plan.md",
+    "Documents/Evidence/2026-09-08-Project4-Authenticated-Admission.json",
+    "Documents/Evidence/2026-09-08-Foundation-Copy-Borrow-Read-Through.json"
+  ]
+}

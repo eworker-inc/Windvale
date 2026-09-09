@@ -31,8 +31,14 @@ tool construction or cold qualification. Installed product selection, maintained
 package manifest migration, full target/alias/profile coverage, and project build
 cache integration remain unfinished. This checkpoint is not production promotion.
 
-The next integration checkpoint is a reusable current-source compiler product
-set, followed by normal project-build routing through authenticated admission.
+The Windows current-source analyzer/emitter cache and maintained manifest-reader
+bytecode build now complete through the existing reconstruction command. The
+emitter and reader bytes match the earlier tested products; this used exact
+intermediate caches and is not cold qualification. See the
+[current compiler reconstruction evidence](../Evidence/2026-09-09-Project4-Current-Compiler-Reconstruction.json).
+
+The next integration checkpoint is acquisition of the remaining admission
+products, followed by normal project-build routing through authenticated admission.
 The current split-compiler cache constructs only the analyzer and emitter; the
 Project 4 path also needs the native manifest reader, admitter, and authenticator,
 plus the foreign binder when required. Repository `Build-Wvb` launchers and the
