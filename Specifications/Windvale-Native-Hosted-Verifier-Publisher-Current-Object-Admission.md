@@ -90,6 +90,43 @@ The host supplies its normal line ending. Rejection emits no success record and
 reports `publisher current object status=Rejected` on diagnostic output. This
 mode writes no file. The original two-argument frozen-envelope mode remains.
 
+## Current-source binding record
+
+The current construction path also has a host-side binding command:
+
+```text
+node Tools/Native/Build-Current-Publisher-Binding.mjs <publisher.wvb> <object-chunk-prefix> <publisher.wvop> <image-chunk-prefix> <publisher.wvli> <reference-object-directory> <output.wvcp>
+```
+
+It consumes one already-built current publisher WVB, its strict `WVOP 1.0`
+object-staging manifest and chunks, its strict `WVLI 1.0` linked-image manifest
+and chunks, and the six maintained native publisher objects named in this
+specification. The output path must be absent and distinct from every direct
+input. Exact output/input aliasing exits 64 before any write, preserving the
+subject bytes.
+
+The record is ASCII with LF line endings and begins:
+
+```text
+windvale-current-source-wvb-publisher-binding 1
+host <windows-x64-or-linux-x64>
+binding-sha256 <lowercase-hex-sha256>
+```
+
+The remaining fields record byte counts and SHA-256 values for the WVB, `WVOP`,
+every object chunk, `WVLI`, every image chunk, and each fixed native object
+role. The `WVOP` and `WVLI` readers enforce their magic, version, manifest size,
+nonzero payload size, one-through-518 chunk count, 4 MiB chunk ceiling,
+contiguous positions, exact chunk byte lengths, and absence of a trailing
+`chunk-<count>` resource. The image entry offset is recorded and must be inside
+the declared image; the current focused owner still expects entry offset zero
+from the linker report.
+
+This binding record is construction input evidence. It does not authenticate
+machine code, resolve adapter imports, compute relative relocation values,
+materialize PE/ELF bytes, install a publisher, or prove transactional
+publication behavior. Those remain later current-source construction gates.
+
 ## Verification
 
 The existing `hosted-verifier-publisher-files` owner includes the focused
@@ -99,7 +136,12 @@ oversized records, invalid names/counts/kinds/offsets/relocations, moved startup
 entries, the inclusive byte ceiling, and command success/rejection. It does not
 substitute for module identity, complete linkage, or native transaction tests.
 
-Development construction requires the existing validated current split-compiler
-cache. A missing cache is an explicit setup failure, not permission to start a
-cold compiler reconstruction inside this check. The focused tool builder has a
-four-minute total construction deadline and reuses existing exact-input caches.
+The same owner includes the focused `--current-source` selection. It rebuilds
+the current publisher source twice, compares exact WVB, `WVOP`, `WVLI`, and
+chunk bytes, emits the binding record for one reproduced set, checks the shared
+transaction-state object appears as role 6, and checks exact alias rejection
+preserves the source WVB. Development construction requires the existing
+validated current split-compiler cache. A missing cache is an explicit setup
+failure, not permission to start a cold compiler reconstruction inside this
+check. The focused current-object tool builder has a four-minute total
+construction deadline and reuses existing exact-input caches.

@@ -155,6 +155,40 @@ for %%K in (Object Image) do (
         )
     )
 )
+set "Phase=current-source publisher binding"
+node "%RepositoryRoot%\Tools\Native\Build-Current-Publisher-Binding.mjs" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    "%TestDirectory%\Wvb-Publisher-Object-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvop" ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%RepositoryRoot%\Linker\Reference\Consumers" ^
+    "%TestDirectory%\Current-Publisher-Binding.wvcp" ^
+    >"%TestDirectory%\Current-Publisher-Binding.out" 2>"%TestDirectory%\Current-Publisher-Binding.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Binding.err" "current-source publisher binding wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"current publisher binding status=Valid format=1 native-objects=6" "%TestDirectory%\Current-Publisher-Binding.out" >nul
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher-Binding.wvcp" 131072 "current-source publisher binding"
+if errorlevel 1 goto :failed
+findstr /b /c:"windvale-current-source-wvb-publisher-binding 1" "%TestDirectory%\Current-Publisher-Binding.wvcp" >nul
+if errorlevel 1 goto :failed
+findstr /b /c:"native-object-6 X64-Publication-Transaction-State.wvo bytes " "%TestDirectory%\Current-Publisher-Binding.wvcp" >nul
+if errorlevel 1 goto :failed
+node "%RepositoryRoot%\Tools\Native\Build-Current-Publisher-Binding.mjs" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    "%TestDirectory%\Wvb-Publisher-Object-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvop" ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%RepositoryRoot%\Linker\Reference\Consumers" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    >"%TestDirectory%\Current-Publisher-Binding-Alias.out" 2>"%TestDirectory%\Current-Publisher-Binding-Alias.err"
+if errorlevel 65 goto :failed
+if not errorlevel 64 goto :failed
+fc /b "%TestDirectory%\Wvb-Publisher-1.wvb" "%TestDirectory%\Wvb-Publisher-2.wvb" >nul
+if errorlevel 1 goto :failed
 call :pass "current-source publisher reproducibility"
 if "%CurrentSourceOnly%"=="1" (
     set "Result=0"
@@ -543,7 +577,7 @@ exit /b 0
 :failed
 set "Result=1"
 >&2 echo FAIL  hosted-verifier publisher files: %Phase%
-for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Current-Publisher-Binding.out Current-Publisher-Binding.err Current-Publisher-Binding-Alias.out Current-Publisher-Binding-Alias.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

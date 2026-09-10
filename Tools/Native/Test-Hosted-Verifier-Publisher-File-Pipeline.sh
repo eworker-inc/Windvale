@@ -274,6 +274,40 @@ for kind in Object Image; do
         fi
     done
 done
+phase='current-source publisher binding'
+node "$repository_root/Tools/Native/Build-Current-Publisher-Binding.mjs" \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Wvb-Publisher-Object-1" \
+    "$test_directory/Wvb-Publisher-1.wvop" \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$repository_root/Linker/Reference/Consumers" \
+    "$test_directory/Current-Publisher-Binding.wvcp" \
+    > "$test_directory/Current-Publisher-Binding.out" \
+    2> "$test_directory/Current-Publisher-Binding.err" || fail
+check_empty "$test_directory/Current-Publisher-Binding.err" \
+    'current-source publisher binding wrote a diagnostic' || fail
+grep -Fx 'current publisher binding status=Valid format=1 native-objects=6' \
+    "$test_directory/Current-Publisher-Binding.out" >/dev/null || fail
+check_bounded "$test_directory/Current-Publisher-Binding.wvcp" 131072 \
+    'current-source publisher binding' || fail
+grep -Fx 'windvale-current-source-wvb-publisher-binding 1' \
+    "$test_directory/Current-Publisher-Binding.wvcp" >/dev/null || fail
+grep -E '^native-object-6 X64-Publication-Transaction-State\.wvo bytes ' \
+    "$test_directory/Current-Publisher-Binding.wvcp" >/dev/null || fail
+node "$repository_root/Tools/Native/Build-Current-Publisher-Binding.mjs" \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Wvb-Publisher-Object-1" \
+    "$test_directory/Wvb-Publisher-1.wvop" \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$repository_root/Linker/Reference/Consumers" \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    > "$test_directory/Current-Publisher-Binding-Alias.out" \
+    2> "$test_directory/Current-Publisher-Binding-Alias.err"
+[[ $? -eq 64 ]] || fail
+cmp --silent "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Wvb-Publisher-2.wvb" || fail
 pass 'current-source publisher reproducibility'
 if [[ $current_source_only == true ]]; then
     echo "Tests: $total, Passed: $passed, Failed: 0"
