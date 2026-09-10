@@ -187,6 +187,36 @@ node "%RepositoryRoot%\Tools\Native\Build-Current-Publisher-Binding.mjs" ^
     >"%TestDirectory%\Current-Publisher-Binding-Alias.out" 2>"%TestDirectory%\Current-Publisher-Binding-Alias.err"
 if errorlevel 65 goto :failed
 if not errorlevel 64 goto :failed
+set "Phase=current-source publisher linkage"
+node "%RepositoryRoot%\Tools\Native\Plan-Current-Publisher-Linkage.mjs" ^
+    "%TestDirectory%\Current-Publisher-Binding.wvcp" ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%RepositoryRoot%\Linker\Reference\Consumers" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" ^
+    >"%TestDirectory%\Current-Publisher-Linkage.out" 2>"%TestDirectory%\Current-Publisher-Linkage.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Linkage.err" "current-source publisher linkage wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"current publisher linkage status=Valid format=1 targets=2" "%TestDirectory%\Current-Publisher-Linkage.out" >nul
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher-Linkage.wvcl" 131072 "current-source publisher linkage"
+if errorlevel 1 goto :failed
+findstr /b /c:"windvale-current-source-wvb-publisher-linkage 1" "%TestDirectory%\Current-Publisher-Linkage.wvcl" >nul
+if errorlevel 1 goto :failed
+findstr /b /c:"target windows-x64 imports-resolved " "%TestDirectory%\Current-Publisher-Linkage.wvcl" >nul
+if errorlevel 1 goto :failed
+findstr /b /c:"target linux-x64 relocations-checked " "%TestDirectory%\Current-Publisher-Linkage.wvcl" >nul
+if errorlevel 1 goto :failed
+node "%RepositoryRoot%\Tools\Native\Plan-Current-Publisher-Linkage.mjs" ^
+    "%TestDirectory%\Current-Publisher-Binding.wvcp" ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%RepositoryRoot%\Linker\Reference\Consumers" ^
+    "%TestDirectory%\Current-Publisher-Binding.wvcp" ^
+    >"%TestDirectory%\Current-Publisher-Linkage-Alias.out" 2>"%TestDirectory%\Current-Publisher-Linkage-Alias.err"
+if errorlevel 65 goto :failed
+if not errorlevel 64 goto :failed
 fc /b "%TestDirectory%\Wvb-Publisher-1.wvb" "%TestDirectory%\Wvb-Publisher-2.wvb" >nul
 if errorlevel 1 goto :failed
 call :pass "current-source publisher reproducibility"

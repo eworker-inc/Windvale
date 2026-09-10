@@ -306,6 +306,36 @@ node "$repository_root/Tools/Native/Build-Current-Publisher-Binding.mjs" \
     > "$test_directory/Current-Publisher-Binding-Alias.out" \
     2> "$test_directory/Current-Publisher-Binding-Alias.err"
 [[ $? -eq 64 ]] || fail
+phase='current-source publisher linkage'
+node "$repository_root/Tools/Native/Plan-Current-Publisher-Linkage.mjs" \
+    "$test_directory/Current-Publisher-Binding.wvcp" \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$repository_root/Linker/Reference/Consumers" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" \
+    > "$test_directory/Current-Publisher-Linkage.out" \
+    2> "$test_directory/Current-Publisher-Linkage.err" || fail
+check_empty "$test_directory/Current-Publisher-Linkage.err" \
+    'current-source publisher linkage wrote a diagnostic' || fail
+grep -Fx 'current publisher linkage status=Valid format=1 targets=2' \
+    "$test_directory/Current-Publisher-Linkage.out" >/dev/null || fail
+check_bounded "$test_directory/Current-Publisher-Linkage.wvcl" 131072 \
+    'current-source publisher linkage' || fail
+grep -Fx 'windvale-current-source-wvb-publisher-linkage 1' \
+    "$test_directory/Current-Publisher-Linkage.wvcl" >/dev/null || fail
+grep -E '^target windows-x64 imports-resolved ' \
+    "$test_directory/Current-Publisher-Linkage.wvcl" >/dev/null || fail
+grep -E '^target linux-x64 relocations-checked ' \
+    "$test_directory/Current-Publisher-Linkage.wvcl" >/dev/null || fail
+node "$repository_root/Tools/Native/Plan-Current-Publisher-Linkage.mjs" \
+    "$test_directory/Current-Publisher-Binding.wvcp" \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$repository_root/Linker/Reference/Consumers" \
+    "$test_directory/Current-Publisher-Binding.wvcp" \
+    > "$test_directory/Current-Publisher-Linkage-Alias.out" \
+    2> "$test_directory/Current-Publisher-Linkage-Alias.err"
+[[ $? -eq 64 ]] || fail
 cmp --silent "$test_directory/Wvb-Publisher-1.wvb" \
     "$test_directory/Wvb-Publisher-2.wvb" || fail
 pass 'current-source publisher reproducibility'

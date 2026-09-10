@@ -1698,7 +1698,7 @@ function Add-Native-Tool-Suite {
         Add-Suite 'uefi-packager'
     } elseif ($Stem -eq 'Publish-Hosted-Verifier-Application') {
         Add-Suite 'publisher-rejections'
-    } elseif ($Stem -eq 'Build-Current-Publisher-Binding') {
+    } elseif ($Stem -in @('Build-Current-Publisher-Binding', 'Plan-Current-Publisher-Linkage')) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Stem -eq 'Install-Hosted-Verifier-Publisher') {
         Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
@@ -4787,6 +4787,7 @@ $FoundationBorrowOwnerInputs = @(
 $PublisherCurrentSourceInputs = @(
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
     'Tools/Native/Build-Current-Publisher-Binding.mjs',
+    'Tools/Native/Plan-Current-Publisher-Linkage.mjs',
     'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',

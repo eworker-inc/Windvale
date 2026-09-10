@@ -125,7 +125,49 @@ from the linker report.
 This binding record is construction input evidence. It does not authenticate
 machine code, resolve adapter imports, compute relative relocation values,
 materialize PE/ELF bytes, install a publisher, or prove transactional
-publication behavior. Those remain later current-source construction gates.
+publication behavior by itself. Those remain later current-source construction
+gates.
+
+## Current-source linkage plan
+
+The next host-side construction command consumes the binding record, the linked
+current publisher image manifest and chunks, and the same six maintained native
+publisher objects:
+
+```text
+node Tools/Native/Plan-Current-Publisher-Linkage.mjs <current-publisher-binding.wvcp> <image-chunk-prefix> <publisher.wvli> <reference-object-directory> <output.wvcl>
+```
+
+The command verifies the binding record's self hash, verifies the `WVLI 1.0`
+manifest and every image chunk against the binding record, verifies every native
+object byte count and SHA-256 identity against the binding record, parses each
+bounded `WVO1` object, and rechecks the closed role imports, exports, section
+shape, relative-i32 relocation form, addend, and zero patch placeholders. The
+output path must be absent and distinct from every direct input, image chunk, and
+native object.
+
+The output record is ASCII with LF line endings and begins:
+
+```text
+windvale-current-source-wvb-publisher-linkage 1
+host <windows-x64-or-linux-x64>
+linkage-sha256 <lowercase-hex-sha256>
+```
+
+It records the consumed binding hash, image identity, native object identities,
+and one target plan for `windows-x64` and one for `linux-x64`. Each target plan
+assigns deterministic provisional addresses for the startup shim, current image,
+adapter, SHA/reporting object, and transaction-state object. It resolves the
+startup-to-adapter import, `Native_main` to the current image entry offset, the
+transaction imports to role 6, and the SHA/reporting imports to role 5, then
+checks the resulting relative-i32 displacements. Hosted runtime service imports
+and the Windows IAT data imports remain explicitly listed as deferred imports for
+the later PE/ELF materializer, which must bind them to the host container's final
+service and import-table geometry before execution.
+
+This linkage plan is not an executable image, not an installation candidate, and
+not a transactional publication test. It is the checked name-resolution and
+relative-range input for the later materialization gate.
 
 ## Verification
 
@@ -139,9 +181,10 @@ substitute for module identity, complete linkage, or native transaction tests.
 The same owner includes the focused `--current-source` selection. It rebuilds
 the current publisher source twice, compares exact WVB, `WVOP`, `WVLI`, and
 chunk bytes, emits the binding record for one reproduced set, checks the shared
-transaction-state object appears as role 6, and checks exact alias rejection
-preserves the source WVB. Development construction requires the existing
-validated current split-compiler cache. A missing cache is an explicit setup
-failure, not permission to start a cold compiler reconstruction inside this
-check. The focused current-object tool builder has a four-minute total
-construction deadline and reuses existing exact-input caches.
+transaction-state object appears as role 6, emits the linkage plan, checks both
+target reports, and checks exact alias rejection for both host-side writers.
+Development construction requires the existing validated current split-compiler
+cache. A missing cache is an explicit setup failure, not permission to start a
+cold compiler reconstruction inside this check. The focused current-object tool
+builder has a four-minute total construction deadline and reuses existing
+exact-input caches.
