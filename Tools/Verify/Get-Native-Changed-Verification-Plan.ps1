@@ -5210,6 +5210,16 @@ if (!$LibraryDevelopmentRequiresAllTargets -and
     $SelectedLibraryDevelopmentTargets.Count -eq 1) {
     $LibraryDevelopmentTarget = @($SelectedLibraryDevelopmentTargets)[0]
 }
+if ($SelectedSuites.Contains('libraries') -and
+    $LibraryDevelopmentTarget -eq 'foundation-values') {
+    $LibraryOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'libraries'
+    })[0]
+    $SelectedExpectedSeconds = [long](
+        $SelectedExpectedSeconds - $LibraryOwner.ExpectedSeconds + 900)
+    $SelectedMaximumSeconds = [long](
+        $SelectedMaximumSeconds - $LibraryOwner.MaximumSeconds + 1800)
+}
 $SourceContainmentDevelopmentMode = if (
     $SelectedSuites.Contains('source-containment') -and
     $SourceContainmentCompilerDevelopmentEligible) {

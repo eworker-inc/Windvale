@@ -496,9 +496,14 @@ if ($Plan.Scope -eq 'website') {
                 }
                 $LibraryTarget = $NativePlan.LibraryDevelopmentTarget
                 $OwnerArguments = @('--development-target', $LibraryTarget)
+                $LibraryExpectedSeconds = if ($LibraryTarget -eq 'foundation-values') {
+                    900
+                } else {
+                    300
+                }
                 $OwnerMessage = (
                     'Native owner libraries mode=development-target ' +
-                    "target=$LibraryTarget")
+                    "target=$LibraryTarget expected-seconds=$LibraryExpectedSeconds")
             } elseif ($Suite -eq 'os-x64-code-emission' -and
                 $NativePlan.UseOsX64CodeEmissionDevelopment) {
                 $OwnerCommand = if ($IsWindowsHost) {

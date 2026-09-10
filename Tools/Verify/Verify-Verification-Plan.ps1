@@ -4865,6 +4865,8 @@ $NativeCases = @(
         VerifyPlan = $false
         LibraryDevelopment = $true
         LibraryTarget = 'foundation-values'
+        ExpectedSeconds = 900
+        MaximumSeconds = 1800
     },
     @{
         Name = 'library development target manifest'
@@ -7155,6 +7157,12 @@ foreach ($Case in $NativeCases) {
     }
     $LibraryTargetDiffers = (
         $Plan.LibraryDevelopmentTarget -ne $ExpectedLibraryTarget)
+    $ExpectedSecondsDiffers = (
+        $Case.ContainsKey('ExpectedSeconds') -and
+        $Plan.ExpectedSeconds -ne $Case.ExpectedSeconds)
+    $MaximumSecondsDiffers = (
+        $Case.ContainsKey('MaximumSeconds') -and
+        $Plan.MaximumSeconds -ne $Case.MaximumSeconds)
     $ExpectedDatabaseTarget = if ($Case.ContainsKey('DatabaseTarget')) {
         $Case.DatabaseTarget
     } else {
@@ -7196,6 +7204,8 @@ foreach ($Case in $NativeCases) {
         $Project4LauncherDevelopmentDiffers -or
         $Project4LauncherExpectedSecondsDiffers -or
         $Project4LauncherMaximumSecondsDiffers -or
+        $ExpectedSecondsDiffers -or
+        $MaximumSecondsDiffers -or
         $StreamingSha256Differs -or
         $DatabaseDevelopmentDiffers -or
         $DatabaseTargetDiffers -or
