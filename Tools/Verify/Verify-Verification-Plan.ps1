@@ -2271,6 +2271,20 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Project 4 Build-Wvb launcher helper'
+        Paths = @(
+            'Tools/Native/Build-Wvb-Project4.mjs'
+        )
+        Suites = @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding',
+            'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'WVB runner reconstruction owner'
         Paths = @(
             'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd',
@@ -2463,6 +2477,9 @@ $NativeCases = @(
             'console-publisher-reconstruction',
             'unsafe-wvb',
             'wvb-containment',
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding',
+            'compiler-split-development',
             'lowerer-rejections',
             'linker-rejections',
             'linker-hostile',

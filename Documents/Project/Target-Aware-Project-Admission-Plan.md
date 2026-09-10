@@ -2,7 +2,7 @@
 
 > Status: Current; Project 4 direction approved, integration in progress
 > Authority: Informative; existing specifications and accepted decisions remain authoritative
-> Last reviewed: 2026-09-09
+> Last reviewed: 2026-09-10
 
 The package-library migration needs a project build that supplies the same
 explicit target and authenticated source admission already used by the split
@@ -46,6 +46,16 @@ installer inventories still select the older build driver. Retained diagnostic
 executables must not be substituted into those inventories or labeled current
 solely because selected consumer tests pass.
 
+The repository `Build-Wvb` launchers now dispatch a `windvale-project 4` manifest
+to a development Project 4 helper instead of the older profile-only build driver.
+That helper acquires the current split compiler cache, builds and packages the
+manifest reader, source admitter, source authenticator, and foreign binder on
+demand, then calls the split compiler's authenticated Project 4 mode. Project 2
+and Project 3 stay on the pinned native front door. This is normal repository
+routing for the development path, not installed-toolchain promotion; the product
+cache is still current-host development evidence, and the installer inventories
+still select the older front-door products.
+
 Publication is a separate integration dependency: both frozen native publishers
 reject the migrated package test bytecode, while a rebuilt current publisher's
 validation-only executable accepts it. Generic hosted packaging does not provide
@@ -68,10 +78,14 @@ by named imports/exports and typed relocation structure. Its focused Windows
 owner passes; the same bytecode, cross-packaged for Linux, passes native execution
 on Debian. This is not an independent Linux source rebuild. Exact evidence and
 limits are in the [object-admission checkpoint](../Evidence/2026-09-09-Current-Publisher-Object-Admission.json).
-The next stages are module/producer identity binding, dynamic attachment of the
-segmented verifier image, and actual native transaction tests. The current Debian
-compiler cache is absent and requires separately budgeted reconstruction before
-the full current-source owner can run there.
+The next construction stage materialized current-source publisher executables for
+Windows and Linux targets and smoke-tested the Windows executable against the
+maintained metadata fixture through the focused current-source owner. That
+advances the publication dependency past validation-only execution on the local
+Windows host, but it is not full Debian source reconstruction or installed
+publisher promotion. The current Debian compiler cache is absent and requires
+separately budgeted reconstruction before the full current-source owner can run
+there.
 
 ## Current boundary
 

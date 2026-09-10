@@ -150,6 +150,15 @@ selection with 16 cases, including explicit Windows and Linux x64/no-foreign
 targets. Complete qualification and broader target, alias, and
 profile evidence remain required before promotion.
 
+The repository `Tools/Native/Build-Wvb` launchers inspect the first manifest line.
+Project 2 and Project 3 manifests continue to use the pinned native front-door
+inventory. A Project 4 manifest is handed to the development
+`Build-Wvb-Project4.mjs` helper, which acquires current-host manifest-reader,
+admission, authentication, foreign-binding, analyzer, and emitter products before
+calling the split coordinator's authenticated project mode. That helper inherits
+the coordinator's new-output requirement and remains a development path, not an
+installed product identity or release qualification.
+
 Maintained [explicit target inputs](../Projects/Targets/README.md) provide the
 registered Windows and Linux x64/no-foreign descriptors. The target writer's
 `--target <registry-name>` option selects these without consulting the host;

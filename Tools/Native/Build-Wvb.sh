@@ -8,11 +8,6 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-artifact_root="$repository_root/Artifacts/Native-Front-Door"
-if ! (cd -- "$artifact_root" && sha256sum --check --strict --quiet SHA256SUMS); then
-    echo 'The native-front-door artifact inventory is invalid.' >&2
-    exit 1
-fi
 
 project_input=$1
 project_directory=$(CDPATH= cd -- "$(dirname -- "$project_input")" && pwd -P) || exit 1
@@ -42,6 +37,21 @@ fi
 if [[ $output_path != *.wvb ]]; then
     echo 'The native build output must use the .wvb extension.' >&2
     exit 64
+fi
+
+project_header=
+if [[ -f $project_path ]]; then
+    IFS= read -r project_header < "$project_path" || true
+fi
+if [[ $project_header == 'windvale-project 4' ]]; then
+    node "$script_directory/Build-Wvb-Project4.mjs" "$project_path" "$output_path"
+    exit $?
+fi
+
+artifact_root="$repository_root/Artifacts/Native-Front-Door"
+if ! (cd -- "$artifact_root" && sha256sum --check --strict --quiet SHA256SUMS); then
+    echo 'The native-front-door artifact inventory is invalid.' >&2
+    exit 1
 fi
 
 temporary_root=${TMPDIR:-/tmp}

@@ -33,9 +33,18 @@ the exact candidate snapshot and atomically replaces the destination. A rejected
 project, source set, compiler result, verifier result, or pre-replacement publication
 attempt preserves an existing destination.
 
-The project must use the current Project 2 format and may identify at most 63 source
-modules. The launchers do not discover source files, install packages, infer imports,
-create output directories, package PE/ELF applications, or execute the result.
+Project 2 and Project 3 manifests use that pinned front-door route. A Project 4
+manifest is dispatched to the current development Project 4 helper, which acquires
+the manifest reader, source admitter, source authenticator, foreign binder,
+analyzer, and emitter through the current split-compiler cache before invoking
+authenticated project compilation. That route rejects a pre-existing output path
+instead of replacing it and can perform cold cache construction. It is development
+evidence for the target-aware project path, not an installed-toolchain promotion
+or cross-host qualification claim.
+
+The project may identify at most 63 source modules. The launchers do not discover
+source files, install packages, infer imports, create output directories, package
+PE/ELF applications for the build result, or execute the result.
 
 ## Forward-language candidate build
 

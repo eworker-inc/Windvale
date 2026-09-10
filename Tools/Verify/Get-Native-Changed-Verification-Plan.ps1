@@ -1454,6 +1454,15 @@ function Add-Native-Tool-Suite {
         )
         return
     }
+    if ($Stem -eq 'Build-Wvb-Project4') {
+        Add-Suite @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding',
+            'compiler-split-development'
+        )
+        return
+    }
     if ($Stem -eq 'Test-Language-1.0-Authenticated-Foreign-Binding') {
         Add-Suite 'language-1-authenticated-foreign-binding'
         return
@@ -1653,7 +1662,10 @@ function Add-Native-Tool-Suite {
         Add-Suite @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
-            'console-publisher-reconstruction'
+            'console-publisher-reconstruction',
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding',
+            'compiler-split-development'
         )
     } elseif ($Stem -eq 'Build-Current-Wvb') {
         Add-Bytecode-Suites

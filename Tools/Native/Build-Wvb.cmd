@@ -10,21 +10,6 @@ if /I not "%~x1"==".wvproj" (
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-set "ArtifactRoot=%RepositoryRoot%\Artifacts\Native-Front-Door"
-set "BuildDriver=%ArtifactRoot%\windows-x64\wvbuild.exe"
-set "Publisher=%ArtifactRoot%\windows-x64\wvpublish.exe"
-
-certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec" >nul
-if errorlevel 1 (
-    >&2 echo The Windows native build-driver artifact digest is invalid.
-    exit /b 1
-)
-certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421" >nul
-if errorlevel 1 (
-    >&2 echo The Windows native publisher artifact digest is invalid.
-    exit /b 1
-)
-
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
 set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
@@ -52,6 +37,25 @@ if "%~2"=="" (
     set "OutputPath=%~f2"
 )
 
+set "ProjectHeader="
+if exist "%ProjectPath%" for /f "usebackq delims=" %%H in ("%ProjectPath%") do if not defined ProjectHeader set "ProjectHeader=%%H"
+if "%ProjectHeader%"=="windvale-project 4" goto :project4_build
+
+set "ArtifactRoot=%RepositoryRoot%\Artifacts\Native-Front-Door"
+set "BuildDriver=%ArtifactRoot%\windows-x64\wvbuild.exe"
+set "Publisher=%ArtifactRoot%\windows-x64\wvpublish.exe"
+
+certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec" >nul
+if errorlevel 1 (
+    >&2 echo The Windows native build-driver artifact digest is invalid.
+    exit /b 1
+)
+certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421" >nul
+if errorlevel 1 (
+    >&2 echo The Windows native publisher artifact digest is invalid.
+    exit /b 1
+)
+
 set /a AllocationAttempts=0
 :allocate
 set /a AllocationAttempts+=1
@@ -75,6 +79,10 @@ set "Result=%ERRORLEVEL%"
 if exist "%CandidatePath%" del /f /q "%CandidatePath%" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%
+
+:project4_build
+node "%RepositoryRoot%\Tools\Native\Build-Wvb-Project4.mjs" "%ProjectPath%" "%OutputPath%"
+exit /b %ERRORLEVEL%
 
 :usage
 >&2 echo Usage: Tools\Native\Build-Wvb.cmd ^<project.wvproj^> [output.wvb]
