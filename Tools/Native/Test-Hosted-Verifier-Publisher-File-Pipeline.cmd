@@ -217,6 +217,92 @@ node "%RepositoryRoot%\Tools\Native\Plan-Current-Publisher-Linkage.mjs" ^
     >"%TestDirectory%\Current-Publisher-Linkage-Alias.out" 2>"%TestDirectory%\Current-Publisher-Linkage-Alias.err"
 if errorlevel 65 goto :failed
 if not errorlevel 64 goto :failed
+set "Phase=current-source publisher hosted image transport"
+call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%TestDirectory%\Current-Publisher-Hosted-Image" ^
+    "%TestDirectory%\Current-Publisher-Hosted.wvli" ^
+    >"%TestDirectory%\Current-Publisher-Transport.out" 2>"%TestDirectory%\Current-Publisher-Transport.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Transport.err" "current-source publisher transport wrote a diagnostic"
+if errorlevel 1 goto :failed
+set "HostedEntryOffset="
+set "HostedFragments="
+for /f "tokens=9,11 delims== " %%E in ('findstr /b /c:"compiler image transport status=Complete " "%TestDirectory%\Current-Publisher-Transport.out"') do (
+    set "HostedEntryOffset=%%E"
+    set "HostedFragments=%%F"
+)
+if not "%HostedEntryOffset%"=="0" goto :failed
+if not defined HostedFragments goto :failed
+echo(%HostedFragments%| findstr /r /x "[1-9] 1[0-6]" >nul
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Windows host plan"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" plan 2 ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    "%TestDirectory%\Current-Publisher-Hosted-Image" %HostedFragments% %HostedEntryOffset% ^
+    "%TestDirectory%\Current-Publisher-Windows-Runtime.wvhr" ^
+    "%TestDirectory%\Current-Publisher-Windows-Plan.wvcd" windows ^
+    >"%TestDirectory%\Current-Publisher-Windows-Plan.out" 2>"%TestDirectory%\Current-Publisher-Windows-Plan.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Windows-Plan.err" "current-source publisher Windows host plan wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /c:"hosted package step=plan status=Complete target=windows" "%TestDirectory%\Current-Publisher-Windows-Plan.out" >nul
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Windows host imports"
+node "%RepositoryRoot%\Tools\Native\Bind-Current-Publisher-Host-Imports.mjs" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" windows-x64 ^
+    "%TestDirectory%\Current-Publisher-Windows-Runtime.wvhr" ^
+    "%TestDirectory%\Current-Publisher-Windows-Plan.wvcd" ^
+    "%TestDirectory%\Current-Publisher-Windows-Host-Imports.wvci" ^
+    >"%TestDirectory%\Current-Publisher-Windows-Host-Imports.out" 2>"%TestDirectory%\Current-Publisher-Windows-Host-Imports.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Windows-Host-Imports.err" "current-source publisher Windows host imports wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"current publisher host imports status=Valid format=1 target=windows-x64 bound=" "%TestDirectory%\Current-Publisher-Windows-Host-Imports.out" >nul
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher-Windows-Host-Imports.wvci" 131072 "current-source publisher Windows host imports"
+if errorlevel 1 goto :failed
+findstr /b /c:"windvale-current-source-wvb-publisher-host-imports 1" "%TestDirectory%\Current-Publisher-Windows-Host-Imports.wvci" >nul
+if errorlevel 1 goto :failed
+findstr /b /c:"windows-publisher-iat-directory-address " "%TestDirectory%\Current-Publisher-Windows-Host-Imports.wvci" >nul
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Linux host plan"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" plan 2 ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    "%TestDirectory%\Current-Publisher-Hosted-Image" %HostedFragments% %HostedEntryOffset% ^
+    "%TestDirectory%\Current-Publisher-Linux-Runtime.wvhr" ^
+    "%TestDirectory%\Current-Publisher-Linux-Plan.wvcd" linux ^
+    >"%TestDirectory%\Current-Publisher-Linux-Plan.out" 2>"%TestDirectory%\Current-Publisher-Linux-Plan.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Linux-Plan.err" "current-source publisher Linux host plan wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /c:"hosted package step=plan status=Complete target=linux" "%TestDirectory%\Current-Publisher-Linux-Plan.out" >nul
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Linux host imports"
+node "%RepositoryRoot%\Tools\Native\Bind-Current-Publisher-Host-Imports.mjs" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" linux-x64 ^
+    "%TestDirectory%\Current-Publisher-Linux-Runtime.wvhr" ^
+    "%TestDirectory%\Current-Publisher-Linux-Plan.wvcd" ^
+    "%TestDirectory%\Current-Publisher-Linux-Host-Imports.wvci" ^
+    >"%TestDirectory%\Current-Publisher-Linux-Host-Imports.out" 2>"%TestDirectory%\Current-Publisher-Linux-Host-Imports.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Linux-Host-Imports.err" "current-source publisher Linux host imports wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"current publisher host imports status=Valid format=1 target=linux-x64 bound=" "%TestDirectory%\Current-Publisher-Linux-Host-Imports.out" >nul
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher-Linux-Host-Imports.wvci" 131072 "current-source publisher Linux host imports"
+if errorlevel 1 goto :failed
+findstr /b /c:"windvale-current-source-wvb-publisher-host-imports 1" "%TestDirectory%\Current-Publisher-Linux-Host-Imports.wvci" >nul
+if errorlevel 1 goto :failed
+node "%RepositoryRoot%\Tools\Native\Bind-Current-Publisher-Host-Imports.mjs" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" windows-x64 ^
+    "%TestDirectory%\Current-Publisher-Windows-Runtime.wvhr" ^
+    "%TestDirectory%\Current-Publisher-Windows-Plan.wvcd" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" ^
+    >"%TestDirectory%\Current-Publisher-Host-Imports-Alias.out" 2>"%TestDirectory%\Current-Publisher-Host-Imports-Alias.err"
+if errorlevel 65 goto :failed
+if not errorlevel 64 goto :failed
 fc /b "%TestDirectory%\Wvb-Publisher-1.wvb" "%TestDirectory%\Wvb-Publisher-2.wvb" >nul
 if errorlevel 1 goto :failed
 call :pass "current-source publisher reproducibility"
@@ -607,7 +693,7 @@ exit /b 0
 :failed
 set "Result=1"
 >&2 echo FAIL  hosted-verifier publisher files: %Phase%
-for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Current-Publisher-Binding.out Current-Publisher-Binding.err Current-Publisher-Binding-Alias.out Current-Publisher-Binding-Alias.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Current-Publisher-Binding.out Current-Publisher-Binding.err Current-Publisher-Binding-Alias.out Current-Publisher-Binding-Alias.err Current-Publisher-Linkage.out Current-Publisher-Linkage.err Current-Publisher-Linkage-Alias.out Current-Publisher-Linkage-Alias.err Current-Publisher-Transport.out Current-Publisher-Transport.err Current-Publisher-Windows-Plan.out Current-Publisher-Windows-Plan.err Current-Publisher-Windows-Host-Imports.out Current-Publisher-Windows-Host-Imports.err Current-Publisher-Linux-Plan.out Current-Publisher-Linux-Plan.err Current-Publisher-Linux-Host-Imports.out Current-Publisher-Linux-Host-Imports.err Current-Publisher-Host-Imports-Alias.out Current-Publisher-Host-Imports-Alias.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

@@ -169,6 +169,40 @@ This linkage plan is not an executable image, not an installation candidate, and
 not a transactional publication test. It is the checked name-resolution and
 relative-range input for the later materialization gate.
 
+## Current-source host-import binding
+
+The next construction command binds the linkage plan's deferred imports to one
+hosted-container runtime and plan for a selected target:
+
+```text
+node Tools/Native/Bind-Current-Publisher-Host-Imports.mjs <current-publisher-linkage.wvcl> <windows-x64-or-linux-x64> <runtime.wvhr> <plan.wvcd> <output.wvci>
+```
+
+The command verifies the linkage record self hash, the target-specific deferred
+import list, the hosted-container `WVCD 1` plan, and the generated 4096-byte
+runtime header metadata. It binds shared runtime data imports and service
+imports to the hosted-container addresses for the chosen profile. For Windows it
+also binds the publisher adapter's fixed IAT data imports inside the generic
+4096-byte import-page reservation so a later PE materializer can replace the
+reserved page with the publisher-specific import directory without changing the
+already-checked adapter relocations.
+
+The output record is ASCII with LF line endings and begins:
+
+```text
+windvale-current-source-wvb-publisher-host-imports 1
+host <windows-x64-or-linux-x64>
+host-imports-sha256 <lowercase-hex-sha256>
+```
+
+The record carries the linkage hash, binding hash, runtime and plan identities,
+native image and runtime addresses, import and relocation addresses, deferred
+and bound import counts, and one final address per bound import. It is still not
+an executable image or installation candidate. Current publisher image payloads
+can exceed the old monolithic hosted-verifier bundle request limit, so this gate
+uses the segmented hosted-container plan/runtime path rather than the frozen
+4 MiB verifier bundle construction path.
+
 ## Verification
 
 The existing `hosted-verifier-publisher-files` owner includes the focused
@@ -182,7 +216,10 @@ The same owner includes the focused `--current-source` selection. It rebuilds
 the current publisher source twice, compares exact WVB, `WVOP`, `WVLI`, and
 chunk bytes, emits the binding record for one reproduced set, checks the shared
 transaction-state object appears as role 6, emits the linkage plan, checks both
-target reports, and checks exact alias rejection for both host-side writers.
+target reports, transports the linked image into canonical hosted fragments,
+generates Windows and Linux hosted-container runtime/plan pairs, binds deferred
+imports for both targets, and checks exact alias rejection for the current-source
+host-side writers.
 Development construction requires the existing validated current split-compiler
 cache. A missing cache is an explicit setup failure, not permission to start a
 cold compiler reconstruction inside this check. The focused current-object tool

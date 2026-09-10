@@ -5166,7 +5166,7 @@ $QualificationPipelineExpected = @{
     'Lower-Wvb-To-Wvo' = '16|45'
     'Check-Wvo' = '21|56'
     'Link-Wvo' = '40|113'
-    'Package-Hosted-Wvb' = '18|96'
+    'Package-Hosted-Wvb' = '19|100'
     'Package-Console' = '20|78'
     'Package-Segmented-Compiler-Wvb' = '23|65'
     'Verify-Wvb' = '5|16'
@@ -5815,6 +5815,7 @@ foreach ($OwnerPath in @(
 }
 foreach ($PublisherPath in @(
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
+    'Tools/Native/Bind-Current-Publisher-Host-Imports.mjs',
     'Tools/Native/Build-Current-Publisher-Binding.mjs',
     'Tools/Native/Plan-Current-Publisher-Linkage.mjs',
     'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',

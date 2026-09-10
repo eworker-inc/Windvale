@@ -336,6 +336,91 @@ node "$repository_root/Tools/Native/Plan-Current-Publisher-Linkage.mjs" \
     > "$test_directory/Current-Publisher-Linkage-Alias.out" \
     2> "$test_directory/Current-Publisher-Linkage-Alias.err"
 [[ $? -eq 64 ]] || fail
+phase='current-source publisher hosted image transport'
+"$repository_root/Tools/Native/Transport-Compiler-Image.sh" \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$test_directory/Current-Publisher-Hosted-Image" \
+    "$test_directory/Current-Publisher-Hosted.wvli" \
+    > "$test_directory/Current-Publisher-Transport.out" \
+    2> "$test_directory/Current-Publisher-Transport.err" || fail
+check_empty "$test_directory/Current-Publisher-Transport.err" \
+    'current-source publisher transport wrote a diagnostic' || fail
+hosted_entry_offset=$(sed -n 's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=\([0-9][0-9]*\) chunks=[0-9][0-9]* manifest-bytes=[0-9][0-9]*$/\1/p' \
+    "$test_directory/Current-Publisher-Transport.out")
+hosted_fragments=$(sed -n 's/^compiler image transport status=Complete image-bytes=[0-9][0-9]* entry-offset=[0-9][0-9]* chunks=\([0-9][0-9]*\) manifest-bytes=[0-9][0-9]*$/\1/p' \
+    "$test_directory/Current-Publisher-Transport.out")
+[[ $hosted_entry_offset == 0 ]] || fail
+case "$hosted_fragments" in
+    [1-9]|1[0-6]) ;;
+    *) fail ;;
+esac
+phase='current-source publisher Windows host plan'
+"$repository_root/Tools/Native/Package-Hosted-Wvb.sh" plan 2 \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Current-Publisher-Hosted-Image" "$hosted_fragments" "$hosted_entry_offset" \
+    "$test_directory/Current-Publisher-Windows-Runtime.wvhr" \
+    "$test_directory/Current-Publisher-Windows-Plan.wvcd" windows \
+    > "$test_directory/Current-Publisher-Windows-Plan.out" \
+    2> "$test_directory/Current-Publisher-Windows-Plan.err" || fail
+check_empty "$test_directory/Current-Publisher-Windows-Plan.err" \
+    'current-source publisher Windows host plan wrote a diagnostic' || fail
+grep -F 'hosted package step=plan status=Complete target=windows' \
+    "$test_directory/Current-Publisher-Windows-Plan.out" >/dev/null || fail
+phase='current-source publisher Windows host imports'
+node "$repository_root/Tools/Native/Bind-Current-Publisher-Host-Imports.mjs" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" windows-x64 \
+    "$test_directory/Current-Publisher-Windows-Runtime.wvhr" \
+    "$test_directory/Current-Publisher-Windows-Plan.wvcd" \
+    "$test_directory/Current-Publisher-Windows-Host-Imports.wvci" \
+    > "$test_directory/Current-Publisher-Windows-Host-Imports.out" \
+    2> "$test_directory/Current-Publisher-Windows-Host-Imports.err" || fail
+check_empty "$test_directory/Current-Publisher-Windows-Host-Imports.err" \
+    'current-source publisher Windows host imports wrote a diagnostic' || fail
+grep -F 'current publisher host imports status=Valid format=1 target=windows-x64 bound=' \
+    "$test_directory/Current-Publisher-Windows-Host-Imports.out" >/dev/null || fail
+check_bounded "$test_directory/Current-Publisher-Windows-Host-Imports.wvci" 131072 \
+    'current-source publisher Windows host imports' || fail
+grep -Fx 'windvale-current-source-wvb-publisher-host-imports 1' \
+    "$test_directory/Current-Publisher-Windows-Host-Imports.wvci" >/dev/null || fail
+grep -E '^windows-publisher-iat-directory-address ' \
+    "$test_directory/Current-Publisher-Windows-Host-Imports.wvci" >/dev/null || fail
+phase='current-source publisher Linux host plan'
+"$repository_root/Tools/Native/Package-Hosted-Wvb.sh" plan 2 \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Current-Publisher-Hosted-Image" "$hosted_fragments" "$hosted_entry_offset" \
+    "$test_directory/Current-Publisher-Linux-Runtime.wvhr" \
+    "$test_directory/Current-Publisher-Linux-Plan.wvcd" linux \
+    > "$test_directory/Current-Publisher-Linux-Plan.out" \
+    2> "$test_directory/Current-Publisher-Linux-Plan.err" || fail
+check_empty "$test_directory/Current-Publisher-Linux-Plan.err" \
+    'current-source publisher Linux host plan wrote a diagnostic' || fail
+grep -F 'hosted package step=plan status=Complete target=linux' \
+    "$test_directory/Current-Publisher-Linux-Plan.out" >/dev/null || fail
+phase='current-source publisher Linux host imports'
+node "$repository_root/Tools/Native/Bind-Current-Publisher-Host-Imports.mjs" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" linux-x64 \
+    "$test_directory/Current-Publisher-Linux-Runtime.wvhr" \
+    "$test_directory/Current-Publisher-Linux-Plan.wvcd" \
+    "$test_directory/Current-Publisher-Linux-Host-Imports.wvci" \
+    > "$test_directory/Current-Publisher-Linux-Host-Imports.out" \
+    2> "$test_directory/Current-Publisher-Linux-Host-Imports.err" || fail
+check_empty "$test_directory/Current-Publisher-Linux-Host-Imports.err" \
+    'current-source publisher Linux host imports wrote a diagnostic' || fail
+grep -F 'current publisher host imports status=Valid format=1 target=linux-x64 bound=' \
+    "$test_directory/Current-Publisher-Linux-Host-Imports.out" >/dev/null || fail
+check_bounded "$test_directory/Current-Publisher-Linux-Host-Imports.wvci" 131072 \
+    'current-source publisher Linux host imports' || fail
+grep -Fx 'windvale-current-source-wvb-publisher-host-imports 1' \
+    "$test_directory/Current-Publisher-Linux-Host-Imports.wvci" >/dev/null || fail
+node "$repository_root/Tools/Native/Bind-Current-Publisher-Host-Imports.mjs" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" windows-x64 \
+    "$test_directory/Current-Publisher-Windows-Runtime.wvhr" \
+    "$test_directory/Current-Publisher-Windows-Plan.wvcd" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" \
+    > "$test_directory/Current-Publisher-Host-Imports-Alias.out" \
+    2> "$test_directory/Current-Publisher-Host-Imports-Alias.err"
+[[ $? -eq 64 ]] || fail
 cmp --silent "$test_directory/Wvb-Publisher-1.wvb" \
     "$test_directory/Wvb-Publisher-2.wvb" || fail
 pass 'current-source publisher reproducibility'

@@ -1,10 +1,14 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+call :count_arguments %*
+if errorlevel 10 goto :usage
+set "ArgumentCount=%ERRORLEVEL%"
 set "ImageMode=0"
+set "PlanMode=0"
 if /I "%~1"=="image" goto :image_arguments
-if "%~3"=="" goto :usage
-if not "%~5"=="" goto :usage
+if /I "%~1"=="plan" goto :plan_arguments
+if not "%ArgumentCount%"=="3" if not "%ArgumentCount%"=="4" goto :usage
 echo(%~1| findstr /r /x "[1-8]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 set "Profile=%~1"
@@ -15,8 +19,7 @@ if not defined Target set "Target=windows"
 goto :arguments_ready
 
 :image_arguments
-if "%~7"=="" goto :usage
-if not "%~9"=="" goto :usage
+if not "%ArgumentCount%"=="7" if not "%ArgumentCount%"=="8" goto :usage
 echo(%~2| findstr /r /x "[1-8]" >nul || goto :usage
 if /I not "%~x3"==".wvb" goto :usage
 echo(%~5| findstr /r /x "[1-9] 1[0-6]" >nul || goto :usage
@@ -30,8 +33,29 @@ set "NativeEntry=%~6"
 set "Output=%~f7"
 set "Target=%~8"
 if not defined Target set "Target=windows"
+goto :arguments_ready
+
+:plan_arguments
+if not "%ArgumentCount%"=="8" if not "%ArgumentCount%"=="9" goto :usage
+echo(%~2| findstr /r /x "[1-8]" >nul || goto :usage
+if /I not "%~x3"==".wvb" goto :usage
+echo(%~5| findstr /r /x "[1-9] 1[0-6]" >nul || goto :usage
+echo(%~6| findstr /r /x "[0-9][0-9]*" >nul || goto :usage
+set "ImageMode=1"
+set "PlanMode=1"
+set "Profile=%~2"
+set "Input=%~f3"
+set "ExternalBundleSources=%~f4"
+set "FragmentCount=%~5"
+set "NativeEntry=%~6"
+set "RuntimeOutput=%~f7"
+set "PlanOutput=%~f8"
+set "Output=%~f8"
+set "Target=%~9"
+if not defined Target set "Target=windows"
 
 :arguments_ready
+if "%PlanMode%"=="1" if /I "%RuntimeOutput%"=="%PlanOutput%" goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Toolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate"
@@ -42,8 +66,13 @@ if /I "%Target%"=="linux" goto :linux_target
 goto :usage
 
 :windows_target
-if /I not "%~x7"==".exe" if "%ImageMode%"=="1" goto :usage
-if /I not "%~x3"==".exe" if "%ImageMode%"=="0" goto :usage
+if "%PlanMode%"=="1" (
+    if /I not "%~x7"==".wvhr" goto :usage
+    if /I not "%~x8"==".wvcd" goto :usage
+) else (
+    if /I not "%~x7"==".exe" if "%ImageMode%"=="1" goto :usage
+    if /I not "%~x3"==".exe" if "%ImageMode%"=="0" goto :usage
+)
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Windows-X64-Hosted-Compiler.wvo"
 set "StartupBytes=4488"
 set "StartupSha256=6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5"
@@ -62,8 +91,13 @@ set "FileOutputServiceSha256=a331248b12fc5830587f6fd8ddf06a546859b8f57366e205032
 goto :target_ready
 
 :linux_target
-if /I not "%~x7"==".elf" if "%ImageMode%"=="1" goto :usage
-if /I not "%~x3"==".elf" if "%ImageMode%"=="0" goto :usage
+if "%PlanMode%"=="1" (
+    if /I not "%~x7"==".wvhr" goto :usage
+    if /I not "%~x8"==".wvcd" goto :usage
+) else (
+    if /I not "%~x7"==".elf" if "%ImageMode%"=="1" goto :usage
+    if /I not "%~x3"==".elf" if "%ImageMode%"=="0" goto :usage
+)
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Linux-X64-Hosted-Compiler.wvo"
 set "StartupBytes=2454"
 set "StartupSha256=1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946"
@@ -179,6 +213,13 @@ if "%Profile%"=="8" (
     "%Toolset%\windows-x64\wvhostplan.exe" "%TemporaryDirectory%\Runtime.wvhr" "%TemporaryDirectory%\Plan.wvcd"
 )
 if errorlevel 1 goto :cleanup
+if "%PlanMode%"=="1" (
+    copy /b "%TemporaryDirectory%\Runtime.wvhr" "%RuntimeOutput%" >nul || goto :cleanup
+    copy /b "%TemporaryDirectory%\Plan.wvcd" "%PlanOutput%" >nul || goto :cleanup
+    echo hosted package step=plan status=Complete target=%Target%
+    set "Result=0"
+    goto :cleanup
+)
 "%Toolset%\windows-x64\wvhostbytes.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Platform.wvhb"
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhoststartup.exe" "%TemporaryDirectory%\Plan.wvcd" "%Startup%" "%TemporaryDirectory%\Startup.wvsd"
@@ -258,7 +299,17 @@ if errorlevel 1 (
 )
 exit /b 0
 
+:count_arguments
+set "CountedArguments=0"
+:count_arguments_loop
+if "%~1"=="" exit /b %CountedArguments%
+set /a CountedArguments+=1 >nul
+if %CountedArguments% GEQ 10 exit /b 10
+shift /1
+goto :count_arguments_loop
+
 :usage
 >&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^|output.elf^> [windows^|linux]
 >&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-8^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<output.exe^|output.elf^> [windows^|linux]
+>&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd plan ^<profile-1-through-8^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<runtime.wvhr^> ^<plan.wvcd^> [windows^|linux]
 exit /b 64

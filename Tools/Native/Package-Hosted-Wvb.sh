@@ -2,6 +2,7 @@
 set -uo pipefail
 
 image_mode=0
+plan_mode=0
 if [[ ($# -eq 3 || $# -eq 4) && $1 =~ ^[1-8]$ && $2 == *.wvb ]]; then
     profile=$1
     input_argument=$2
@@ -17,18 +18,35 @@ elif [[ ($# -eq 7 || $# -eq 8) && $1 == image && $2 =~ ^[1-8]$ &&
     native_entry=$6
     output_argument=$7
     target=${8:-linux}
+elif [[ ($# -eq 8 || $# -eq 9) && $1 == plan && $2 =~ ^[1-8]$ &&
+        $3 == *.wvb && $5 =~ ^([1-9]|1[0-6])$ && $6 =~ ^[0-9]+$ &&
+        $7 == *.wvhr && $8 == *.wvcd ]]; then
+    image_mode=1
+    plan_mode=1
+    profile=$2
+    input_argument=$3
+    external_bundle_sources=$4
+    fragment_count=$5
+    native_entry=$6
+    runtime_output_argument=$7
+    plan_output_argument=$8
+    output_argument=$8
+    target=${9:-linux}
 else
     echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh <profile-1-through-8> <input.wvb> <output.elf|output.exe> [linux|windows]' >&2
     echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-8> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <output.elf|output.exe> [linux|windows]' >&2
+    echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh plan <profile-1-through-8> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <runtime.wvhr> <plan.wvcd> [linux|windows]' >&2
     exit 64
 fi
-case "$target:$output_argument" in
-    linux:*.elf|windows:*.exe) ;;
-    *)
-        echo 'The hosted-container target and output extension do not agree.' >&2
-        exit 64
-        ;;
-esac
+if [[ $plan_mode -eq 0 ]]; then
+    case "$target:$output_argument" in
+        linux:*.elf|windows:*.exe) ;;
+        *)
+            echo 'The hosted-container target and output extension do not agree.' >&2
+            exit 64
+            ;;
+    esac
+fi
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 toolset="$repository_root/Artifacts/Native-Hosted-Container-Toolset-Candidate"
@@ -74,6 +92,16 @@ input_directory=$(CDPATH= cd -- "$(dirname -- "$input_argument")" && pwd -P) || 
 input="$input_directory/$(basename -- "$input_argument")"
 output_directory=$(CDPATH= cd -- "$(dirname -- "$output_argument")" && pwd -P) || exit 64
 output="$output_directory/$(basename -- "$output_argument")"
+if [[ $plan_mode -eq 1 ]]; then
+    runtime_output_directory=$(CDPATH= cd -- "$(dirname -- "$runtime_output_argument")" && pwd -P) || exit 64
+    runtime_output="$runtime_output_directory/$(basename -- "$runtime_output_argument")"
+    plan_output_directory=$(CDPATH= cd -- "$(dirname -- "$plan_output_argument")" && pwd -P) || exit 64
+    plan_output="$plan_output_directory/$(basename -- "$plan_output_argument")"
+    if [[ $runtime_output == "$plan_output" ]]; then
+        echo 'The hosted-container runtime and plan outputs must be distinct.' >&2
+        exit 64
+    fi
+fi
 
 verify_file() {
     local path=$1
@@ -178,6 +206,12 @@ if [[ $profile == 8 ]]; then
     "$host/wvhostplan.elf" "$temporary_directory/Runtime.wvhr" "$temporary_directory/Plan.wvcd" "$publication_plan" || exit $?
 else
     "$host/wvhostplan.elf" "$temporary_directory/Runtime.wvhr" "$temporary_directory/Plan.wvcd" || exit $?
+fi
+if [[ $plan_mode -eq 1 ]]; then
+    cp -- "$temporary_directory/Runtime.wvhr" "$runtime_output" || exit 1
+    cp -- "$temporary_directory/Plan.wvcd" "$plan_output" || exit 1
+    echo "hosted package step=plan status=Complete target=$target"
+    exit 0
 fi
 "$host/wvhostbytes.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Platform.wvhb" || exit $?
 "$host/wvhoststartup.elf" "$temporary_directory/Plan.wvcd" "$startup" "$temporary_directory/Startup.wvsd" || exit $?
