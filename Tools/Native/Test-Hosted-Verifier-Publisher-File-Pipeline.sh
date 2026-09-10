@@ -413,6 +413,67 @@ check_bounded "$test_directory/Current-Publisher-Linux-Host-Imports.wvci" 131072
     'current-source publisher Linux host imports' || fail
 grep -Fx 'windvale-current-source-wvb-publisher-host-imports 1' \
     "$test_directory/Current-Publisher-Linux-Host-Imports.wvci" >/dev/null || fail
+phase='current-source publisher Windows executable materialization'
+node "$repository_root/Tools/Native/Materialize-Current-Publisher-Executable.mjs" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" windows-x64 \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$repository_root/Linker/Reference/Consumers" \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Current-Publisher.exe" \
+    "$test_directory/Current-Publisher-Windows-Final-Host-Imports.wvci" \
+    > "$test_directory/Current-Publisher-Windows-Materialize.out" \
+    2> "$test_directory/Current-Publisher-Windows-Materialize.err" || fail
+check_empty "$test_directory/Current-Publisher-Windows-Materialize.err" \
+    'current-source publisher Windows materialization wrote a diagnostic' || fail
+grep -F 'current publisher executable materialization status=Valid target=windows-x64 ' \
+    "$test_directory/Current-Publisher-Windows-Materialize.out" >/dev/null || fail
+check_bounded "$test_directory/Current-Publisher.exe" 67108864 \
+    'current-source publisher Windows executable' || fail
+check_bounded "$test_directory/Current-Publisher-Windows-Final-Host-Imports.wvci" 131072 \
+    'current-source publisher Windows final host imports' || fail
+node -e "const fs=require('node:fs'); const b=fs.readFileSync(process.argv[1]); if (b.length < 2 || b[0] !== 0x4d || b[1] !== 0x5a) process.exit(1);" \
+    "$test_directory/Current-Publisher.exe" || fail
+phase='current-source publisher Linux executable materialization'
+node "$repository_root/Tools/Native/Materialize-Current-Publisher-Executable.mjs" \
+    "$test_directory/Current-Publisher-Linkage.wvcl" linux-x64 \
+    "$test_directory/Wvb-Publisher-Image-1" \
+    "$test_directory/Wvb-Publisher-1.wvli" \
+    "$repository_root/Linker/Reference/Consumers" \
+    "$test_directory/Wvb-Publisher-1.wvb" \
+    "$test_directory/Current-Publisher.elf" \
+    "$test_directory/Current-Publisher-Linux-Final-Host-Imports.wvci" \
+    > "$test_directory/Current-Publisher-Linux-Materialize.out" \
+    2> "$test_directory/Current-Publisher-Linux-Materialize.err" || fail
+check_empty "$test_directory/Current-Publisher-Linux-Materialize.err" \
+    'current-source publisher Linux materialization wrote a diagnostic' || fail
+grep -F 'current publisher executable materialization status=Valid target=linux-x64 ' \
+    "$test_directory/Current-Publisher-Linux-Materialize.out" >/dev/null || fail
+check_bounded "$test_directory/Current-Publisher.elf" 67108864 \
+    'current-source publisher Linux executable' || fail
+check_bounded "$test_directory/Current-Publisher-Linux-Final-Host-Imports.wvci" 131072 \
+    'current-source publisher Linux final host imports' || fail
+node -e "const fs=require('node:fs'); const b=fs.readFileSync(process.argv[1]); if (b.length < 4 || b[0] !== 0x7f || b[1] !== 0x45 || b[2] !== 0x4c || b[3] !== 0x46) process.exit(1);" \
+    "$test_directory/Current-Publisher.elf" || fail
+phase='current-source publisher Linux executable smoke'
+metadata_wvb_candidate="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Metadata.wvb"
+check_file "$metadata_wvb_candidate" 369 \
+    94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa \
+    'metadata-present WVB' || fail
+"$test_directory/Current-Publisher.elf" \
+    "$metadata_wvb_candidate" "$test_directory/Current-Published-Metadata.wvb" \
+    > "$test_directory/Current-Publisher-Execute.out" \
+    2> "$test_directory/Current-Publisher-Execute.err" || fail
+check_empty "$test_directory/Current-Publisher-Execute.err" \
+    'current-source publisher execution wrote a diagnostic' || fail
+check_file "$test_directory/Current-Publisher-Execute.out" 117 \
+    65e72413bf11bafc3b08abe4c53b8abc65d85f4c4cc576de9dd2ff721418ce1d \
+    'current-source publisher completion report' || fail
+check_file "$test_directory/Current-Published-Metadata.wvb" 369 \
+    94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa \
+    'current-source published metadata-present WVB' || fail
+cmp --silent "$metadata_wvb_candidate" \
+    "$test_directory/Current-Published-Metadata.wvb" || fail
 node "$repository_root/Tools/Native/Bind-Current-Publisher-Host-Imports.mjs" \
     "$test_directory/Current-Publisher-Linkage.wvcl" windows-x64 \
     "$test_directory/Current-Publisher-Windows-Runtime.wvhr" \

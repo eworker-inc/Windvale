@@ -1701,6 +1701,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -in @(
         'Bind-Current-Publisher-Host-Imports',
         'Build-Current-Publisher-Binding',
+        'Materialize-Current-Publisher-Executable',
         'Plan-Current-Publisher-Linkage'
     )) {
         Add-Suite 'hosted-verifier-publisher-files'
@@ -4792,6 +4793,7 @@ $PublisherCurrentSourceInputs = @(
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
     'Tools/Native/Bind-Current-Publisher-Host-Imports.mjs',
     'Tools/Native/Build-Current-Publisher-Binding.mjs',
+    'Tools/Native/Materialize-Current-Publisher-Executable.mjs',
     'Tools/Native/Plan-Current-Publisher-Linkage.mjs',
     'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
@@ -4818,8 +4820,8 @@ if ($UsePublisherCurrentSourceDevelopment) {
     $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'hosted-verifier-publisher-files'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 180)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 480)
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 300)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 600)
 }
 $UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and

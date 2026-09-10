@@ -354,8 +354,11 @@ function ParseRuntime(file, plan, linkage, target) {
     const imageBytes = RequiredNumber(linkage.fields, 'image-bytes', 'current publisher linkage', 67_108_864);
     const imageEntry = RequiredNumber(linkage.fields, 'image-entry-offset', 'current publisher linkage', 67_108_864);
     const linkedNativeMain = RequiredNumber(target.fields, 'native-main-address', `target ${plan.targetName} linkage`);
+    const endAddress = RequiredNumber(target.fields, 'end-address', `target ${plan.targetName} linkage`);
+    const linkedNativeBytes = endAddress - IMAGE_BASE_ADDRESS;
     if (serviceCount !== 10 || bundleOffset !== 4_096 ||
-        nativeBytes !== imageBytes || nativeEntry !== imageEntry ||
+        (nativeBytes !== imageBytes && nativeBytes !== linkedNativeBytes) ||
+        nativeEntry !== imageEntry ||
         IMAGE_BASE_ADDRESS + nativeEntry !== linkedNativeMain ||
         nativeEntry >= nativeBytes || nativeBytes > bundleBytes) {
         Reject('The hosted-container runtime metadata does not match the current publisher image.');
@@ -364,6 +367,7 @@ function ParseRuntime(file, plan, linkage, target) {
         metadataOffset,
         serviceCount,
         bundleBytes,
+        imageBytes,
         nativeBytes,
         nativeEntry,
         nativeMainAddress: IMAGE_BASE_ADDRESS + nativeEntry,
@@ -430,7 +434,8 @@ function HostImportLines(values, hostImportsSha256 = null) {
         `application-bytes ${values.plan.applicationBytes}`,
         `image-virtual-bytes ${values.plan.imageVirtualBytes}`,
         `current-image-address ${IMAGE_BASE_ADDRESS}`,
-        `current-image-bytes ${values.metadata.nativeBytes}`,
+        `current-image-bytes ${values.metadata.imageBytes}`,
+        `native-image-bytes ${values.metadata.nativeBytes}`,
         `native-entry-offset ${values.metadata.nativeEntry}`,
         `native-main-address ${values.metadata.nativeMainAddress}`,
         `runtime-address ${values.plan.runtimeAddress}`,

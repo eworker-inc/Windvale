@@ -169,13 +169,21 @@ if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Current-Publisher-Binding.err" "current-source publisher binding wrote a diagnostic"
 if errorlevel 1 goto :failed
 findstr /b /c:"current publisher binding status=Valid format=1 native-objects=6" "%TestDirectory%\Current-Publisher-Binding.out" >nul
-if errorlevel 1 goto :failed
+if not errorlevel 1 goto :binding_stdout_ok
+goto :failed
+:binding_stdout_ok
 call :check_bounded "%TestDirectory%\Current-Publisher-Binding.wvcp" 131072 "current-source publisher binding"
-if errorlevel 1 goto :failed
+if not errorlevel 1 goto :binding_record_bounded_ok
+goto :failed
+:binding_record_bounded_ok
 findstr /b /c:"windvale-current-source-wvb-publisher-binding 1" "%TestDirectory%\Current-Publisher-Binding.wvcp" >nul
-if errorlevel 1 goto :failed
+if not errorlevel 1 goto :binding_header_ok
+goto :failed
+:binding_header_ok
 findstr /b /c:"native-object-6 X64-Publication-Transaction-State.wvo bytes " "%TestDirectory%\Current-Publisher-Binding.wvcp" >nul
-if errorlevel 1 goto :failed
+if not errorlevel 1 goto :binding_role6_ok
+goto :failed
+:binding_role6_ok
 node "%RepositoryRoot%\Tools\Native\Build-Current-Publisher-Binding.mjs" ^
     "%TestDirectory%\Wvb-Publisher-1.wvb" ^
     "%TestDirectory%\Wvb-Publisher-Object-1" ^
@@ -294,6 +302,58 @@ if errorlevel 1 goto :failed
 call :check_bounded "%TestDirectory%\Current-Publisher-Linux-Host-Imports.wvci" 131072 "current-source publisher Linux host imports"
 if errorlevel 1 goto :failed
 findstr /b /c:"windvale-current-source-wvb-publisher-host-imports 1" "%TestDirectory%\Current-Publisher-Linux-Host-Imports.wvci" >nul
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Windows executable materialization"
+node "%RepositoryRoot%\Tools\Native\Materialize-Current-Publisher-Executable.mjs" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" windows-x64 ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%RepositoryRoot%\Linker\Reference\Consumers" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    "%TestDirectory%\Current-Publisher.exe" ^
+    "%TestDirectory%\Current-Publisher-Windows-Final-Host-Imports.wvci" ^
+    >"%TestDirectory%\Current-Publisher-Windows-Materialize.out" 2>"%TestDirectory%\Current-Publisher-Windows-Materialize.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Windows-Materialize.err" "current-source publisher Windows materialization wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"current publisher executable materialization status=Valid target=windows-x64 " "%TestDirectory%\Current-Publisher-Windows-Materialize.out" >nul
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher.exe" 67108864 "current-source publisher Windows executable"
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher-Windows-Final-Host-Imports.wvci" 131072 "current-source publisher Windows final host imports"
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Windows executable smoke"
+set "MetadataWvbCandidate=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Metadata.wvb"
+call :check_file "%MetadataWvbCandidate%" 369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa "metadata-present WVB"
+if errorlevel 1 goto :failed
+"%TestDirectory%\Current-Publisher.exe" "%MetadataWvbCandidate%" "%TestDirectory%\Current-Published-Metadata.wvb" >"%TestDirectory%\Current-Publisher-Execute.out" 2>"%TestDirectory%\Current-Publisher-Execute.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Execute.err" "current-source publisher execution wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Current-Publisher-Execute.out" 117 65e72413bf11bafc3b08abe4c53b8abc65d85f4c4cc576de9dd2ff721418ce1d "current-source publisher completion report"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Current-Published-Metadata.wvb" 369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa "current-source published metadata-present WVB"
+if errorlevel 1 goto :failed
+fc /b "%MetadataWvbCandidate%" "%TestDirectory%\Current-Published-Metadata.wvb" >nul
+if errorlevel 1 goto :failed
+set "Phase=current-source publisher Linux executable materialization"
+node "%RepositoryRoot%\Tools\Native\Materialize-Current-Publisher-Executable.mjs" ^
+    "%TestDirectory%\Current-Publisher-Linkage.wvcl" linux-x64 ^
+    "%TestDirectory%\Wvb-Publisher-Image-1" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvli" ^
+    "%RepositoryRoot%\Linker\Reference\Consumers" ^
+    "%TestDirectory%\Wvb-Publisher-1.wvb" ^
+    "%TestDirectory%\Current-Publisher.elf" ^
+    "%TestDirectory%\Current-Publisher-Linux-Final-Host-Imports.wvci" ^
+    >"%TestDirectory%\Current-Publisher-Linux-Materialize.out" 2>"%TestDirectory%\Current-Publisher-Linux-Materialize.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Current-Publisher-Linux-Materialize.err" "current-source publisher Linux materialization wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"current publisher executable materialization status=Valid target=linux-x64 " "%TestDirectory%\Current-Publisher-Linux-Materialize.out" >nul
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher.elf" 67108864 "current-source publisher Linux executable"
+if errorlevel 1 goto :failed
+call :check_bounded "%TestDirectory%\Current-Publisher-Linux-Final-Host-Imports.wvci" 131072 "current-source publisher Linux final host imports"
 if errorlevel 1 goto :failed
 node "%RepositoryRoot%\Tools\Native\Bind-Current-Publisher-Host-Imports.mjs" ^
     "%TestDirectory%\Current-Publisher-Linkage.wvcl" windows-x64 ^
@@ -693,7 +753,7 @@ exit /b 0
 :failed
 set "Result=1"
 >&2 echo FAIL  hosted-verifier publisher files: %Phase%
-for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Current-Publisher-Binding.out Current-Publisher-Binding.err Current-Publisher-Binding-Alias.out Current-Publisher-Binding-Alias.err Current-Publisher-Linkage.out Current-Publisher-Linkage.err Current-Publisher-Linkage-Alias.out Current-Publisher-Linkage-Alias.err Current-Publisher-Transport.out Current-Publisher-Transport.err Current-Publisher-Windows-Plan.out Current-Publisher-Windows-Plan.err Current-Publisher-Windows-Host-Imports.out Current-Publisher-Windows-Host-Imports.err Current-Publisher-Linux-Plan.out Current-Publisher-Linux-Plan.err Current-Publisher-Linux-Host-Imports.out Current-Publisher-Linux-Host-Imports.err Current-Publisher-Host-Imports-Alias.out Current-Publisher-Host-Imports-Alias.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Current-Publisher-Binding.out Current-Publisher-Binding.err Current-Publisher-Binding-Alias.out Current-Publisher-Binding-Alias.err Current-Publisher-Linkage.out Current-Publisher-Linkage.err Current-Publisher-Linkage-Alias.out Current-Publisher-Linkage-Alias.err Current-Publisher-Transport.out Current-Publisher-Transport.err Current-Publisher-Windows-Plan.out Current-Publisher-Windows-Plan.err Current-Publisher-Windows-Host-Imports.out Current-Publisher-Windows-Host-Imports.err Current-Publisher-Linux-Plan.out Current-Publisher-Linux-Plan.err Current-Publisher-Linux-Host-Imports.out Current-Publisher-Linux-Host-Imports.err Current-Publisher-Windows-Materialize.out Current-Publisher-Windows-Materialize.err Current-Publisher-Execute.out Current-Publisher-Execute.err Current-Publisher-Linux-Materialize.out Current-Publisher-Linux-Materialize.err Current-Publisher-Host-Imports-Alias.out Current-Publisher-Host-Imports-Alias.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

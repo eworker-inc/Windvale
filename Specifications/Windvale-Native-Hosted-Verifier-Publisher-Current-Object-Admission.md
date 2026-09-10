@@ -203,6 +203,32 @@ can exceed the old monolithic hosted-verifier bundle request limit, so this gate
 uses the segmented hosted-container plan/runtime path rather than the frozen
 4 MiB verifier bundle construction path.
 
+## Current-source executable materialization
+
+The final current-source construction command consumes the linkage plan, current
+image manifest and chunks, fixed native objects, source WVB, and selected target:
+
+```text
+node Tools/Native/Materialize-Current-Publisher-Executable.mjs <current-publisher-linkage.wvcl> <windows-x64-or-linux-x64> <image-chunk-prefix> <publisher.wvli> <reference-object-directory> <publisher.wvb> <output.exe-or-elf> <output.wvci>
+```
+
+It verifies every direct input and recomputes the target layout from the linkage
+record. It first emits a provisional native image with deferred host imports
+left unpatched, packages that image to obtain the hosted-container runtime and
+plan, binds the deferred imports, then emits the final native image and repeats
+the hosted-container planning pass. The final host-import record must match the
+final runtime, final plan, current image bytes, native image bytes, and native
+entry offset. Rebuilding the final image from that record must produce identical
+bytes before any executable is written.
+
+For both targets the materializer asks the existing hosted-container packager to
+create the outer executable and then replaces the startup shim with the selected
+publisher startup object. For Windows it also replaces the generic import page
+with the publisher import page and updates the PE import and IAT data-directory
+ranges to the publisher import table. The output path and final `.wvci` path
+must be absent and distinct from every direct input. The result is an executable
+construction artifact, not an installed publisher or release identity by itself.
+
 ## Verification
 
 The existing `hosted-verifier-publisher-files` owner includes the focused
@@ -218,8 +244,10 @@ chunk bytes, emits the binding record for one reproduced set, checks the shared
 transaction-state object appears as role 6, emits the linkage plan, checks both
 target reports, transports the linked image into canonical hosted fragments,
 generates Windows and Linux hosted-container runtime/plan pairs, binds deferred
-imports for both targets, and checks exact alias rejection for the current-source
-host-side writers.
+imports for both targets, materializes both target executables, runs the
+current-host executable against the metadata-present WVB fixture, checks the
+cross-target executable header, and checks exact alias rejection for the
+current-source host-side writers.
 Development construction requires the existing validated current split-compiler
 cache. A missing cache is an explicit setup failure, not permission to start a
 cold compiler reconstruction inside this check. The focused current-object tool

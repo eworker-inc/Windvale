@@ -5817,6 +5817,7 @@ foreach ($PublisherPath in @(
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
     'Tools/Native/Bind-Current-Publisher-Host-Imports.mjs',
     'Tools/Native/Build-Current-Publisher-Binding.mjs',
+    'Tools/Native/Materialize-Current-Publisher-Executable.mjs',
     'Tools/Native/Plan-Current-Publisher-Linkage.mjs',
     'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
