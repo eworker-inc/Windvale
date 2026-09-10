@@ -19,10 +19,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 65_536;
+const MAXIMUM_PROJECT4_LAUNCHER_OUTPUT_BYTES = 1_048_576;
 const HEARTBEAT_MILLISECONDS = 30_000;
 const TASKKILL_TIMEOUT_MILLISECONDS = 2_000;
 const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const BUILD_TIMEOUT_MILLISECONDS = 600_000;
+const PROJECT4_LAUNCHER_BUILD_TIMEOUT_MILLISECONDS = 1_800_000;
 const PACKAGE_TIMEOUT_MILLISECONDS = 1_200_000;
 const CASE_TIMEOUT_MILLISECONDS = 30_000;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
@@ -3198,7 +3200,92 @@ async function Runˉproject4ˉcases(Work, Products, Reader) {
         `host=${process.platform} wvb-sha256=${Sha256(Baseline)} qualification=false\n`);
 }
 
+async function Runˉproject4ˉlauncherˉcase() {
+    if (!['win32', 'linux'].includes(process.platform) || process.arch !== 'x64') {
+        Reject(`Unsupported Project 4 launcher host: ${process.platform}-${process.arch}.`);
+    }
+    const Temporaryˉroot = await realpath(resolve(tmpdir()));
+    const Work = await mkdtemp(join(Temporaryˉroot, TEMPORARY_PREFIX));
+    const Manifest = join(
+        REPOSITORY_ROOT,
+        'Projects',
+        'Tests',
+        'Language-1.0-Foundation-Generic-Result-Project4.wvproj',
+    );
+    const Builder = join(SCRIPT_DIRECTORY, `Build-Wvb.${NATIVE_TOOL_EXTENSION}`);
+    let Evidence = null;
+    try {
+        const Existing = join(Work, 'Existing.wvb');
+        const Preserved = Buffer.from('preserve-project4-launcher-output', 'ascii');
+        await writeFile(Existing, Preserved, { flag: 'wx' });
+        const Rejected = await Runˉbounded(
+            Builder,
+            [Manifest, Existing],
+            'project4-launcher-existing-output',
+            CASE_TIMEOUT_MILLISECONDS,
+        );
+        Requireˉcleanˉtermination(Rejected, 'project4-launcher-existing-output');
+        Require(Rejected.code !== 0,
+            'The Project 4 launcher accepted a pre-existing output.');
+        Require((await readFile(Existing)).equals(Preserved),
+            'The Project 4 launcher changed a preserved output.');
+        Require(Rejected.error.toString('utf8').includes('must be a new .wvb path'),
+            'The Project 4 launcher missed the helper new-output boundary.');
+        process.stdout.write(
+            'PASS project4 launcher case=existing-output item=1/2\n',
+        );
+
+        const Output = join(Work, 'Foundation-Generic-Result-Project4.wvb');
+        const Built = await Runˉbounded(
+            Builder,
+            [Manifest, Output],
+            'project4-launcher-build',
+            PROJECT4_LAUNCHER_BUILD_TIMEOUT_MILLISECONDS,
+            process.env,
+            true,
+            MAXIMUM_PROJECT4_LAUNCHER_OUTPUT_BYTES,
+        );
+        Requireˉcleanˉtermination(Built, 'project4-launcher-build');
+        Require(!Built.timedOut && !Built.exceeded && Built.code === 0 &&
+            Built.error.length === 0,
+        `The Project 4 launcher build failed: exit=${Built.code} ` +
+            `timeout=${Built.timedOut} overflow=${Built.exceeded}.\n` +
+            Built.error.toString('utf8'));
+        const Diagnostic = Built.output.toString('utf8');
+        Require(Diagnostic.includes('project4 build compiler-cache status=') &&
+            Diagnostic.includes('project4 build status=Published '),
+        'The Project 4 launcher did not report authenticated build publication.');
+        const Information = await lstat(Output);
+        Require(Information.isFile() && !Information.isSymbolicLink() &&
+            Information.size > 0 && Information.size <= MAXIMUM_PROJECT4_LAUNCHER_OUTPUT_BYTES,
+        'The Project 4 launcher output is not a bounded ordinary WVB.');
+        const Bytes = await readFile(Output);
+        Require(Bytes.length === Information.size,
+            'The Project 4 launcher output changed while reading.');
+        Evidence = {
+            bytes: Bytes.length,
+            sha256: Sha256(Bytes),
+        };
+        process.stdout.write(
+            'PASS project4 launcher case=maintained-build item=2/2 ' +
+            `wvb-bytes=${Evidence.bytes} wvb-sha256=${Evidence.sha256}\n`,
+        );
+    } finally {
+        await Removeˉwork(Work, Temporaryˉroot);
+    }
+    process.stdout.write(
+        'project4 launcher status=Passed cases=2 manifest=' +
+        'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj ' +
+        `wvb-bytes=${Evidence.bytes} wvb-sha256=${Evidence.sha256} ` +
+        'qualification=false\n',
+    );
+}
+
 async function Main() {
+    if (process.argv.length === 3 && process.argv[2] === '--project4-launcher') {
+        await Runˉproject4ˉlauncherˉcase();
+        return;
+    }
     if (process.argv[2] === '--project4-products') {
         Require(process.argv.length === 8,
             'Usage: --project4-products <reader> <admitter> <validator> <analyzer> <emitter>');
@@ -3221,7 +3308,7 @@ async function Main() {
         return;
     }
     if (process.argv.length !== 2) {
-        Reject('The production-admission-ingress owner accepts no arguments.');
+        Reject('Usage: Test-Language-1.0-Production-Admission-Ingress.mjs [--project4-launcher]');
     }
     const Buildˉmode = Getˉproductˉbuildˉmode();
     await Verifyˉcontracts();

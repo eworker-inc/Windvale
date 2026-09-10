@@ -136,6 +136,7 @@ $NativeCases = @(
         Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $false
+        LibraryTarget = 'foundation-values'
     },
     @{
         Name = 'Language 1.0 bounded memory-budget accounting owner'
@@ -678,6 +679,16 @@ $NativeCases = @(
         Suites = @('language-1-production-admission-ingress')
         Gaps = @()
         VerifyPlan = $false
+    },
+    @{
+        Name = 'Project 4 launcher focused routing'
+        Paths = @('Projects/Targets/Windows-X64-No-Foreign.wvtd')
+        Suites = @('language-1-production-admission-ingress')
+        Gaps = @()
+        VerifyPlan = $false
+        Project4LauncherDevelopment = $true
+        Project4LauncherExpectedSeconds = 900
+        Project4LauncherMaximumSeconds = 1800
     },
     @{
         Name = 'Language 1.0 shared foreign catalog authentication routing'
@@ -2276,13 +2287,14 @@ $NativeCases = @(
             'Tools/Native/Build-Wvb-Project4.mjs'
         )
         Suites = @(
-            'language-1-front-door',
             'language-1-production-admission-ingress',
-            'language-1-authenticated-foreign-binding',
             'compiler-split-development'
         )
         Gaps = @()
         VerifyPlan = $false
+        Project4LauncherDevelopment = $true
+        Project4LauncherExpectedSeconds = 1200
+        Project4LauncherMaximumSeconds = 2400
     },
     @{
         Name = 'WVB runner reconstruction owner'
@@ -4844,6 +4856,17 @@ $NativeCases = @(
         OsX64Target = 'all'
     },
     @{
+        Name = 'Project 4 maintained library manifest'
+        Paths = @(
+            'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj'
+        )
+        Suites = @('libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'foundation-values'
+    },
+    @{
         Name = 'library development target manifest'
         Paths = @('Tests/Native/Library-Development-Targets.txt')
         Suites = @()
@@ -5174,7 +5197,7 @@ if ($QualificationShardSignature -cne
 }
 $QualificationPipelineExpected = @{
     'Build-Current-Wvb' = '11|41'
-    'Build-Wvb' = '46|216'
+    'Build-Wvb' = '47|217'
     'Build-Cached-Project-Object' = '1|2'
     'Build-Cached-Hosted-Application' = '12|44'
     'Build-Cached-Split-Project-Wvb' = '3|18'
@@ -5584,6 +5607,10 @@ $Language1FrontDoorWindows = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.cmd')
 $Language1FrontDoorLinux = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.sh')
+$ProductionAdmissionWindows = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.cmd')
+$ProductionAdmissionLinux = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh')
 $GenericNominalDevelopmentRunner = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Generic-Nominal-Development-Bundle.mjs')
 $GenericNominalDevelopmentProject = Get-Content -Raw -LiteralPath (
@@ -5716,6 +5743,32 @@ foreach ($Contract in @(
             'phase=value-front-end item=3/13',
             'Test-Language-1.0-Front-Door-Development.mjs',
             'status=Passed cases=495'
+        )
+    },
+    @{
+        Name = 'Windows Project 4 launcher development owner'
+        Text = $ProductionAdmissionWindows
+        Required = @(
+            'Test-Language-1.0-Production-Admission-Ingress.cmd [--project4-launcher]',
+            '--project4-launcher'
+        )
+    },
+    @{
+        Name = 'Linux Project 4 launcher development owner'
+        Text = $ProductionAdmissionLinux
+        Required = @(
+            'Test-Language-1.0-Production-Admission-Ingress.sh [--project4-launcher]',
+            '--project4-launcher'
+        )
+    },
+    @{
+        Name = 'Project 4 launcher changed-file dispatch'
+        Text = $ChangedVerification
+        Required = @(
+            '$Suite -eq ''language-1-production-admission-ingress''',
+            '$NativePlan.UseProject4LauncherDevelopment',
+            'mode=project4-launcher cases=2 expected-seconds=900',
+            '''--project4-launcher'''
         )
     },
     @{
@@ -6887,7 +6940,7 @@ foreach ($OwnerContract in $OsX64OwnerContracts) {
 $LibraryTargetPlan = Join-Path $RepositoryRoot `
     'Tests/Native/Library-Development-Targets.txt'
 $LibraryTargetLines = @(Get-Content -LiteralPath $LibraryTargetPlan)
-if ($LibraryTargetLines.Count -ne 30 -or
+if ($LibraryTargetLines.Count -ne 31 -or
     $LibraryTargetLines[0] -ne 'windvale-library-development-targets 1') {
     throw 'The library development-target inventory differs.'
 }
@@ -6936,6 +6989,7 @@ foreach ($Line in @($LibraryTargetLines | Select-Object -Skip 1)) {
     }
 }
 $ExpectedLibraryTargetProjects = [string[]]@(
+    'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj',
     'Projects/Libraries/Windvale-Library-Resource-Store.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Storage-Geometry.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Storage-Page.wvproj',
@@ -6969,6 +7023,7 @@ $ExpectedLibraryTargetProjects = [string[]]@(
 if (!$LibraryTargetNames.SetEquals([string[]]@(
         'capability-rejections',
         'durability',
+        'foundation-values',
         'models',
         'page-storage',
         'read-only-wvdb',
@@ -6977,7 +7032,7 @@ if (!$LibraryTargetNames.SetEquals([string[]]@(
     )) -or
     !$LibraryTargetProjects.SetEquals($ExpectedLibraryTargetProjects) -or
     $LibraryTargetKindCounts.project -ne 19 -or
-    $LibraryTargetKindCounts.conformance -ne 8 -or
+    $LibraryTargetKindCounts.conformance -ne 9 -or
     $LibraryTargetKindCounts.negative -ne 2) {
     throw 'The library development-target names or evidence totals differ.'
 }
@@ -7071,6 +7126,21 @@ foreach ($Case in $NativeCases) {
     }
     $LibraryDevelopmentDiffers = (
         $Plan.UseLibraryDevelopment -ne $ExpectedLibraryDevelopment)
+    $ExpectedProject4LauncherDevelopment = if (
+        $Case.ContainsKey('Project4LauncherDevelopment')) {
+        $Case.Project4LauncherDevelopment
+    } else {
+        $false
+    }
+    $Project4LauncherDevelopmentDiffers = (
+        $Plan.UseProject4LauncherDevelopment -ne
+            $ExpectedProject4LauncherDevelopment)
+    $Project4LauncherExpectedSecondsDiffers = (
+        $Case.ContainsKey('Project4LauncherExpectedSeconds') -and
+        $Plan.ExpectedSeconds -ne $Case.Project4LauncherExpectedSeconds)
+    $Project4LauncherMaximumSecondsDiffers = (
+        $Case.ContainsKey('Project4LauncherMaximumSeconds') -and
+        $Plan.MaximumSeconds -ne $Case.Project4LauncherMaximumSeconds)
     $ExpectedOsX64Target = if ($Case.ContainsKey('OsX64Target')) {
         $Case.OsX64Target
     } else {
@@ -7123,6 +7193,9 @@ foreach ($Case in $NativeCases) {
         $OsX64TargetDiffers -or
         $LibraryDevelopmentDiffers -or
         $LibraryTargetDiffers -or
+        $Project4LauncherDevelopmentDiffers -or
+        $Project4LauncherExpectedSecondsDiffers -or
+        $Project4LauncherMaximumSecondsDiffers -or
         $StreamingSha256Differs -or
         $DatabaseDevelopmentDiffers -or
         $DatabaseTargetDiffers -or
@@ -7147,6 +7220,7 @@ foreach ($Case in $NativeCases) {
             "os-x64-target=$($Plan.OsX64CodeEmissionDevelopmentTarget), " +
             "library-development=$($Plan.UseLibraryDevelopment), " +
             "library-target=$($Plan.LibraryDevelopmentTarget), " +
+            "project4-launcher-development=$($Plan.UseProject4LauncherDevelopment), " +
             "database-development=$($Plan.UseDatabaseStorageDevelopment), " +
             "database-target=$($Plan.DatabaseStorageDevelopmentTarget), " +
             "database-cases=$($Plan.DatabaseStorageDevelopmentCaseCount), " +

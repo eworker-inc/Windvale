@@ -1,4 +1,5 @@
 windvale-library-development-targets 1
+foundation-values|conformance|Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj
 resource-store|project|Projects/Libraries/Windvale-Library-Resource-Store.wvproj
 resource-store|project|Projects/Libraries/Windvale-Library-Hosted-Resource-Store.wvproj
 storage-geometry|project|Projects/Libraries/Windvale-Library-Database-Storage-Geometry.wvproj

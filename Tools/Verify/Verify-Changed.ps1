@@ -367,6 +367,13 @@ if ($Plan.Scope -eq 'website') {
                     "Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.$OwnerExtension")
                 $OwnerArguments = @('--current-source')
                 $OwnerMessage = 'Native owner hosted-verifier-publisher-files mode=current-source cases=1 expected-seconds=60'
+            } elseif ($Suite -eq 'language-1-production-admission-ingress' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UseProject4LauncherDevelopment) {
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.$OwnerExtension")
+                $OwnerArguments = @('--project4-launcher')
+                $OwnerMessage = 'Native owner language-1-production-admission-ingress mode=project4-launcher cases=2 expected-seconds=900'
             } elseif ($Suite -eq 'language-1-front-door' -and
                 $Plan.Scope -eq 'development') {
                 $OwnerCommand = if ($IsWindowsHost) {

@@ -116,7 +116,7 @@ $LibraryDevelopmentTargetNames =
 $LibraryDevelopmentTargetProjects =
     [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $LibraryDevelopmentKindCounts = @{ project = 0; conformance = 0; negative = 0 }
-if ($LibraryDevelopmentLines.Count -ne 30 -or
+if ($LibraryDevelopmentLines.Count -ne 31 -or
     $LibraryDevelopmentLines[0] -ne 'windvale-library-development-targets 1') {
     $LibraryDevelopmentEligible = $false
 }
@@ -174,6 +174,7 @@ foreach ($Line in @($LibraryDevelopmentLines | Select-Object -Skip 1)) {
 if (!$LibraryDevelopmentTargetNames.SetEquals([string[]]@(
         'capability-rejections',
         'durability',
+        'foundation-values',
         'models',
         'page-storage',
         'read-only-wvdb',
@@ -181,7 +182,7 @@ if (!$LibraryDevelopmentTargetNames.SetEquals([string[]]@(
         'storage-geometry'
     )) -or
     $LibraryDevelopmentKindCounts.project -ne 19 -or
-    $LibraryDevelopmentKindCounts.conformance -ne 8 -or
+    $LibraryDevelopmentKindCounts.conformance -ne 9 -or
     $LibraryDevelopmentKindCounts.negative -ne 2) {
     $LibraryDevelopmentEligible = $false
 }
@@ -1456,9 +1457,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -eq 'Build-Wvb-Project4') {
         Add-Suite @(
-            'language-1-front-door',
             'language-1-production-admission-ingress',
-            'language-1-authenticated-foreign-binding',
             'compiler-split-development'
         )
         return
@@ -3102,6 +3101,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Projects/Targets/', [StringComparison]::Ordinal) -and
         [IO.Path]::GetExtension($Path) -eq '.wvtd') {
         Add-Suite 'language-1-production-admission-ingress'
+    } elseif ($Path -eq
+        'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj') {
+        Add-Suite 'libraries'
     } elseif ($Path -eq 'Windvale.wvws' -or
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {
@@ -4835,6 +4837,25 @@ if ($UsePublisherCurrentSourceDevelopment) {
     $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 300)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 600)
 }
+$Project4LauncherInputs = @(
+    'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj',
+    'Projects/Targets/Windows-X64-No-Foreign.wvtd',
+    'Projects/Targets/Linux-X64-No-Foreign.wvtd',
+    'Tools/Native/Build-Wvb-Project4.mjs',
+    'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.cmd',
+    'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
+    'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh'
+)
+$UseProject4LauncherDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('language-1-production-admission-ingress') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $Project4LauncherInputs }).Count -eq 0
+if ($UseProject4LauncherDevelopment) {
+    $Project4Owner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'language-1-production-admission-ingress'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $Project4Owner.ExpectedSeconds + 900)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $Project4Owner.MaximumSeconds + 1800)
+}
 $UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
@@ -5223,6 +5244,8 @@ if (!$Quiet) {
         $UsePublisherCurrentSourceDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-object development: ' +
         $UsePublisherCurrentObjectDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Project 4 launcher development: ' +
+        $UseProject4LauncherDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
         Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
         Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
@@ -5305,6 +5328,7 @@ if ($PassThru) {
         UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
+        UseProject4LauncherDevelopment = $UseProject4LauncherDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount

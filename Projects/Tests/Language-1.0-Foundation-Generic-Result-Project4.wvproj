@@ -1,0 +1,9 @@
+windvale-project 4
+root "Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv"
+source "Libraries/Foundation/Values/Option.wv"
+source "Libraries/Foundation/Values/Result.wv"
+source-input-lock "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock"
+source-input-lock-sha256 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
+source-profile "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp"
+target-descriptor "Projects/Targets/Windows-X64-No-Foreign.wvtd"
+emit wvb

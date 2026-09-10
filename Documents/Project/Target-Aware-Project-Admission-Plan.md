@@ -37,15 +37,6 @@ emitter and reader bytes match the earlier tested products; this used exact
 intermediate caches and is not cold qualification. See the
 [current compiler reconstruction evidence](../Evidence/2026-09-09-Project4-Current-Compiler-Reconstruction.json).
 
-The next integration checkpoint is acquisition of the remaining admission
-products, followed by normal project-build routing through authenticated admission.
-The current split-compiler cache constructs only the analyzer and emitter; the
-Project 4 path also needs the native manifest reader, admitter, and authenticator,
-plus the foreign binder when required. Repository `Build-Wvb` launchers and the
-installer inventories still select the older build driver. Retained diagnostic
-executables must not be substituted into those inventories or labeled current
-solely because selected consumer tests pass.
-
 The repository `Build-Wvb` launchers now dispatch a `windvale-project 4` manifest
 to a development Project 4 helper instead of the older profile-only build driver.
 That helper acquires the current split compiler cache, builds and packages the
@@ -55,6 +46,24 @@ and Project 3 stay on the pinned native front door. This is normal repository
 routing for the development path, not installed-toolchain promotion; the product
 cache is still current-host development evidence, and the installer inventories
 still select the older front-door products.
+
+Maintained manifest migration has started with
+`Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj`, which
+builds the existing Option/Result generic consumer with the source-input lock,
+source profile, and explicit Windows x64/no-foreign target descriptor. The
+library development-target inventory exposes this as `foundation-values`, so a
+focused library check can run that Project 4 manifest through the ordinary
+`Build-Wvb` launcher. The production-admission owner also has a focused
+`--project4-launcher` development mode for the launcher boundary: it preserves a
+pre-existing output and then builds the maintained Project 4 consumer. This
+narrows the checked behavior relative to the full owner, but cold package
+acquisition can still require a named longer local run; it does not replace the
+full production-admission owner or cross-host qualification.
+
+The next integration checkpoint is broader maintained package/library manifest
+migration and publication promotion. Retained diagnostic executables must not be
+substituted into installer inventories or labeled current solely because selected
+consumer tests pass.
 
 Publication is a separate integration dependency: both frozen native publishers
 reject the migrated package test bytecode, while a rebuilt current publisher's
