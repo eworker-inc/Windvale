@@ -334,7 +334,8 @@ fn Readˉfunctionˉdirectory(
             if Shapeˉkind == 25u32 {
                 if Moduleˉminor == 33u32 || Moduleˉminor == 34u32 ||
                     Moduleˉminor == 35u32 || Moduleˉminor == 36u32 ||
-                    Moduleˉminor == 37u32 || Moduleˉminor == 38u32 {
+                    Moduleˉminor == 37u32 || Moduleˉminor == 38u32 ||
+                    Moduleˉminor == 39u32 {
                     if Functionˉindex == Mainˉindex {
                         if Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                             Mainˉhasˉmemoryˉbudget {
@@ -488,7 +489,7 @@ fn Readˉfunctionˉdirectory(
                     (Moduleˉminor != 34u32 && Moduleˉminor != 33u32 &&
                         Moduleˉminor != 35u32 && Moduleˉminor != 36u32 &&
                         Moduleˉminor != 37u32 && Moduleˉminor != 38u32 &&
-                        Moduleˉminor != 32u32 &&
+                        Moduleˉminor != 39u32 && Moduleˉminor != 32u32 &&
                         (Moduleˉminor < 23u32 || Moduleˉminor > 28u32 ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget))) ||
@@ -5657,7 +5658,8 @@ fn Executeˉextended(
 
     if Payloadˉlength == 207u32 {
         let Vectorˉmoduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-        if (Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 28u32) ||
+        if ((Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 28u32) &&
+                Vectorˉmoduleˉminor != 39u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }

@@ -1594,12 +1594,65 @@ async function Verifyˉfoundationˉownedˉpayloads(Admitter, Authenticator, Anal
         return Replace(Text, 'Option.Borrow(borrow Owner)',
             Failure ? 'Result.Borrowˉfailure(borrow Owner)' : 'Result.Borrowˉvalid(borrow Owner)');
     }
+    function Reclaimˉsource(Text) {
+        // 128 sequential child budgets exceed both the root's bytes and child
+        // limit if returning from Observe retains the owned Vector or its lease.
+        return Text.slice(0, Text.indexOf('export fn Main(')) + `
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    var Iteration: u32 = 0u32;
+    while Iteration < 128u32 {
+        let Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+            Memory.Split(borrow mut Parent, 8192u64, 0u32);
+        let Observed: i32 = match Split {
+            case Result.Result.Valid { Value: Child } {
+                let Constructed: Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+                    Collections.Vectorˉconstructˉreserved::<i32>(Child, 4u64);
+                match Constructed {
+                    case Result.Result.Valid { Value: Values } { Observe(Values) }
+                    case Result.Result.Failure { Error: Failure } { 1 }
+                }
+            }
+            case Result.Result.Failure { Error: Splitˉfailure } { 3 }
+        };
+        if Observed != 42 { return Observed; }
+        Iteration = Iteration + 1u32;
+    }
+    return 42;
+}
+`;
+    }
+    const Refusedˉreclaim = Replace(Replace(Replace(Reclaimˉsource(Source),
+        '8192u64', '16u64'),
+        '{ Observe(Values) }', '{ Observe(Values) + 1 }'),
+        'case Result.Result.Failure { Error: Failure } { 1 }',
+        `case Result.Result.Failure { Error: Failure } {
+            if Failure.Reason == Memory.Allocationˉreason.Budgetˉexhausted &&
+                Failure.Requestedˉbytes == 40u64 && Failure.Availableˉbytes == 16u64 {
+                42
+            } else { 4 }
+        }`);
+    const Unaddressable = Replace(Replace(Replace(Source,
+        '(Budget, 4u64)', '(Budget, 2048u64)'),
+        '            Observe(Values)', '            Observe(Values) + 1'),
+        'case Result.Result.Failure { Error: Failure } { 1 }',
+        `case Result.Result.Failure { Error: Failure } {
+            if Failure.Reason == Memory.Allocationˉreason.Targetˉunaddressable &&
+                Failure.Requestedˉbytes == 16392u64 && Failure.Availableˉbytes == 0u64 {
+                42
+            } else { 4 }
+        }`);
     const Cases = [
         ['option-record-vector', Source, true],
         ['result-valid-record-vector', Resultˉsource(false), true],
         ['result-failure-record-vector', Resultˉsource(true), true],
         ['option-record-copy', Source.slice(0, Source.indexOf('export fn Main(')) +
             'export fn Main() -> i32 { return Observe(7); }\n', false],
+        ['option-record-reclaim', Reclaimˉsource(Source), true],
+        ['result-valid-record-reclaim', Reclaimˉsource(Resultˉsource(false)), true],
+        ['result-failure-record-reclaim', Reclaimˉsource(Resultˉsource(true)), true],
+        ['option-record-refused-reclaim', Refusedˉreclaim, true],
+        ['option-record-unaddressable', Unaddressable, true],
     ];
     let Completed = 0;
     for (const [Label, Text, Owned] of Cases) {
@@ -1630,19 +1683,8 @@ async function Verifyˉfoundationˉownedˉpayloads(Admitter, Authenticator, Anal
                 if (Normalize(Verified) !== 'wvb status=Valid profile=compiler-aligned\n') {
                     Reject('Owned payload verifier output differs.');
                 }
-                if (Owned) {
-                    // Publication is the current checkpoint; do not silently open the runtime profile.
-                    const Execution = await Runˉdevelopmentˉcommand(Runner, [Output],
-                        Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
-                    if (Execution.Code !== 1 || Execution.Output !== '' || Normalize(Execution.Error) !==
-                        'wvb run status=Unsupported profile=portable-main-i32 phase=execution\n') {
-                        Reject(`Owned payload runtime boundary changed; qualify execution explicitly: ${Execution.Output}${Execution.Error}`);
-                    }
-                    process.stdout.write(`PENDING owned payload execution case=${Label} status=Unsupported\n`);
-                } else {
-                    const Executed = await Run(Label + '-execute', Runner, [Output]);
-                    if (Normalize(Executed) !== 'Result: 42\n') Reject('Copy payload execution result differs.');
-                }
+                const Executed = await Run(Label + '-execute', Runner, [Output]);
+                if (Normalize(Executed) !== 'Result: 42\n') Reject('Payload execution result differs.');
                 const Transfers = [];
                 for (const Function of Functions) {
                     const Begin = Sections[5].payload + Function.codeOffset;
@@ -1678,7 +1720,36 @@ async function Verifyˉfoundationˉownedˉpayloads(Admitter, Authenticator, Anal
         Completed += 1;
         process.stdout.write(`PASS owned payload item=${Completed}/${Cases.length} case=${Label} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
     }
-    process.stdout.write(`native Foundation owned payloads publication=Passed cases=${Completed} owned-execution=Pending qualification=false elapsed-ms=${Date.now() - Started}\n`);
+    // The loop-indexing fix must not admit a second use of a consumed budget,
+    // or a branch that consumes the parent before the loop backedge.
+    const Invalidˉbudgets = [
+        ['duplicate-budget-move', Replace(Reclaimˉsource(Source),
+            'var Parent: Memory.Memoryˉbudget = Budget;',
+            'var Parent: Memory.Memoryˉbudget = Budget;\n    var Again: Memory.Memoryˉbudget = Budget;')],
+        ['consumed-loop-parent', Replace(Reclaimˉsource(Source),
+            '(Child, 4u64)', '(Parent, 4u64)')],
+    ];
+    for (const [Label, Text] of Invalidˉbudgets) {
+        const Input = path.join(Work, Label + '.wv');
+        const Output = path.join(Work, Label + '.wvb');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        const Rejected = await Runˉdevelopmentˉcommand(process.execPath, [
+            path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'),
+            Admitter, Authenticator, Analyzer, Emitter,
+            '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+            '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
+            Input, ...['Collections/Collections.wv', 'Memory/Memory.wv',
+                'Values/Option.wv', 'Values/Result.wv'].map(Name =>
+                path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output,
+        ], Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 30_000),
+        false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Rejected.Code !== 1 || existsSync(Output) || Normalize(Rejected.Error) !==
+            'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n') {
+            Reject(`Invalid budget ownership did not reject at WIR validation: ${Label}\n${Rejected.Output}${Rejected.Error}`);
+        }
+        process.stdout.write(`PASS owned budget rejection case=${Label}\n`);
+    }
+    process.stdout.write(`native Foundation owned payloads publication=Passed cases=${Completed} budget-rejections=${Invalidˉbudgets.length} owned-execution=Passed qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 
 async function Verifyˉfoundationˉsourceˉownership(Admitter, Analyzer, Emitter) {

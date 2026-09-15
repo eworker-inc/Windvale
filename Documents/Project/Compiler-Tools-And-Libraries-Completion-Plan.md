@@ -125,9 +125,17 @@ named-consumer milestone, direct Vector extraction, borrowed Vector helper
 observations, arbitrary payload composition, or installed/native promotion.
 The [paired-host publication checkpoint](../Evidence/2026-09-15-Owned-Variant-Payload-Publication.json)
 passes complete verification and copied-payload rejection for those shapes.
-The Copy control executes; the three owned programs still report unsupported
-execution. Runtime integration and allocation/reclamation evidence are the next
-gate before selecting and migrating a maintained owned-resource consumer.
+The later [runtime and reclamation checkpoint](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+executes all nine selected scenarios on Windows and Debian. Three owned-record
+shapes each survive 128 allocate/observe/release cycles; repeated allocation
+refusal releases its child budget, and unaddressable capacity reports the exact
+failure. Copied payloads and invalid budget reuse still reject. The runner now
+admits the existing memory-budget shapes and reserved Vector construction in
+this minor-39 profile. The compiler also tracks budget temporaries by declared
+ID rather than block visitation order, fixing valid loops without widening
+ownership-proof limits. The next gate is a maintained owned-resource consumer;
+direct Vector extraction, borrowed Vector helpers, arbitrary composition,
+native lowering, and installed promotion remain outside this checkpoint.
 
 Before starting each, enumerate its finite accepted public operations, existing
 implementation, missing implementation, consumer, targets, and focused verifier.
@@ -256,8 +264,8 @@ from actual delivery time, unresolved API rows, and cold verification costs.
 - Report implemented, verified, deferred, elapsed time, and the next gate
   separately. This planning change needs documentation checks only.
 
-The package-parser milestone is delivered. Chunk 1 now targets wider owned
-payloads, beginning with executable composition and its ownership regressions.
+The package-parser milestone is delivered. Chunk 1 now targets a maintained
+owned-resource consumer after the selected composition/reclamation gate.
 Status updates name the exact remaining consumer or execution gate, rather than
 repeating "Option/Result pending" or estimating a percentage for the entire
 draft Libraries 1.0 catalog.

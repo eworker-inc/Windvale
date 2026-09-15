@@ -5058,6 +5058,20 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
     var Temporaryˉstate: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Temporaryˉorigin: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Temporaryˉblock: bytes = Bytesˉslice(Directory, 0u32, 0u32);
+    // Block traversal need not follow temporary numbering: a loop exit can
+    // precede its body. Allocate by declared ID, not by visitation order.
+    if Range.Temporaryˉcount > Bytesˉlength(Directory) / 4u32 { return false; }
+    var Emptyˉstates: bytes = Bytesˉfromˉu8(0u8);
+    var Emptyˉorigins: bytes = Bytesˉfromˉu32ˉlittle(
+        Wirˉconsumer.Compilerˉsourceˉwirˉsentinel()
+    );
+    while Bytesˉlength(Emptyˉstates) < Range.Temporaryˉcount {
+        Emptyˉstates = Bytesˉconcat(Emptyˉstates, Emptyˉstates);
+        Emptyˉorigins = Bytesˉconcat(Emptyˉorigins, Emptyˉorigins);
+    }
+    Temporaryˉstate = Bytesˉslice(Emptyˉstates, 0u32, Range.Temporaryˉcount);
+    Temporaryˉorigin = Bytesˉslice(Emptyˉorigins, 0u32, Range.Temporaryˉcount * 4u32);
+    Temporaryˉblock = Temporaryˉorigin;
     Blockˉindex = 0u32;
     while Blockˉindex < Range.Blockˉcount {
         if Bytesˉreadˉu8(Reachable, Blockˉindex) != 1u8 { return false; }
@@ -5096,6 +5110,10 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
                 Directory, Operationˉentry + 24u32
             );
             if Operationˉshape != 0u32 {
+                let Temporaryˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Directory, Operationˉentry + 12u32
+                );
+                if Temporaryˉindex >= Range.Temporaryˉcount { return false; }
                 var Temporaryˉlive: u8 = 0u8;
                 var Temporaryˉsource: u32 =
                     Wirˉconsumer.Compilerˉsourceˉwirˉsentinel();
@@ -5105,15 +5123,14 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
                         Temporaryˉsource = Operationˉtarget;
                     }
                 }
-                Temporaryˉstate = Bytesˉconcat(
-                    Temporaryˉstate, Bytesˉfromˉu8(Temporaryˉlive)
+                Temporaryˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                    Temporaryˉstate, Temporaryˉindex, Temporaryˉlive
                 );
-                Temporaryˉorigin = Bytesˉconcat(
-                    Temporaryˉorigin,
-                    Bytesˉfromˉu32ˉlittle(Temporaryˉsource)
+                Temporaryˉorigin = Compilerˉsourceˉwirˉownershipˉu32ˉset(
+                    Temporaryˉorigin, Temporaryˉindex, Temporaryˉsource
                 );
-                Temporaryˉblock = Bytesˉconcat(
-                    Temporaryˉblock, Bytesˉfromˉu32ˉlittle(Blockˉindex)
+                Temporaryˉblock = Compilerˉsourceˉwirˉownershipˉu32ˉset(
+                    Temporaryˉblock, Temporaryˉindex, Blockˉindex
                 );
             }
 

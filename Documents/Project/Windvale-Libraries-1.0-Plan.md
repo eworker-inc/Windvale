@@ -40,10 +40,14 @@ cover the selected source closure, publication, and consumer behavior. Installed
 promotion and complete repository qualification remain separate.
 
 Wider owned payloads are the next active milestone; exclusive borrowing, take,
-and mapping follow separately. The immediate prerequisite is executable
-owned-aggregate composition: existing component evidence and an uncalled owned
-borrow helper did not establish that source-generated path. Preserve exact ownership, failure
-behavior, authority, and target limits. The broader library catalog remains a
+and mapping follow separately. The selected executable owned-aggregate and
+reclamation prerequisite now passes on Windows and Debian: nine source scenarios,
+including repeated successful allocation and refusal/release, retain exact
+ownership rejections. The [runtime evidence](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+records its bounded shapes and unchanged target limits. Selecting and migrating
+a maintained owned-resource consumer is next; arbitrary payload composition,
+direct Vector extraction, borrowed Vector helpers, and native/installed promotion
+are not established by this checkpoint. The broader library catalog remains a
 draft; this delivery split does not accept unreviewed API signatures or weaken
 the complete Libraries 1.0 gate.
 

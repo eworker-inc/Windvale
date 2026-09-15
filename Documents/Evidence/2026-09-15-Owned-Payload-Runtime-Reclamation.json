@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-owned-payload-runtime-reclamation",
+  "date": "2026-09-15",
+  "subject": "Bounded owned Option/Result record execution and memory-budget reclamation",
+  "claim": "Nine source-generated minor-39 programs execute successfully on Windows and Debian with deterministic, identical WVB bytes. Three owned-record shapes each complete 128 allocation/observation/release cycles; a refusal case releases 128 child budgets and an oversized capacity returns the exact unaddressable failure. Eight copied-payload mutations reject at both complete-verifier and runner boundaries, and two invalid budget-ownership sources reject at emitter WIR validation.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on e08415d0cdfa87443b038e6bf155c6a8da638d69 with exact changed source identities below. Authenticated native predecessor products constructed the updated emitter, which constructed the updated runner. No bootstrap or installed identity was promoted."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Nine publication/execution scenarios, eight copy mutations at two boundaries, and two invalid budget ownership sources",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <baseline-admitter> <baseline-authenticator> <baseline-analyzer> <Emitter-Indexed-Budgets.exe> Projects/Targets/Windows-X64-No-Foreign.wvtd <unchanged-complete-verifier> <Runner-Owned39-Split.exe>",
+      "result": "Passed",
+      "elapsedMilliseconds": 18577,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wir-Validation-Core.wv",
+          "size": 359313,
+          "sha256": "92746e8318f9ebcfd1366ca96ccea8db4497267c598bcd3e423ee18dd371deac"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 372711,
+          "sha256": "f4f9aebf82db4bcf2cb144ad3cc220dac7a51e1fe74d8dce5fe66edf786ef7b5"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+          "size": 40207,
+          "sha256": "a2b515e60d1366302529821bedf081ada539283520855a75b4eb9572c31a465f"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 159933,
+          "sha256": "38658b7c1bc9c8a45da0bc6e7201c2324ea0621a6cb3910fc1dfc4cf6b9501c9"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Vector-Executable.wv",
+          "size": 1088,
+          "sha256": "e72d956dcc51fd6af60dbea01c7d5dba59fdde511148422b6d4d3d0f367c25ea"
+        },
+        {
+          "path": "Emitter-Indexed-Budgets.wvb",
+          "size": 1596219,
+          "sha256": "a64f81284ff23e3b247cc255e8feb306d78b975f0e7ed966b199c7b29ac9f767"
+        },
+        {
+          "path": "Emitter-Indexed-Budgets.exe",
+          "size": 32674816,
+          "sha256": "c2c00a21c21fecaeda535eec6d60e3e698fe083a3a0311a0a101571267d701c0"
+        },
+        {
+          "path": "Runner-Owned39-Split.wvb",
+          "size": 1153292,
+          "sha256": "4f6b35b669d4ef8f18a017fe78e72f220fe9cef3f5b4bd84fb1a179afdd2b3f6"
+        },
+        {
+          "path": "Runner-Owned39-Split.exe",
+          "size": 11961856,
+          "sha256": "b2eb7f3be85d0a85ea9bdffc583a240d710cd2f6a8dfdf01b68636ff788c0b5a"
+        },
+        {
+          "path": "baseline-admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "baseline-authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "baseline-analyzer.exe",
+          "size": 54543360,
+          "sha256": "c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1"
+        },
+        {
+          "path": "complete-verifier.exe",
+          "size": 4861440,
+          "sha256": "32b39e538625d80b42dbe89430b15a281465dda5e8eba874a8290508a79f0806"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "option-record-vector-a.wvb",
+          "size": 1500,
+          "sha256": "0231439b52541b2b1208197f476c3198f42f0b43559755feb70b72d4e522d4c3"
+        },
+        {
+          "path": "result-valid-record-vector-a.wvb",
+          "size": 1564,
+          "sha256": "177661c589f3355d2e105ffb91b937fbd1e562fd05174459459fa7d3e0425115"
+        },
+        {
+          "path": "result-failure-record-vector-a.wvb",
+          "size": 1564,
+          "sha256": "c7c72c0af452be021ad157d44cd09d91f64e5fcc0af7e14222fbd3513d20efff"
+        },
+        {
+          "path": "option-record-copy-a.wvb",
+          "size": 1168,
+          "sha256": "e78861b0413f1879c50d03bb8239909de924c61b6b24b998c4b3c1c3097b83cb"
+        },
+        {
+          "path": "option-record-reclaim-a.wvb",
+          "size": 2056,
+          "sha256": "6b12a0b3bc0a4c4c1cf9677594fa926469479d3ad0844c84417f9ee4698d329f"
+        },
+        {
+          "path": "result-valid-record-reclaim-a.wvb",
+          "size": 2120,
+          "sha256": "ecbb8f6e0cd5d712d2d36d9ede3185742e5537fc663b08e09788a3917fda1d89"
+        },
+        {
+          "path": "result-failure-record-reclaim-a.wvb",
+          "size": 2120,
+          "sha256": "7c4a2dced1093280b97cc2288281078c1358f77bd8de09abfebc3ae2e8295fc7"
+        },
+        {
+          "path": "option-record-refused-reclaim-a.wvb",
+          "size": 2446,
+          "sha256": "960bb2f1f843fc5f7c5dca71a949406f7a6ad9566e1968a808ea5b0391f0d071"
+        },
+        {
+          "path": "option-record-unaddressable-a.wvb",
+          "size": 1890,
+          "sha256": "8ebcb62e651f0ee8cc8a5ac8d8d397e0af95f59ae1f71a72306849afe9b52cb4"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "The same nine programs, copy mutations and budget rejection cases; all nine WVB digests match Windows",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <baseline-linux-admitter> <baseline-linux-authenticator> <baseline-linux-analyzer> <Emitter-Indexed-Budgets.elf> Projects/Targets/Windows-X64-No-Foreign.wvtd <unchanged-linux-complete-verifier> <Runner-Owned39-Split.elf>",
+      "result": "Passed",
+      "elapsedMilliseconds": 30750,
+      "inputs": [
+        {
+          "path": "Emitter-Indexed-Budgets.elf",
+          "size": 32673792,
+          "sha256": "96f6893041f1d2d9aace4a715c67899e75093623eda809529ac95f42305d2f05"
+        },
+        {
+          "path": "Runner-Owned39-Split.elf",
+          "size": 11960320,
+          "sha256": "3651f6ac0ce6d6cfd10acec86b591b3cc539e07026418daa8b99925bc54ee776"
+        },
+        {
+          "path": "baseline-admitter.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "baseline-authenticator.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "baseline-analyzer.elf",
+          "size": 54542336,
+          "sha256": "2312bd21cf1929c75398c10e3ce0be01b7415ba34ea3cb9e023f0d9ef84e1ad7"
+        },
+        {
+          "path": "complete-verifier.elf",
+          "size": 4861952,
+          "sha256": "ff49d0f2f980d65e2d37f521bc1892272e28301758ef040fde84145d013477c1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Existing ten-case borrowed-value runner regression selection",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime <Runner-Owned39-Split.exe>",
+      "result": "Passed",
+      "elapsedMilliseconds": 652
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Existing ten-case borrowed-value runner regression selection",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime <Runner-Owned39-Split.elf>",
+      "result": "Passed",
+      "elapsedMilliseconds": 1011
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The selected payloads are Option and either Result side containing a generic record that owns an i32 Vector, plus a Copy-record control. Observation reads the record marker through an immutable borrow, not Vector contents. No maintained owned-resource consumer was migrated.",
+    "The successful loops each split 8192 bytes 128 times under a 98304-byte/64-child root. The refusal loop splits 16 bytes, requests a 40-byte Vector, and checks Budget-exhausted with exact requested/available values. Capacity 2048 checks Target-unaddressable with requested=16392 and available=0. These are bounded host-profile results, not arbitrary resource or payload support.",
+    "The runtime change admits existing budget parameter/local/variant shapes and reserved Vector construction for exact minor 39. Construction and Memory.Split remain Main-only. Direct Vector extraction, borrowed Vector helper observations, exclusive borrowing, Take, mapping, unsafe operations, task execution, native lowering and installed promotion are not newly supported by this checkpoint.",
+    "The compiler fix addresses temporary tables by declared ID instead of block traversal order. The failing loop visits an exit producing temporary 31 before a body producing temporary 10. Bounds, consumption and cross-block checks remain. Three additional local WIR mutations (undefined ID, duplicate ID, consumed cross-block budget) rejected on both hosts; these ad-hoc diagnostics supplement the retained source rejection controls rather than adding a verifier entry point.",
+    "The emitter source build took 178383 ms and the final runner source build took 238307 ms on Windows. Both packages consumed Windows-constructed WVB/images. Native Debian execution and byte agreement do not establish independent Debian reconstruction. Peak memory was not measured; no performance-improvement claim is made.",
+    "Explicit reusable compiler, admission and complete-verifier products were supplied. The plan-only conservative routing proposed 2550 seconds across nine owners; unrelated reconstruction, editor, backend, OS and whole-repository qualification were not executed. Existing runtime regressions were rerun only after their runner dependency changed. No broader gate is claimed.",
+    "The earlier publication-only checkpoint remains a historical record. Its unsupported owned executions are superseded only for the exact runtime scope recorded here."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-15-Owned-Variant-Payload-Publication.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}
