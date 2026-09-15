@@ -309,7 +309,7 @@
   "limitations": [
     "The claim is the narrowed direct-read checkpoint, not completion of the compiler/tools/Libraries 1.0 migration.",
     "Initial broader fixture failed typed verification. Isolating function bodies showed borrowed forwarding fails typed-execution and loop borrowing fails control-reachability. These cases remain unsupported; the passing fixture does not contain them.",
-    "Original verifier/runner native packaging failed because F-code-and-exports used 2,115 slots. Reusing the existing fixed-width decoder kept the native bound unchanged. Rebuilt verifier maximum geometry reported 1,882 slots; rebuilt runner largest function reported 2,043 slots, and native staging/packaging passed.",
+    "Original verifier/runner native packaging failed because F-code-and-exports used 2,115 slots. Reusing the existing fixed-width decoder kept the native bound unchanged. Inspection of every function gives a rebuilt verifier maximum of 1,933 slots and runner maximum of 2,043 slots; native staging/packaging passed. The earlier 1,882-slot report described the verifier's largest code body, not its largest slot count.",
     "No installed or bootstrap identity, candidate-minor-40 native lowering, browser, OS, provider authority, full dual-host Qualification or release artifact was promoted.",
     "Debian products reuse Windows-generated WVB/native images; there is no independent reconstruction claim.",
     "Full automatic changed-file plan was not run: its approximately 64-minute expected duration exceeded this approved 45-minute focused construction/execution run.",
