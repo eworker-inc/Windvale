@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 8 September 2026
+> Status: Current project snapshot as of 15 September 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-09-08
+> Last reviewed: 2026-09-15
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -55,7 +55,8 @@ materially misleading.
 | Slice 8 source admission | Qualified | The target-aware front door authenticates, analyzes, pairs, emits, verifies, lowers, assembles, links, packages, and executes registered Foreign calls without pointer escape or ambient authority. The real Linux system-profile record consumer uses the canonical Foundation Memory, Result, and Unsafe modules and passes within the [final paired-host gate](../Evidence/2026-09-04-Language-1.0-Slice-8-Qualification.json); separate native ABI cases qualify the Windows path. | Complete. Preserve this evidence unless a declared source, WVB, containment, ABI, or qualification input changes. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain historical proposals rather than alternate compilers. |
 | Unsafe Foundation slice | Qualified | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, exact write-region validation, and contained `Writeˉpointer::<Abi>` derivation execute through WVB 1.37 and are consumed immediately by registered WVB 1.38 bindings. The real record consumer preserves the exact binding, target, lifetime, and authority boundary through native execution. | The bounded compiler/runtime contract is complete. Future library APIs must reuse it without widening authority. |
 | Compiler scale | Qualified | The promoted segmented toolset, WVB-to-WVO lowerer, and WVB runner reconstruct byte for byte. Relocation-free terminal publication and the 50,761,605-byte compiler-scale object are covered. The self-hosted analyzer and emitter reproduce the exact WVB runner and application, resumable symbol checkpoints fail closed, and the final gate reconstructs the compiler independently on Windows and Debian. | Correctness and deterministic reconstruction are complete for Language 1.0. Cold analysis, emission, and qualification latency remain performance work, not an open compiler-semantic gate. |
-| Libraries 1.0 | Active | Foundation memory-budget, collection, byte-buffer, and builder contracts have focused implementations and fixtures. Candidate WVB 1.39 publishes all three immutable Option/Result payload projections and preserves exact borrowed identity across direct helper calls. The focused Windows publication checkpoint passes 39 cases, including native planner tests, structural mutations, deterministic output, and unchanged large borrow-free functions. The current database remains a useful bounded byte-oriented consumer. | Complete-verifier source now passes focused checks on both hosts. The published fixture now executes in the source-built scalar runner on both hosts. Finish wider payload/source integration and a real consumer. Complete Option/Result exclusive borrow, take, and mapping before primitive ordering, collection mutation/slicing, and bounded byte construction. Migrate and qualify required real consumers afterward; the current database's passing storage suite does not prove those APIs or unsafe-region adoption. |
+| Libraries 1.0 | Active | Bounded immutable Option/Result borrowing has complete-verifier, interpreter, and selected native execution evidence on Windows/Debian. Foundation memory, collections, and builders have focused implementations. | Deliver the maintained package parser through normal project builds and safe publication; source-closure migration and consumer qualification remain open. Wider owned payloads, exclusive borrow, take, and mapping are separate following milestones, then the remaining Foundation/Data/Backend APIs. See the [finite delivery gates](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing). |
+| Project 4 build integration | Development | Repository launchers recognize explicit-target Project 4 manifests and route them through authenticated admission. Current-source publishers can be materialized; a Windows publication smoke test is recorded in the [integration plan](Target-Aware-Project-Admission-Plan.md). | Project 4 still requires a new output path; transactional replacement and installed promotion remain open. The package migration must reconcile legacy shared dependencies. Current compiler cache acquisition exceeds the ordinary local verification budget in this checkout and needs an approved longer run. |
 | WVDB 1.0 | Candidate | Upper-layer identity, tables, typed relationships, indexes, queries, transactions, storage profiles, types, documents/graphs, and backup direction are accepted. Existing storage and service slices remain useful implementation evidence. | Finish normative storage, durability, backup/restore, service, operations, and conformance contracts, then reconcile the implementation against them. |
 | Packages and services | Active | Immutable packages, release admission, installers, offline activation, rollback, command resolution, and rights-limited execution are established foundations. | Define and qualify the complete 1.0 service lifecycle, support, migration, update, compatibility, and recovery promises. |
 | Windvale OS | Ongoing | Probe 40 qualifies protected processes, capability IPC, bounded preemption, generation-safe memory reuse, exact WVB portability, and growing source ownership of the fixed process machine. Filesystem work has bounded host and FAT32 foundations. | Bind a surviving consumer and FAT32 media, enter the ready filesystem provider, complete one bounded guest read with rollback and teardown, then advance networking without claiming arbitrary application launch. |
@@ -150,12 +151,9 @@ one existing owner. The
 and [typed directory's 24 cases](../Evidence/2026-09-04-Wvb-Typed-Directory-Development.json)
 have separate focused selectors and changed-source rejection evidence.
 
-The separate cross-call publication checkpoint now passes 39 cases in 15.35
-seconds warm. Constructing missing compiler packages and running the preceding
-37-case selection took 29.02 minutes under an approved one-hour cap. Complete
-products were retained; the expanded run reused them and freshly executed its
-cases. These are local observations, not clean-machine or cross-host claims.
-See the [publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json).
+The [cross-call publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json)
+records 39 passing Windows cases and the separate cold-construction cost; it is
+not clean-machine or cross-host qualification.
 
 The `--foundation-borrow-owners` selector combines
 [18 owner-flow groups](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json),
@@ -171,9 +169,11 @@ cached products keep fresh execution separate from construction. Bounded host
 minor-39 execution now has paired-host evidence. Full-verifier source
 changes retain broader routing.
 
-1. Finish native borrow lowering and wider payload integration, then real-consumer
-   execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
-   qualify the full path on both hosts, then complete exclusive borrow, take, and mapping.
+1. Deliver the maintained package parser using immutable Option/Result borrowing
+   through the ordinary build, safe publication, and Windows/Debian execution.
+   Native record/scalar/text execution already has selected paired-host evidence.
+   Close the consumer gate separately from wider payloads, exclusive borrowing,
+   take, and mapping; do not report all of these as one indefinitely pending task.
 2. Continue required Libraries 1.0 through primitive ordering, collection
    mutation and slicing, bounded byte construction, and real consumers.
 3. Advance the remaining WVDB 1.0 specifications and reconcile its useful

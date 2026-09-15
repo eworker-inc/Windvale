@@ -2,12 +2,37 @@
 
 > Status: Current; Project 4 direction approved, integration in progress
 > Authority: Informative; existing specifications and accepted decisions remain authoritative
-> Last reviewed: 2026-09-10
+> Last reviewed: 2026-09-15
 
-The package-library migration needs a project build that supplies the same
-explicit target and authenticated source admission already used by the split
-compiler. Reconstructing the current build driver alone does not provide that
-integration.
+Project 4 metadata and normal repository routing now exist. The remaining
+consumer work is source-closure migration, safe output replacement, and execution
+evidence, not simply adding a target directive to project files. The
+[package-parser milestone](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)
+owns the finite delivery result; later Option/Result operations and installed
+toolchain promotion have separate gates.
+
+## Current delivery boundary
+
+- Project 4 launchers use the authenticated split pipeline but require a new
+  `.wvb` output path. They do not yet invoke the current transactional publisher
+  to replace an existing output. New-file publication is not replacement evidence.
+- Current-source publisher construction has advanced past validation-only
+  execution: Windows/Linux executables can be materialized, with the recorded
+  Windows smoke test below. Native failure/recovery behavior and launcher
+  integration still need their own tests before claiming the consumer milestone.
+- The local package migration is incomplete. Some affected projects still mix
+  modern package sources with legacy dependencies such as shared SHA-256.
+  Reconcile the complete dependency closure without duplicate implementations,
+  source-header rewriting, or implicit targets.
+- The 15 September read-only preflight found no current Windows compiler-cache
+  entry. The focused Project 4 helper plan estimates 1,200 seconds, maximum
+  2,400 seconds; the package plan estimates 645 seconds. Neither was launched
+  under the ten-minute development budget. Cold acquisition requires explicit
+  advance approval for a named command and maximum duration.
+
+Once target and source closure are known, convert manifests mechanically and
+review their exact inputs. Do not count each converted manifest as a separate
+product milestone or weaken target admission to make migration appear complete.
 
 ## Development checkpoint
 
@@ -65,22 +90,22 @@ migration and publication promotion. Retained diagnostic executables must not be
 substituted into installer inventories or labeled current solely because selected
 consumer tests pass.
 
-Publication is a separate integration dependency: both frozen native publishers
-reject the migrated package test bytecode, while a rebuilt current publisher's
-validation-only executable accepts it. Generic hosted packaging does not provide
-the native transactional publication adapter. The specialized constructor remains
-tied to fixed old artifacts and function offsets; its current-source check stops
-at reproducible native images, not a current publishing executable. The next
-publication work must preserve native validation, transaction state, and failure
-guarantees while connecting that current verifier. See the
+The earlier publication checkpoint found that both frozen native publishers
+rejected the migrated package test bytecode, while a rebuilt current publisher's
+validation-only executable accepted it. Generic hosted packaging did not provide
+the native transactional publication adapter. At that checkpoint the specialized
+constructor was tied to fixed old artifacts and function offsets, and the
+current-source check stopped at reproducible native images. That established the
+need to preserve native validation, transaction state, and failure guarantees
+while connecting the current verifier. See the
 [publisher validation boundary evidence](../Evidence/2026-09-09-Current-Publisher-Validation-Boundary.json).
 
-The maintainer has approved
+To address that earlier boundary, the maintainer approved
 [bounded current-source publisher construction](../Decisions/0962-Construct-Current-Source-Wvb-Publishers.md):
 checked identities, named symbols and typed relocations, existing segmented
 native images, and the shared native transaction state. Frozen release products
-remain unchanged. Implementation must still connect and test an actual publisher
-before the Project 4 launchers can use it.
+remain unchanged. The subsequent materialization checkpoint below constructs an
+actual publisher; launcher integration and full transaction tests remain open.
 
 The first construction stage now checks the six small native publisher objects
 by named imports/exports and typed relocation structure. Its focused Windows

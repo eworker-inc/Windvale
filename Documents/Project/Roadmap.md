@@ -2,7 +2,7 @@
 
 > Status: Current dependency plan for the direct Windvale 1.0 product
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-06
+> Last reviewed: 2026-09-15
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -79,14 +79,14 @@ independent library contracts and consumers may advance in parallel.
 
 Immediate sequence:
 
-1. finish the remaining operand, owned-payload, and authority-operation composition and
-   source value-classification reconciliation for the immutable Option/Result
-   candidate, then audit complete admission; retain the gate while current
-   metadata, typing, loan-flow, and collection/callable probes cover components
-   rather than the complete compiler-to-runtime contract;
-2. implement bounded execution, reproduce it on Linux, and qualify the complete
-   compiler-to-runtime path;
-3. complete Option/Result take and mapping operations;
+1. close the [package-parser delivery milestone](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing):
+   reconcile the maintained source closure, use the normal Project 4 build and
+   native publication path, and demonstrate the consumer on Windows/Debian;
+   bounded immutable-borrow interpreter/native execution already has selected
+   paired-host evidence;
+2. complete wider owned-payload composition and exclusive borrowing as separately
+   scoped and verified deliverables;
+3. complete Option/Result take and mapping operations as separate deliverables;
 4. add primitive ordering, collection mutation and slicing, and bounded byte
    construction; and
 5. migrate required real consumers and run one paired-host Libraries 1.0 gate.

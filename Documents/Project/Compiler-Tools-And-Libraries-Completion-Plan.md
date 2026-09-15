@@ -1,13 +1,14 @@
 # Compiler, tools, and libraries completion plan
 
-> Status: Proposed completion sequence based on the 6 September 2026 repository review
+> Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-06
+> Last reviewed: 2026-09-15
 
-The next useful result is complete Option/Result support through the compiler,
-verifier, runtime, libraries, and a real application. Continue from that result
-in substantial usable chunks, with short checks during implementation and one
-combined affected verification plan at each chunk boundary.
+The next result is the maintained package parser using canonical Option/Result
+through the ordinary project build, safe publication, and Windows/Debian
+execution. Close that result separately from exclusive borrowing, take, mapping,
+and the wider Libraries 1.0 suite. The maintainer approved this delivery split on
+15 September 2026; it changes progress reporting, not language or release scope.
 
 This plan coordinates the [roadmap](Roadmap.md),
 [Libraries 1.0 delivery plan](Windvale-Libraries-1.0-Plan.md), and
@@ -22,7 +23,7 @@ Windvale OS and optional profiles retain their own gates.
 | Area | What already works | Remaining work |
 | --- | --- | --- |
 | Frozen Language 1.0 compiler | The [Slice 8 decision](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) closes its exact paired-host compiler and reconstruction gate. | Preserve that baseline. Complete versioned library-driven compiler/runtime additions and integrate the selected generation into the delivered toolchain. Cold construction remains performance work. |
-| Option/Result | Canonical variant declarations, immutable projection publication, and focused verifier components exist. The [6 September operand checkpoint](../Evidence/2026-09-06-Foundation-Borrow-Operand-Integration.json) passes 185 groups on Windows and Debian. | Complete WVB 1.39 admission remains closed. Owned payloads, authority operations, source value classification, runtime retention, exclusive borrow, take, mapping, and a real consumer remain. |
+| Option/Result | Canonical variants, complete verification, and bounded immutable-borrow execution exist. [Fresh source](../Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json) and [native execution](../Evidence/2026-09-08-Native-Foundation-Borrow-Execution.json) have selected Windows/Debian evidence. | Deliver the maintained consumer through the normal build/publication path. Wider owned payloads, exclusive borrow, take, mapping, and installed promotion remain separate gaps. |
 | Foundation and Data | Memory/collection contracts, bounded components, byte algorithms, SHA-256, and database JSON implementations provide starting points. | Close public operations and ownership behavior; extract shared data APIs and migrate consumers. General CBOR is still unimplemented according to the library owner plan. |
 | Hosted libraries | Filesystem/storage facades, operation state machines, network values, and bounded hosted network/TLS/HTTP implementations exist. | Deliver the selected Language 1.0 APIs, instance binding, provider lifecycle, and shared consumers. Existing isolated evidence does not qualify the complete Backend profile. |
 | Developer and delivery tools | Native build, verification, execution, assembly, linking, packaging, recovery, editor grammar, and a bounded browser playground exist. | Reconcile delivered compiler/package identities, finish installed workflows and service operations, and document exact supported targets. Editor highlighting and browser subsets do not establish full compiler support. |
@@ -35,24 +36,56 @@ for their exact recorded inputs, not an automatic pass for later source states.
 
 ## Ordered completion chunks
 
-### 1. Finish Option/Result end to end
+### 1. Deliver the package parser, then complete Option/Result
 
-Close the remaining immutable-borrow verifier composition and source
-classification seams, then implement bounded runtime retention and execution.
-Keep unsupported admission closed until the complete path is sound. Complete
-exclusive borrowing, take, and mapping with exact success/failure ownership.
-Select a maintained parser or database consumer and migrate one useful operation
-to the canonical APIs.
+#### Active milestone: package parser with immutable borrowing
 
-Exit: the real consumer compiles and executes on the declared interpreter/native
-paths; invalid lifetime, owned-copy, escape, and authority cases reject; resource
-release and deterministic output are demonstrated on Windows and Debian. This
-is one delivery chunk even when implementation needs several focused commits.
+Consumer: `Libraries/Package/Canonical-Package-Text.wv` decimal parsing and its
+maintained package-lock consumer. Replace the private presence/value result with
+canonical `Option<u64>` and exercise immutable payload borrowing without changing
+decimal syntax, overflow rejection, or package wire formats. Do not add Result
+to an operation that only needs optional presence to satisfy the milestone name.
+
+| Gate | Remaining work | Completion evidence |
+| --- | --- | --- |
+| Source closure | Finish the consumer migration and reconcile every affected project dependency. Shared SHA-256 still has legacy callers; do not mix source editions or create a second SHA implementation. | The maintained projects compile with declared source inventories, profiles, and explicit targets, without diagnostic source rewriting. |
+| Normal build and publication | Reuse Project 4 routing and connect current-source native publication. Manifest conversion is mechanical once each project's target and closure are known. | Ordinary `Build-Wvb` builds and safely replaces the output. Pre-publication rejection preserves prior bytes; injected transaction failures report the contract's exact completion or indeterminate state, without automatic replay. |
+| Consumer behavior | Run maintained parser/lock cases and the affected borrow checks using the selected current products. | Valid, absent, zero, maximum, overflow, malformed, and invalid-span behavior passes; repeated inputs produce identical WVB; declared execution paths pass on Windows and Debian. |
+| Delivery record | Record exact inputs, targets, commands, elapsed time, resource limits, and remaining exclusions. | Evidence identifies the usable consumer and distinguishes local tests, paired-host execution, and installed promotion. |
+
+The existing `package-format` and production-admission owners own these
+boundaries. Extend them with focused cases where needed; do not introduce a new
+coordinator or replay unrelated suites. This milestone does not wait for every
+Option/Result operation or installed-toolchain qualification. It does not claim
+arbitrary payload or target support when only its declared subset passes.
+
+The 15 September checkout review found an incomplete package migration, no
+current Windows compiler-cache entry, and a package plan estimated at 645 seconds
+before accounting for unknown cold construction. The Project 4 helper plan
+estimates 1,200 seconds, with a 2,400-second maximum. Neither plan was executed
+under the ten-minute development budget. These are planning observations, not
+passing execution evidence or estimates for the whole feature.
+
+#### Following milestones: complete Option/Result operations
+
+Track these as separate deliverables, not additions to the active consumer gate:
+
+1. Wider owned-payload composition with a named consumer and exact supported
+   shapes; retain copying, escape, lifetime, and authority rejection cases.
+2. Exclusive borrowing with mutation, alias exclusion, and release behavior.
+3. Take with exact ownership transfer and post-take owner state on every path.
+4. Mapping with payload/callback ownership, failure, and bounded resource use.
+
+Before starting each, enumerate its finite accepted public operations, existing
+implementation, missing implementation, consumer, targets, and focused verifier.
+An operation is complete only when those rows have evidence on its claimed hosts.
+Report the immutable-borrow consumer as delivered when its gates close, even
+while these later milestones remain open.
 
 ### 2. Finish the usable Foundation nucleus
 
-Follow Option/Result with primitive ordering, collection mutation and slicing,
-and bounded bytes/text construction. Close the remaining required numeric
+Follow the selected Option/Result milestones with primitive ordering, collection
+mutation and slicing, and bounded bytes/text construction. Close the remaining required numeric
 conversion, parsing, Decimal128, map/set/iterator/arena, formatting, memory-budget,
 operation, and task API rows from the accepted Foundation registry. Distinguish
 already implemented language operations from missing public library operations.
@@ -128,8 +161,10 @@ Finishing the compiler and libraries alone does not qualify Windvale 1.0.
 
 At the start of each chunk, enumerate its finite public operations, accepted
 contract, source owners, consumer, target rows, and existing verifier selectors.
-Mark each row implemented, locally verified, paired-host qualified, or pending
-with a concrete blocker. Resolve draft API decisions before dependent code.
+Separate existing implementation, source/API migration, missing code, and missing
+verification; these are different kinds of work. Mark each row implemented,
+locally verified, paired-host qualified, or pending with a concrete blocker.
+Resolve draft API decisions before dependent code.
 Do not equate an existing filename or a passing storage suite with API closure.
 
 Keep one main feature chunk active. Contract review, consumer preparation, and
@@ -168,5 +203,6 @@ from actual delivery time, unresolved API rows, and cold verification costs.
 - Report implemented, verified, deferred, elapsed time, and the next gate
   separately. This planning change needs documentation checks only.
 
-The immediate recommendation is chunk 1. The existing library plan already
-names it as active; finish that usable result before widening the feature lane.
+The active result is chunk 1's package-parser milestone. Status updates name its
+unfinished gate and next executable result, rather than repeating "Option/Result
+pending" or estimating a percentage for the entire draft Libraries 1.0 catalog.

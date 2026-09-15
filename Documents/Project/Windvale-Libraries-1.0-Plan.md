@@ -2,7 +2,7 @@
 
 > Status: Proposed suite catalog with an active Option/Result implementation goal
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-08
+> Last reviewed: 2026-09-15
 
 ## Status
 
@@ -33,14 +33,20 @@ The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Librarie
 coordinates this library sequence with compiler/runtime support, installed tools,
 real consumers, and testing at substantial chunk boundaries.
 
-The active goal is end-to-end immutable Option/Result borrowing: finish payload
-and lifetime verification, add bounded runtime retention/execution, enable
-complete admission only when those boundaries are ready, and migrate one real
-consumer demonstrating success and safe failure. Exclusive borrowing, take,
-and mapping follow as separate goals. Preserve exact ownership, failure behavior, authority, and
-declared target limits. Windows and Debian evidence is required before claiming
-the chunk complete across hosts. The broader library catalog remains a draft;
-this goal does not accept unreviewed API signatures.
+The active result is the maintained package parser using canonical Option/Result
+through the ordinary project build, safe publication, and Windows/Debian
+execution. The [delivery gates](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)
+name its source closure, build/publication, consumer behavior, and evidence work.
+Bounded immutable-borrow verification and interpreter/native execution already
+have selected paired-host evidence; they must not be reported as wholly missing.
+Consumer migration and ordinary publication integration remain unfinished.
+
+Wider owned payloads, exclusive borrowing, take, and mapping have separate
+following milestones. Completing all of them is not a prerequisite for closing
+the declared immutable-borrow consumer result. Preserve exact ownership, failure
+behavior, authority, and target limits. The broader library catalog remains a
+draft; this delivery split does not accept unreviewed API signatures or weaken
+the complete Libraries 1.0 gate.
 
 During implementation, use small diagnostic checks where needed. Once the
 chunk is coherent, inspect one combined verification plan, share construction
@@ -54,6 +60,13 @@ The [verification throughput redesign](Verification-Throughput-Plan.md) remains
 supporting work with open performance targets; it does not block implementation
 until every verifier is fast. Commit coherent verified results and push them to
 both configured remotes, `origin` and `github`.
+
+## Implementation checkpoint history
+
+The following records describe their exact historical inputs and limits. Earlier
+statements about closed admission or missing runtime support are superseded by
+the later complete-verifier, runtime, and native execution records below. Use the
+active delivery gates above for current remaining work.
 
 The runtime preparation checkpoint has a bounded, non-consuming payload
 reader with 16 grouped tests. It checks live scalar aggregate cells and identifies
