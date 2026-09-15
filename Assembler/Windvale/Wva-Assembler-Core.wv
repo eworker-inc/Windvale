@@ -1,16 +1,20 @@
-module Wvaˉassemblerˉcore profile hosted;
+#!wv/1 en@1
+module Wvaˉassemblerˉcore;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 import Foundationˉbyteˉordering as Byteˉordering;
 import Foundationˉdecimalˉparsing as Decimalˉparsing;
 import Foundationˉmachineˉcontracts as Machineˉcontracts;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Headerˉword: bytes = [119, 105, 110, 100, 118, 97, 108, 101, 45, 97, 115, 115, 101, 109, 98, 108, 121];
 data Versionˉword: bytes = [49];
@@ -43,14 +47,14 @@ data Byteˉvalues: bytes = [
     240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
 ];
 
-enum Wvaˉtokenˉkind {
+enum Wvaˉtokenˉkind: i32 {
     Invalid = 0;
     Word = 1;
     Newline = 2;
     End = 3;
 }
 
-enum Wvaˉscanˉstatus {
+enum Wvaˉscanˉstatus: i32 {
     Valid = 0;
     Sourceˉtooˉlarge = 1;
     Invalidˉutf8 = 2;
@@ -89,7 +93,7 @@ record Wvaˉscan {
     Failureˉcolumn: u32;
 }
 
-enum Wvaˉsemanticˉstatus {
+enum Wvaˉsemanticˉstatus: i32 {
     Valid = 0;
     Wva1001 = 1;
     Wva1002 = 2;

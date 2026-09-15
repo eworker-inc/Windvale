@@ -1,10 +1,15 @@
-module Windvaleˉstandardˉbyteˉoutputˉresponseˉcore profile portable;
+#!wv/1 en@1
+module Windvaleˉstandardˉbyteˉoutputˉresponseˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const OUTPUT_RESPONSE_MAGIC: u32 = 1464817239u32;
 const OUTPUT_RESPONSE_BYTES: u32 = 32u32;
 const OUTPUT_PROVIDER_GENERATION: u64 = 1u64;
 
-export enum Standardˉoutputˉproviderˉstatus {
+export enum Standardˉoutputˉproviderˉstatus: i32 {
     Completed = 0;
     Rejected = 1;
     Peerˉclosed = 2;

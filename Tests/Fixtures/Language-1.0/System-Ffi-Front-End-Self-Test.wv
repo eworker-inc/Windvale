@@ -1,4 +1,10 @@
-module Languageˉoneˉsystemˉffiˉfrontˉendˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉsystemˉffiˉfrontˉendˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
@@ -6,8 +12,6 @@ import Compilerˉsourceˉlexer as Lexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉtarget as Target;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Canonical() -> text {
     return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";

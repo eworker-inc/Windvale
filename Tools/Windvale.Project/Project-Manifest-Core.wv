@@ -1,6 +1,11 @@
-module Windvaleˉproject profile portable;
+#!wv/1 en@1
+module Windvaleˉproject;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Windvaleˉprojectˉstatus {
+
+export enum Windvaleˉprojectˉstatus: i32 {
     Valid = 0;
     Invalidˉheader = 1001;
     Invalidˉtext = 1002;

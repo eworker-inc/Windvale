@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉstartupˉinstantiation profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉstartupˉinstantiation;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 record Relativeˉvalue {
     Valid: bool;

@@ -1,4 +1,9 @@
-module Durableˉdatabaseˉlifecycle profile hosted;
+#!wv/1 en@1
+module Durableˉdatabaseˉlifecycle;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉdatabaseˉbootstrap as Bootstrap;
 import Durableˉdatabaseˉengine as Engine;
@@ -6,9 +11,8 @@ import Randomˉaccessˉstorage as Storage;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
 
-capability storage.random_access_v1;
 
-export enum Databaseˉdurableˉlifecycleˉstatus {
+export enum Databaseˉdurableˉlifecycleˉstatus: i32 {
     Created = 0;
     Resumed = 1;
     Opened = 2;

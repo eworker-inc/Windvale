@@ -1,10 +1,15 @@
-module Compilerˉnativeˉx64ˉloweringˉstagingˉcontent profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉstagingˉcontent;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 
-export enum Compilerˉnativeˉx64ˉstagingˉcontentˉstatus {
+export enum Compilerˉnativeˉx64ˉstagingˉcontentˉstatus: i32 {
     Active = 0;
     Complete = 1;
     Invalidˉplan = 2;

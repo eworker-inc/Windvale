@@ -19,11 +19,11 @@ echo native installation command dispatch step=build-selection-and-bundle-tools 
 call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Command-Resolver.wvproj" ^
     "%Work%\Resolver.wvb" || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Resolver.wvb" "%Work%\Resolver.exe" windows || goto :cleanup
+call "%Native%\Package-Hosted-Wvb.cmd" current 6 "%Work%\Resolver.wvb" "%Work%\Resolver.exe" windows || goto :cleanup
 call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
+node "%Native%\Package-Current-Segmented-Wvb.mjs" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
 
 echo native installation command dispatch step=build-package-payloads item=2/7 packages=2
 call "%Native%\Build-Wvdb-Query-Package.cmd" ^
@@ -54,7 +54,7 @@ echo native installation command dispatch step=lower-wvdb-host item=4/7
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
     "%Work%\Lowerer.wvb" || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache || goto :cleanup
 "%Work%\Lowerer.exe" "%Work%\Wvdb-Query.wvb" "%Work%\Wvdb-Query.wvo" >nul || goto :cleanup
 
 echo native installation command dispatch step=bind-rights-reduced-provider item=5/7 target=windows-x64

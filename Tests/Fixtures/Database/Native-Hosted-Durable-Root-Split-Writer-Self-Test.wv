@@ -1,11 +1,15 @@
-module Nativeˉhostedˉdurableˉrootˉsplitˉwriterˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉdurableˉrootˉsplitˉwriterˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉrootˉsplitˉwriter as Writer;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Logical;
 
-capability storage.random_access_v1;
 
 fn Emptyˉbytes() -> bytes {
     let Unit: bytes = Bytesˉfromˉu8(0u8);

@@ -1,4 +1,10 @@
-module Languageˉoneˉauthenticatedˉforeignˉbindingˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉauthenticatedˉforeignˉbindingˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉforeignˉbinding as Foreignˉbinding;
@@ -9,8 +15,6 @@ import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
 import Compilerˉsourceˉtarget as Target;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Patchˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
     return Bytesˉconcat(

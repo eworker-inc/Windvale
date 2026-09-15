@@ -1,4 +1,9 @@
-module Windvaleˉpackageˉbundleˉverifier profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉbundleˉverifier;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
@@ -8,7 +13,7 @@ import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉmanifest as Manifest;
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉpackageˉbundleˉstatus {
+export enum Windvaleˉpackageˉbundleˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1401;
     Invalidˉheader = 1402;

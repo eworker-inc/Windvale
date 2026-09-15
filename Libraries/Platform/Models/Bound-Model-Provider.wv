@@ -1,9 +1,13 @@
-module Boundˉmodelˉprovider profile hosted;
+#!wv/1 en@1
+module Boundˉmodelˉprovider;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability model.catalog_v1 version 1;
+requires capability model.inference_v1 version 1;
 
 import Windvaleˉmodelˉprotocol as Protocol;
 
-capability model.catalog_v1;
-capability model.inference_v1;
 
 export record Boundˉmodelˉcatalogˉresult {
     Requestˉstatus: Protocol.Modelˉcodecˉstatus;

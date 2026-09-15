@@ -1,4 +1,9 @@
-module Compilerˉsourceˉwvbˉmemoryˉadapter profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwvbˉmemoryˉadapter;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;

@@ -1,6 +1,11 @@
-module Compilerˉnativeˉpublication profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉpublication;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-enum Nativeˉpublicationˉstatus {
+
+enum Nativeˉpublicationˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;

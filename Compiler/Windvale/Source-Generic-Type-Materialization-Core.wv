@@ -1,4 +1,9 @@
-module Compilerˉsourceˉgenericˉtypeˉmaterialization profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉgenericˉtypeˉmaterialization;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
@@ -7,7 +12,7 @@ import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 
-export enum Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus {
+export enum Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus: i32 {
     Valid = 0;
     Invalidˉevidence = 1;
     Invalidˉlayout = 2;

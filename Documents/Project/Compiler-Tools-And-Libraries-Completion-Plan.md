@@ -4,10 +4,11 @@
 > Authority: Informative; accepted specifications and decisions own contracts
 > Last reviewed: 2026-09-15
 
-The next result is the maintained package parser using canonical Option/Result
-through the ordinary project build, safe publication, and Windows/Debian
-execution. Close that result separately from exclusive borrowing, take, mapping,
-and the wider Libraries 1.0 suite. The maintainer approved this delivery split on
+The maintained package parser now uses canonical `Option<u64>` and immutable
+payload borrowing through ordinary project build, safe publication, and
+Windows/Debian package execution. The next milestones are wider owned payloads,
+exclusive borrowing, take, mapping, and the wider Libraries 1.0 suite. The
+maintainer approved this delivery split on
 15 September 2026; it changes progress reporting, not language or release scope.
 
 This plan coordinates the [roadmap](Roadmap.md),
@@ -23,7 +24,7 @@ Windvale OS and optional profiles retain their own gates.
 | Area | What already works | Remaining work |
 | --- | --- | --- |
 | Frozen Language 1.0 compiler | The [Slice 8 decision](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) closes its exact paired-host compiler and reconstruction gate. | Preserve that baseline. Complete versioned library-driven compiler/runtime additions and integrate the selected generation into the delivered toolchain. Cold construction remains performance work. |
-| Option/Result | Canonical variants, complete verification, and bounded immutable-borrow execution exist. [Fresh source](../Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json) and [native execution](../Evidence/2026-09-08-Native-Foundation-Borrow-Execution.json) have selected Windows/Debian evidence. | Deliver the maintained consumer through the normal build/publication path. Wider owned payloads, exclusive borrow, take, mapping, and installed promotion remain separate gaps. |
+| Option/Result | Canonical variants and bounded immutable borrowing work in the maintained package parser/lock consumer through the normal build/publication path on Windows and Debian. See the [integration evidence](../Evidence/2026-09-15-Source-Edition-Package-Integration.json). | Wider owned payloads, exclusive borrow, take, mapping, and installed promotion remain separate gaps. |
 | Foundation and Data | Memory/collection contracts, bounded components, byte algorithms, SHA-256, and database JSON implementations provide starting points. | Close public operations and ownership behavior; extract shared data APIs and migrate consumers. General CBOR is still unimplemented according to the library owner plan. |
 | Hosted libraries | Filesystem/storage facades, operation state machines, network values, and bounded hosted network/TLS/HTTP implementations exist. | Deliver the selected Language 1.0 APIs, instance binding, provider lifecycle, and shared consumers. Existing isolated evidence does not qualify the complete Backend profile. |
 | Developer and delivery tools | Native build, verification, execution, assembly, linking, packaging, recovery, editor grammar, and a bounded browser playground exist. | Reconcile delivered compiler/package identities, finish installed workflows and service operations, and document exact supported targets. Editor highlighting and browser subsets do not establish full compiler support. |
@@ -38,20 +39,22 @@ for their exact recorded inputs, not an automatic pass for later source states.
 
 ### 1. Deliver the package parser, then complete Option/Result
 
-#### Active milestone: package parser with immutable borrowing
+<a id="active-milestone-package-parser-with-immutable-borrowing"></a>
+
+#### Completed selected milestone: package parser with immutable borrowing
 
 Consumer: `Libraries/Package/Canonical-Package-Text.wv` decimal parsing and its
-maintained package-lock consumer. Replace the private presence/value result with
-canonical `Option<u64>` and exercise immutable payload borrowing without changing
-decimal syntax, overflow rejection, or package wire formats. Do not add Result
-to an operation that only needs optional presence to satisfy the milestone name.
+maintained package-lock consumer. Canonical `Option<u64>` replaces the private
+presence/value result, with immutable payload borrowing and unchanged decimal
+syntax, overflow rejection, and package wire formats. An operation needing only
+optional presence does not acquire an artificial Result layer.
 
-| Gate | Remaining work | Completion evidence |
+| Gate | Delivered scope | Completion evidence |
 | --- | --- | --- |
-| Source closure | Finish the consumer migration and reconcile every affected project dependency. Shared SHA-256 still has legacy callers; do not mix source editions or create a second SHA implementation. | The maintained projects compile with declared source inventories, profiles, and explicit targets, without diagnostic source rewriting. |
-| Normal build and publication | Reuse Project 4 routing and connect current-source native publication. Manifest conversion is mechanical once each project's target and closure are known. | Ordinary `Build-Wvb` builds and safely replaces the output. Pre-publication rejection preserves prior bytes; injected transaction failures report the contract's exact completion or indeterminate state, without automatic replay. |
-| Consumer behavior | Run maintained parser/lock cases and the affected borrow checks using the selected current products. | Valid, absent, zero, maximum, overflow, malformed, and invalid-span behavior passes; repeated inputs produce identical WVB; declared execution paths pass on Windows and Debian. |
-| Delivery record | Record exact inputs, targets, commands, elapsed time, resource limits, and remaining exclusions. | Evidence identifies the usable consumer and distinguishes local tests, paired-host execution, and installed promotion. |
+| Source closure | 394 connected Project 4 manifests and 593 edition-1 sources, retaining one shared SHA-256 implementation. | Native admission on both hosts, plus exact two-generation compiler convergence and compiler-scale verification. |
+| Normal build and publication | Current-source compilation, authenticated cache reuse, and native final publication. | Nine launcher/publication cases per host, including replacement, aliases, malformed WVB, and bad-lock preservation. Transaction fault-injection qualification remains separate. |
+| Consumer behavior | Maintained parser/lock and related package consumers use current native lowering. | 82 package-format groups and 43 borrow/pointer cases per host; bundle, generation, resolution, dispatch, and offline-stage workflows also pass. |
+| Delivery record | Exact input identities, commands, measured durations where available, runtime profiles, and exclusions. | The [integration record](../Evidence/2026-09-15-Source-Edition-Package-Integration.json) distinguishes selected paired-host execution from installed promotion and full qualification. |
 
 The existing `package-format` and production-admission owners own these
 boundaries. Extend them with focused cases where needed; do not introduce a new
@@ -67,8 +70,8 @@ executable. This is not independent Linux construction or fault-injection
 qualification; exact inputs and exclusions are in the
 [publication evidence](../Evidence/2026-09-15-Project4-Native-Publication.json).
 
-The package migration remains uncommitted, but its native-lowering blocker is
-resolved for the selected current product. The approved current-lowerer rebuild
+The earlier native-lowering blocker was resolved for the selected current
+product. The approved current-lowerer rebuild
 completed in 2 minutes 10 seconds; 43 focused Windows cases passed. Both the
 canonical parser and package-lock tests now return 42 on Windows and Debian
 using explicitly selected native lowering and image-mode packaging. The earlier
@@ -76,14 +79,27 @@ package-lock rejection came from the older lowerer. See the
 [current-lowerer execution evidence](../Evidence/2026-09-15-Current-Lowerer-Package-Execution.json)
 for exact identities, runtime profiles, cache reuse, and host limits.
 
-Package-lock still uses ordinary Option matching. Moving its four matches to
-immutable borrowing exposes an emitter `Invalid analysis / Invalid WIR`
-rejection; those unsuccessful changes were withdrawn. Next: close that compiler
-boundary, integrate the selected lowerer into the maintained package verification
-path, and reconcile shared SHA-256's legacy callers before committing the source
-migration. The pinned packager and installed identities are unchanged. These
-selected executions do not establish full package delivery or independent
-dual-host lowerer construction.
+The package-lock borrow rejection is resolved in the delivered source batch.
+Its large scanner exceeded the documented per-function borrow-proof bounds:
+281 blocks and 87 slots versus the 64/64 limits. The repeated digest-and-size
+validation now belongs to one private lock-content reader, whose borrowed match
+uses seven blocks and six slots. The canonical decimal parser still returns
+`Option<u64>`; that private extraction changes no compiler limit, public API,
+or wire format. Forty-two
+new content cases plus the existing lock tests pass on Windows and Debian, and
+ordinary Project 4 build/replacement produces identical WVB bytes. See the
+[borrowed lock-reader evidence](../Evidence/2026-09-15-Package-Lock-Borrowed-Content.json).
+
+The maintainer approved the expanded source-edition rollout after the dependency
+audit connected the package sources to shared compiler and verifier projects.
+The [bounded rollout plan](Repository-Source-Edition-Rollout.md) owns its
+bootstrap-first order, source classification, and completed selected gates.
+Current compiler/admission products and the lowerer are constructed on both
+hosts; the normal package paths use the current lowerer and segmented staging
+where required. Forty production-admission cases pass per host after the runner's
+private failure helper was kept within the supported native subset. Bootstrap
+pins and installed identities remain unchanged. Full installed delivery and
+repository-wide qualification are not implied by this completed consumer gate.
 
 #### Following milestones: complete Option/Result operations
 

@@ -23,9 +23,9 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%Work%\Resolver.wvb" || goto :cleanup
 
 echo native offline generation lifecycle step=package-tools item=2/4 target=windows-x64
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 6 ^
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" current 6 ^
     "%Work%\Planner.wvb" "%Work%\Planner.exe" windows || goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 6 ^
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" current 6 ^
     "%Work%\Resolver.wvb" "%Work%\Resolver.exe" windows || goto :cleanup
 
 echo native offline generation lifecycle step=verify-planner item=3/4 cases=12

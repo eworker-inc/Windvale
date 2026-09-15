@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉtreeˉcompletion profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉtreeˉcompletion;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -23,7 +28,7 @@ const DATABASE_TRANSACTION_TREE_COMPLETION_MAXIMUM_PATH_BYTES: u32 = 16777216u32
 const DATABASE_TRANSACTION_TREE_COMPLETION_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉtreeˉcompletionˉerror {
+export enum Databaseˉtransactionˉtreeˉcompletionˉerror: i32 {
     Valid = 0;
     Branchesˉfailed = 1;
     Invalidˉbranches = 2;

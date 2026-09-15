@@ -1,4 +1,9 @@
-module Terminalˉlineˉinputˉcoreˉselfˉtest profile portable;
+#!wv/1 en@1
+module Terminalˉlineˉinputˉcoreˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉterminalˉlineˉinputˉcore as Core;
 

@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉadmission profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
     let Length: u32 = Bytesˉlength(Left);

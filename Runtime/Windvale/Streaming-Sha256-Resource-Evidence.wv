@@ -1,4 +1,9 @@
-module Runtimeˉstreamingˉsha256ˉresourceˉevidence profile portable;
+#!wv/1 en@1
+module Runtimeˉstreamingˉsha256ˉresourceˉevidence;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 import Runtimeˉstreamingˉsha256ˉevidence as Evidence;

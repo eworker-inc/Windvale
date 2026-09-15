@@ -1,4 +1,9 @@
-module Windvaleˉmodelˉprotocolˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉmodelˉprotocolˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉmodelˉprotocol as Protocol;
 import Windvaleˉscriptedˉmodelˉprovider as Scripted;

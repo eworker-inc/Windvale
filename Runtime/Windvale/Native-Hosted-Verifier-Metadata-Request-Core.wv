@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequest profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉpublication as Publication;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;

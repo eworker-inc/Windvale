@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉrootˉgrowth profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉrootˉgrowth;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -17,7 +22,7 @@ const DATABASE_TRANSACTION_ROOT_GROWTH_MAXIMUM_PAGES: u32 = 63u32;
 const DATABASE_TRANSACTION_ROOT_GROWTH_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉrootˉgrowthˉerror {
+export enum Databaseˉtransactionˉrootˉgrowthˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉreplacements = 2;

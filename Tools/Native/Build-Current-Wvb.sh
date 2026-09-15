@@ -60,5 +60,12 @@ if [[ $output_path != *.wvb ]]; then
     exit 64
 fi
 
+project_header=
+IFS= read -r project_header < "$project_path" || true
+if [[ $project_header == 'windvale-project 4' ]]; then
+    node "$script_directory/Build-Wvb-Project4.mjs" "$project_path" "$output_path"
+    exit $?
+fi
+
 "$build_driver" \
     --workspace "$workspace_path" --project "$project_path" "$output_path"

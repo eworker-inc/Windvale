@@ -1,4 +1,9 @@
-module Compilerˉsourceˉforeignˉsemantics profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉforeignˉsemantics;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
 import Compilerˉsourceˉtarget as Target;
@@ -25,7 +30,7 @@ export const COMPILER_SOURCE_FOREIGN_SEMANTICS_SOURCE_NAME_BUFFER_READ: u32 = 1u
 export const COMPILER_SOURCE_FOREIGN_SEMANTICS_EXTERNAL_SYMBOL_BUFFER_READ: u32 = 1u32;
 export const COMPILER_SOURCE_FOREIGN_SEMANTICS_TARGET_UNADDRESSABLE_REASON: u32 = 2u32;
 
-export enum Compilerˉsourceˉforeignˉtypeˉkind {
+export enum Compilerˉsourceˉforeignˉtypeˉkind: i32 {
     Unknown = 0;
     U8 = 1;
     U64 = 2;
@@ -41,7 +46,7 @@ export enum Compilerˉsourceˉforeignˉtypeˉkind {
     Bytes = 12;
 }
 
-export enum Compilerˉsourceˉforeignˉsemanticˉstatus {
+export enum Compilerˉsourceˉforeignˉsemanticˉstatus: i32 {
     Valid = 0;
     Invalidˉevidence = 1;
     Resourceˉlimit = 2;

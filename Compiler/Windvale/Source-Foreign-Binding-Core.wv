@@ -1,4 +1,9 @@
-module Compilerˉsourceˉforeignˉbinding profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉforeignˉbinding;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
@@ -12,7 +17,7 @@ import Compilerˉsourceˉtarget as Target;
 // This adapter constructs semantic facts from untrusted source/catalog/target
 // bytes. A Valid result is not admission authority; the production coordinator
 // separately owns authentication and retained-snapshot identity.
-export enum Compilerˉsourceˉforeignˉbindingˉstatus {
+export enum Compilerˉsourceˉforeignˉbindingˉstatus: i32 {
     Valid = 0;
     Sourceˉstructure = 1;
     Catalogˉstructure = 2;

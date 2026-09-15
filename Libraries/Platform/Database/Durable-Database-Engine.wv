@@ -1,15 +1,19 @@
-module Durableˉdatabaseˉengine profile hosted;
+#!wv/1 en@1
+module Durableˉdatabaseˉengine;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉstorageˉexecutor as Executor;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
 
-capability storage.random_access_v1;
 
 const DATABASE_ENGINE_HEADER_BYTES: u32 = 512u32;
 
-export enum Databaseˉengineˉstatus {
+export enum Databaseˉengineˉstatus: i32 {
     Ready = 0;
     Recovered = 1;
     Recoveryˉactive = 2;

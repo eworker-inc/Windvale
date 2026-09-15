@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 data Bytesˉconcatˉtemplate: bytes = [
     139, 132, 36, 168, 8, 0, 0, 139, 140, 36, 184, 8, 0, 0, 1, 200,

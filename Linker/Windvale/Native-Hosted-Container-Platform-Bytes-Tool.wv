@@ -1,16 +1,20 @@
-module Nativeˉhostedˉcontainerˉplatformˉbytesˉtool profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉcontainerˉplatformˉbytesˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Linkerˉnativeˉhostedˉcontainerˉlinux as Linux;
 import Linkerˉnativeˉhostedˉcontainerˉwindows as Windows;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
-enum Nativeˉhostedˉcontainerˉplatformˉbytesˉstatus {
+enum Nativeˉhostedˉcontainerˉplatformˉbytesˉstatus: i32 {
     Valid = 0;
     Rejected = 1;
 }

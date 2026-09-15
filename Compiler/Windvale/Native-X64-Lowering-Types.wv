@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉtypes profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉtypes;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Compilerˉnativeˉx64ˉtypes {
     Valid: bool;

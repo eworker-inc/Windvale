@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉformatting profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉformatting;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Interpreterˉformatˉinteger(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);

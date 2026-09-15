@@ -1,4 +1,9 @@
-module Compilerˉsourceˉtarget profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉtarget;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export const COMPILER_SOURCE_TARGET_MAX_PLATFORM_SCOPES: u32 = 32u32;
 export const COMPILER_SOURCE_TARGET_WVTD_HEADER_BYTES: u32 = 64u32;

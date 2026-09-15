@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉlayout profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉlayout;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() -> u32 {
     return 76u32;

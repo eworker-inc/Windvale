@@ -1,4 +1,9 @@
-module Windvaleˉstandardˉbyteˉoutputˉcoreˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉstandardˉbyteˉoutputˉcoreˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉboundedˉoperationˉcore as Operation;
 import Windvaleˉstandardˉbyteˉoutputˉcore as Output;

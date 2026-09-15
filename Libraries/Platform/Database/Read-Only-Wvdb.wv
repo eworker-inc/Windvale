@@ -1,14 +1,18 @@
-module Readˉonlyˉwvdb profile hosted;
+#!wv/1 en@1
+module Readˉonlyˉwvdb;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability filesystem.directory_read_v1 version 1;
 
 import Readˉonlyˉdirectory as Directory;
 import Windvaleˉdatabaseˉreader as Database;
 
-capability filesystem.directory_read_v1;
 
 const MAXIMUM_WVDB_BYTES: u32 = 16416u32;
 const MAXIMUM_DIRECTORY_CHUNK: u32 = 3072u32;
 
-export enum Wvdbˉsnapshotˉstorageˉstatus {
+export enum Wvdbˉsnapshotˉstorageˉstatus: i32 {
     Notˉfound = 1;
     Notˉfile = 2;
     Permissionˉdenied = 3;
@@ -29,7 +33,7 @@ export record Wvdbˉsnapshotˉstorageˉfailure {
     Fileˉlength: u32;
 }
 
-export enum Wvdbˉsnapshotˉdatabaseˉstatus {
+export enum Wvdbˉsnapshotˉdatabaseˉstatus: i32 {
     Invalidˉsize = 1;
     Invalidˉmagic = 2;
     Unsupportedˉversion = 3;

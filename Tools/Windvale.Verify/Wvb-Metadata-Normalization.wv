@@ -1,4 +1,9 @@
-module Windvaleˉwvbˉmetadataˉnormalization profile portable;
+#!wv/1 en@1
+module Windvaleˉwvbˉmetadataˉnormalization;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);

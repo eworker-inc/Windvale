@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉplatformˉwindows profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉplatformˉwindows;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
 import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;

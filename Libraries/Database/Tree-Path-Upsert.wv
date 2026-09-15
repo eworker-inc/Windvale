@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtreeˉpathˉupsert profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtreeˉpathˉupsert;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -11,7 +16,7 @@ const DATABASE_TREE_PATH_UPSERT_MINIMUM_DEPTH: u32 = 2u32;
 const DATABASE_TREE_PATH_UPSERT_MAXIMUM_DEPTH: u32 = 8u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtreeˉpathˉupsertˉerror {
+export enum Databaseˉtreeˉpathˉupsertˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Unsupportedˉdepth = 2;

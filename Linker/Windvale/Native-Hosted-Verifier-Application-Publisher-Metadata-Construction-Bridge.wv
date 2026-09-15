@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉbridge profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉconstruction as Construction;
 

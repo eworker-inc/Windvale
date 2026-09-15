@@ -1,4 +1,9 @@
-module Linkerˉnativeˉcurrentˉpublisherˉobjectˉadmission profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉcurrentˉpublisherˉobjectˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Wvoˉobjectˉverification as Wvo;
 

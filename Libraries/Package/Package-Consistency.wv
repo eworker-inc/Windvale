@@ -1,11 +1,15 @@
-module Windvaleˉpackageˉconsistency profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉconsistency;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉmanifest as Manifest;
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉpackageˉconsistencyˉstatus {
+export enum Windvaleˉpackageˉconsistencyˉstatus: i32 {
     Valid = 0;
     Invalidˉmanifest = 1201;
     Invalidˉlock = 1202;

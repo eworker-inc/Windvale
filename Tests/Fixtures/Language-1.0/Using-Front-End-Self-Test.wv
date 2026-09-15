@@ -1,11 +1,15 @@
-module Languageˉoneˉusingˉfrontˉendˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉusingˉfrontˉendˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbodyˉparser as Bodies;
 import Compilerˉsourceˉlexer as Lexer;
 import Compilerˉsourceˉset as Sourceˉset;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Parse(
     Source: text,

@@ -1,11 +1,15 @@
-module Nativeˉhostedˉsnapshotˉpageˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉsnapshotˉpageˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Nativeˉhostedˉsnapshotˉpage as Snapshot;
 import Windvaleˉdatabaseˉstorageˉpage as Page;
 
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 export fn Main() -> i32 {
     if process.argument_count() != 1u32 { return 1; }

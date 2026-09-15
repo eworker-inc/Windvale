@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉhostedˉtoolˉruntimeˉheaderˉbridge profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉtoolˉruntimeˉheaderˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Runtimeˉnativeˉhostedˉtoolˉruntimeˉheader as Runtimeˉheader;
 

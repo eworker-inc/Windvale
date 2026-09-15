@@ -1,4 +1,9 @@
-module Foundationˉbyteˉconstructionˉdemo profile portable;
+#!wv/1 en@1
+module Foundationˉbyteˉconstructionˉdemo;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 

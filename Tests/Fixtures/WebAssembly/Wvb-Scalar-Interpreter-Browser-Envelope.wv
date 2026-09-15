@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);

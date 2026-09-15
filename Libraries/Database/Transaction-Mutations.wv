@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉmutations profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉmutations;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const DATABASE_TRANSACTION_MUTATIONS_MAGIC: u32 = 1297372759u32;
 const DATABASE_TRANSACTION_MUTATIONS_VERSION: u32 = 1u32;
@@ -9,13 +14,13 @@ const DATABASE_TRANSACTION_MUTATIONS_MAXIMUM_COUNT: u32 = 32u32;
 const DATABASE_TRANSACTION_MUTATION_MAXIMUM_KEY_BYTES: u32 = 4096u32;
 const DATABASE_TRANSACTION_MUTATION_MAXIMUM_VALUE_BYTES: u32 = 61440u32;
 
-export enum Databaseˉtransactionˉmutationˉkind {
+export enum Databaseˉtransactionˉmutationˉkind: i32 {
     Invalid = 0;
     Put = 1;
     Delete = 2;
 }
 
-export enum Databaseˉtransactionˉmutationsˉerror {
+export enum Databaseˉtransactionˉmutationsˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

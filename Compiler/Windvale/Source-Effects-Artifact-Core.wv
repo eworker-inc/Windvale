@@ -1,4 +1,8 @@
-module Compilerˉsourceˉeffects profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉeffects;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
@@ -6,7 +10,7 @@ import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
-export enum Compilerˉsourceˉeffectˉstatus {
+export enum Compilerˉsourceˉeffectˉstatus: i32 {
 Valid = 0;
 Sourceˉsymbols = 1;
 Sourceˉwir = 2;

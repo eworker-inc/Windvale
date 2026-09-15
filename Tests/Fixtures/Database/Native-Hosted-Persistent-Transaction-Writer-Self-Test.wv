@@ -1,4 +1,9 @@
-module Nativeˉhostedˉpersistentˉtransactionˉwriterˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉpersistentˉtransactionˉwriterˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉpersistentˉtransactionˉwriter as Persistent;
 import Durableˉtransactionˉwriter as Writer;
@@ -9,7 +14,6 @@ import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉtransactionˉmutations as Mutations;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 fn Same(Left: bytes, Right: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Left);

@@ -43,6 +43,12 @@ if "%~2"=="" (
     set "OutputPath=%~f2"
 )
 set "OutputResource=%OutputPath:\=/%"
+set "ProjectHeader="
+if exist "%ProjectPath%" for /f "usebackq delims=" %%H in ("%ProjectPath%") do if not defined ProjectHeader set "ProjectHeader=%%H"
+if "%ProjectHeader%"=="windvale-project 4" (
+    node "%RepositoryRoot%\Tools\Native\Build-Wvb-Project4.mjs" "%ProjectPath%" "%OutputPath%"
+    exit /b
+)
 
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%OutputResource%"
 exit /b %ERRORLEVEL%

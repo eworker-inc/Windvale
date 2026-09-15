@@ -1,7 +1,11 @@
-windvale-project 2
+windvale-project 4
 root "Tools/Windvale.Publish/Native-Hosted-Verifier-Application-Publisher.wv"
 source "Foundation/Sha256.wv"
 source "Linker/Windvale/Native-Hosted-Verifier-Application-Admission.wv"
 source "Tools/Windvale.Publish/Wvb-Publication-Native-Bridge.wv"
 source "Tools/Windvale.Publish/Wvb-Publication-Transaction.wv"
 emit wvb
+source-input-lock "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock"
+source-input-lock-sha256 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
+source-profile "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp"
+target-descriptor "Projects/Targets/Windows-X64-No-Foreign.wvtd"

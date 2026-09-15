@@ -1,8 +1,12 @@
-module Compilerˉsourceˉwvbˉtemporaryˉslots profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwvbˉtemporaryˉslots;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-export enum Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus {
+export enum Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus: i32 {
     Valid = 0;
     Invalidˉwir = 1;
     Slotˉlimit = 2;

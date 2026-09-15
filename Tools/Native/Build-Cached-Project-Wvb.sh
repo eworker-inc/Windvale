@@ -12,6 +12,12 @@ project_directory=$(CDPATH= cd -- "$(dirname -- "$1")" && pwd -P) || exit 1
 project="$project_directory/$(basename -- "$1")"
 output_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 1
 output_wvb="$output_directory/$(basename -- "$2")"
+project_header=
+IFS= read -r project_header < "$project" || true
+if [[ $project_header == 'windvale-project 4' ]]; then
+    node "$script_directory/Build-Current-Split-Project-Wvb.mjs" "$project" "$output_wvb"
+    exit $?
+fi
 key_tool="$script_directory/Get-Native-Project-Cache-Key.mjs"
 front_door="$repository_root/Artifacts/Native-Front-Door"
 inventory="$front_door/SHA256SUMS"

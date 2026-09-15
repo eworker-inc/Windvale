@@ -1,13 +1,17 @@
-module Durableˉpersistentˉtransactionˉwriter profile hosted;
+#!wv/1 en@1
+module Durableˉpersistentˉtransactionˉwriter;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉtransactionˉwriter as Writer;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 
-capability storage.random_access_v1;
 
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉpersistentˉwriterˉstatus {
+export enum Databaseˉpersistentˉwriterˉstatus: i32 {
     Ready = 0;
     Reopenˉrequired = 1;
     Failed = 2;

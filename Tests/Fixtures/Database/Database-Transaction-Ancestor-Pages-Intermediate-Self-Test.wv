@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉpagesˉintermediate profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉpagesˉintermediate;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;

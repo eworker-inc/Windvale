@@ -1,8 +1,13 @@
-module Compilerˉadmissionˉevidence profile portable;
+#!wv/1 en@1
+module Compilerˉadmissionˉevidence;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 
-export enum Compilerˉadmissionˉevidenceˉstatus {
+export enum Compilerˉadmissionˉevidenceˉstatus: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

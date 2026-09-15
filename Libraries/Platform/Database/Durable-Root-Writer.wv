@@ -1,4 +1,9 @@
-module Durableˉrootˉwriter profile hosted;
+#!wv/1 en@1
+module Durableˉrootˉwriter;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
 import Randomˉaccessˉstorage as Storage;
@@ -10,12 +15,11 @@ import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Commit;
 import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const DATABASE_ROOT_WRITER_HEADER_BYTES: u64 = 512u64;
 const DATABASE_ROOT_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉdurableˉrootˉupsertˉstatus {
+export enum Databaseˉdurableˉrootˉupsertˉstatus: i32 {
     Committed = 0;
     Active = 1;
     Aborted = 2;

@@ -1,6 +1,11 @@
-module Linkerˉconsoleˉapplicationˉplan profile portable;
+#!wv/1 en@1
+module Linkerˉconsoleˉapplicationˉplan;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Consoleˉapplicationˉplanˉstatus {
+
+export enum Consoleˉapplicationˉplanˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;

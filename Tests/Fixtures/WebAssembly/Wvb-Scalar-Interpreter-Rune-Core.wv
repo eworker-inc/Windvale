@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉruneˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Execution(Metadata: u8, Stack: bytes) -> bytes {
     return Bytesˉconcat(

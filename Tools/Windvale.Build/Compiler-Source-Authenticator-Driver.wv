@@ -1,4 +1,13 @@
-module Windvaleˉcompilerˉsourceˉauthenticatorˉdriver profile hosted;
+#!wv/1 en@1
+module Windvaleˉcompilerˉsourceˉauthenticatorˉdriver;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉadmissionˉevidence as Evidence;
 import Compilerˉadmissionˉevidenceˉvalidator as Validator;
@@ -6,11 +15,6 @@ import Compilerˉadmissionˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉadmissionˉauthentication as Authentication;
 import Compilerˉsourceˉforeignˉcatalogˉauthentication as Foreignˉauthentication;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Rejectˉevidence(
     Status: Evidence.Compilerˉadmissionˉevidenceˉstatus,

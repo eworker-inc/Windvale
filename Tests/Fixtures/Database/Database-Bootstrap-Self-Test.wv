@@ -1,4 +1,9 @@
-module Databaseˉbootstrapˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉbootstrapˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉbootstrap as Bootstrap;
 import Windvaleˉdatabaseˉcommitˉpublication as Commitˉpublication;

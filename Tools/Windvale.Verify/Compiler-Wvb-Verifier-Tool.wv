@@ -1,14 +1,18 @@
-module Windvaleˉcompilerˉwvbˉverifierˉtool profile hosted;
+#!wv/1 en@1
+module Windvaleˉcompilerˉwvbˉverifierˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
 import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Reportˉsemanticˉfailure(Input: bytes) -> u32 {
     let Normalized: bytes =

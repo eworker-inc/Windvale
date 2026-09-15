@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉmutations profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉmutations;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
 

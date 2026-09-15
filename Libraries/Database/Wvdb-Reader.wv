@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉreader profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉreader;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const DATABASE_MAGIC: u32 = 1111774807u32;
 const PAGE_MAGIC: u32 = 1196447319u32;
@@ -14,7 +19,7 @@ const LEAF_PAGE: u32 = 1u32;
 const BRANCH_PAGE: u32 = 2u32;
 const MAXIMUM_KEY: u32 = 4294967295u32;
 
-export enum Wvdbˉerror {
+export enum Wvdbˉerror: i32 {
     Invalidˉsize = 1;
     Invalidˉmagic = 2;
     Unsupportedˉversion = 3;

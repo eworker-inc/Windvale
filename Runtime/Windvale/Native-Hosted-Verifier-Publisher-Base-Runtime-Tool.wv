@@ -1,12 +1,16 @@
-module Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉruntimeˉtool profile hosted;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉruntimeˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉfileˉtoolˉsupport as Support;
 import Runtimeˉnativeˉhostedˉverifierˉruntimeˉheader as Runtimeˉheader;
 
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
     return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));

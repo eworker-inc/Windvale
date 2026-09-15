@@ -1,12 +1,16 @@
-module Windvaleˉprojectˉtool profile hosted;
+#!wv/1 en@1
+module Windvaleˉprojectˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Windvaleˉproject as Project;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Windvaleˉprojectˉtoolˉquote(Value: text) -> text {
     // Admitted paths and lowercase digests contain no JSON escape characters.

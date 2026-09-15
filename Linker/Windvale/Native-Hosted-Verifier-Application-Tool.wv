@@ -1,11 +1,15 @@
-module Linkerˉnativeˉhostedˉverifierˉapplicationˉtool profile hosted;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Linkerˉnativeˉhostedˉverifierˉapplicationˉadmission as Admission;
 
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 export fn Main() -> i32 {
     if process.argument_count() != 2u32 {

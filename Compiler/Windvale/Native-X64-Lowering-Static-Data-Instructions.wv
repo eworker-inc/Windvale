@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉstaticˉdataˉinstructions profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉstaticˉdataˉinstructions;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 

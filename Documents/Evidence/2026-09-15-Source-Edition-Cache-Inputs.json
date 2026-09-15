@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-source-edition-cache-inputs",
+  "date": "2026-09-15",
+  "subject": "Declared admission inputs in native project cache identity",
+  "claim": "The pending native project cache-key change hashes declared source-input-lock, source-profile and target-descriptor contents and retains them for stale-request checks. The existing project-object checkpoint test has a focused selector with 21 cases passing on Windows and Debian, including the unchanged source-only key framing. This enables safe identity for later authenticated-project caching; it does not add authenticated compiler construction or complete repository source migration.",
+  "source": {
+    "kind": "Other",
+    "value": "Base commit 992ba7bbebbbf3356966bdcc0ea1d2b0e5923720 plus the exact uncommitted cache implementation and test identities below. The previously tested package migration remains uncommitted and was not reverified in this run."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Native project cache identity and input-retention checks",
+      "tool": "Node.js; existing Test-Project-Object-Checkpoint.mjs owner with --project-inputs selector",
+      "command": "node Tools/Native/Test-Project-Object-Checkpoint.mjs --project-inputs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        },
+        {
+          "path": "Tools/Native/Test-Project-Object-Checkpoint.mjs",
+          "size": 21002,
+          "sha256": "25eb0fad621c809b80087cb692eb199e761844d4b8ea7ddcf2cb0c0c17caf1c7"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Same cache code and independent temporary test inputs",
+      "tool": "Debian Node.js; same source files and test selector as the Windows run",
+      "command": "wsl -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Test-Project-Object-Checkpoint.mjs --project-inputs",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "The 21 cases comprise one stable complete-input request; three independent byte-mutation/key-change/stale-request/restore cases; fifteen missing, escaping, repeated, malformed and wrong-extension declarations across the three input kinds; one linked-directory rejection; and one source-only compatibility/unreferenced-input exclusion case.",
+    "Input byte hashing is not semantic admission. Native admission still owns exact source-lock digest, profile, target format, source scope and capability validation. Test admission files deliberately contain opaque bytes rather than valid production artifacts.",
+    "No source edition, compiler semantics, generated native product or installed identity was changed or qualified. The full existing cache creation/corruption/race/session test was not run; this selector exercises the changed input-identity contract only and also runs before that test in its ordinary mode.",
+    "The change-aware plan was inspected but not executed: it proposed 3410 expected seconds, including broad OS/database work and pending package changes. The focused cross-host cache checks and documentation checks remain within the ten-minute local budget.",
+    "The recalculated current split-compiler key is 0573e8aec29dbd22447cdfc664e78654e401a1a96062cc2f961b096c5c886eed and has no existing checkpoint. No cold compiler reconstruction was started; the earlier approximately 18-minute preparation is not a measured estimate for this changed state.",
+    "No peak-memory measurement, independent human review, full bootstrap convergence, repository-wide source conversion or final migration commit is claimed."
+  ],
+  "related": [
+    "Documents/Project/Repository-Source-Edition-Rollout.md",
+    "Specifications/Windvale-Project.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}

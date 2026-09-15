@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const MEMORY_BUDGET_MAGIC: u32 = 1112364631u32;
 const MEMORY_BUDGET_VERSION: u32 = 1u32;

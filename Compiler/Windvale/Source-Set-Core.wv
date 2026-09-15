@@ -1,11 +1,16 @@
-module Compilerˉsourceˉset profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉset;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 
-export enum Compilerˉsourceˉsetˉstatus {
+export enum Compilerˉsourceˉsetˉstatus: i32 {
     Valid = 0;
     Tooˉshort = 1;
     Invalidˉmagic = 2;

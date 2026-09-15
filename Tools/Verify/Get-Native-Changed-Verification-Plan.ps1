@@ -1468,6 +1468,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Build-Cached-Split-Project-Wvb',
+        'Source-Edition-Predecessor-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development'
     )) {
@@ -1639,6 +1640,8 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
+    } elseif ($Stem -eq 'Lower-Wvb-To-Wvo' -and $Path.EndsWith('.mjs', [StringComparison]::Ordinal)) {
+        Add-Suite @('native-x64-lowering-development', 'package-format')
     } elseif ($Stem -eq 'Lower-Wvb-To-Wvo') {
         Add-Suite @(
             'wv-linker-reconstruction',
@@ -1689,6 +1692,8 @@ function Add-Native-Tool-Suite {
         Add-Suite @('packages', 'offline-package-stage')
     } elseif ($Stem -eq 'Test-Package-Format') {
         Add-Suite 'package-format'
+    } elseif ($Stem -eq 'Package-Current-Segmented-Wvb') {
+        Add-Suite @('package-bundle', 'offline-package-stage', 'installation-command-dispatch')
     } elseif ($Stem -eq 'Run-Wvb') {
         Add-Bytecode-Suites
         Add-Suite 'wvb-runner-reconstruction'
@@ -3823,6 +3828,14 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -in @(
         'Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv',
+        'Runtime/Windvale/Native-Hosted-Container-Metadata-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Enum-Request-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Orchestration-Control-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Publication-Request-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Service-Bundle-Request-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Service-Bundle-Tool.wv',
+        'Runtime/Windvale/Native-Streaming-Sha256-Evidence-Tool.wv',
+        'Runtime/Windvale/Streaming-Sha256-Resource-Evidence.wv',
         'Runtime/Windvale/Native-Hosted-Fixed-Services-Tool.wv',
         'Runtime/Windvale/Native-Hosted-Container-Runtime-Tool.wv',
         'Runtime/Windvale/Native-Hosted-Orchestration-Control-Core.wv',
@@ -3838,6 +3851,10 @@ foreach ($Path in $Paths) {
         )
     } elseif ($Path -in @(
         'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Bridge.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Bridge.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Runtime-Header-Bridge.wv',
         'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Core.wv',
         'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Core.wv',
         'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-Metadata-Core.wv',
@@ -4303,6 +4320,34 @@ foreach ($Path in $Paths) {
         Add-Object-Suites
     } elseif ($Path.StartsWith('Tests/Native/', [StringComparison]::Ordinal)) {
         Add-Gap "native-test:$([IO.Path]::GetFileName($Path))"
+    } elseif ($Path -in @(
+        'Tests/Fixtures/Native-X64/Native-X64-Foundation-Borrow-Machine-Probe.wv',
+        'Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv'
+    )) {
+        Add-Suite 'native-x64-lowering-development'
+    } elseif ($Path -in @(
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Envelope-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Envelope-Native-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Manifest-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Native-Bridge-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Adapter.wv',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Native-Adapter.wv'
+    )) {
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
+    } elseif ($Path -in @(
+        'Tests/Fixtures/Database/Database-Secondary-Index-Mutations-Self-Test.wv',
+        'Tests/Fixtures/Database/Database-Secondary-Index-Self-Test.wv'
+    )) {
+        Require-Full-Database-Storage
+    } elseif ($Path -in @(
+        'Tests/Fixtures/Database/Wvdb-Reader-Self-Test.wv',
+        'Tests/Fixtures/Database/Wvdb-Test-Fixtures.wv'
+    )) {
+        Add-Suite 'libraries'
+        Require-Full-Database-Storage
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {

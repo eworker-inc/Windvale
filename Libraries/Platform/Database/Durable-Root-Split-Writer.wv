@@ -1,4 +1,9 @@
-module Durableˉrootˉsplitˉwriter profile hosted;
+#!wv/1 en@1
+module Durableˉrootˉsplitˉwriter;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
 import Randomˉaccessˉstorage as Storage;
@@ -11,12 +16,11 @@ import Windvaleˉdatabaseˉrootˉsplitˉupsert as Split;
 import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const DATABASE_ROOT_SPLIT_WRITER_HEADER_BYTES: u64 = 512u64;
 const DATABASE_ROOT_SPLIT_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉdurableˉrootˉsplitˉstatus {
+export enum Databaseˉdurableˉrootˉsplitˉstatus: i32 {
     Committed = 0;
     Active = 1;
     Aborted = 2;

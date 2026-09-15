@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉqueryˉir profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉqueryˉir;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;

@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉfoundationˉborrowˉview as Borrowˉview;
 import Windvaleˉfoundationˉborrowˉframes as Borrowˉframes;

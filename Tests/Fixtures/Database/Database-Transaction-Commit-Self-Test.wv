@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉcommit profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉcommit;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;

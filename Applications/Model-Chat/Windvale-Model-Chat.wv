@@ -1,4 +1,14 @@
-module Windvaleˉmodelˉchat profile hosted;
+#!wv/1 en@1
+module Windvaleˉmodelˉchat;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability model.catalog_v1 version 1;
+requires capability model.inference_v1 version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+requires capability standard_output.write_v1 version 1;
+requires capability terminal.line_read_v1 version 1;
 
 import Boundˉmodelˉprovider as Provider;
 import Foundationˉdecimalˉparsing as Decimal;
@@ -8,12 +18,6 @@ import Windvaleˉstandardˉbyteˉoutput as Output;
 import Windvaleˉterminalˉlineˉinput as Input;
 import Windvaleˉterminalˉlineˉinputˉcore as Inputˉcore;
 
-capability model.catalog_v1;
-capability model.inference_v1;
-capability process.argument;
-capability process.argument_count;
-capability standard_output.write_v1;
-capability terminal.line_read_v1;
 
 fn Write(Session: Output.Standardˉoutputˉsession, Value: text)
     -> Output.Standardˉoutputˉsession {

@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉstartupˉrequest profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉstartupˉrequest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256 as Sha256;
 import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;

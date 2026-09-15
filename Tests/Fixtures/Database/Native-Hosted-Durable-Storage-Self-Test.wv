@@ -1,4 +1,9 @@
-module Nativeˉhostedˉdurableˉstorageˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉdurableˉstorageˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉdatabaseˉbootstrap as Bootstrap;
@@ -14,7 +19,6 @@ import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const NO_PAGE: u64 = 18446744073709551615u64;
 const DATABASE_LENGTH: u64 = 4608u64;

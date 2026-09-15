@@ -54,7 +54,9 @@ try {
                 join(Compiler.directory, 'Analyzer' + SUFFIX),
                 join(Compiler.directory, 'Analyzer.identity'),
                 join(Compiler.directory, 'Emitter' + SUFFIX),
-                join(Compiler.directory, 'Emitter.identity'), '--symbol-checkpoint'],
+                join(Compiler.directory, 'Emitter.identity'), '--authenticated-project4',
+                ...['Admitter', 'Authenticator', 'Reader', 'Binder'].map(Name =>
+                    join(Compiler.directory, Name + SUFFIX))],
             [join(REPOSITORY, 'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs'),
                 '7', Wvb, Application],
         ]) {

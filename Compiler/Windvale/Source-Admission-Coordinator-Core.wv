@@ -1,4 +1,9 @@
-module Compilerˉsourceˉadmissionˉcoordinator profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉadmissionˉcoordinator;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉadmissionˉevidence as Admissionˉevidence;
 import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;

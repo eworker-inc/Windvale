@@ -1,4 +1,9 @@
-module Compilerˉsourceˉforeignˉloweringˉcarrier profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉforeignˉloweringˉcarrier;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉtarget as Target;
 
@@ -8,7 +13,7 @@ export const COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES: u32 = 56u32;
 export const COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES: u32 = 80u32;
 export const COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_MAXIMUM_RECORDS: u32 = 64u32;
 
-export enum Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus {
+export enum Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;

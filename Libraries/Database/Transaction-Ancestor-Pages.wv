@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉancestorˉpages profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉancestorˉpages;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -18,7 +23,7 @@ const DATABASE_TRANSACTION_ANCESTOR_PAGES_MAXIMUM_PAGES: u32 = 95u32;
 const DATABASE_TRANSACTION_ANCESTOR_PAGES_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉancestorˉpagesˉerror {
+export enum Databaseˉtransactionˉancestorˉpagesˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉgroups = 2;

@@ -94,7 +94,7 @@ const Work = mkdtempSync(path.join(
 ));
 const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
 let Step = 0;
-let Totalˉsteps = 12 + Targets.length;
+let Totalˉsteps = 20 + Targets.length;
 
 try {
     const Compilerˉkey = await Getˉcurrentˉsplitˉcompilerˉkey();
@@ -122,6 +122,7 @@ try {
         const Label = Targets.length === 1
             ? 'target-project-build'
             : `target-project-build-${Index + 1}`;
+        const Modern = readFileSync(Target.Project, 'utf8').split(/\r?\n/u)[0] === 'windvale-project 4';
         await Runˉnode(Label, 'Build-Cached-Split-Project-Wvb.mjs', [
             Target.Project,
             Target.Output,
@@ -129,7 +130,9 @@ try {
             path.join(Compilerˉcheckpoint.directory, 'Analyzer.identity'),
             path.join(Compilerˉcheckpoint.directory, 'Emitter' + Suffix),
             path.join(Compilerˉcheckpoint.directory, 'Emitter.identity'),
-            '--symbol-checkpoint',
+            ...(Modern ? ['--authenticated-project4',
+                ...['Admitter', 'Authenticator', 'Reader', 'Binder'].map(Name =>
+                    path.join(Compilerˉcheckpoint.directory, Name + Suffix))] : ['--symbol-checkpoint']),
         ]);
         const Targetˉevidence = Fileˉevidence(
             Target.Output,

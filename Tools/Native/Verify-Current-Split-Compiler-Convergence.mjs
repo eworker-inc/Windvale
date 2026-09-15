@@ -1,426 +1,135 @@
 import { createHash } from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
+import { Readˉboundedˉhostedˉfile } from './Native-Hosted-Application-Cache-Core.mjs';
+import { Constructˉsourceˉeditionˉpredecessor, SOURCE_EDITION_PREDECESSOR } from './Source-Edition-Predecessor-Core.mjs';
 import {
-    lstatSync,
-    mkdirSync,
-    mkdtempSync,
-    readFileSync,
-    realpathSync,
-    rmSync,
-} from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+    Prepareˉnativeˉprojectˉcacheˉcontext, Getˉnativeˉprojectˉcacheˉrequest,
+    Requireˉnativeˉprojectˉcacheˉrequestˉunchanged,
+} from './Native-Project-Cache-Key-Core.mjs';
+import {
+    Acquireˉcurrentˉsplitˉcompiler, Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
+} from './Current-Split-Compiler-Cache-Core.mjs';
 
-const MAXIMUM_DIAGNOSTIC_BYTES = 1_048_576;
-const MAXIMUM_PRODUCT_BYTES = 16_777_216;
-const PRODUCER_TIMEOUT_MILLISECONDS = 900_000;
-const PHASES = 16;
-const PINNED_ANALYZER = {
-    bytes: 1_552_090,
-    sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77',
-};
-const PINNED_EMITTER = {
-    bytes: 1_556_434,
-    sha256: 'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9',
-};
-const CURRENT_VERIFIER = {
-    bytes: 502_386,
-    sha256: '742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4',
-};
+const NATIVE = dirname(fileURLToPath(import.meta.url));
+const REPOSITORY = resolve(NATIVE, '..', '..');
+const WINDOWS = process.platform === 'win32';
+const SUFFIX = WINDOWS ? '.exe' : '.elf';
+const MAXIMUM_WVB_BYTES = 16_777_216;
+const MAXIMUM_MILLISECONDS = 3_600_000;
+const Hash = Bytes => createHash('sha256').update(Bytes).digest('hex');
+function Require(Condition, Message) { if (!Condition) throw new Error(Message); }
 
-if (process.argv.length !== 3) {
-    Usage();
-}
-const Host = `${process.platform}-${process.arch}`;
-if (Host !== 'win32-x64' && Host !== 'linux-x64') {
-    Reject(`The split compiler convergence gate does not support ${Host}.`);
-}
-
-const Sourceˉroot = Canonicalˉordinaryˉdirectory(
-    process.argv[2],
-    'source root',
-);
-const Nativeˉroot = path.join(Sourceˉroot, 'Tools', 'Native');
-const Bootstrapˉroot = path.join(
-    Sourceˉroot,
-    'Artifacts',
-    'Language-1.0-Target-Aware-Emission-Bootstrap',
-    'Wvb',
-);
-const Pinnedˉanalyzerˉwvb = path.join(Bootstrapˉroot, 'wvanalyze.wvb');
-const Pinnedˉemitterˉwvb = path.join(Bootstrapˉroot, 'wvemit.wvb');
-Requireˉexactˉfile(
-    Pinnedˉanalyzerˉwvb,
-    PINNED_ANALYZER,
-    'pinned analyzer WVB',
-);
-Requireˉexactˉfile(
-    Pinnedˉemitterˉwvb,
-    PINNED_EMITTER,
-    'pinned emitter WVB',
-);
-const Temporaryˉroot = Canonicalˉordinaryˉdirectory(
-    os.tmpdir(),
-    'temporary root',
-);
-const Work = mkdtempSync(path.join(
-    Temporaryˉroot,
-    'windvale-current-split-convergence-',
-));
-const Cacheˉroot = path.join(Work, 'Cache');
-const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
-const Pinnedˉanalyzer = path.join(Work, `Pinned-Analyzer${Suffix}`);
-const Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Suffix}`);
-const Pinnedˉanalyzerˉidentity = path.join(
-    Work,
-    'Pinned-Analyzer.identity',
-);
-const Pinnedˉemitterˉidentity = path.join(
-    Work,
-    'Pinned-Emitter.identity',
-);
-const Analyzerˉstage1ˉwvb = path.join(Work, 'Analyzer-Stage1.wvb');
-const Analyzer = path.join(Work, `Analyzer${Suffix}`);
-const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
-const Emitterˉstage1ˉwvb = path.join(Work, 'Emitter-Stage1.wvb');
-const Emitter = path.join(Work, `Emitter${Suffix}`);
-const Emitterˉidentity = path.join(Work, 'Emitter.identity');
-const Analyzerˉstage2ˉwvb = path.join(Work, 'Analyzer-Stage2.wvb');
-const Emitterˉstage2ˉwvb = path.join(Work, 'Emitter-Stage2.wvb');
-const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
-const Verifier = path.join(Work, `Verifier${Suffix}`);
-let Phase = 0;
-
-try {
-    mkdirSync(Cacheˉroot);
-    await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer,
-    ]);
-    await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Pinnedˉemitterˉwvb, Pinnedˉemitter,
-    ]);
-    await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
-    ]);
-    await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
-    ]);
-    await Runˉnode('current-analyzer-stage1', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
-        Analyzerˉstage1ˉwvb,
-        Pinnedˉanalyzer,
-        Pinnedˉanalyzerˉidentity,
-        Pinnedˉemitter,
-        Pinnedˉemitterˉidentity,
-    ]);
-    Requireˉordinaryˉfile(
-        Analyzerˉstage1ˉwvb,
-        MAXIMUM_PRODUCT_BYTES,
-        'current analyzer Stage 1 WVB',
-    );
-    await Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Analyzerˉstage1ˉwvb, Analyzer,
-    ]);
-    await Runˉnode('current-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Analyzer, Analyzerˉidentity,
-    ]);
-    await Runˉnode('current-emitter-stage1', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
-        Emitterˉstage1ˉwvb,
-        Analyzer,
-        Analyzerˉidentity,
-        Pinnedˉemitter,
-        Pinnedˉemitterˉidentity,
-    ]);
-    Requireˉordinaryˉfile(
-        Emitterˉstage1ˉwvb,
-        MAXIMUM_PRODUCT_BYTES,
-        'current emitter Stage 1 WVB',
-    );
-    await Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Emitterˉstage1ˉwvb, Emitter,
-    ]);
-    await Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Emitter, Emitterˉidentity,
-    ]);
-    await Runˉnode('current-analyzer-stage2', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
-        Analyzerˉstage2ˉwvb,
-        Analyzer,
-        Analyzerˉidentity,
-        Emitter,
-        Emitterˉidentity,
-    ]);
-    await Runˉnode('current-emitter-stage2', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
-        Emitterˉstage2ˉwvb,
-        Analyzer,
-        Analyzerˉidentity,
-        Emitter,
-        Emitterˉidentity,
-    ]);
-    await Runˉnode('current-verifier-wvb', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Wvb-Verifier.wvproj'),
-        Verifierˉwvb,
-        Analyzer,
-        Analyzerˉidentity,
-        Emitter,
-        Emitterˉidentity,
-    ]);
-    Requireˉexactˉfile(
-        Verifierˉwvb,
-        CURRENT_VERIFIER,
-        'current WVB verifier',
-    );
-    await Runˉnative('current-verifier-package', 'Package-Segmented-Compiler-Wvb', [
-        '2', Verifierˉwvb, Verifier,
-    ]);
-    Requireˉordinaryˉfile(
-        Verifier,
-        MAXIMUM_PRODUCT_BYTES,
-        'current native WVB verifier',
-    );
-    await Runˉtool('analyzer-verification', Verifier, [Analyzerˉstage2ˉwvb]);
-    await Runˉtool('emitter-verification', Verifier, [Emitterˉstage2ˉwvb]);
-
-    const Analyzerˉstage1 = Fileˉevidence(
-        Analyzerˉstage1ˉwvb,
-        'current analyzer Stage 1 WVB',
-        MAXIMUM_PRODUCT_BYTES,
-    );
-    const Analyzerˉstage2 = Fileˉevidence(
-        Analyzerˉstage2ˉwvb,
-        'current analyzer Stage 2 WVB',
-        MAXIMUM_PRODUCT_BYTES,
-    );
-    const Emitterˉstage1 = Fileˉevidence(
-        Emitterˉstage1ˉwvb,
-        'current emitter Stage 1 WVB',
-        MAXIMUM_PRODUCT_BYTES,
-    );
-    const Emitterˉstage2 = Fileˉevidence(
-        Emitterˉstage2ˉwvb,
-        'current emitter Stage 2 WVB',
-        MAXIMUM_PRODUCT_BYTES,
-    );
-    if (!Analyzerˉstage1.value.equals(Analyzerˉstage2.value) ||
-        !Emitterˉstage1.value.equals(Emitterˉstage2.value)) {
-        Reject('The current split compiler did not reach an exact fixed point.');
-    }
-    process.stdout.write(
-        'native compiler convergence status=Complete products=2 ' +
-        `analyzer-bytes=${Analyzerˉstage1.bytes} ` +
-        `analyzer-sha256=${Analyzerˉstage1.sha256} ` +
-        `emitter-bytes=${Emitterˉstage1.bytes} ` +
-        `emitter-sha256=${Emitterˉstage1.sha256} ` +
-        `bootstrap-analyzer-sha256=${PINNED_ANALYZER.sha256} ` +
-        `bootstrap-emitter-sha256=${PINNED_EMITTER.sha256} ` +
-        'cache=Isolated\n',
-    );
-} finally {
-    const Resolved = path.resolve(Work);
-    if (!Sameˉpath(path.dirname(Resolved), Temporaryˉroot) ||
-        !path.basename(Resolved).startsWith(
-            'windvale-current-split-convergence-',
-        )) {
-        Reject(`Refusing to remove unexpected temporary directory: ${Resolved}.`);
-    }
-    rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
-}
-
-function Projectˉpath(Name) {
-    return path.join(Sourceˉroot, 'Projects', 'Tools', Name);
-}
-
-async function Runˉnative(Label, Name, Arguments) {
-    const Extension = process.platform === 'win32' ? '.cmd' : '.sh';
-    const Script = path.join(Nativeˉroot, `${Name}${Extension}`);
-    Requireˉordinaryˉfile(Script, MAXIMUM_PRODUCT_BYTES, `${Name} script`);
-    if (process.platform === 'win32') {
-        await Run(Label, process.env.ComSpec ?? 'cmd.exe', [
-            '/d', '/c', 'call', Script, ...Arguments,
-        ]);
-        return;
-    }
-    await Run(Label, 'bash', [Script, ...Arguments]);
-}
-
-async function Runˉnode(Label, Name, Arguments) {
-    await Run(
-        Label,
-        process.execPath,
-        [path.join(Nativeˉroot, Name), ...Arguments],
-    );
-}
-
-async function Runˉtool(Label, Command, Arguments) {
-    await Run(Label, Command, Arguments);
-}
-
-async function Run(Label, Command, Arguments) {
-    Phase += 1;
-    process.stdout.write(
-        `START native compiler convergence phase=${Phase}/${PHASES} ` +
-        `step=${Label}\n`,
-    );
-    const Result = await new Promise((Resolve, Rejectˉpromise) => {
-        const Child = spawn(Command, Arguments, {
-            cwd: Sourceˉroot,
-            env: {
-                ...process.env,
-                WINDVALE_NATIVE_CACHE_ROOT: Cacheˉroot,
-            },
-            windowsHide: true,
-            stdio: ['ignore', 'pipe', 'pipe'],
-        });
-        const Started = Date.now();
-        let Diagnosticˉbytes = 0;
-        let Stderr = Buffer.alloc(0);
-        let Timedˉout = false;
-        let Settled = false;
-        const Progress = setInterval(() => {
-            process.stdout.write(
-                `PROGRESS native compiler convergence phase=${Phase}/${PHASES} ` +
-                `step=${Label} elapsed-seconds=${Math.floor(
-                    (Date.now() - Started) / 1_000,
-                )}\n`,
-            );
-        }, 30_000);
-        const Timeout = setTimeout(() => {
-            Timedˉout = true;
-            Child.kill();
-        }, PRODUCER_TIMEOUT_MILLISECONDS);
-        const Finish = Value => {
-            if (Settled) return;
-            Settled = true;
-            clearInterval(Progress);
-            clearTimeout(Timeout);
-            Resolve(Value);
-        };
-        const Append = Chunk => {
-            Diagnosticˉbytes += Chunk.length;
-            if (Diagnosticˉbytes > MAXIMUM_DIAGNOSTIC_BYTES) {
-                Settled = true;
-                clearInterval(Progress);
-                clearTimeout(Timeout);
-                Child.kill();
-                Rejectˉpromise(new Error(
-                    `${Label} diagnostics exceed 1 MiB.`,
-                ));
-                return false;
-            }
-            return true;
-        };
-        Child.stdout.on('data', Chunk => {
-            if (Append(Chunk)) process.stdout.write(Chunk);
-        });
-        Child.stderr.on('data', Chunk => {
-            if (Append(Chunk)) Stderr = Buffer.concat([Stderr, Chunk]);
-        });
-        Child.on('error', Error => {
-            if (Settled) return;
-            Settled = true;
-            clearInterval(Progress);
-            clearTimeout(Timeout);
-            Rejectˉpromise(Error);
-        });
-        Child.on('close', Status => Finish({
-            status: Status,
-            stderr: Stderr,
-            timedOut: Timedˉout,
-        }));
-    });
-    if (Result.stderr.length !== 0) {
-        process.stderr.write(Result.stderr);
-    }
-    if (Result.timedOut || Result.status !== 0 || Result.stderr.length !== 0) {
-        Reject(
-            `${Label} failed: status=${Result.status} ` +
-            `timeout=${Result.timedOut}.`,
-        );
-    }
-    process.stdout.write(
-        `PASS  native compiler convergence phase=${Phase}/${PHASES} ` +
-        `step=${Label}\n`,
-    );
-}
-
-function Requireˉexactˉfile(Candidate, Expected, Label) {
-    const Evidence = Fileˉevidence(Candidate, Label, MAXIMUM_PRODUCT_BYTES);
-    if (!Sameˉevidence(Evidence, Expected)) {
-        Reject(
-            `The ${Label} identity differs: ` +
-            `expected-bytes=${Expected.bytes} ` +
-            `expected-sha256=${Expected.sha256} ` +
-            `found-bytes=${Evidence.bytes} ` +
-            `found-sha256=${Evidence.sha256}.`,
-        );
-    }
-    return Evidence;
-}
-
-function Sameˉevidence(Actual, Expected) {
-    return Actual.bytes === Expected.bytes &&
-        Actual.sha256 === Expected.sha256;
-}
-
-function Fileˉevidence(Candidate, Label, Maximum) {
-    const Information = Requireˉordinaryˉfile(Candidate, Maximum, Label);
-    const Value = readFileSync(Candidate);
-    if (Value.length !== Information.size) {
-        Reject(`The ${Label} changed while it was read.`);
-    }
-    return {
-        bytes: Value.length,
-        sha256: createHash('sha256').update(Value).digest('hex'),
-        value: Value,
+async function Main() {
+    Require(process.argv.length === 3 && process.arch === 'x64' && ['win32', 'linux'].includes(process.platform),
+        'Usage: Verify-Current-Split-Compiler-Convergence.mjs <source-root>');
+    const Root = await realpath(resolve(process.argv[2]));
+    Require(WINDOWS ? Root.toLowerCase() === REPOSITORY.toLowerCase() : Root === REPOSITORY,
+        'Convergence requires the active source root.');
+    const Key = await Getˉcurrentˉsplitˉcompilerˉkey();
+    const Context = await Prepareˉnativeˉprojectˉcacheˉcontext('current-compiler-convergence-v1',
+        [fileURLToPath(import.meta.url)]);
+    const Verifierˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(Context,
+        join(REPOSITORY, 'Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj'));
+    const Unchanged = async () => {
+        Require(await Getˉcurrentˉsplitˉcompilerˉkey() === Key,
+            'Current compiler inputs changed during convergence.');
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Verifierˉrequest);
     };
-}
-
-function Requireˉordinaryˉfile(Candidate, Maximum, Label) {
-    const Information = lstatSync(Candidate, { throwIfNoEntry: false });
-    if (Information === undefined || !Information.isFile() ||
-        Information.isSymbolicLink() || Information.size < 1 ||
-        Information.size > Maximum ||
-        !Sameˉpath(realpathSync.native(Candidate), path.resolve(Candidate))) {
-        Reject(`The ${Label} is not a bounded ordinary file: ${Candidate}`);
+    const Current = await Acquireˉcurrentˉsplitˉcompiler(await Getˉcurrentˉsplitˉcompilerˉfamily(), Key,
+        () => { throw new Error('Prepare the current compiler checkpoint in a separately selected construction run.'); }, Unchanged);
+    const Temporary = await realpath(tmpdir());
+    const Work = await realpath(await mkdtemp(join(Temporary, 'windvale-current-split-convergence-')));
+    const Started = Date.now();
+    const Deadline = Started + MAXIMUM_MILLISECONDS;
+    let Phase = 0;
+    let Complete = false;
+    async function Run(Label, Command, Arguments, Rejection = false) {
+        const Item = ++Phase;
+        process.stdout.write('START native compiler convergence phase=' + Item + '/13 step=' + Label + '\n');
+        const Result = await Runˉdevelopmentˉcommand(Command, Arguments,
+            Math.min(Deadline, Date.now() + 900_000), true, 1_048_576);
+        Require(Result.Error === '' && (Rejection ? Result.Code === 1 &&
+            Result.Output.includes('wvb status=Invalid') : Result.Code === 0),
+            Label + ' failed exit=' + Result.Code + ': ' + Result.Output + Result.Error);
+        process.stdout.write('PASS native compiler convergence phase=' + Item + '/13 step=' + Label + '\n');
     }
-    return Information;
-}
-
-function Canonicalˉordinaryˉdirectory(Candidate, Label) {
-    const Resolved = path.resolve(Candidate);
-    const Root = path.parse(Resolved).root;
-    let Current = Root;
-    for (const Component of path.relative(Root, Resolved)
-            .split(path.sep).filter(Value => Value.length !== 0)) {
-        Current = path.join(Current, Component);
-        const Information = lstatSync(Current, { throwIfNoEntry: false });
-        if (Information === undefined || !Information.isDirectory() ||
-            Information.isSymbolicLink()) {
-            Reject(
-                `The ${Label} traverses a missing, linked, or ` +
-                `non-directory path: ${Current}`,
-            );
+    async function Node(Label, Name, Arguments) {
+        await Run(Label, process.execPath, [join(NATIVE, Name), ...Arguments]);
+    }
+    async function Build(Label, Project, Output, Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity, Admission, Generation) {
+        const Cache = join(Work, 'Emission-' + Generation);
+        // Separate empty generations prevent a byte-identical producer identity
+        // from turning the second reconstruction into a first-generation hit.
+        const Code = "import {pathToFileURL} from 'node:url';process.env.WINDVALE_NATIVE_CACHE_ROOT=" +
+            JSON.stringify(Cache) + ";await import(pathToFileURL(process.argv[1]).href);";
+        await Run(Label, process.execPath, ['--input-type=module', '-e', Code,
+            join(NATIVE, 'Build-Cached-Split-Project-Wvb.mjs'),
+            join(REPOSITORY, 'Projects/Tools', Project), Output,
+            Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity, '--authenticated-project4',
+            ...['Admitter', 'Authenticator', 'Reader', 'Binder'].map(Name => Admission[Name])]);
+    }
+    try {
+        const Frozen = await Constructˉsourceˉeditionˉpredecessor(Work);
+        const Admission = Object.fromEntries(['Admitter', 'Authenticator', 'Reader', 'Binder']
+            .map(Name => [Name, join(Current.directory, Name + SUFFIX)]));
+        const Analyzer1 = join(Work, 'Analyzer-Stage1.wvb');
+        const Emitter1 = join(Work, 'Emitter-Stage1.wvb');
+        const Analyzer2 = join(Work, 'Analyzer-Stage2.wvb');
+        const Emitter2 = join(Work, 'Emitter-Stage2.wvb');
+        const Analyzer = join(Work, 'Analyzer' + SUFFIX);
+        const Emitter = join(Work, 'Emitter' + SUFFIX);
+        const Analyzerˉidentity = join(Work, 'Analyzer.identity');
+        const Emitterˉidentity = join(Work, 'Emitter.identity');
+        await Build('analyzer-stage1', 'Windvale-Compiler-Analysis-Driver.wvproj', Analyzer1,
+            Frozen.Analyzer, Frozen.Analyzerˉidentity, Frozen.Emitter, Frozen.Emitterˉidentity, Frozen, 1);
+        await Node('analyzer-package', 'Build-Cached-Segmented-Hosted-Wvb.mjs', ['8', Analyzer1, Analyzer]);
+        await Node('analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', ['analyzer', Analyzer, Analyzerˉidentity]);
+        await Build('emitter-stage1', 'Windvale-Compiler-Emission-Driver.wvproj', Emitter1,
+            Analyzer, Analyzerˉidentity, Frozen.Emitter, Frozen.Emitterˉidentity, Frozen, 1);
+        await Node('emitter-package', 'Build-Cached-Segmented-Hosted-Wvb.mjs', ['8', Emitter1, Emitter]);
+        await Node('emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', ['emitter', Emitter, Emitterˉidentity]);
+        await Build('analyzer-stage2', 'Windvale-Compiler-Analysis-Driver.wvproj', Analyzer2,
+            Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity, Admission, 2);
+        await Build('emitter-stage2', 'Windvale-Compiler-Emission-Driver.wvproj', Emitter2,
+            Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity, Admission, 2);
+        const Products = [];
+        for (const [Name, First, Second] of [['analyzer', Analyzer1, Analyzer2], ['emitter', Emitter1, Emitter2]]) {
+            const Left = await Readˉboundedˉhostedˉfile(First, Name + ' first generation', MAXIMUM_WVB_BYTES);
+            const Right = await Readˉboundedˉhostedˉfile(Second, Name + ' second generation', MAXIMUM_WVB_BYTES);
+            Require(Left.equals(Right), Name + ' failed byte-identical source convergence.');
+            Products.push({ name: Name, bytes: Left.length, sha256: Hash(Left) });
         }
+        const Verifierˉwvb = join(Work, 'Verifier.wvb');
+        const Verifier = join(Work, 'Verifier' + SUFFIX);
+        await Build('verifier-build', 'Windvale-Compiler-Wvb-Verifier.wvproj', Verifierˉwvb,
+            Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity, Admission, 2);
+        await Node('verifier-package', 'Build-Cached-Segmented-Hosted-Wvb.mjs', ['7', Verifierˉwvb, Verifier]);
+        await Run('analyzer-verification', Verifier, [Analyzer2]);
+        await Run('emitter-verification', Verifier, [Emitter2]);
+        const Malformed = join(Work, 'Malformed.wvb');
+        const Bytes = Buffer.from(await Readˉboundedˉhostedˉfile(Analyzer2, 'malformed-input oracle', MAXIMUM_WVB_BYTES));
+        Bytes[0] ^= 1;
+        await writeFile(Malformed, Bytes, { flag: 'wx' });
+        await Run('verifier-rejection', Verifier, [Malformed], true);
+        await Unchanged();
+        Complete = true;
+        process.stdout.write('native compiler convergence status=Complete products=2 host=' +
+            process.platform + '-' + process.arch + ' source=' + SOURCE_EDITION_PREDECESSOR +
+            ' current-key=' + Key + ' generations=Fresh-Isolated verifier-profile=7 packaging-cache=Reusable elapsed-ms=' +
+            (Date.now() - Started) + ' products=' + JSON.stringify(Products) + '\n');
+    } finally {
+        Require(dirname(Work) === Temporary && basename(Work).startsWith('windvale-current-split-convergence-'),
+            'Refusing to remove an unowned convergence directory.');
+        if (Complete) await rm(Work, { recursive: true, force: false });
+        else process.stderr.write('Convergence incomplete; retained phase artifacts: ' + Work + '\n');
     }
-    return realpathSync.native(Resolved);
 }
-
-function Sameˉpath(Left, Right) {
-    return process.platform === 'win32'
-        ? Left.toLowerCase() === Right.toLowerCase()
-        : Left === Right;
-}
-
-function Usage() {
-    process.stderr.write(
-        'Usage: node Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs ' +
-        '<source-root>\n',
-    );
-    process.exit(64);
-}
-
-function Reject(Message) {
-    throw new Error(Message);
+try { await Main(); }
+catch (Error) {
+    process.stderr.write(Error.message + '\n');
+    process.exitCode = Error.exitCode ?? 1;
 }

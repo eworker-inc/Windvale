@@ -1,10 +1,14 @@
-module Nativeˉhostedˉmodelˉproviderˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉmodelˉproviderˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability model.catalog_v1 version 1;
+requires capability model.inference_v1 version 1;
 
 import Boundˉmodelˉprovider as Bound;
 import Windvaleˉmodelˉprotocol as Protocol;
 
-capability model.catalog_v1;
-capability model.inference_v1;
 
 fn Emptyˉbytes() -> bytes {
     let Unit: bytes = Bytesˉfromˉu8(0u8);

@@ -1,11 +1,15 @@
-module Readˉonlyˉdirectory profile hosted;
+#!wv/1 en@1
+module Readˉonlyˉdirectory;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability filesystem.directory_read_v1 version 1;
 
-capability filesystem.directory_read_v1;
 
 // The capability is one pre-bound directory instance. Names are single ASCII
 // segments; providers never receive native paths or ambient process state.
 
-export enum Directoryˉreadˉstatus {
+export enum Directoryˉreadˉstatus: i32 {
     Valid = 0;
     Notˉfound = 1;
     Notˉfile = 2;

@@ -1,4 +1,9 @@
-module Windvaleˉnetworkˉconnectˉstreamˉcoreˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉnetworkˉconnectˉstreamˉcoreˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉboundedˉoperationˉcore as Operation;
 import Windvaleˉnetworkˉaddressˉauthority as Network;

@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉhostedˉverifierˉmetadataˉadmission profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Rangeˉisˉvalid(Total: u32, Offset: u32, Count: u32) -> bool {
     return Offset <= Total && Count <= Total - Offset;

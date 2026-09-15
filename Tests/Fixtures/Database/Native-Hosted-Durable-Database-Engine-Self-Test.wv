@@ -1,4 +1,9 @@
-module Nativeˉhostedˉdurableˉdatabaseˉengineˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉdurableˉdatabaseˉengineˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉdatabaseˉbootstrap as Bootstrap;
@@ -7,7 +12,6 @@ import Durableˉdatabaseˉlifecycle as Lifecycle;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
 
-capability storage.random_access_v1;
 
 const COMMITTED_LENGTH: u64 = 20992u64;
 const INITIAL_LENGTH: u64 = 4608u64;

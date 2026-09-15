@@ -1,4 +1,9 @@
-module Languageˉoneˉcallableˉtypeˉcatalogˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉcallableˉtypeˉcatalogˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉcallableˉtypes as Callables;

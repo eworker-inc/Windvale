@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegers profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegers;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Core;
 

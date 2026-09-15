@@ -18,21 +18,21 @@ set "Result=1"
 
 echo native package bundle step=build-tools item=1/7
 call "%Native%\Build-Current-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Package-Bundle.wvproj" "%Work%\Self-Test.wvb" || goto :cleanup
-call :verify_file "%Work%\Self-Test.wvb" 661335 cfad643389cc66461aafea190b54e87242a93a51c61331e9f87a7ce9c5500f2f "bundle self-test WVB" || goto :cleanup
+call :verify_file "%Work%\Self-Test.wvb" 719641 8891889015ac57bee1a3a851986ad382ad1ff4e3fade10daf004aab3b7316c17 "bundle self-test WVB" || goto :cleanup
 call "%Native%\Build-Current-Wvb.cmd" "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 613470 ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 "bundle writer WVB" || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 675300 4a1e137b7c4695e6c516626d658c985aa960a91478b1eafab4cbffcba5c232d0 "bundle writer WVB" || goto :cleanup
 call "%Native%\Build-Current-Wvb.cmd" "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 632763 cb8c959e44b24aa380f2a0f6b838d371ed2815d51c586e3e96a36190f52319c7 "bundle verifier WVB" || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 694665 8807ee7605fc2d133f8b57921953f9e2c4861e7ba8c487caa30dcc084972e8b8 "bundle verifier WVB" || goto :cleanup
 
 echo native package bundle step=package-self-test item=2/7
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Self-Test.wvb" "%Work%\Self-Test.exe" || goto :cleanup
+node "%Native%\Package-Current-Segmented-Wvb.mjs" 6 "%Work%\Self-Test.wvb" "%Work%\Self-Test.exe" || goto :cleanup
 "%Work%\Self-Test.exe"
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 
 echo native package bundle step=package-writer item=3/7
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
+node "%Native%\Package-Current-Segmented-Wvb.mjs" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
 echo native package bundle step=package-independent-verifier item=4/7
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" || goto :cleanup
+node "%Native%\Package-Current-Segmented-Wvb.mjs" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" || goto :cleanup
 
 echo native package bundle step=rebuild-locked-applications item=5/7 applications=2
 call "%Native%\Build-Wvdb-Query-Package.cmd" ^

@@ -1,6 +1,11 @@
-module Compilerˉsystemˉkernelˉtargetˉreader profile portable;
+#!wv/1 en@1
+module Compilerˉsystemˉkernelˉtargetˉreader;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Kernelˉtargetˉstatus {
+
+export enum Kernelˉtargetˉstatus: i32 {
     Valid = 0;
     Invalidˉwvb = 1;
     Unsupportedˉmodule = 2;

@@ -1,4 +1,9 @@
-module Compilerˉsourceˉanalysisˉvalidation profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉanalysisˉvalidation;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 import Compilerˉsourceˉbindings as Sourceˉbindings;

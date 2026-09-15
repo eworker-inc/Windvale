@@ -1,8 +1,14 @@
-module Windvaleˉpackageˉlock profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉlock;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Foundationˉoption as Option;
 
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉlockˉstatus {
+export enum Windvaleˉlockˉstatus: i32 {
     Valid = 0;
     Invalidˉtext = 1101;
     Invalidˉheader = 1102;
@@ -91,6 +97,35 @@ export record Windvaleˉlockˉscan {
 
 fn Emptyˉbytes() -> bytes {
     return Textˉtoˉutf8("");
+}
+
+record Lockˉcontent {
+    Status: Windvaleˉlockˉstatus;
+    Digest: Packageˉtext.Windvaleˉpackageˉspan;
+    Bytes: u64;
+}
+
+fn Readˉcontent(
+    Input: bytes,
+    Digest: Packageˉtext.Windvaleˉpackageˉspan,
+    Decimal: Packageˉtext.Windvaleˉpackageˉspan
+) -> Lockˉcontent {
+    let Empty: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(0u32, 0u32);
+    if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Digest) {
+        return Lockˉcontent(Windvaleˉlockˉstatus.Invalidˉdigest, Empty, 0u64);
+    }
+    let Parsed: Option.Option<u64> =
+        Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Decimal);
+    // Keep the owner and its borrowed match inside this bounded record reader.
+    match Option.Borrow(borrow Parsed) {
+        case Option.Option.Present { Value: Number } {
+            return Lockˉcontent(Windvaleˉlockˉstatus.Valid, Digest, Number);
+        }
+        case Option.Option.Absent {
+            return Lockˉcontent(Windvaleˉlockˉstatus.Invalidˉdecimal, Empty, 0u64);
+        }
+    }
 }
 
 fn Failure(
@@ -420,19 +455,16 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
                                 Tokenˉspan(Input, Line, 3u32);
                             let Fixedˉpath: Packageˉtext.Windvaleˉpackageˉspan =
                                 Tokenˉspan(Input, Line, 4u32);
-                            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Fixedˉdigest) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
-                            }
-                            let Fixedˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
-                                Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Fixedˉdecimal);
-                            if !Fixedˉnumber.Valid {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                            let Fixedˉcontent: Lockˉcontent =
+                                Readˉcontent(Input, Fixedˉdigest, Fixedˉdecimal);
+                            if Fixedˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                                return Failure(Fixedˉcontent.Status, Lineˉnumber, 1u32);
                             }
                             if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Fixedˉpath) {
                                 return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
                             }
-                            Originˉdigest = Fixedˉdigest;
-                            Originˉbytes = Fixedˉnumber.Value;
+                            Originˉdigest = Fixedˉcontent.Digest;
+                            Originˉbytes = Fixedˉcontent.Bytes;
                             Originˉpath = Fixedˉpath;
                         } else {
                             if Tokens.Count != 4u32 {
@@ -452,30 +484,27 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
                                 Tokenˉspan(Input, Line, 2u32);
                             let Resourceˉpath: Packageˉtext.Windvaleˉpackageˉspan =
                                 Tokenˉspan(Input, Line, 3u32);
-                            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Resourceˉdigest) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
-                            }
-                            let Resourceˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
-                                Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Resourceˉdecimal);
-                            if !Resourceˉnumber.Valid {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                            let Resourceˉcontent: Lockˉcontent =
+                                Readˉcontent(Input, Resourceˉdigest, Resourceˉdecimal);
+                            if Resourceˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                                return Failure(Resourceˉcontent.Status, Lineˉnumber, 1u32);
                             }
                             if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Resourceˉpath) {
                                 return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
                             }
                             if Lineˉnumber == 7u32 {
-                                Packageˉdigest = Resourceˉdigest;
-                                Packageˉbytes = Resourceˉnumber.Value;
+                                Packageˉdigest = Resourceˉcontent.Digest;
+                                Packageˉbytes = Resourceˉcontent.Bytes;
                                 Packageˉpath = Resourceˉpath;
                             }
                             if Lineˉnumber == 8u32 {
-                                Compilerˉdigest = Resourceˉdigest;
-                                Compilerˉbytes = Resourceˉnumber.Value;
+                                Compilerˉdigest = Resourceˉcontent.Digest;
+                                Compilerˉbytes = Resourceˉcontent.Bytes;
                                 Compilerˉpath = Resourceˉpath;
                             }
                             if Lineˉnumber == 9u32 {
-                                Projectˉdigest = Resourceˉdigest;
-                                Projectˉbytes = Resourceˉnumber.Value;
+                                Projectˉdigest = Resourceˉcontent.Digest;
+                                Projectˉbytes = Resourceˉcontent.Bytes;
                                 Projectˉpath = Resourceˉpath;
                             }
                         }
@@ -505,13 +534,10 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
                 if Scope == 0u32 {
                     return Failure(Windvaleˉlockˉstatus.Invalidˉscope, Lineˉnumber, 1u32);
                 }
-                if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Partˉdigest) {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
-                }
-                let Partˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
-                    Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Partˉdecimal);
-                if !Partˉnumber.Valid {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
+                let Partˉcontent: Lockˉcontent =
+                    Readˉcontent(Input, Partˉdigest, Partˉdecimal);
+                if Partˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                    return Failure(Partˉcontent.Status, Lineˉnumber, 1u32);
                 }
                 if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Partˉpath) {
                     return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
@@ -524,7 +550,8 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
                     }
                 }
                 Directory = Appendˉpart(
-                    Directory, Partˉname, Scope, Partˉdigest, Partˉnumber.Value, Partˉpath
+                    Directory, Partˉname, Scope, Partˉcontent.Digest,
+                    Partˉcontent.Bytes, Partˉpath
                 );
                 Previousˉpart = Partˉname;
                 Parts = Parts + 1u32;
@@ -611,16 +638,13 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
                                 Tokenˉspan(Input, Line, 1u32);
                             let Finalˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
                                 Tokenˉspan(Input, Line, 2u32);
-                            if !Packageˉtext.Windvaleˉpackageˉdigestˉvalid(Input, Finalˉdigest) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉdigest, Lineˉnumber, 1u32);
+                            let Finalˉcontent: Lockˉcontent =
+                                Readˉcontent(Input, Finalˉdigest, Finalˉdecimal);
+                            if Finalˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                                return Failure(Finalˉcontent.Status, Lineˉnumber, 1u32);
                             }
-                            let Finalˉnumber: Packageˉtext.Windvaleˉpackageˉdecimal =
-                                Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Finalˉdecimal);
-                            if !Finalˉnumber.Valid {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉdecimal, Lineˉnumber, 1u32);
-                            }
-                            Outputˉdigest = Finalˉdigest;
-                            Outputˉbytes = Finalˉnumber.Value;
+                            Outputˉdigest = Finalˉcontent.Digest;
+                            Outputˉbytes = Finalˉcontent.Bytes;
                             Outputˉfound = true;
                         } else {
                             return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);

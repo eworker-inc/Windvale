@@ -1,4 +1,9 @@
-module Compilerˉsourceˉemission profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉemission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 import Compilerˉsourceˉanalysisˉvalidation as Analysisˉvalidation;
@@ -6,7 +11,7 @@ import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
-export enum Compilerˉsourceˉemissionˉstatus {
+export enum Compilerˉsourceˉemissionˉstatus: i32 {
     Valid = 0;
     Invalidˉanalysis = 1;
 }

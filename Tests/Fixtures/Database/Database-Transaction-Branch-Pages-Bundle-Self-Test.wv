@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉbundle profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉbundle;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpages as Pages;
 import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉvalidation as Validation;

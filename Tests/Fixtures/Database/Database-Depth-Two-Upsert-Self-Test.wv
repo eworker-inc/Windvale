@@ -1,4 +1,9 @@
-module Databaseˉdepthˉtwoˉupsertˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉdepthˉtwoˉupsertˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉdepthˉtwoˉupsert as Upsert;

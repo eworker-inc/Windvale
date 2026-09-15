@@ -1,9 +1,13 @@
-module Compilerˉsourceˉgraph profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉgraph;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉset as Sourceˉset;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
-export enum Compilerˉsourceˉgraphˉstatus {
+export enum Compilerˉsourceˉgraphˉstatus: i32 {
 Valid = 0;
 Sourceˉset = 1;
 Duplicateˉimport = 2;

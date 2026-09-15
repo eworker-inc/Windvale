@@ -1,8 +1,13 @@
-module Linkerˉconsoleˉapplicationˉsegmentedˉrecipe profile portable;
+#!wv/1 en@1
+module Linkerˉconsoleˉapplicationˉsegmentedˉrecipe;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-export enum Consoleˉapplicationˉsegmentedˉrecipeˉstatus {
+export enum Consoleˉapplicationˉsegmentedˉrecipeˉstatus: i32 {
     Valid = 0;
     Invalid = 1;
     Notˉsegmented = 2;

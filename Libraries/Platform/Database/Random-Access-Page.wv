@@ -1,17 +1,21 @@
-module Randomˉaccessˉdatabaseˉpage profile hosted;
+#!wv/1 en@1
+module Randomˉaccessˉdatabaseˉpage;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Windvaleˉdatabaseˉstorageˉpage as Page;
 
-capability storage.random_access_v1;
 
-export enum Databaseˉpageˉreadˉstatus {
+export enum Databaseˉpageˉreadˉstatus: i32 {
     Valid = 0;
     Pageˉfailure = 1;
     Storageˉfailure = 2;
 }
 
-export enum Databaseˉpageˉstorageˉerror {
+export enum Databaseˉpageˉstorageˉerror: i32 {
     None = 0;
     Permissionˉdenied = 1;
     Unavailable = 2;
@@ -24,7 +28,7 @@ export enum Databaseˉpageˉstorageˉerror {
     Invalidˉresponse = 9;
 }
 
-export enum Databaseˉpageˉerror {
+export enum Databaseˉpageˉerror: i32 {
     None = 0;
     Invalidˉpageˉsize = 1;
     Transferˉlimit = 2;

@@ -1,9 +1,14 @@
-module Windvaleˉdatabaseˉstorageˉpage profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉstorageˉpage;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const MAXIMUM_PAGE_TRANSFER: u32 = 65536u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉstorageˉpageˉerror {
+export enum Databaseˉstorageˉpageˉerror: i32 {
     Valid = 0;
     Invalidˉpageˉsize = 1;
     Transferˉlimit = 2;

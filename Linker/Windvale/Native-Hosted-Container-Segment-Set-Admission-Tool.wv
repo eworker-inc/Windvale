@@ -1,14 +1,18 @@
-module Nativeˉhostedˉcontainerˉsegmentˉsetˉadmissionˉtool profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉcontainerˉsegmentˉsetˉadmissionˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
 import Linkerˉnativeˉhostedˉcontainerˉsegmentˉsetˉcore as Segmentˉset;
 
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
-enum Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus {
+enum Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus: i32 {
     Valid = 0;
     Invalidˉresource = 1;
     Invalidˉrequest = 2;

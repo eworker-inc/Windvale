@@ -187,7 +187,16 @@ async function Readˉproject(Relative) {
         Reject(`The focused project is not bounded: ${Relative}`);
     }
     const Lines = Bytes.toString('utf8').split(/\r?\n/u).filter(Line => Line !== '');
-    if (Lines[0] !== 'windvale-project 2' ||
+    if (Lines[0] === 'windvale-project 4') {
+        const Admission = Lines.splice(-4);
+        if (!/^source-input-lock "[^"\r\n]+\.wvlock"$/u.test(Admission[0] ?? '') ||
+            !/^source-input-lock-sha256 [0-9a-f]{64}$/u.test(Admission[1] ?? '') ||
+            !/^source-profile "[^"\r\n]+\.wvsp"$/u.test(Admission[2] ?? '') ||
+            !/^target-descriptor "[^"\r\n]+\.wvtd"$/u.test(Admission[3] ?? '')) {
+            Reject(`The focused project admission declarations are invalid: ${Relative}`);
+        }
+    }
+    if (!['windvale-project 2', 'windvale-project 4'].includes(Lines[0]) ||
         Lines[Lines.length - 1] !== 'emit wvb') {
         Reject(`The focused project contract is invalid: ${Relative}`);
     }

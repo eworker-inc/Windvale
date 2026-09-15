@@ -27,9 +27,9 @@ echo 'native offline generation lifecycle step=build-tools item=1/4 tools=2'
     "$work/Resolver.wvb" || exit $?
 
 echo 'native offline generation lifecycle step=package-tools item=2/4 target=linux-x64'
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$work/Planner.wvb" "$work/Planner.elf" linux || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$work/Resolver.wvb" "$work/Resolver.elf" linux || exit $?
 
 echo 'native offline generation lifecycle step=verify-planner item=3/4 cases=12'

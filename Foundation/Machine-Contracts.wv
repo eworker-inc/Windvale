@@ -1,4 +1,9 @@
-module Foundationˉmachineˉcontracts profile portable;
+#!wv/1 en@1
+module Foundationˉmachineˉcontracts;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Foundationˉalignmentˉisˉvalid(Value: u32) -> bool {
     if Value == 1u32 { return true; }

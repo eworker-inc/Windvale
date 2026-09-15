@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiation profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiation;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 record Publisherˉobjectˉlayout {
     Sections: u32;

@@ -1,13 +1,17 @@
-module Compilerˉsystemˉkernelˉtargetˉtool profile hosted;
+#!wv/1 en@1
+module Compilerˉsystemˉkernelˉtargetˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsystemˉkernelˉtargetˉreader as Kernelˉreader;
 import Wvoˉobjectˉconstruction as Construction;
 
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Entryˉcode: bytes = [
     72, 133, 201, 15, 132, 154, 0, 0, 0, 72, 184, 87, 86, 75, 72, 65,

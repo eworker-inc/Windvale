@@ -1,4 +1,9 @@
-module Nativeˉhostedˉdurableˉtreeˉwriterˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉdurableˉtreeˉwriterˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉstorageˉexecutor as Executor;
@@ -9,7 +14,6 @@ import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const COMMITTED_LENGTH: u64 = 20992u64;
 const UPDATED_LENGTH: u64 = 33280u64;

@@ -1,11 +1,16 @@
-module Windvaleˉnetworkˉconnectˉstreamˉcore profile portable;
+#!wv/1 en@1
+module Windvaleˉnetworkˉconnectˉstreamˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉboundedˉoperationˉcore as Operation;
 import Windvaleˉnetworkˉaddressˉauthority as Network;
 
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Networkˉconnectˉerror {
+export enum Networkˉconnectˉerror: i32 {
     Valid = 0;
     Unauthorized = 1;
     Invalidˉtarget = 2;
@@ -19,7 +24,7 @@ export enum Networkˉconnectˉerror {
     Arithmeticˉoverflow = 10;
 }
 
-export enum Networkˉconnectˉphase {
+export enum Networkˉconnectˉphase: i32 {
     Invalid = 0;
     Resolving = 1;
     Connecting = 2;
@@ -46,7 +51,7 @@ export record Networkˉconnectˉtransition {
     State: Networkˉconnectˉstate;
 }
 
-export enum Networkˉstreamˉerror {
+export enum Networkˉstreamˉerror: i32 {
     Valid = 0;
     Invalidˉconnection = 1;
     Invalidˉgeneration = 2;
@@ -58,7 +63,7 @@ export enum Networkˉstreamˉerror {
     Arithmeticˉoverflow = 8;
 }
 
-export enum Networkˉstreamˉphase {
+export enum Networkˉstreamˉphase: i32 {
     Invalid = 0;
     Open = 1;
     Peerˉclosed = 2;
@@ -71,7 +76,7 @@ export enum Networkˉstreamˉphase {
     Writeˉindeterminate = 9;
 }
 
-export enum Networkˉstreamˉproviderˉevent {
+export enum Networkˉstreamˉproviderˉevent: i32 {
     Reset = 1;
     Providerˉloss = 2;
     Providerˉrestart = 3;

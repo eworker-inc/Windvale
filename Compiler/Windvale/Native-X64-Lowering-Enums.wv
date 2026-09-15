@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉenums profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉenums;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
     return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));

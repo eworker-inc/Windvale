@@ -1,10 +1,14 @@
-module Durableˉlogicalˉtreeˉwriter profile hosted;
+#!wv/1 en@1
+module Durableˉlogicalˉtreeˉwriter;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉtreeˉwriter as Writer;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Logical;
 
-capability storage.random_access_v1;
 
 export record Databaseˉdurableˉlogicalˉtreeˉupsertˉresult {
     Logicalˉerror: Logical.Databaseˉlogicalˉwriteˉerror;

@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreter;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;

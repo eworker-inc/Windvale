@@ -1,19 +1,23 @@
-module Wvoˉobjectˉcore profile hosted;
+#!wv/1 en@1
+module Wvoˉobjectˉcore;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉsha256ˉstreaming as Sha256;
 import Wvoˉobjectˉverification as Verification;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Emptyˉbytes: bytes = [];
 data Textˉcontents: bytes = [232, 0, 0, 0, 0, 195];
 data Messageˉcontents: bytes = [72, 105, 10];
 
-enum Wvoˉsectionˉkind {
+enum Wvoˉsectionˉkind: i32 {
     Invalid = 0;
     Code = 1;
     Readˉonlyˉdata = 2;
@@ -21,20 +25,20 @@ enum Wvoˉsectionˉkind {
     Zeroˉfill = 4;
 }
 
-enum Wvoˉsymbolˉbinding {
+enum Wvoˉsymbolˉbinding: i32 {
     Invalid = 0;
     Local = 1;
     Export = 2;
     Import = 3;
 }
 
-enum Wvoˉsymbolˉkind {
+enum Wvoˉsymbolˉkind: i32 {
     Invalid = 0;
     Function = 1;
     Data = 2;
 }
 
-enum Wvoˉrelocationˉkind {
+enum Wvoˉrelocationˉkind: i32 {
     Invalid = 0;
     Absoluteˉu32 = 1;
     Relativeˉi32 = 2;

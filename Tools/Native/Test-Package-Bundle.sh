@@ -47,33 +47,33 @@ echo 'native package bundle step=build-tools item=1/7'
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj" \
     "$work/Self-Test.wvb" || exit $?
-verify_file "$work/Self-Test.wvb" 661335 \
-    cfad643389cc66461aafea190b54e87242a93a51c61331e9f87a7ce9c5500f2f \
+verify_file "$work/Self-Test.wvb" 719641 \
+    8891889015ac57bee1a3a851986ad382ad1ff4e3fade10daf004aab3b7316c17 \
     'bundle self-test WVB' || exit 1
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 613470 \
-    ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 \
+verify_file "$work/Writer.wvb" 675300 \
+    4a1e137b7c4695e6c516626d658c985aa960a91478b1eafab4cbffcba5c232d0 \
     'bundle writer WVB' || exit 1
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 632763 \
-    cb8c959e44b24aa380f2a0f6b838d371ed2815d51c586e3e96a36190f52319c7 \
+verify_file "$work/Verifier.wvb" 694665 \
+    8807ee7605fc2d133f8b57921953f9e2c4861e7ba8c487caa30dcc084972e8b8 \
     'bundle verifier WVB' || exit 1
 
 echo 'native package bundle step=package-self-test item=2/7'
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+node "$script_directory/Package-Current-Segmented-Wvb.mjs" 6 \
     "$work/Self-Test.wvb" "$work/Self-Test.elf" || exit $?
 "$work/Self-Test.elf"
 [[ $? -eq 42 ]] || exit 1
 
 echo 'native package bundle step=package-writer item=3/7'
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+node "$script_directory/Package-Current-Segmented-Wvb.mjs" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" || exit $?
 echo 'native package bundle step=package-independent-verifier item=4/7'
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+node "$script_directory/Package-Current-Segmented-Wvb.mjs" 6 \
     "$work/Verifier.wvb" "$work/Verifier.elf" || exit $?
 
 echo 'native package bundle step=rebuild-locked-applications item=5/7 applications=2'

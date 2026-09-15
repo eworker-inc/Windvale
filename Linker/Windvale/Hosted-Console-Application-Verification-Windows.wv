@@ -1,4 +1,9 @@
-module Linkerˉhostedˉconsoleˉapplicationˉverificationˉwindows profile portable;
+#!wv/1 en@1
+module Linkerˉhostedˉconsoleˉapplicationˉverificationˉwindows;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉhostedˉconsoleˉapplicationˉverificationˉcommon as Common;
 

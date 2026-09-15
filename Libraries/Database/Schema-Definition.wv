@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉschemaˉdefinition profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉschemaˉdefinition;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 
@@ -12,7 +17,7 @@ const DATABASE_SCHEMA_MAXIMUM_FIELD_BYTES: u32 = 9216u32;
 const DATABASE_SCHEMA_MAXIMUM_BYTES: u32 = 9264u32;
 const DATABASE_SCHEMA_MAXIMUM_VALUE_BYTES: u32 = 61408u32;
 
-export enum Databaseˉfieldˉkind {
+export enum Databaseˉfieldˉkind: i32 {
     Boolean = 1;
     I64 = 2;
     U64 = 3;
@@ -20,7 +25,7 @@ export enum Databaseˉfieldˉkind {
     Bytes = 5;
 }
 
-export enum Databaseˉschemaˉerror {
+export enum Databaseˉschemaˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

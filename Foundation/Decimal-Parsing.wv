@@ -1,4 +1,9 @@
-module Foundationˉdecimalˉparsing profile portable;
+#!wv/1 en@1
+module Foundationˉdecimalˉparsing;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Foundationˉu32ˉparse {
     Valid: bool;

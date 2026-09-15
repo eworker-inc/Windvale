@@ -1,4 +1,9 @@
-module Windvaleˉstandardˉbyteˉoutputˉcore profile portable;
+#!wv/1 en@1
+module Windvaleˉstandardˉbyteˉoutputˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉboundedˉoperationˉcore as Operation;
 
@@ -6,7 +11,7 @@ const OUTPUT_MAXIMUM_CHUNK_BYTES: u32 = 65536u32;
 const OUTPUT_MAXIMUM_BUFFER_BYTES: u32 = 262144u32;
 const OUTPUT_MAXIMUM_TOTAL_BYTES: u64 = 4194304u64;
 
-export enum Outputˉerror {
+export enum Outputˉerror: i32 {
     Valid = 0;
     Invalidˉidentity = 1;
     Invalidˉgeneration = 2;
@@ -19,7 +24,7 @@ export enum Outputˉerror {
     Arithmeticˉoverflow = 9;
 }
 
-export enum Outputˉphase {
+export enum Outputˉphase: i32 {
     Invalid = 0;
     Open = 1;
     Closing = 2;
@@ -32,7 +37,7 @@ export enum Outputˉphase {
     Released = 9;
 }
 
-export enum Outputˉproviderˉevent {
+export enum Outputˉproviderˉevent: i32 {
     Providerˉloss = 1;
     Providerˉrestart = 2;
     Teardown = 3;

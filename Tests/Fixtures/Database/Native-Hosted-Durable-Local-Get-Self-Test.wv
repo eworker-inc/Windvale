@@ -1,10 +1,14 @@
-module Nativeˉhostedˉdurableˉlocalˉgetˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉdurableˉlocalˉgetˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉlocalˉget as Get;
 import Durableˉlocalˉopen as Open;
 import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
 
-capability storage.random_access_v1;
 
 fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
     let Length: u32 = Bytesˉlength(First);

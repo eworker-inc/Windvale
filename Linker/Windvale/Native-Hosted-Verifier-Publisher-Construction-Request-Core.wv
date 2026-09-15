@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉrequest profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉrequest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉdigests as Digests;
 

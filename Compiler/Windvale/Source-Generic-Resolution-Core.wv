@@ -1,14 +1,19 @@
-module Compilerˉsourceˉgenericˉresolution profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉgenericˉresolution;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-export enum Compilerˉsourceˉgenericˉparameterˉkind {
+export enum Compilerˉsourceˉgenericˉparameterˉkind: i32 {
     None = 0;
     Type = 1;
     Constant = 2;
 }
 
-export enum Compilerˉsourceˉgenericˉstatus {
+export enum Compilerˉsourceˉgenericˉstatus: i32 {
     Valid = 0;
     Invalidˉparameter = 1;
     Parameterˉlimit = 2;

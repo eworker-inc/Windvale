@@ -1,11 +1,16 @@
-module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉverification profile portable;
+#!wv/1 en@1
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉverification;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
 
-export enum Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus {
+export enum Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus: i32 {
     Active = 0;
     Complete = 1;
     Manifest = 2;

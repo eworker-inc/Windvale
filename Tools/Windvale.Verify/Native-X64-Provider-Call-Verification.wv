@@ -1,4 +1,9 @@
-module Toolsˉnativeˉx64ˉproviderˉcallˉverification profile portable;
+#!wv/1 en@1
+module Toolsˉnativeˉx64ˉproviderˉcallˉverification;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Nativeˉx64ˉproviderˉcallˉverification {
     Valid: bool;

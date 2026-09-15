@@ -1,14 +1,18 @@
-module Linkerˉcompilerˉimageˉcanonicalˉtransportˉtool profile hosted;
+#!wv/1 en@1
+module Linkerˉcompilerˉimageˉcanonicalˉtransportˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Linkerˉcompilerˉflatˉimageˉstagingˉmanifest as Manifest;
 import Linkerˉcompilerˉimageˉtransportˉresources as Resources;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 const CHUNK_BYTES: u32 = 4194304u32;
 

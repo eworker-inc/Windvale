@@ -66,7 +66,23 @@ export async function Readˉplan(Selection = 'all') {
         const Bytes = await Readˉordinary(join(REPOSITORY, Product.Project), 65_536);
         const Lines = new TextDecoder('utf-8', { fatal: true }).decode(Bytes)
             .trimEnd().split(/\r?\n/u);
-        if (Lines.shift() !== 'windvale-project 2' || Lines.pop() !== 'emit wvb') {
+        const Header = Lines.shift();
+        const Admission = [];
+        if (Header === 'windvale-project 4') {
+            const Directives = Lines.splice(-4);
+            const Patterns = [/^source-input-lock "([A-Za-z0-9][A-Za-z0-9./-]*\.wvlock)"$/u,
+                /^source-input-lock-sha256 [0-9a-f]{64}$/u,
+                /^source-profile "([A-Za-z0-9][A-Za-z0-9./-]*\.wvsp)"$/u,
+                /^target-descriptor "([A-Za-z0-9][A-Za-z0-9./-]*\.wvtd)"$/u];
+            for (const [Index, Pattern] of Patterns.entries()) {
+                const Match = Pattern.exec(Directives[Index] ?? '');
+                if (!Match || Match[1]?.split('/').some(Part => !Part || Part === '..' || Part === '.')) {
+                    throw new Error(`Malformed front-end admission input: ${Product.Project}`);
+                }
+                if (Match[1]) Admission.push(Match[1]);
+            }
+        }
+        if (!['windvale-project 2', 'windvale-project 4'].includes(Header) || Lines.pop() !== 'emit wvb') {
             throw new Error(`Unexpected front-end project format: ${Product.Project}`);
         }
         const Inputs = [];
@@ -82,7 +98,7 @@ export async function Readˉplan(Selection = 'all') {
         if (Roots !== 1 || Inputs.length > 64 || new Set(Inputs).size !== Inputs.length) {
             throw new Error('Invalid front-end project source inventory.');
         }
-        Products.push({ ...Product, Inputs: [Product.Project, ...Inputs] });
+        Products.push({ ...Product, Inputs: [Product.Project, ...Inputs, ...Admission] });
     }
     return {
         Format: 'windvale-front-end-development-plan-1',

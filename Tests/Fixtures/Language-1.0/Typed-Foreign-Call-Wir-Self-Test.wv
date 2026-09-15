@@ -1,12 +1,16 @@
-module Languageˉoneˉtypedˉforeignˉcallˉwirˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉtypedˉforeignˉcallˉwirˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
 import Compilerˉsourceˉwir as Wir;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Appendˉsourceˉentry(Value: bytes, Offset: u32, Length: u32) -> bytes {
     var Result: bytes = Bytesˉconcat(

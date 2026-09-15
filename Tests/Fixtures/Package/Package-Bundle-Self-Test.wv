@@ -1,4 +1,9 @@
-module Windvaleˉpackageˉbundleˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉbundleˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉpackageˉbundleˉverifier as Verifier;

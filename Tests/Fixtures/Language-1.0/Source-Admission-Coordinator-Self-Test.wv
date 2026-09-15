@@ -1,4 +1,10 @@
-module Languageˉoneˉsourceˉadmissionˉcoordinatorˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉsourceˉadmissionˉcoordinatorˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉadmissionˉevidence as Evidence;
 import Compilerˉsourceˉadmissionˉcoordinator as Coordinator;
@@ -13,8 +19,6 @@ import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉtarget as Target;
 import Compilerˉsourceˉtargetˉadmission as Targetˉadmission;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
 

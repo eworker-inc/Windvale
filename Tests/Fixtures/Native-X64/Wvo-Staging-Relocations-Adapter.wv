@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉtest profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocationsˉnativeˉbridge as Bridge;
 

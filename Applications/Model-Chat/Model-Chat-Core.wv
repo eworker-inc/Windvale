@@ -1,8 +1,13 @@
-module Windvaleˉmodelˉchatˉcore profile portable;
+#!wv/1 en@1
+module Windvaleˉmodelˉchatˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉmodelˉprotocol as Protocol;
 
-export enum Modelˉchatˉcommandˉkind {
+export enum Modelˉchatˉcommandˉkind: i32 {
     Empty = 0;
     Message = 1;
     Help = 2;
@@ -10,7 +15,7 @@ export enum Modelˉchatˉcommandˉkind {
     Quit = 4;
 }
 
-export enum Modelˉchatˉhistoryˉstatus {
+export enum Modelˉchatˉhistoryˉstatus: i32 {
     Valid = 0;
     Invalidˉhistory = 1;
     Invalidˉmessage = 2;

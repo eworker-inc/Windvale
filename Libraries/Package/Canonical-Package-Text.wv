@@ -1,4 +1,10 @@
-module Windvaleˉpackageˉtext profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉtext;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Foundationˉoption as Option;
 
 export record Windvaleˉpackageˉspan {
     Offset: u32;
@@ -23,11 +29,6 @@ export record Windvaleˉpackageˉtoken {
     Found: bool;
     Offset: u32;
     Length: u32;
-}
-
-export record Windvaleˉpackageˉdecimal {
-    Valid: bool;
-    Value: u64;
 }
 
 export record Windvaleˉpackageˉdocument {
@@ -402,16 +403,16 @@ export fn Windvaleˉpackageˉdigestˉvalid(
 export fn Windvaleˉpackageˉdecimalˉparse(
     Input: bytes,
     Span: Windvaleˉpackageˉspan
-) -> Windvaleˉpackageˉdecimal {
+) -> Option.Option<u64> {
     if !Windvaleˉpackageˉspanˉvalid(Input, Span) {
-        return Windvaleˉpackageˉdecimal(false, 0u64);
+        return Option.Option.Absent<u64> {};
     }
     if Span.Length == 0u32 || Span.Length > 20u32 {
-        return Windvaleˉpackageˉdecimal(false, 0u64);
+        return Option.Option.Absent<u64> {};
     }
     if Span.Length > 1u32 {
         if Bytesˉreadˉu8(Input, Span.Offset) == 48u8 {
-            return Windvaleˉpackageˉdecimal(false, 0u64);
+            return Option.Option.Absent<u64> {};
         }
     }
 
@@ -420,19 +421,19 @@ export fn Windvaleˉpackageˉdecimalˉparse(
     while Index < Span.Length {
         let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Span.Offset + Index));
         if Character < 48u32 || Character > 57u32 {
-            return Windvaleˉpackageˉdecimal(false, 0u64);
+            return Option.Option.Absent<u64> {};
         }
         let Digit: u64 = U64ˉfromˉu32(Character - 48u32);
         if Value > 1844674407370955161u64 {
-            return Windvaleˉpackageˉdecimal(false, 0u64);
+            return Option.Option.Absent<u64> {};
         }
         if Value == 1844674407370955161u64 && Digit > 5u64 {
-            return Windvaleˉpackageˉdecimal(false, 0u64);
+            return Option.Option.Absent<u64> {};
         }
         Value = Value * 10u64 + Digit;
         Index = Index + 1u32;
     }
-    return Windvaleˉpackageˉdecimal(true, Value);
+    return Option.Option.Present<u64> { Value: Value };
 }
 
 export fn Windvaleˉpackageˉscope(

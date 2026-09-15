@@ -1,4 +1,9 @@
-module Languageˉoneˉfixedˉintegerˉruntimeˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉfixedˉintegerˉruntimeˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegers as Runtime;

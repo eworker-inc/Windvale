@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowth profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowth;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 import Windvaleˉdatabaseˉdurableˉpage as Page;

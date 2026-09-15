@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉsqlˉlowerer profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉsqlˉlowerer;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉqueryˉir as Query;
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
@@ -12,7 +17,7 @@ const DATABASE_SQL_MAXIMUM_PARAMETERS: u32 = 32u32;
 const DATABASE_SQL_MAXIMUM_ROWS: u32 = 500u32;
 const DATABASE_SQL_NO_PARAMETER: u32 = 4294967295u32;
 
-export enum Databaseˉsqlˉerror {
+export enum Databaseˉsqlˉerror: i32 {
     Valid = 0;
     Empty = 1;
     Tooˉlarge = 2;

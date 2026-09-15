@@ -1,4 +1,9 @@
-module Databaseˉstorageˉpublicationˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉstorageˉpublicationˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;

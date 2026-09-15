@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉrewrite profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉrewrite;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉtransactionˉleafˉrewrite as Rewrite;
 import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;

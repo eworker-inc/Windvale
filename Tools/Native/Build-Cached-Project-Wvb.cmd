@@ -10,6 +10,12 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Project=%~f1"
 set "OutputWvb=%~f2"
+set "ProjectHeader="
+if exist "%Project%" for /f "usebackq delims=" %%H in ("%Project%") do if not defined ProjectHeader set "ProjectHeader=%%H"
+if "%ProjectHeader%"=="windvale-project 4" (
+    node "%RepositoryRoot%\Tools\Native\Build-Current-Split-Project-Wvb.mjs" "%Project%" "%OutputWvb%"
+    exit /b
+)
 set "KeyTool=%RepositoryRoot%\Tools\Native\Get-Native-Project-Cache-Key.mjs"
 set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door"
 set "Inventory=%FrontDoor%\SHA256SUMS"

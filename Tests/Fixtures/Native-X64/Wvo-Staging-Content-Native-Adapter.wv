@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉstagingˉcontentˉnativeˉtest profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉstagingˉcontentˉnativeˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;

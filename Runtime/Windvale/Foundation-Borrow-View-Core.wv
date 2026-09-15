@@ -1,6 +1,11 @@
-module Windvaleˉfoundationˉborrowˉview profile portable;
+#!wv/1 en@1
+module Windvaleˉfoundationˉborrowˉview;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Payloadˉroot {
+
+export enum Payloadˉroot: i32 {
     Inline = 0;
     Descriptor = 1;
     Aggregate = 2;

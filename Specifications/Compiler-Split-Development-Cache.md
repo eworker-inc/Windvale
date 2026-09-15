@@ -6,9 +6,12 @@
 independent analyzer and emitter products specified by
 [the source-analysis phase artifact](Compiler-Source-Analysis.md). It admits
 one canonical Project 2 manifest, one private `.wvb` output, one analyzer plus
-identity, and one emitter plus identity. Project 3 profiles and optimization
-options remain outside this fixed-mode route rather than being silently omitted
-from its key. The analyzer target is `source-analysis-v1`; the emitter and
+identity, and one emitter plus identity. Its explicit `--authenticated-project4`
+mode additionally requires an admitter, authenticator, manifest reader, and
+foreign binder. It delegates Project 4 parsing and authenticated compilation to
+`Run-Split-Compiler.mjs`; it does not reconstruct these supplied producers or
+guess an edition. Project 3 and optimization options remain outside this route.
+The analyzer target is `source-analysis-v1`; the emitter and
 published product target are `portable-wvb-optimized-v1`.
 
 This cache is not a release, qualification, or cross-host conformance boundary.
@@ -92,9 +95,9 @@ checkpoints. It does not read, validate, or reconstruct those intermediate
 products; they may have been evicted independently. It still derives both keys
 from the current complete source closure and producer identities. Invalid final
 records or product bytes fail closed without falling back to reconstruction.
-Only a final-product miss acquires analysis, ordering the bounded source modules
+Only a Project 2 final-product miss acquires analysis, ordering the bounded source modules
 and validating or constructing its phase products as needed. A hit does not
-read or execute either large compiler product.
+read or execute either large compiler product in Project 2 mode.
 On a miss, the coordinator hashes the selected executable against its identity
 both immediately before and after execution, rechecks the complete key input
 set, syncs the candidate files, and atomically publishes the directory.
@@ -108,15 +111,48 @@ after a producer, measurement, manifest, or lost-race failure, after proving
 that the candidate remains a direct child of the selected family. A successful
 rename clears the temporary path and is preserved.
 
+## Authenticated Project 4 construction
+
+The `project-authenticated-split-wvb-v1` family is separate from descriptorless
+analysis and emission caches. It binds all declared source, lock, profile and
+target bytes, the workspace and project, analyzer/emitter identity records,
+the loaded coordinator implementations, host, and role-ordered executable
+content identities for Node and all six supplied native producers. Each producer
+is a nonempty ordinary file of at most 128 MiB, hashed with a 1 MiB streaming
+buffer. There are exactly seven executable inputs; content hashes, not mutable
+cache locations, identify the predecessor products.
+
+A miss invokes the existing authenticated coordinator with its native manifest
+reader and explicit workspace. The resulting WVB is a private cache candidate,
+not application output publication. Its checkpoint uses the existing emission
+record shape, with the complete authenticated request key also occupying the
+analysis-key field. It does not claim a separately reusable analysis checkpoint.
+The outer sequence has a fifteen-minute bound; individual native phases retain
+the existing five-minute ceiling. Diagnostics remain bounded to 64 KiB.
+
+Both hits and misses remeasure all producer bytes and project inputs before
+copying a completed WVB to the caller's private output. Wrong digests, changed
+profiles or targets, invalid identities and failed admission cannot reuse an
+earlier accepted key. Corrupt checkpoints fail closed. The final application
+destination still belongs to the native transactional publisher in the ordinary
+Project 4 launcher; this development cache does not replace that boundary.
+
+The ordinary `Build-Wvb-Project4.mjs` front door uses this authenticated cache
+for both the requested project and its current publisher. Before invoking the
+native publisher, it rechecks the compiler checkpoint identity, its own loaded
+coordinator bytes, and both complete project requests. A cache hit therefore
+avoids compilation, not final native admission or transactional publication.
+
 ## Qualified two-file bootstrap
 
 The Language 1.0 front door retains the qualified current 1,552,090-byte
 analyzer and 1,556,434-byte target-aware emitter under
 `Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/`. Their manifest binds
 the Decision 0896 promotion, current Project 2 roots, source identities, sizes,
-and digests. The active gate packages that pair with normal role-specific
-version-2 identities and uses it directly to reconstruct the current analyzer
-and emitter.
+and digests. The descriptorless construction branch packages that pair with
+normal role-specific version-2 identities. Edition-1 construction first uses
+the recorded-source predecessor described below; it does not feed modern
+sources directly to a descriptorless bootstrap route.
 
 The checkpoint is not another compiler source tree, native executable, release
 artifact, source-admission claim, or fallback compiler. Both promoted products
@@ -134,8 +170,9 @@ builds every requested target through that same immutable current identity.
 The current Analyzer WVB is packaged once under Profile 7 for ordinary target
 analysis and once under Profile 8 for the larger artifact-reader emitter
 closure. Both packages contain the same WVB and have separate executable
-identities. Emitter and requested target analysis use the internal symbol
-checkpoint route; their final WVSS/WVCA/WVLB/WVIR cache contract is unchanged.
+identities. Descriptorless emitter and requested-target analysis use the internal
+symbol checkpoint route. Edition-1 projects instead use the explicit authenticated
+Project 4 route, without a separately reusable symbol checkpoint.
 Output paths must be distinct bounded `.wvb` targets with existing canonical
 parents. A single pair retains the original result line; a multi-project run
 reports each product's size and digest plus one aggregate completion line. This
@@ -144,14 +181,19 @@ the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
-complete counterpart, and executes a twenty-eight-case cache sentinel. The sentinel
+complete counterpart, and executes a thirty-nine-case cache sentinel. The sentinel
 proves module ordering, identity publication, failure cleanup, replacement and
 quarantine race safety, primary-plus-cleanup diagnostics, the root-first raw
 Project 2 argument and WVSS/WVCA/WVLB/WVIR output order, resumable WVSY reuse
 after a later analysis failure, fail-closed WVSY corruption handling, finished
 product reuse after intermediate eviction, final product and analysis-key
 corruption rejection before construction, producer-change invalidation, two-branch construction ordering, peer completion
-after either branch fails, aggregate errors, and rejection before publication. It
+after either branch fails, aggregate errors, admission-product corruption,
+Project 2 and explicit-predecessor Project 4 construction graphs, and rejection
+before publication. The native `--project4` selector adds thirteen cases for
+authenticated construction, independent-cache determinism, hits, lock/profile/
+target invalidation, explicit producers, and preservation of existing output
+on rejection, including preservation of hosted versioned metadata. It
 deliberately does not rebuild three large compiler products already covered by
 the Language 1.0 front door.
 Compiler analysis/emission core changes select that broader semantic gate once;
@@ -162,10 +204,10 @@ integration gates unless this boundary changes them directly.
 ## Reusable current compiler pair
 
 `Build-Current-Split-Project-Wvb.mjs` acquires the current analyzer and emitter
-as one development construction product before building requested projects.
-A validated pair skips pinned compiler packaging and all intermediate compiler
-construction. A miss uses twelve preparation steps and publishes
-only the completed pair; existing intermediate caches remain independently
+and four admission products as one development construction product before
+building requested projects. A validated set skips pinned compiler packaging
+and all intermediate construction. The Project 2 path uses twenty preparation
+steps and publishes only the completed set; existing intermediate caches remain independently
 reusable. This does not make a genuinely cold compiler preparation fit the local
 development budget or turn cached construction into qualification evidence.
 
@@ -181,22 +223,24 @@ bounded process-tree command runner, with a ten-minute per-command timeout and
 a 1 MiB combined diagnostic bound. Owner-level total budgets remain separate.
 Each progress line retains its assigned step number during overlapping work.
 
-The `current-split-compiler-v1` family is separated by `win32-x64` or
-`linux-x64`. Its key binds the workspace marker, both compiler project manifests
-and their complete declared source closures, pinned analyzer/emitter WVB bytes,
+The `current-split-compiler-v2` family is separated by `win32-x64` or
+`linux-x64`. Its key binds the workspace marker, both compiler and all four
+admission project manifests and their complete declared input closures,
+pinned analyzer/emitter WVB bytes,
 the coordinator, command lifecycle and split-cache implementations, source ordering, producer
-identity writing, all segmented staging/linking/transport/admission producers,
+identity writing, the source-edition predecessor constructor, all segmented staging/linking/transport/admission producers,
 the hosted packager's complete producer context, and the Node version and
 executable identity. Requested test projects are separate downstream products.
 Every input is remeasured before accepting a hit and before publishing a miss.
 
-Each checkpoint contains exactly `Analyzer.exe`/`Emitter.exe` on Windows or
-`Analyzer.elf`/`Emitter.elf` on Linux, their two `.identity` files, and
+Each checkpoint contains `Analyzer`, `Emitter`, `Reader`, `Admitter`,
+`Authenticator`, and `Binder` executables (`.exe` on Windows, `.elf` on Linux),
+the analyzer/emitter `.identity` files, and
 `Checkpoint.json`. Each executable is nonempty and at most 64 MiB; each identity
 is at most 1 KiB and must exactly describe its corresponding executable and
 role. The record is at most 4 KiB of canonical UTF-8 JSON with a final LF:
-`format`, `key`, `host`, and four ordered `products` containing `name`, `bytes`,
-and `sha256`. The format is `windvale-current-split-compiler-checkpoint-1`.
+`format`, `key`, `host`, and eight ordered `products` containing `name`, `bytes`,
+and `sha256`. The format is `windvale-current-split-compiler-checkpoint-2`.
 The implementation compares canonical record bytes rather than accepting extra
 fields or alternate serialization.
 
@@ -216,6 +260,33 @@ identity mismatch, size and link rejection, changed inputs and keys,
 interruption cleanup, concurrent publication, and excess inventory. The ordinary
 coordinator route keeps that owner and the foreign-binding integration owner;
 it no longer rebuilds the WVB runner merely to replay compiler preparation.
+
+For edition-1 compiler sources, all six construction projects must explicitly
+select Project 4. The constructor uses a task-owned detached checkout of the
+recorded pre-migration Git source state to reconstruct predecessor products
+through that tree's existing qualified WVB pins. It verifies the recorded tree,
+rejects links or unsupported inventory entries, and bounds the checkout to
+8,192 files and 768 MiB of tracked payload. Git must already contain that commit;
+missing history fails explicitly without network fetching or a cache-only
+fallback. The checkout is removed after construction; ordinary intermediate
+native caches remain reusable. No managed Stage 0 or second maintained source
+implementation is introduced, and bootstrap executable pins do not change.
+
+The predecessor authenticates the first migrated analyzer/emitter and admission
+products. Later ordinary builds use the completed current set. Independent
+reconstruction and two-generation byte convergence remain qualification gates;
+unit-tested construction ordering alone does not satisfy them.
+
+`Verify-Current-Split-Compiler-Convergence.mjs` builds two generations using
+separate initially empty emission caches and compares exact analyzer and emitter
+WVB bytes. Native packaging checkpoints remain reusable. The gate packages the
+current compiler-aligned verifier with existing Profile 7 for these large
+modules, checks both second-generation products, and rejects a malformed WVB.
+Profile 2 remains the small-module verifier profile; exhausting it is not a
+semantic rejection or evidence that compiler-scale output passed verification.
+The gate binds its own implementation and verifier project inputs, retains its
+private work after failure, and has a sixty-minute execution bound after
+separately selected current-compiler preparation.
 
 ## Compiler-scale development sentinel
 

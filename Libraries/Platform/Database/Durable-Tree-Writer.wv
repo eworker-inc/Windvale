@@ -1,4 +1,9 @@
-module Durableˉtreeˉwriter profile hosted;
+#!wv/1 en@1
+module Durableˉtreeˉwriter;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
 import Randomˉaccessˉstorage as Storage;
@@ -10,14 +15,13 @@ import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 import Windvaleˉdatabaseˉtreeˉpathˉupsert as Upsert;
 
-capability storage.random_access_v1;
 
 const DATABASE_TREE_WRITER_HEADER_BYTES: u64 = 512u64;
 const DATABASE_TREE_WRITER_MINIMUM_DEPTH: u32 = 2u32;
 const DATABASE_TREE_WRITER_MAXIMUM_DEPTH: u32 = 8u32;
 const DATABASE_TREE_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉdurableˉtreeˉupsertˉstatus {
+export enum Databaseˉdurableˉtreeˉupsertˉstatus: i32 {
     Committed = 0;
     Active = 1;
     Aborted = 2;

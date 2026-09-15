@@ -1,10 +1,13 @@
-module Windvaleˉpackageˉresourceˉadmissionˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Windvaleˉpackageˉresourceˉadmissionˉselfˉtest;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Windvaleˉpackageˉresourceˉadmission as Admission;
-
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Digest() -> text {
     return "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
@@ -101,29 +104,35 @@ fn Actualˉcases() -> bool {
         0u32,
         "Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb"
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
-        0u32, "Projects/Applications/Windvale-Wvdb-Query.wvproj"
+        0u32, "Projects/Applications/Windvale-Wvdb-Query.wvproj",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
-        0u32, "Applications/Database/Wvdb-Query.wv"
+        0u32, "Applications/Database/Wvdb-Query.wv",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
-        1u32, "Foundation/Decimal-Parsing.wv"
+        1u32, "Foundation/Decimal-Parsing.wv",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
-        2u32, "Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+        2u32, "Libraries/Platform/Filesystem/Read-Only-Directory.wv",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
-        3u32, "Libraries/Platform/Database/Read-Only-Wvdb.wv"
+        3u32, "Libraries/Platform/Database/Read-Only-Wvdb.wv",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
-    if !Actualˉresource(
+    if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
-        4u32, "Libraries/Database/Wvdb-Reader.wv"
+        4u32, "Libraries/Database/Wvdb-Reader.wv",
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
     ) { return false; }
 
     let Inspectorˉlock: bytes = file.read_bytes(

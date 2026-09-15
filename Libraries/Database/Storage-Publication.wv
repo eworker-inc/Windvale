@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉstorageˉpublication profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉstorageˉpublication;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -7,7 +12,7 @@ const DATABASE_STORAGE_MAX_TRANSFER: u32 = 65536u32;
 const DATABASE_STORAGE_SUPERBLOCK_BYTES: u32 = 256u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉstorageˉpublicationˉstatus {
+export enum Databaseˉstorageˉpublicationˉstatus: i32 {
     Active = 0;
     Committed = 1;
     Aborted = 2;
@@ -15,7 +20,7 @@ export enum Databaseˉstorageˉpublicationˉstatus {
     Invalid = 4;
 }
 
-export enum Databaseˉstorageˉpublicationˉerror {
+export enum Databaseˉstorageˉpublicationˉerror: i32 {
     None = 0;
     Invalidˉpublication = 1;
     Invalidˉgeneration = 2;
@@ -31,7 +36,7 @@ export enum Databaseˉstorageˉpublicationˉerror {
     Indeterminate = 12;
 }
 
-export enum Databaseˉstorageˉproviderˉerror {
+export enum Databaseˉstorageˉproviderˉerror: i32 {
     None = 0;
     Permissionˉdenied = 1;
     Unavailable = 2;
@@ -44,7 +49,7 @@ export enum Databaseˉstorageˉproviderˉerror {
     Invalidˉresponse = 9;
 }
 
-export enum Databaseˉstorageˉobservationˉkind {
+export enum Databaseˉstorageˉobservationˉkind: i32 {
     Completed = 0;
     Rejected = 1;
     Partial = 2;
@@ -53,14 +58,14 @@ export enum Databaseˉstorageˉobservationˉkind {
     Invalid = 5;
 }
 
-export enum Databaseˉstorageˉactionˉkind {
+export enum Databaseˉstorageˉactionˉkind: i32 {
     None = 0;
     Write = 1;
     Flush = 2;
     Resize = 3;
 }
 
-export enum Databaseˉstorageˉflushˉscope {
+export enum Databaseˉstorageˉflushˉscope: i32 {
     None = 0;
     Content = 1;
     Contentˉandˉlength = 2;

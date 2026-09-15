@@ -1,11 +1,15 @@
-module Probeˉobjectˉproducer profile hosted;
+#!wv/1 en@1
+module Probeˉobjectˉproducer;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability diagnostic.write_line version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Wvoˉobjectˉconstruction as Construction;
 
-capability diagnostic.write_line;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Exceptionsˉselector: bytes = [101, 120, 99, 101, 112, 116, 105, 111, 110, 115];
 data Admissionˉselector: bytes = [119, 118, 98, 45, 97, 100, 109, 105, 115, 115, 105, 111, 110, 45, 98, 114, 105, 100, 103, 101];

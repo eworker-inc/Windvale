@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉsecondaryˉindexˉmutations profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉsecondaryˉindexˉmutations;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
 import Windvaleˉdatabaseˉsecondaryˉindex as Secondary;
@@ -17,7 +22,7 @@ const DATABASE_SECONDARY_MAXIMUM_DEFINITION_BYTES: u32 = 288u32;
 const DATABASE_SECONDARY_MAXIMUM_BUNDLE_BYTES: u32 = 2384u32;
 const DATABASE_SECONDARY_MAXIMUM_UNIQUE_CHECK_BYTES: u32 = 65536u32;
 
-export enum Databaseˉsecondaryˉmutationsˉerror {
+export enum Databaseˉsecondaryˉmutationsˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

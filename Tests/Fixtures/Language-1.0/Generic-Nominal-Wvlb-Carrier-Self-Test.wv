@@ -1,4 +1,9 @@
-module Languageˉoneˉgenericˉnominalˉwvlbˉcarrierˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉnominalˉwvlbˉcarrierˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉbindingsˉgenericˉtypes as Carrier;

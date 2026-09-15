@@ -1,4 +1,9 @@
-module Foundationˉsha256ˉcompression profile portable;
+#!wv/1 en@1
+module Foundationˉsha256ˉcompression;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Foundationˉsha256ˉhash {
     Valid: bool;

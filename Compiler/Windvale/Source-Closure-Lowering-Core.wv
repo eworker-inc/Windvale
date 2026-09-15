@@ -1,6 +1,11 @@
-module Compilerˉsourceˉclosureˉlowering profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉclosureˉlowering;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉsourceˉclosureˉloweringˉstatus {
+
+export enum Compilerˉsourceˉclosureˉloweringˉstatus: i32 {
     Valid = 0;
     Invalidˉevidence = 1;
     Instanceˉlimit = 2;

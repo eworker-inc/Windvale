@@ -1,8 +1,14 @@
-module Windvaleˉinstallationˉgeneration profile portable;
+#!wv/1 en@1
+module Windvaleˉinstallationˉgeneration;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Foundationˉoption as Option;
 
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉgenerationˉstatus {
+export enum Windvaleˉgenerationˉstatus: i32 {
     Valid = 0;
     Invalidˉtext = 2001;
     Invalidˉheader = 2002;
@@ -16,7 +22,7 @@ export enum Windvaleˉgenerationˉstatus {
     Missingˉrecord = 2010;
 }
 
-export enum Windvaleˉtransitionˉstatus {
+export enum Windvaleˉtransitionˉstatus: i32 {
     Ready = 0;
     Unchanged = 1;
     Invalidˉactivation = 2101;
@@ -434,12 +440,19 @@ export fn Windvaleˉactivationˉscanˉrecord(Input: bytes) -> Windvaleˉactivati
     Line = Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
     Tokens = Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
     let Serialˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
-    let Serial: Packageˉtext.Windvaleˉpackageˉdecimal =
+    let Serial: Option.Option<u64> =
         Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Serialˉspan);
+    var Serialˉvalue: u64 = 0u64;
+    match Serial {
+        case Option.Option.Present { Value: Number } { Serialˉvalue = Number; }
+        case Option.Option.Absent {
+            return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdecimal, 2u32, 1u32);
+        }
+    }
     if !Tokens.Valid || Tokens.Count != 2u32 ||
         !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
             Input, Tokenˉspan(Input, Line, 0u32), "serial"
-        ) || !Serial.Valid || Serial.Value == 0u64 {
+        ) || Serialˉvalue == 0u64 {
         return Activationˉfailure(Windvaleˉgenerationˉstatus.Invalidˉdecimal, 2u32, 1u32);
     }
     Cursor = Line.Nextˉoffset;
@@ -475,7 +488,7 @@ export fn Windvaleˉactivationˉscanˉrecord(Input: bytes) -> Windvaleˉactivati
     }
     return Windvaleˉactivationˉscan(
         Windvaleˉgenerationˉstatus.Valid,
-        Serial.Value,
+        Serialˉvalue,
         Current.Offset,
         Current.Length,
         Previousˉnone,

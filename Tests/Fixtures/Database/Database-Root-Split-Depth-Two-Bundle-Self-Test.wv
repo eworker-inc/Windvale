@@ -1,4 +1,9 @@
-module Databaseˉrootˉsplitˉdepthˉtwoˉbundleˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉrootˉsplitˉdepthˉtwoˉbundleˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Databaseˉrootˉsplitˉselfˉtest as RootSplit;
 import Databaseˉdepthˉtwoˉupsertˉselfˉtest as DepthTwo;

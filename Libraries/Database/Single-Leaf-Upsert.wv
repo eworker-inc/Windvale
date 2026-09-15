@@ -1,11 +1,16 @@
-module Windvaleˉdatabaseˉsingleˉleafˉupsert profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉsingleˉleafˉupsert;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉsingleˉwriterˉcommit as Single;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-export enum Databaseˉsingleˉleafˉupsertˉerror {
+export enum Databaseˉsingleˉleafˉupsertˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉrootˉpage = 2;

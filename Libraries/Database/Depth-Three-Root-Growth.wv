@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉdepthˉthreeˉrootˉgrowth profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉdepthˉthreeˉrootˉgrowth;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -9,7 +14,7 @@ import Windvaleˉdatabaseˉtreeˉnode as Tree;
 const DATABASE_DEPTH_THREE_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉdepthˉthreeˉrootˉgrowthˉerror {
+export enum Databaseˉdepthˉthreeˉrootˉgrowthˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉrootˉpage = 2;

@@ -1,4 +1,9 @@
-module Compilerˉsourceˉsymbolsˉdemo profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉsymbolsˉdemo;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉset as Sourceˉset;

@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉcommitˉpublication profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉcommitˉpublication;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -8,7 +13,7 @@ const DATABASE_PUBLICATION_SUPERBLOCK_BYTES: u64 = 256u64;
 const DATABASE_PUBLICATION_SECOND_SLOT_OFFSET: u64 = 256u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉcommitˉpublicationˉerror {
+export enum Databaseˉcommitˉpublicationˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉtargetˉsuperblock = 2;
@@ -26,7 +31,7 @@ export enum Databaseˉcommitˉpublicationˉerror {
     Arithmeticˉoverflow = 14;
 }
 
-export enum Databaseˉcommitˉpublicationˉstage {
+export enum Databaseˉcommitˉpublicationˉstage: i32 {
     Invalid = 0;
     Writeˉpages = 1;
     Flushˉpages = 2;
@@ -37,14 +42,14 @@ export enum Databaseˉcommitˉpublicationˉstage {
     Recover = 7;
 }
 
-export enum Databaseˉcommitˉpublicationˉobservation {
+export enum Databaseˉcommitˉpublicationˉobservation: i32 {
     Completed = 0;
     Rejected = 1;
     Partial = 2;
     Indeterminate = 3;
 }
 
-export enum Databaseˉcommitˉpublicationˉflushˉscope {
+export enum Databaseˉcommitˉpublicationˉflushˉscope: i32 {
     None = 0;
     Content = 1;
     Contentˉandˉlength = 2;

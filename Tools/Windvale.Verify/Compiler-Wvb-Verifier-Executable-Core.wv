@@ -1,4 +1,9 @@
-module Windvaleˉcompilerˉwvbˉverifierˉexecutable profile portable;
+#!wv/1 en@1
+module Windvaleˉcompilerˉwvbˉverifierˉexecutable;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Typedˉdirectories;
 import Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow as Foundationˉowners;

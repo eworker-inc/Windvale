@@ -1,4 +1,9 @@
-module Compilerˉsourceˉdeclarationˉparserˉdemo profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉdeclarationˉparserˉdemo;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉlexer as Sourceˉlexer;

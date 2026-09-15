@@ -1,4 +1,9 @@
-module Compilerˉsourceˉgenericˉtypeˉlowering profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉgenericˉtypeˉlowering;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
 

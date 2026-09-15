@@ -145,8 +145,8 @@ for (const Step of Steps) {
         const ProjectLines = Readˉtext(Project.Absolute, `project ${Project.Path}`)
             .split(/\r?\n/u)
             .filter(Line => Line.length !== 0);
-        if (ProjectLines[0] !== 'windvale-project 2') {
-            Fail(`project ${Project.Path} is not Project 2`);
+        if (!['windvale-project 2', 'windvale-project 4'].includes(ProjectLines[0])) {
+            Fail(`project ${Project.Path} has an unsupported project format`);
         }
         const Roots = [];
         const Sources = [];

@@ -1,4 +1,9 @@
-module Durableˉtreeˉpath profile hosted;
+#!wv/1 en@1
+module Durableˉtreeˉpath;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
 import Randomˉaccessˉstorage as Storage;
@@ -6,11 +11,10 @@ import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const DATABASE_TREE_PATH_HEADER_BYTES: u64 = 512u64;
 
-export enum Databaseˉdurableˉtreeˉpathˉstatus {
+export enum Databaseˉdurableˉtreeˉpathˉstatus: i32 {
     Active = 0;
     Invalidˉcurrent = 1;
     Pageˉfailure = 2;
@@ -21,7 +25,7 @@ export enum Databaseˉdurableˉtreeˉpathˉstatus {
     Transactionˉfailure = 7;
 }
 
-export enum Databaseˉdurableˉtreeˉpathˉerror {
+export enum Databaseˉdurableˉtreeˉpathˉerror: i32 {
     Valid = 0;
     Invalidˉpage = 1;
     Pathˉmismatch = 2;

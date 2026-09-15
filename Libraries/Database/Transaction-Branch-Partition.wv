@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉbranchˉpartition profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉbranchˉpartition;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉtransactionˉchildˉreplacements as Replacements;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
@@ -18,7 +23,7 @@ const DATABASE_TREE_NODE_HEADER_BYTES: u32 = 32u32;
 const DATABASE_TREE_NODE_MAXIMUM_BYTES: u32 = 65408u32;
 const DATABASE_TREE_NODE_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉbranchˉpartitionˉerror {
+export enum Databaseˉtransactionˉbranchˉpartitionˉerror: i32 {
     Valid = 0;
     Invalidˉreplacements = 1;
     Invalidˉbranch = 2;

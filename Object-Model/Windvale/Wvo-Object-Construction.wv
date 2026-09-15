@@ -1,4 +1,9 @@
-module Wvoˉobjectˉconstruction profile portable;
+#!wv/1 en@1
+module Wvoˉobjectˉconstruction;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Wvoˉobjectˉverification as Verification;
 

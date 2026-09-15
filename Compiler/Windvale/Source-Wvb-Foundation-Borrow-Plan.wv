@@ -1,4 +1,9 @@
-module Compilerˉsourceˉwvbˉfoundationˉborrows profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwvbˉfoundationˉborrows;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Borrowˉplan {
     Valid: bool;

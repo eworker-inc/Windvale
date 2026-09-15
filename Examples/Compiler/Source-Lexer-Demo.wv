@@ -1,4 +1,9 @@
-module Compilerˉsourceˉlexerˉdemo profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉlexerˉdemo;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 

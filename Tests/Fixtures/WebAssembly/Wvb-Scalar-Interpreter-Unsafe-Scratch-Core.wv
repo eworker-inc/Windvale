@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉunsafeˉscratchˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉunsafeˉscratchˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export const MAXIMUM_SCRATCH_BYTES: u64 = 64u64;
 export const MAXIMUM_SCRATCH_ALIGNMENT: u64 = 8u64;

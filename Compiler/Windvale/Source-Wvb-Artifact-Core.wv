@@ -1,4 +1,8 @@
-module Compilerˉsourceˉwvb profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwvb;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
 import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
@@ -16,7 +20,7 @@ import Compilerˉsourceˉwvbˉgenericˉnominalˉtypes as Genericˉnominalˉtypes
 import Compilerˉsourceˉwvbˉtemporaryˉslots as Temporaryˉslots;
 import Compilerˉsourceˉwvbˉfoundationˉborrows as Foundationˉborrows;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
-export enum Compilerˉsourceˉwvbˉstatus {
+export enum Compilerˉsourceˉwvbˉstatus: i32 {
 Valid = 0;
 Sourceˉwir = 1;
 Unsupportedˉmoduleˉcount = 2;

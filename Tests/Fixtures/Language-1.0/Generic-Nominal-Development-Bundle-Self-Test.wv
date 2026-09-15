@@ -1,4 +1,9 @@
-module Languageˉoneˉgenericˉnominalˉdevelopmentˉbundleˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉnominalˉdevelopmentˉbundleˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Languageˉoneˉgenericˉnominalˉtypeˉbindingˉselfˉtest as Binding;
 import Languageˉoneˉgenericˉnominalˉtypeˉlayoutˉselfˉtest as Layout;

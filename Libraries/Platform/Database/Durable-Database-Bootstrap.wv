@@ -1,11 +1,15 @@
-module Durableˉdatabaseˉbootstrap profile hosted;
+#!wv/1 en@1
+module Durableˉdatabaseˉbootstrap;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉstorageˉexecutor as Executor;
 import Windvaleˉdatabaseˉbootstrap as Bootstrap;
 import Windvaleˉdatabaseˉstorageˉpublication as Publication;
 
-capability storage.random_access_v1;
 
 fn Databaseˉdurableˉbootstrapˉownedˉcopy(Input: bytes) -> bytes {
     let Length: u32 = Bytesˉlength(Input);
@@ -13,7 +17,7 @@ fn Databaseˉdurableˉbootstrapˉownedˉcopy(Input: bytes) -> bytes {
     return Bytesˉslice(Prefixed, 1u32, Length);
 }
 
-export enum Databaseˉdurableˉbootstrapˉstatus {
+export enum Databaseˉdurableˉbootstrapˉstatus: i32 {
     Created = 0;
     Active = 1;
     Notˉempty = 2;

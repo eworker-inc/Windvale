@@ -1,6 +1,11 @@
-module Windvaleˉwvbˉpublicationˉtransaction profile portable;
+#!wv/1 en@1
+module Windvaleˉwvbˉpublicationˉtransaction;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Wvbˉpublicationˉstate {
+
+export enum Wvbˉpublicationˉstate: i32 {
     Candidateˉadmitted = 0;
     Siblingˉowned = 1;
     Siblingˉdurable = 2;
@@ -12,7 +17,7 @@ export enum Wvbˉpublicationˉstate {
     Indeterminate = 8;
 }
 
-export enum Wvbˉpublicationˉaction {
+export enum Wvbˉpublicationˉaction: i32 {
     Createˉsibling = 0;
     Flushˉsibling = 1;
     Verifyˉsibling = 2;
@@ -22,7 +27,7 @@ export enum Wvbˉpublicationˉaction {
     Cleanˉsibling = 6;
 }
 
-export enum Wvbˉpublicationˉoutcome {
+export enum Wvbˉpublicationˉoutcome: i32 {
     Active = 0;
     Cleanupˉrequired = 1;
     Rejectedˉunchanged = 2;

@@ -1,15 +1,19 @@
-module Nativeˉhostedˉenumˉrequestˉtool profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉenumˉrequestˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Nativeˉhostedˉenumˉserviceˉrequest as Enumˉrequest;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
-enum Nativeˉhostedˉenumˉrequestˉstatus {
+enum Nativeˉhostedˉenumˉrequestˉstatus: i32 {
     Valid = 0;
     Rejected = 1;
 }

@@ -1,4 +1,9 @@
-module Foundationˉbyteˉordering profile portable;
+#!wv/1 en@1
+module Foundationˉbyteˉordering;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Foundationˉbyteˉspansˉcompare(
     Input: bytes,

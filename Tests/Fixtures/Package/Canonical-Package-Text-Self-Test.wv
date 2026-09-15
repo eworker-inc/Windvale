@@ -1,4 +1,10 @@
-module Windvaleˉpackageˉtextˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉtextˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
 
 import Windvaleˉpackageˉtext as Packageˉtext;
 
@@ -110,7 +116,36 @@ fn Pathˉcases() -> bool {
     return true;
 }
 
+fn Decimalˉabsent(Input: bytes, Span: Packageˉtext.Windvaleˉpackageˉspan) -> bool {
+    let Parsed: Option.Option<u64> = Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Input, Span);
+    match Option.Borrow(borrow Parsed) {
+        case Option.Option.Present { Value: Number } { return false; }
+        case Option.Option.Absent { return true; }
+    }
+}
+
 fn Digestˉandˉdecimalˉcases() -> bool {
+    let Zero: bytes = Textˉtoˉutf8("0");
+    let Zeroˉresult: Option.Option<u64> =
+        Packageˉtext.Windvaleˉpackageˉdecimalˉparse(Zero, Spanˉof("0"));
+    match Option.Borrow(borrow Zeroˉresult) {
+        case Option.Option.Present { Value: Zeroˉnumber } {
+            if Zeroˉnumber != 0u64 { return false; }
+        }
+        case Option.Option.Absent { return false; }
+    }
+    // Borrowing the payload must leave its owner available for another read.
+    match Option.Borrow(borrow Zeroˉresult) {
+        case Option.Option.Present { Value: Repeatedˉzero } {
+            if Repeatedˉzero != 0u64 { return false; }
+        }
+        case Option.Option.Absent { return false; }
+    }
+    if !Decimalˉabsent(Textˉtoˉutf8(""), Spanˉof("")) { return false; }
+    if !Decimalˉabsent(Textˉtoˉutf8("12x"), Spanˉof("12x")) { return false; }
+    if !Decimalˉabsent(Textˉtoˉutf8("-1"), Spanˉof("-1")) { return false; }
+    if !Decimalˉabsent(Zero, Packageˉtext.Windvaleˉpackageˉspan(2u32, 1u32)) { return false; }
+    if !Decimalˉabsent(Zero, Packageˉtext.Windvaleˉpackageˉspan(0u32, 2u32)) { return false; }
     let Digest: bytes = Textˉtoˉutf8(
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     );
@@ -125,23 +160,34 @@ fn Digestˉandˉdecimalˉcases() -> bool {
     )) { return false; }
 
     let Maximum: bytes = Textˉtoˉutf8("18446744073709551615");
-    let Parsed: Packageˉtext.Windvaleˉpackageˉdecimal =
+    let Parsed: Option.Option<u64> =
         Packageˉtext.Windvaleˉpackageˉdecimalˉparse(
             Maximum, Spanˉof("18446744073709551615")
         );
-    if !Parsed.Valid || Parsed.Value != 18446744073709551615u64 { return false; }
+    match Option.Borrow(borrow Parsed) {
+        case Option.Option.Present { Value: Parsedˉnumber } {
+            if Parsedˉnumber != 18446744073709551615u64 { return false; }
+        }
+        case Option.Option.Absent { return false; }
+    }
     let Overflow: bytes = Textˉtoˉutf8("18446744073709551616");
-    let Overflowˉresult: Packageˉtext.Windvaleˉpackageˉdecimal =
+    let Overflowˉresult: Option.Option<u64> =
         Packageˉtext.Windvaleˉpackageˉdecimalˉparse(
         Overflow, Spanˉof("18446744073709551616")
     );
-    if Overflowˉresult.Valid { return false; }
+    match Option.Borrow(borrow Overflowˉresult) {
+        case Option.Option.Present { Value: Overflowˉnumber } { return false; }
+        case Option.Option.Absent { }
+    }
     let Leadingˉzero: bytes = Textˉtoˉutf8("01");
-    let Leadingˉzeroˉresult: Packageˉtext.Windvaleˉpackageˉdecimal =
+    let Leadingˉzeroˉresult: Option.Option<u64> =
         Packageˉtext.Windvaleˉpackageˉdecimalˉparse(
         Leadingˉzero, Spanˉof("01")
     );
-    if Leadingˉzeroˉresult.Valid { return false; }
+    match Option.Borrow(borrow Leadingˉzeroˉresult) {
+        case Option.Option.Present { Value: Leadingˉzeroˉnumber } { return false; }
+        case Option.Option.Absent { }
+    }
     return true;
 }
 

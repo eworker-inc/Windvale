@@ -1,4 +1,9 @@
-module Languageˉoneˉsourceˉanalysisˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉsourceˉanalysisˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉanalysis as Analysis;
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;

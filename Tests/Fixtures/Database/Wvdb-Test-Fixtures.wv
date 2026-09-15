@@ -1,4 +1,9 @@
-module Wvdbˉtestˉfixtures profile portable;
+#!wv/1 en@1
+module Wvdbˉtestˉfixtures;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉbyteˉconstruction as Construction;
 

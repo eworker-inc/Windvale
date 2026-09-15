@@ -1,4 +1,11 @@
-module Languageˉoneˉgenericˉcollectionˉanalysisˉpublicationˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉcollectionˉanalysisˉpublicationˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -6,9 +13,6 @@ import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉwirˉchecked as Sourceˉwirˉchecked;
 
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Sourceˉsetˉfrom(Source: text) -> bytes {
     let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);

@@ -1,13 +1,17 @@
-module Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉtool profile hosted;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉdecimalˉparsing as Decimal;
 import Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉfileˉtoolˉsupport as Support;
 import Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉmetadata as Metadata;
 
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Textˉequals(Left: text, Right: text) -> bool {
     let Leftˉbytes: bytes = Textˉtoˉutf8(Left);

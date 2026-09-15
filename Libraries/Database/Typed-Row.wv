@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtypedˉrow profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtypedˉrow;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
@@ -10,7 +15,7 @@ const DATABASE_TYPED_VALUE_HEADER_BYTES: u32 = 16u32;
 const DATABASE_TYPED_ROW_MAXIMUM_BYTES: u32 = 61408u32;
 const DATABASE_TYPED_ROW_MAXIMUM_VALUE_BYTES: u32 = 61376u32;
 
-export enum Databaseˉtypedˉrowˉerror {
+export enum Databaseˉtypedˉrowˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

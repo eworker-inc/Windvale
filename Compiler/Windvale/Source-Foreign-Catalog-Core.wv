@@ -1,4 +1,9 @@
-module Compilerˉsourceˉforeignˉcatalog profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉforeignˉcatalog;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export const COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES: u32 = 48u32;
 export const COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES: u32 = 96u32;

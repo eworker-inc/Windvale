@@ -16,6 +16,10 @@ import {
 import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { Orderˉsplitˉprojectˉsourceˉpayloads } from './Split-Project-Source-Ordering-Core.mjs';
+import {
+    Acquireˉcurrentˉsplitˉcompiler, Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
+} from './Current-Split-Compiler-Cache-Core.mjs';
 
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 65_536;
@@ -2227,16 +2231,9 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         SCRIPT_DIRECTORY,
         'Build-Cached-Segmented-Hosted-Wvb.mjs'
     );
-    const Hostedˉpackage = join(
-        SCRIPT_DIRECTORY, `Package-Hosted-Wvb.${Extension}`
-    );
     const Build = join(SCRIPT_DIRECTORY, 'Build-Cached-Split-Project-Wvb.mjs');
     const Writeˉidentity = join(
         SCRIPT_DIRECTORY, 'Write-Split-Compiler-Producer-Identity.mjs'
-    );
-    const Pinnedˉroot = join(
-        REPOSITORY_ROOT, 'Artifacts',
-        'Language-1.0-Target-Aware-Emission-Bootstrap', 'Wvb'
     );
     const Cacheˉroots = Buildˉmode.coldDoubleBuild
         ? [join(Work, 'Cache-A'), join(Work, 'Cache-B')]
@@ -2253,27 +2250,19 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         `builds-per-product=${Buildˉmode.buildsPerProduct} ` +
         `cache=${Buildˉmode.coldDoubleBuild ? 'isolated-cold' : 'shared'}\n`
     );
-    const Pinned = {};
-    for (const [Name, Expected] of Object.entries(PINNED_COMPILER)) {
-        const Wvb = join(Pinnedˉroot, Expected.file);
-        const Actual = await Evidence(Wvb);
-        Require(Actual.bytes === Expected.bytes &&
-            Actual.sha256 === Expected.sha256,
-        `pinned ${Name} identity differs: bytes=${Actual.bytes} ` +
-            `sha256=${Actual.sha256}.`);
-        const Application = join(
-            Work, `Pinned-${Name}.${Executableˉextension}`
-        );
-        await Requireˉsuccess(
-            `pinned-${Name}-profile-8-package`, Lowˉlevelˉpackage,
-            ['8', Wvb, Application, '--development-cache'],
-            PACKAGE_TIMEOUT_MILLISECONDS, true);
-        const Identity = join(Work, `Pinned-${Name}.identity`);
-        await Requireˉsuccess(`pinned-${Name}-identity`, process.execPath,
-            [Writeˉidentity, Expected.role, Application, Identity],
-            BUILD_TIMEOUT_MILLISECONDS);
-        Pinned[Name] = { application: Application, identity: Identity };
-    }
+    const Compilerˉkey = await Getˉcurrentˉsplitˉcompilerˉkey();
+    const Compilerˉunchanged = async () => Require(await Getˉcurrentˉsplitˉcompilerˉkey() === Compilerˉkey,
+        'Production admission compiler inputs changed.');
+    const Compiler = await Acquireˉcurrentˉsplitˉcompiler(await Getˉcurrentˉsplitˉcompilerˉfamily(), Compilerˉkey,
+        () => { throw new Error('Prepare the current compiler checkpoint in a separately selected construction run.'); },
+        Compilerˉunchanged);
+    const Current = Object.fromEntries(['analyzer', 'emitter'].map(Name => {
+        const Product = Name === 'analyzer' ? 'Analyzer' : 'Emitter';
+        return [Name, { application: join(Compiler.directory, Product + '.' + Executableˉextension),
+            identity: join(Compiler.directory, Product + '.identity') }];
+    }));
+    const Admissionˉarguments = ['--authenticated-project4', ...['Admitter', 'Authenticator', 'Reader', 'Binder']
+        .map(Name => join(Compiler.directory, Name + '.' + Executableˉextension))];
     const Projects = {
         wvproject: join(REPOSITORY_ROOT, 'Projects', 'Tools',
             'Windvale-Project-Manifest.wvproj'),
@@ -2309,7 +2298,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             `build-mode=${Buildˉmode.name}\n`
         );
         await Requireˉsuccess(`${Name}-build-1`, process.execPath,
-            [Build, Project, First, ...Producerˉarguments],
+            [Build, Project, First, ...Producerˉarguments, ...Admissionˉarguments],
             BUILD_TIMEOUT_MILLISECONDS, false, Buildˉenvironments[0]);
         const Firstˉidentity = await Evidence(First);
         if (Buildˉmode.coldDoubleBuild) {
@@ -2320,7 +2309,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
                 `build-mode=${Buildˉmode.name}\n`
             );
             await Requireˉsuccess(`${Name}-build-2`, process.execPath,
-                [Build, Project, Second, ...Producerˉarguments],
+                [Build, Project, Second, ...Producerˉarguments, ...Admissionˉarguments],
                 BUILD_TIMEOUT_MILLISECONDS, false, Buildˉenvironments[1]);
             const Secondˉidentity = await Evidence(Second);
             Require(Firstˉidentity.value.equals(Secondˉidentity.value),
@@ -2335,16 +2324,21 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
                 `bytes=${Firstˉidentity.bytes} sha256=${Firstˉidentity.sha256}.`);
         }
         const Application = join(Work, `${Name}.${Executableˉextension}`);
-        if (Name === 'wvanalyze' || Name === 'wvemit' || Name === 'wvrun') {
-            const Profile = Name === 'wvrun' ? '5' : '8';
+        if (Name === 'wvrun') {
+            await Requireˉsuccess(
+                `${Name}-profile-5-package`, process.execPath,
+                [join(REPOSITORY_ROOT, 'Tools/Native/Package-Current-Segmented-Wvb.mjs'), '5', First, Application],
+                PACKAGE_TIMEOUT_MILLISECONDS, true);
+        } else if (Name === 'wvanalyze' || Name === 'wvemit') {
+            const Profile = '8';
             await Requireˉsuccess(
                 `${Name}-profile-${Profile}-package`, Lowˉlevelˉpackage,
                 [Profile, First, Application, '--development-cache'],
                 PACKAGE_TIMEOUT_MILLISECONDS, true);
         } else if (Name === 'wvverify') {
             await Requireˉsuccess(
-                `${Name}-profile-2-package`, Hostedˉpackage,
-                ['2', First, Application, WINDOWS ? 'windows' : 'linux'],
+                `${Name}-profile-2-package`, process.execPath,
+                [Cachedˉpackage, '2', First, Application],
                 PACKAGE_TIMEOUT_MILLISECONDS, true);
         } else {
             await Requireˉsuccess(
@@ -2372,7 +2366,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
     };
     for (const Name of ['wvadmit', 'wvauth', 'wvanalyze', 'wvbind']) {
         await Buildˉproduct(
-            Name, Projects[Name], Pinned.analyzer, Pinned.emitter
+            Name, Projects[Name], Current.analyzer, Current.emitter
         );
     }
     const Currentˉanalyzerˉidentity = join(Work, 'wvanalyze.identity');
@@ -2386,7 +2380,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             application: Applications.wvanalyze,
             identity: Currentˉanalyzerˉidentity,
         },
-        Pinned.emitter
+        Current.emitter
     );
     const Currentˉemitterˉidentity = join(Work, 'wvemit.identity');
     await Requireˉsuccess('wvemit-current-identity', process.execPath,
@@ -2418,6 +2412,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
     await Buildˉproduct('wvproject', Projects.wvproject,
         { application: Applications.wvanalyze, identity: Currentˉanalyzerˉidentity },
         { application: Applications.wvemit, identity: Currentˉemitterˉidentity });
+    await Compilerˉunchanged();
     return Applications;
 }
 
@@ -3363,7 +3358,113 @@ async function Runˉproject4ˉpublisherˉcases(Publisher, Candidate) {
     process.stdout.write(`project4 native publisher status=Passed cases=${Count} host=${process.platform} qualification=false\n`);
 }
 
+async function Runˉrepositoryˉsourceˉedition(Reader, Admitter, Authenticator, Start = '') {
+    const Temporary = await realpath(tmpdir());
+    const Work = await mkdtemp(join(Temporary, TEMPORARY_PREFIX));
+    const Started = Date.now();
+    const Deadline = Started + 1_800_000;
+    const Files = [];
+    let Entries = 0;
+    async function Discover(Directory) {
+        for (const Entry of await readdir(Directory, { withFileTypes: true })) {
+            Require(++Entries <= 4096 && !Entry.isSymbolicLink(), 'Project inventory exceeds its ordinary-file bound.');
+            const File = join(Directory, Entry.name);
+            if (Entry.isDirectory()) await Discover(File);
+            else if (Entry.isFile() && Entry.name.endsWith('.wvproj')) {
+                const Information = await lstat(File);
+                Require(Information.size <= 65_536, 'Project manifest exceeds 64 KiB.');
+                if ((await readFile(File, 'utf8')).split(/\r?\n/u)[0] === 'windvale-project 4') Files.push(File);
+            }
+        }
+    }
+    try {
+        await Discover(join(REPOSITORY_ROOT, 'Projects'));
+        Files.sort();
+        Require(Files.length > 0 && Files.length <= 1024, 'No bounded Project 4 inventory found.');
+        const Completeˉcount = Files.length;
+        if (Start !== '') {
+            const Index = Files.findIndex(File => File.slice(REPOSITORY_ROOT.length + 1).replaceAll('\\', '/') === Start);
+            Require(Index >= 0, 'Unknown source-edition resume project.');
+            Files.splice(0, Index);
+        }
+        const Sources = new Set();
+        const Hash = createHash('sha256');
+        const Identities = new Map();
+        for (const Producer of [Reader, Admitter, Authenticator, fileURLToPath(import.meta.url),
+            join(SCRIPT_DIRECTORY, 'Run-Authenticated-Source-Admission.mjs'),
+            join(SCRIPT_DIRECTORY, 'Split-Project-Source-Ordering-Core.mjs')]) {
+            const Identity = await Evidence(Producer);
+            Identities.set(Producer, Identity.sha256);
+            Hash.update(Identity.sha256);
+        }
+        for (const [Index, Project] of Files.entries()) {
+            const Remaining = Deadline - Date.now();
+            Require(Remaining > 0, 'Repository source-edition admission exceeded thirty minutes.');
+            const Label = Project.slice(REPOSITORY_ROOT.length + 1).replaceAll('\\', '/');
+            process.stdout.write(`repository source edition step=admission item=${Index + 1}/${Files.length} project=${Label}\n`);
+            const Report = await Requireˉsuccess(Label + '-inventory', Reader,
+                ['--inventory', Project], Math.min(Remaining, CASE_TIMEOUT_MILLISECONDS));
+            const Inventory = JSON.parse(Report.output.toString('utf8'));
+            Require(Inventory.inventoryVersion === 1 && Inventory.projectVersion === 4 &&
+                Array.isArray(Inventory.sources) && Inventory.sources.length >= 1 && Inventory.sources.length <= 64 &&
+                /^[0-9a-f]{64}$/u.test(Inventory.sourceInputLockSha256), 'Invalid native project inventory.');
+            const Paths = [Inventory.sourceInputLock, Inventory.sourceProfile, Inventory.targetDescriptor, ...Inventory.sources];
+            const Resolved = [];
+            let Sourceˉbytes = 16 + Inventory.sources.length * 8;
+            Hash.update(Label + '\n');
+            const Projectˉidentity = (await Evidence(Project)).sha256;
+            Identities.set(Project, Projectˉidentity);
+            Hash.update(Projectˉidentity);
+            for (const Value of Paths) {
+                Require(typeof Value === 'string' && Value.length <= 4096 &&
+                    /^[A-Za-z0-9][A-Za-z0-9./-]*$/u.test(Value) &&
+                    Value.split('/').every(Part => Part && Part !== '.' && Part !== '..'), 'Invalid repository source-edition path.');
+                const File = join(REPOSITORY_ROOT, Value);
+                const Information = await lstat(File);
+                const Maximum = Resolved.length === 0 ? 1_048_576 :
+                    Resolved.length === 1 ? 65_536 : Resolved.length === 2 ? 320 : 4_194_304;
+                const Canonical = await realpath(File);
+                Require(Information.isFile() && !Information.isSymbolicLink() &&
+                    Information.size > 0 && Information.size <= Maximum &&
+                    (WINDOWS ? Canonical.toLowerCase() === File.toLowerCase() : Canonical === File),
+                    'Source-edition input is not bounded and ordinary.');
+                if (Resolved.length >= 3) {
+                    Sourceˉbytes += Information.size;
+                    Require(Sourceˉbytes <= 4_194_304, 'Source-edition closure exceeds 4 MiB.');
+                }
+                const Identity = await Evidence(File);
+                Require(!Identities.has(File) || Identities.get(File) === Identity.sha256, 'Source-edition input changed.');
+                Identities.set(File, Identity.sha256);
+                Hash.update(Value + '\n' + Identity.sha256 + '\n');
+                Resolved.push(File);
+            }
+            const Payloads = await Promise.all(Resolved.slice(3).map(File => readFile(File)));
+            for (const [Source, Payload] of Payloads.entries()) {
+                Require(Payload.toString('utf8').startsWith('#!wv/1 en@1\n'), 'Mixed source edition in ' + Label);
+                Sources.add(Resolved[Source + 3]);
+            }
+            const Ordered = Orderˉsplitˉprojectˉsourceˉpayloads(Payloads).map(Payload => Resolved[3 + Payloads.indexOf(Payload)]);
+            const Output = join(Work, 'Admitted.wvss');
+            await Requireˉsuccess(Label + '-authenticated-admission', process.execPath,
+                [join(SCRIPT_DIRECTORY, 'Run-Authenticated-Source-Admission.mjs'), Admitter, Authenticator,
+                    '--source-input-lock', Resolved[0], Inventory.sourceInputLockSha256,
+                    '--source-profile', Resolved[1], '--target-descriptor', Resolved[2], ...Ordered, Output],
+                Math.min(45_000, Deadline - Date.now()));
+            for (const Extension of ['wvss', 'wvtd', 'wvfc', 'wvae']) await rm(join(Work, 'Admitted.' + Extension));
+        }
+        for (const [File, Identity] of Identities) Require((await Evidence(File)).sha256 === Identity,
+            'Source-edition input or producer changed during admission.');
+        process.stdout.write(`repository source edition status=Passed projects=${Files.length}/${Completeˉcount} sources=${Sources.size} ` +
+            `input-sha256=${Hash.digest('hex')} host=${process.platform}-${process.arch} elapsed-ms=${Date.now() - Started}\n`);
+    } finally { await Removeˉwork(Work, Temporary); }
+}
+
 async function Main() {
+    if ([6, 8].includes(process.argv.length) && process.argv[2] === '--repository-source-edition') {
+        Require(process.argv.length === 6 || process.argv[6] === '--start-at', 'Expected --start-at <repository-project>.');
+        await Runˉrepositoryˉsourceˉedition(...process.argv.slice(3, 6).map(Value => resolve(Value)), process.argv[7] ?? '');
+        return;
+    }
     if (process.argv.length === 5 && process.argv[2] === '--project4-publisher') {
         await Runˉproject4ˉpublisherˉcases(resolve(process.argv[3]), resolve(process.argv[4]));
         return;

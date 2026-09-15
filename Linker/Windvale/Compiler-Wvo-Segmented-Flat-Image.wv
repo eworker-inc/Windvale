@@ -1,11 +1,16 @@
-module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage profile portable;
+#!wv/1 en@1
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
 
-export enum Linkerˉcompilerˉwvoˉsegmentedˉstatus {
+export enum Linkerˉcompilerˉwvoˉsegmentedˉstatus: i32 {
     Valid = 0;
     Manifest = 1;
     Envelope = 2;
@@ -19,7 +24,7 @@ export enum Linkerˉcompilerˉwvoˉsegmentedˉstatus {
     Text = 10;
 }
 
-export enum Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind {
+export enum Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind: i32 {
     Metadata = 0;
     Text = 1;
     Readˉonlyˉdata = 2;

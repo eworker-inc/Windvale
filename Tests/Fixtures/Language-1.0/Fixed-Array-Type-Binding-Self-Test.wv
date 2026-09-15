@@ -1,4 +1,9 @@
-module Languageˉoneˉfixedˉarrayˉtypeˉbindingˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉfixedˉarrayˉtypeˉbindingˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉgenericˉlowering as Generics;
 import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;

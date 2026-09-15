@@ -1,14 +1,18 @@
-module Windvaleˉpackageˉbundleˉwriterˉtool profile hosted;
+#!wv/1 en@1
+module Windvaleˉpackageˉbundleˉwriterˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉpackageˉbundleˉwriter as Bundleˉwriter;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Statusˉtext(
     Status: Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus

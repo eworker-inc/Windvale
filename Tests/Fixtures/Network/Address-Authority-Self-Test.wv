@@ -1,4 +1,9 @@
-module Windvaleˉnetworkˉaddressˉauthorityˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉnetworkˉaddressˉauthorityˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉnetworkˉaddressˉauthority as Network;
 

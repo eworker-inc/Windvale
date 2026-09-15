@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉdurableˉpage profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉdurableˉpage;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 
@@ -9,14 +14,14 @@ const DATABASE_PAGE_HEADER_BODY_BYTES: u32 = 96u32;
 const DATABASE_PAGE_CHECKSUM_BYTES: u32 = 32u32;
 const DATABASE_PAGE_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉdurableˉpageˉkind {
+export enum Databaseˉdurableˉpageˉkind: i32 {
     Root = 1;
     Branch = 2;
     Leaf = 3;
     Commitˉlog = 4;
 }
 
-export enum Databaseˉdurableˉpageˉerror {
+export enum Databaseˉdurableˉpageˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

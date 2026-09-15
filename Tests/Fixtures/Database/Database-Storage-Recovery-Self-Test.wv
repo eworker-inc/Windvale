@@ -1,4 +1,9 @@
-module Databaseˉstorageˉrecoveryˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉstorageˉrecoveryˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉpublication as Storage;

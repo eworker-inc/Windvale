@@ -1,4 +1,9 @@
-module Foundationˉborrowˉframesˉselfˉtest profile portable;
+#!wv/1 en@1
+module Foundationˉborrowˉframesˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉfoundationˉborrowˉframes as Frames;
 import Windvaleˉfoundationˉborrowˉview as View;

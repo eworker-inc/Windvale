@@ -1,12 +1,16 @@
-module Randomˉaccessˉstorage profile hosted;
+#!wv/1 en@1
+module Randomˉaccessˉstorage;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
-capability storage.random_access_v1;
 
 const STORAGE_RESPONSE_MAGIC: u32 = 1095980631u32;
 const STORAGE_MAX_TRANSFER: u32 = 65536u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Storageˉstatus {
+export enum Storageˉstatus: i32 {
     Valid = 0;
     Permissionˉdenied = 1;
     Unavailable = 2;
@@ -19,14 +23,14 @@ export enum Storageˉstatus {
     Invalidˉresponse = 9;
 }
 
-export enum Storageˉcompletion {
+export enum Storageˉcompletion: i32 {
     None = 0;
     Completed = 1;
     Partial = 2;
     Indeterminate = 3;
 }
 
-export enum Storageˉflush {
+export enum Storageˉflush: i32 {
     Content = 1;
     Contentˉandˉlength = 2;
 }

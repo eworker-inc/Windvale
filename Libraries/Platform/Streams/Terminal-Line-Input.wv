@@ -1,8 +1,12 @@
-module Windvaleˉterminalˉlineˉinput profile hosted;
+#!wv/1 en@1
+module Windvaleˉterminalˉlineˉinput;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability terminal.line_read_v1 version 1;
 
 import Windvaleˉterminalˉlineˉinputˉcore as Core;
 
-capability terminal.line_read_v1;
 
 export fn Terminalˉlineˉread(Maximum: u32) -> bytes {
     let Unit: bytes = Bytesˉfromˉu8(0u8);

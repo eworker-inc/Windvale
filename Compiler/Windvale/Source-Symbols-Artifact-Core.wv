@@ -1,4 +1,8 @@
-module Compilerˉsourceˉsymbols profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉsymbols;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
@@ -6,7 +10,7 @@ import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
-export enum Compilerˉsourceˉsymbolˉstatus {
+export enum Compilerˉsourceˉsymbolˉstatus: i32 {
 Valid = 0;
 Sourceˉgraph = 1;
 Capabilityˉlimit = 2;
@@ -47,7 +51,7 @@ Missingˉenumˉbacking = 36;
 Invalidˉenumˉbacking = 37;
 Invalidˉenumˉvalue = 38;
 }
-enum Compilerˉsourceˉnamespaceˉkind {
+enum Compilerˉsourceˉnamespaceˉkind: i32 {
 Capability = 0;
 Data = 1;
 Nominal = 2;

@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉmetadataˉrequest profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉmetadataˉrequest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha;
 import Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉadmission as Admission;

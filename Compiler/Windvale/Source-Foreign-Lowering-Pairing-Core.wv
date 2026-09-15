@@ -1,4 +1,9 @@
-module Compilerˉsourceˉforeignˉloweringˉpairing profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉforeignˉloweringˉpairing;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉforeignˉloweringˉcarrier as Carrierˉformat;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
@@ -7,7 +12,7 @@ const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
 const WIR_OPERATION_ENTRY_BYTES: u32 = 28u32;
 const WIR_FOREIGN_CALL_LIMIT: u32 = 4096u32;
 
-export enum Compilerˉsourceˉforeignˉloweringˉpairingˉstatus {
+export enum Compilerˉsourceˉforeignˉloweringˉpairingˉstatus: i32 {
     Valid = 0;
     Invalidˉcarrier = 1;
     Invalidˉsymbols = 2;

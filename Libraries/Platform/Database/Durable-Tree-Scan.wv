@@ -1,4 +1,9 @@
-module Durableˉtreeˉscan profile hosted;
+#!wv/1 en@1
+module Durableˉtreeˉscan;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -6,14 +11,13 @@ import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉtreeˉleafˉscan as Leafˉscan;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const DATABASE_TREE_SCAN_HEADER_BYTES: u64 = 512u64;
 const DATABASE_TREE_SCAN_MAXIMUM_DEPTH: u32 = 32u32;
 const DATABASE_TREE_SCAN_MAXIMUM_KEY_BYTES: u32 = 4096u32;
 const DATABASE_TREE_SCAN_MAXIMUM_ROWS: u32 = 500u32;
 
-export enum Databaseˉdurableˉtreeˉscanˉstatus {
+export enum Databaseˉdurableˉtreeˉscanˉstatus: i32 {
     Page = 0;
     Complete = 1;
     Invalidˉcurrent = 2;

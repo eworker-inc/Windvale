@@ -1,6 +1,11 @@
-module Compilerˉsourceˉdescriptor profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉdescriptor;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉsourceˉdescriptorˉstatus {
+
+export enum Compilerˉsourceˉdescriptorˉstatus: i32 {
     Valid = 0;
     Missingˉdescriptor = 1;
     Unsupportedˉedition = 2;
@@ -17,7 +22,7 @@ export enum Compilerˉsourceˉdescriptorˉstatus {
     Nonˉascii = 13;
 }
 
-export enum Compilerˉsourceˉprofileˉbinding {
+export enum Compilerˉsourceˉprofileˉbinding: i32 {
     None = 0;
     English = 1;
 }

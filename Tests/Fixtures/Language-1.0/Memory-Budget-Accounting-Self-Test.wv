@@ -1,4 +1,9 @@
-module Languageˉoneˉmemoryˉbudgetˉaccountingˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉmemoryˉbudgetˉaccountingˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore as Budgets;
 

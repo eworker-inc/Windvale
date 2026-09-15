@@ -1,4 +1,9 @@
-module Windvaleˉscriptedˉmodelˉprovider profile portable;
+#!wv/1 en@1
+module Windvaleˉscriptedˉmodelˉprovider;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉmodelˉprotocol as Protocol;
 

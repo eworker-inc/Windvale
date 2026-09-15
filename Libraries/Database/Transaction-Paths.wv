@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉpaths profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉpaths;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -9,7 +14,7 @@ const DATABASE_TRANSACTION_PATHS_MAXIMUM_DEPTH: u32 = 8u32;
 const DATABASE_TRANSACTION_PATHS_MAXIMUM_BYTES: u32 = 16777216u32;
 const DATABASE_TRANSACTION_PATHS_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉpathsˉerror {
+export enum Databaseˉtransactionˉpathsˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉmutations = 2;

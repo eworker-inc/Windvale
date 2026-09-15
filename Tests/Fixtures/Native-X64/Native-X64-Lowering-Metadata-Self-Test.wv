@@ -1,4 +1,9 @@
-module Nativeˉx64ˉloweringˉmetadataˉselfˉtest profile portable;
+#!wv/1 en@1
+module Nativeˉx64ˉloweringˉmetadataˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
 

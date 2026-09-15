@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉmaterializationˉbridge profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉmaterializationˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉmaterialization as Materialization;
 

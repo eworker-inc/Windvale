@@ -42,6 +42,93 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
+        Name = 'current segmented package integration'
+        Paths = @('Tools/Native/Package-Current-Segmented-Wvb.mjs')
+        Suites = @('installation-command-dispatch', 'package-bundle', 'offline-package-stage')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native hosted request and evidence tool ownership'
+        Paths = @(
+            'Runtime/Windvale/Native-Hosted-Container-Metadata-Tool.wv',
+            'Runtime/Windvale/Native-Hosted-Enum-Request-Tool.wv',
+            'Runtime/Windvale/Native-Hosted-Orchestration-Control-Tool.wv',
+            'Runtime/Windvale/Native-Hosted-Publication-Request-Tool.wv',
+            'Runtime/Windvale/Native-Hosted-Service-Bundle-Request-Tool.wv',
+            'Runtime/Windvale/Native-Hosted-Service-Bundle-Tool.wv',
+            'Runtime/Windvale/Native-Streaming-Sha256-Evidence-Tool.wv',
+            'Runtime/Windvale/Streaming-Sha256-Resource-Evidence.wv'
+        )
+        Suites = @(
+            'seed', 'seed-native-front-door', 'wvb-runner-reconstruction',
+            'wvb-inspector-reconstruction', 'wvo-inspector-reconstruction',
+            'console-publisher-reconstruction', 'wvo-publisher-reconstruction',
+            'unsafe-wvb', 'wvb-containment', 'console-packager-container-reconstruction',
+            'hosted-verifier-publisher-files'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'current lowerer package integration'
+        Paths = @('Tools/Native/Lower-Wvb-To-Wvo.mjs')
+        Suites = @('native-x64-lowering-development', 'package-format')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native borrow machine probe inputs'
+        Paths = @(
+            'Tests/Fixtures/Native-X64/Native-X64-Foundation-Borrow-Machine-Probe.wv',
+            'Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv'
+        )
+        Suites = @('native-x64-lowering-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native staging adapter inputs'
+        Paths = @(
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Envelope-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Envelope-Native-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Manifest-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Native-Bridge-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Adapter.wv',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Native-Adapter.wv'
+        )
+        Suites = @('segmented-compiler-toolset-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native secondary-index fixture ownership'
+        Paths = @(
+            'Tests/Fixtures/Database/Database-Secondary-Index-Mutations-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Secondary-Index-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseStorageDevelopment = $false
+    },
+    @{
+        Name = 'native database reader fixture ownership'
+        Paths = @(
+            'Tests/Fixtures/Database/Wvdb-Reader-Self-Test.wv',
+            'Tests/Fixtures/Database/Wvdb-Test-Fixtures.wv'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseStorageDevelopment = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'read-only-wvdb'
+    },
+    @{
         Name = 'PowerShell test runner and native owner live stream'
         Paths = @(
             'Tools/Native/Verification-Owner-Stream-Path.mjs',
@@ -2238,6 +2325,13 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'source edition predecessor construction stays with split compiler ownership'
+        Paths = @('Tools/Native/Source-Edition-Predecessor-Core.mjs')
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'split cache verifier edits remain focused'
         Paths = @(
             'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
@@ -3157,6 +3251,10 @@ $NativeCases = @(
             'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-Metadata-Core.wv',
             'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wv',
             'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv',
+            'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Bridge.wv',
+            'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Bridge.wv',
+            'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Tool.wv',
+            'Runtime/Windvale/Native-Hosted-Verifier-Runtime-Header-Bridge.wv',
             'Linker/Windvale/Native-Hosted-Verifier-Layout-Core.wv',
             'Tools/Windvale.Publish/Native-Hosted-Verifier-Application-Publisher.wv',
             'Tools/Windvale.Publish/Native-Hosted-Verifier-Publisher-Promoter.wv',
@@ -5218,15 +5316,15 @@ $QualificationPipelineExpected = @{
     'Lower-Wvb-To-Wvo' = '16|45'
     'Check-Wvo' = '21|56'
     'Link-Wvo' = '40|113'
-    'Package-Hosted-Wvb' = '19|100'
+    'Package-Hosted-Wvb' = '18|99'
     'Package-Console' = '20|78'
-    'Package-Segmented-Compiler-Wvb' = '23|65'
+    'Package-Segmented-Compiler-Wvb' = '21|53'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
     'Run-Split-Compiler' = '3|84'
-    'Run-Authenticated-Source-Admission' = '1|30'
+    'Run-Authenticated-Source-Admission' = '2|32'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
     $ActualPipelineUse = "$($PipelineUse.Owners)|$($PipelineUse.ScriptCallSites)"

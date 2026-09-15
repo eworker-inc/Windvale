@@ -1,4 +1,9 @@
-module Languageˉoneˉvalueˉfrontˉendˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉvalueˉfrontˉendˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉbodyˉparser as Bodies;

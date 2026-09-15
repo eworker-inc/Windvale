@@ -1,8 +1,13 @@
-module Linkerˉconsoleˉapplicationˉverification profile portable;
+#!wv/1 en@1
+module Linkerˉconsoleˉapplicationˉverification;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉconsoleˉapplicationˉconstruction as Applicationˉconstruction;
 
-export enum Consoleˉapplicationˉverificationˉstatus {
+export enum Consoleˉapplicationˉverificationˉstatus: i32 {
     Valid = 0;
     Invalidˉchunk = 1;
     Invalidˉsize = 2;

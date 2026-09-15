@@ -3,6 +3,7 @@ import { createReadStream } from 'node:fs';
 import { copyFile, lstat, mkdir, opendir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { Constructˉsourceˉeditionˉpredecessor } from './Source-Edition-Predecessor-Core.mjs';
 import {
     Getˉnativeˉprojectˉcacheˉrequest,
     Prepareˉnativeˉprojectˉcacheˉcontext,
@@ -13,17 +14,24 @@ import {
     Prepareˉhostedˉapplicationˉcontext,
 } from './Native-Hosted-Application-Cache-Core.mjs';
 
-const NAMESPACE = 'current-split-compiler-v1';
+const NAMESPACE = 'current-split-compiler-v2';
 const HOST = `${process.platform}-${process.arch}`;
 const WINDOWS = process.platform === 'win32';
 const EXTENSION = WINDOWS ? 'exe' : 'elf';
 const MAXIMUM_INPUT_BYTES = 134_217_728;
 const MAXIMUM_PRODUCT_BYTES = 67_108_864;
 const MAXIMUM_RECORD_BYTES = 4_096;
-const FORMAT = 'windvale-current-split-compiler-checkpoint-1';
+const FORMAT = 'windvale-current-split-compiler-checkpoint-2';
+export const CURRENT_ADMISSION_PROJECTS = Object.freeze([
+    ['Reader', 'Windvale-Project-Manifest.wvproj'],
+    ['Admitter', 'Windvale-Compiler-Admission-Driver.wvproj'],
+    ['Authenticator', 'Windvale-Compiler-Source-Authenticator.wvproj'],
+    ['Binder', 'Windvale-Compiler-Foreign-Binding-Driver.wvproj'],
+]);
 const PRODUCT_NAMES = Object.freeze([
     `Analyzer.${EXTENSION}`, 'Analyzer.identity',
     `Emitter.${EXTENSION}`, 'Emitter.identity',
+    ...CURRENT_ADMISSION_PROJECTS.map(([Name]) => `${Name}.${EXTENSION}`),
 ]);
 
 function Reject(Message) { throw new Error(Message); }
@@ -91,10 +99,13 @@ export async function Getˉcurrentˉsplitˉcompilerˉkey() {
         'Native-Project-Cache-Key-Core.mjs',
         'Split-Project-Source-Ordering-Core.mjs',
         'Write-Split-Compiler-Producer-Identity.mjs',
+        'Source-Edition-Predecessor-Core.mjs',
+        'Run-Split-Compiler.mjs',
     ].map(Name => path.join(REPOSITORY_ROOT, 'Tools', 'Native', Name)));
-    for (const Name of ['Analysis', 'Emission']) {
+    for (const Name of ['Windvale-Compiler-Analysis-Driver.wvproj',
+        'Windvale-Compiler-Emission-Driver.wvproj', ...CURRENT_ADMISSION_PROJECTS.map(([, Project]) => Project)]) {
         const Request = await Getˉnativeˉprojectˉcacheˉrequest(Context, path.join(
-            REPOSITORY_ROOT, 'Projects', 'Tools', `Windvale-Compiler-${Name}-Driver.wvproj`));
+            REPOSITORY_ROOT, 'Projects', 'Tools', Name));
         Field(Hash, `compiler:${Name}`, Request.key);
     }
     const Producers = [
@@ -195,7 +206,7 @@ async function Exists(Candidate) {
     });
 }
 
-// The producer writes only the four final files; intermediates retain their own owners.
+// Compiler and admission products are one identity-bound construction result.
 export async function Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, Requireˉunchanged) {
     if (typeof Key !== 'string' || !/^[0-9a-f]{64}$/.test(Key) || typeof Produce !== 'function' ||
         typeof Requireˉunchanged !== 'function') Reject('The compiler checkpoint request is invalid.');
@@ -241,15 +252,17 @@ export async function Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, Re
 // Fixed construction graph: serial preparation, then at most two producer branches.
 export async function Constructˉcurrentˉsplitˉcompiler(
     Work, Candidate, Runˉnative, Runˉnode,
+    Getˉpredecessor = Constructˉsourceˉeditionˉpredecessor,
+    Projectˉdirectory = path.join(REPOSITORY_ROOT, 'Projects', 'Tools'),
 ) {
     const Suffix = '.' + EXTENSION;
     const Bootstrap = path.join(REPOSITORY_ROOT, 'Artifacts',
         'Language-1.0-Target-Aware-Emission-Bootstrap', 'Wvb');
     const Pinnedˉanalyzerˉwvb = path.join(Bootstrap, 'wvanalyze.wvb');
     const Pinnedˉemitterˉwvb = path.join(Bootstrap, 'wvemit.wvb');
-    const Projectˉpath = Name => path.join(REPOSITORY_ROOT, 'Projects', 'Tools', Name);
-    const Pinnedˉanalyzer = path.join(Work, `Pinned-Analyzer${Suffix}`);
-    const Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Suffix}`);
+    const Projectˉpath = Name => path.join(Projectˉdirectory, Name);
+    let Pinnedˉanalyzer = path.join(Work, `Pinned-Analyzer${Suffix}`);
+    let Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Suffix}`);
     const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
     const Analyzer = path.join(Work, `Analyzer${Suffix}`);
     const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
@@ -261,24 +274,37 @@ export async function Constructˉcurrentˉsplitˉcompiler(
     const Emitter = path.join(Work, `Emitter${Suffix}`);
     const Emitterˉidentity = path.join(Work, 'Emitter.identity');
 
-    await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
-    ]);
-    await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
-    ]);
-    const Pinnedˉanalyzerˉidentity = path.join(
-        Work, 'Pinned-Analyzer.identity',
-    );
-    const Pinnedˉemitterˉidentity = path.join(
-        Work, 'Pinned-Emitter.identity',
-    );
-    await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
-    ]);
-    await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
-    ]);
+    const Analysisˉheader = (await readFile(Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'), 'utf8')).split(/\r?\n/u)[0];
+    const Emissionˉheader = (await readFile(Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'), 'utf8')).split(/\r?\n/u)[0];
+    if (Analysisˉheader !== Emissionˉheader || !['windvale-project 2', 'windvale-project 4'].includes(Analysisˉheader)) {
+        Reject('Compiler construction requires matching explicit Project 2 or Project 4 manifests.');
+    }
+    const Modern = Analysisˉheader === 'windvale-project 4';
+    let Admissionˉarguments = [];
+    let Pinnedˉanalyzerˉidentity = path.join(Work, 'Pinned-Analyzer.identity');
+    let Pinnedˉemitterˉidentity = path.join(Work, 'Pinned-Emitter.identity');
+    if (Modern) {
+        const Predecessor = await Getˉpredecessor(Work);
+        Pinnedˉanalyzer = Predecessor.Analyzer;
+        Pinnedˉanalyzerˉidentity = Predecessor.Analyzerˉidentity;
+        Pinnedˉemitter = Predecessor.Emitter;
+        Pinnedˉemitterˉidentity = Predecessor.Emitterˉidentity;
+        Admissionˉarguments = ['--authenticated-project4', Predecessor.Admitter,
+            Predecessor.Authenticator, Predecessor.Reader, Predecessor.Binder];
+    } else {
+        await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+            '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
+        ]);
+        await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+            '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
+        ]);
+        await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+            'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
+        ]);
+        await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+            'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
+        ]);
+    }
     await Runˉnode('stage1-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
         Analyzerˉwvb,
@@ -286,6 +312,7 @@ export async function Constructˉcurrentˉsplitˉcompiler(
         Pinnedˉanalyzerˉidentity,
         Pinnedˉemitter,
         Pinnedˉemitterˉidentity,
+        ...Admissionˉarguments,
     ]);
     await Runˉnative('stage1-checkpoint-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '8', Analyzerˉwvb, Checkpointˉanalyzer, '--development-cache',
@@ -312,7 +339,7 @@ export async function Constructˉcurrentˉsplitˉcompiler(
                 Checkpointˉanalyzerˉidentity,
                 Pinnedˉemitter,
                 Pinnedˉemitterˉidentity,
-                '--symbol-checkpoint',
+                ...(Modern ? Admissionˉarguments : ['--symbol-checkpoint']),
             ]);
             await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
                 '8', Emitterˉwvb, Emitter, '--development-cache',
@@ -327,7 +354,22 @@ export async function Constructˉcurrentˉsplitˉcompiler(
         throw new AggregateError(Failures.map(Result => Result.reason),
             'Current compiler preparation failed.');
     }
-    for (const Product of [Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity]) {
+    const Admissionˉproducts = [];
+    for (const [Name, Project] of CURRENT_ADMISSION_PROJECTS) {
+        const Wvb = path.join(Work, Name + '.wvb');
+        const Product = path.join(Work, Name + Suffix);
+        const Header = (await readFile(Projectˉpath(Project), 'utf8')).split(/\r?\n/u)[0];
+        if (Header !== Analysisˉheader) Reject('Compiler admission projects must use the compiler source edition.');
+        await Runˉnode(`current-${Name}-build`, 'Build-Cached-Split-Project-Wvb.mjs', [
+            Projectˉpath(Project), Wvb, Checkpointˉanalyzer, Checkpointˉanalyzerˉidentity,
+            Emitter, Emitterˉidentity, ...(Modern ? Admissionˉarguments : ['--symbol-checkpoint']),
+        ]);
+        await Runˉnode(`current-${Name}-package`, 'Build-Cached-Segmented-Hosted-Wvb.mjs', [
+            '7', Wvb, Product,
+        ]);
+        Admissionˉproducts.push(Product);
+    }
+    for (const Product of [Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity, ...Admissionˉproducts]) {
         await copyFile(Product, path.join(Candidate, path.basename(Product)));
     }
 }

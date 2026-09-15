@@ -6,10 +6,12 @@ import {
     readFile,
     rm,
     stat,
+    writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { Runˉdevelopmentˉcommand } from "../Native/Development-Command-Core.mjs";
 
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = path.resolve(Scriptˉdirectory, "../..");
@@ -36,8 +38,14 @@ const Temporaryˉprefix = path.join(
 );
 
 const Options = Parseˉarguments(process.argv.slice(2));
+// This command reproduces the shipped browser compiler, not the live compiler.
+// Current source builds use the authenticated Project 4 front door.
+const HISTORICAL_SOURCE = "8b4267f51fe508a882552442911a4743115eae57";
+const Historicalˉdeadline = Date.now() + 600_000;
 const Toolchainˉmanifest = await Readˉjson(path.join(Toolchainˉroot, "Manifest.json"));
 const Packageˉmanifest = await Readˉjson(path.join(Packageˉroot, "Manifest.json"));
+Require(Packageˉmanifest.sourceCommit === HISTORICAL_SOURCE,
+    "The historical browser compiler source identity differs.");
 
 Require(
     Toolchainˉmanifest.format === "windvale-webassembly-native-compiler-1",
@@ -117,15 +125,27 @@ if (Outputˉpath !== null) {
 
 const Temporaryˉdirectory = await mkdtemp(Temporaryˉprefix);
 try {
+    const Historicalˉpaths = [];
+    let Historicalˉbytes = 0;
+    for (const [Index, Source] of Sourceˉpaths.entries()) {
+        const Relative = path.relative(Repositoryˉroot, Source).split(path.sep).join("/");
+        const Bytes = await Readˉhistorical(Relative);
+        Historicalˉbytes += Bytes.length;
+        Require(Historicalˉbytes <= 4_194_304, "Historical compiler sources exceed 4 MiB.");
+        const Snapshot = path.join(Temporaryˉdirectory, `${Index}.wv`);
+        await writeFile(Snapshot, Bytes, { flag: "wx" });
+        Historicalˉpaths.push(Snapshot);
+    }
     const Candidateˉpath = path.join(Temporaryˉdirectory, "Candidate.wvb");
     const Publishedˉpath = Options.Check
         ? path.join(Temporaryˉdirectory, "Published.wvb")
         : Outputˉpath;
     Runˉnative(
         Compilerˉpath,
-        [...Sourceˉpaths, Candidateˉpath],
+        [...Historicalˉpaths, Candidateˉpath],
         "native compiler",
     );
+    await Verifyˉartifact(Candidateˉpath, Expectedˉcompiler, "historical browser compiler candidate");
     Runˉnative(
         Publisherˉpath,
         [Candidateˉpath, Publishedˉpath],
@@ -245,7 +265,7 @@ async function Readˉworkspace(Fileˉpath) {
 }
 
 async function Readˉproject(Fileˉpath, Workspaceˉroot) {
-    const Bytes = await readFile(Fileˉpath);
+    const Bytes = await Readˉhistorical("Windvale-Compiler-Memory.wvproj");
     Require(Bytes.byteLength <= 65_536, "The compiler project exceeds the byte limit.");
     const Text = new TextDecoder("utf-8", { fatal: true }).decode(Bytes);
     Require(!Text.startsWith("\uFEFF"), "The compiler project contains a byte-order mark.");
@@ -254,7 +274,7 @@ async function Readˉproject(Fileˉpath, Workspaceˉroot) {
         Lines.pop();
     }
     Require(
-        Lines.shift() === "windvale-project 2",
+        Lines.shift() === "windvale-project 1",
         "The compiler project header is invalid.",
     );
     Require(Lines.length !== 0 && Lines.every(Line => Line.length !== 0),
@@ -308,11 +328,23 @@ function Runˉnative(Command, Arguments, Boundary) {
         cwd: Repositoryˉroot,
         stdio: "inherit",
         windowsHide: true,
+        timeout: Math.min(120_000, Math.max(1, Historicalˉdeadline - Date.now())),
     });
     if (Result.error !== undefined) {
         throw Result.error;
     }
     Require(Result.status === 0, `The ${Boundary} exited with status ${Result.status}.`);
+}
+
+async function Readˉhistorical(Relative) {
+    Require(/^[A-Za-z0-9][A-Za-z0-9./-]*$/u.test(Relative) &&
+        Relative.split("/").every(Part => Part && Part !== "." && Part !== ".."),
+    "Invalid historical compiler source path.");
+    const Result = await Runˉdevelopmentˉcommand("git", ["-C", Repositoryˉroot,
+        "show", `${HISTORICAL_SOURCE}:${Relative}`],
+    Math.min(Historicalˉdeadline, Date.now() + 120_000), false, 1_048_576);
+    Require(Result.Code === 0 && Result.Error === "", "Historical compiler source is unavailable: " + Relative);
+    return Buffer.from(Result.Output, "utf8");
 }
 
 function Sha256(Bytes) {

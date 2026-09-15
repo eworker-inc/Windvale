@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉparentˉgroups profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉparentˉgroups;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -16,7 +21,7 @@ const DATABASE_TRANSACTION_PARENT_GROUPS_MAXIMUM_BYTES: u32 = 3145728u32;
 const DATABASE_TRANSACTION_LEAF_PAGES_GROUP_BYTES: u32 = 32u32;
 const DATABASE_TRANSACTION_LEAF_PAGES_LEAF_BYTES: u32 = 16u32;
 
-export enum Databaseˉtransactionˉparentˉgroupsˉerror {
+export enum Databaseˉtransactionˉparentˉgroupsˉerror: i32 {
     Valid = 0;
     Invalidˉdepth = 1;
     Leafˉpagesˉfailed = 2;

@@ -1,4 +1,8 @@
-module Compilerˉsourceˉbindings profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉbindings;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
@@ -8,7 +12,7 @@ import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
-export enum Compilerˉsourceˉbindingˉstatus {
+export enum Compilerˉsourceˉbindingˉstatus: i32 {
 Valid = 0;
 Sourceˉsymbols = 1;
 Bindingˉlimit = 2;
@@ -27,7 +31,7 @@ Unknownˉcall = 14;
 Callˉarity = 15;
 Invalidˉargument = 16;
 }
-export enum Compilerˉsourceˉbindingˉkind {
+export enum Compilerˉsourceˉbindingˉkind: i32 {
 None = 0;
 Parameter = 1;
 Let = 2;
@@ -37,7 +41,7 @@ Taskˉjoin = 5;
 Taskˉcancelˉjoin = 6;
 Taskˉfailˉjoin = 7;
 }
-export enum Compilerˉsourceˉcallableˉkind {
+export enum Compilerˉsourceˉcallableˉkind: i32 {
 None = 0;
 Intrinsic = 1;
 Record = 2;

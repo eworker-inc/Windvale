@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉsingleˉwriterˉcommit profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉsingleˉwriterˉcommit;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
@@ -8,7 +13,7 @@ import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 const SINGLE_WRITER_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉsingleˉwriterˉcommitˉerror {
+export enum Databaseˉsingleˉwriterˉcommitˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Unpublishedˉtail = 2;

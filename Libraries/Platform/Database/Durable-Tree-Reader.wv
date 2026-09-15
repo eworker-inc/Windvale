@@ -1,16 +1,20 @@
-module Durableˉtreeˉreader profile hosted;
+#!wv/1 en@1
+module Durableˉtreeˉreader;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const DATABASE_TREE_READER_HEADER_BYTES: u64 = 512u64;
 const DATABASE_TREE_READER_MAXIMUM_DEPTH: u32 = 32u32;
 
-export enum Databaseˉdurableˉtreeˉlookupˉstatus {
+export enum Databaseˉdurableˉtreeˉlookupˉstatus: i32 {
     Found = 0;
     Missing = 1;
     Invalidˉcurrent = 2;

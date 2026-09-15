@@ -1,4 +1,9 @@
-module Foundationˉdecimalˉparsingˉdemo profile portable;
+#!wv/1 en@1
+module Foundationˉdecimalˉparsingˉdemo;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉdecimalˉparsing as Decimalˉparsing;
 

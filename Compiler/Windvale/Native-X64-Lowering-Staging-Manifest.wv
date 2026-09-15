@@ -1,6 +1,11 @@
-module Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus {
+
+export enum Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus: i32 {
     Valid = 0;
     Truncated = 1;
     Magic = 2;

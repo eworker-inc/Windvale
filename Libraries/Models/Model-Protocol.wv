@@ -1,4 +1,9 @@
-module Windvaleˉmodelˉprotocol profile portable;
+#!wv/1 en@1
+module Windvaleˉmodelˉprotocol;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const MODEL_MESSAGE_MAGIC: u32 = 1296914007u32;
 const MODEL_REQUEST_MAGIC: u32 = 1364022871u32;
@@ -14,7 +19,7 @@ const MODEL_MAXIMUM_CONTINUATION_BYTES: u32 = 1024u32;
 const MODEL_MAXIMUM_CATALOG_ENTRIES: u32 = 128u32;
 const MODEL_MAXIMUM_CATALOG_BYTES: u32 = 65536u32;
 
-export enum Modelˉcodecˉstatus {
+export enum Modelˉcodecˉstatus: i32 {
     Valid = 0;
     Invalidˉenvelope = 1;
     Invalidˉtext = 2;
@@ -23,7 +28,7 @@ export enum Modelˉcodecˉstatus {
     Sizeˉlimit = 5;
 }
 
-export enum Modelˉstatus {
+export enum Modelˉstatus: i32 {
     Valid = 0;
     Invalidˉrequest = 1;
     Unavailable = 2;
@@ -38,27 +43,27 @@ export enum Modelˉstatus {
     Submissionˉindeterminate = 11;
 }
 
-export enum Modelˉoperation {
+export enum Modelˉoperation: i32 {
     None = 0;
     Catalog = 1;
     Generate = 2;
 }
 
-export enum Modelˉrole {
+export enum Modelˉrole: i32 {
     None = 0;
     System = 1;
     User = 2;
     Assistant = 3;
 }
 
-export enum Modelˉcompletion {
+export enum Modelˉcompletion: i32 {
     None = 0;
     Complete = 1;
     Lengthˉlimit = 2;
     Contentˉfilter = 3;
 }
 
-export enum Modelˉlifecycle {
+export enum Modelˉlifecycle: i32 {
     Stable = 1;
     Mutableˉalias = 2;
     Deprecated = 3;

@@ -1,4 +1,9 @@
-module Databaseˉstorageˉpageˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉstorageˉpageˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉstorageˉpage as Page;
 

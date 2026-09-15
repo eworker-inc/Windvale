@@ -1,4 +1,9 @@
-module Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow profile portable;
+#!wv/1 en@1
+module Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
 

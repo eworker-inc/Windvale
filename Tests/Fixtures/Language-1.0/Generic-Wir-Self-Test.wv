@@ -1,4 +1,9 @@
-module Languageˉoneˉgenericˉwirˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉwirˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉwir as Sourceˉwir;

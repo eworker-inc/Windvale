@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉcommitˉbatch profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉcommitˉbatch;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
@@ -10,7 +15,7 @@ const DATABASE_COMMIT_BATCH_MAXIMUM_DATA_PAGES: u32 = 792u32;
 const DATABASE_COMMIT_BATCH_PREVIOUS_PAGE_OFFSET: u32 = 48u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉcommitˉbatchˉerror {
+export enum Databaseˉcommitˉbatchˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Unpublishedˉtail = 2;

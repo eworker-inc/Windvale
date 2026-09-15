@@ -1,6 +1,11 @@
-module Compilerˉsourceˉanalysisˉcontract profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉanalysisˉcontract;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉsourceˉanalysisˉstatus {
+
+export enum Compilerˉsourceˉanalysisˉstatus: i32 {
     Valid = 0;
     Invalidˉmanifest = 1;
     Sourceˉsymbols = 2;

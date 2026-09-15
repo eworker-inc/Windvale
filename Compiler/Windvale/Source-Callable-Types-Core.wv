@@ -1,4 +1,9 @@
-module Compilerˉsourceˉcallableˉtypes profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉcallableˉtypes;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
@@ -9,7 +14,7 @@ import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 
-export enum Compilerˉsourceˉcallableˉtypeˉstatus {
+export enum Compilerˉsourceˉcallableˉtypeˉstatus: i32 {
     Valid = 0;
     Sourceˉsymbols = 1;
     Sourceˉbindings = 2;
@@ -22,7 +27,7 @@ export enum Compilerˉsourceˉcallableˉtypeˉstatus {
     Invalidˉdirectory = 9;
 }
 
-export enum Compilerˉsourceˉcallableˉdisposition {
+export enum Compilerˉsourceˉcallableˉdisposition: i32 {
     Nonˉfunction = 0;
     Genericˉtemplate = 1;
     Legacyˉvoid = 2;

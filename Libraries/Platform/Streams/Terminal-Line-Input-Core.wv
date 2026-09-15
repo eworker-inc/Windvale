@@ -1,4 +1,9 @@
-module Windvaleˉterminalˉlineˉinputˉcore profile portable;
+#!wv/1 en@1
+module Windvaleˉterminalˉlineˉinputˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const TERMINAL_LINE_REQUEST_MAGIC: u32 = 1380734551u32;
 const TERMINAL_LINE_RESPONSE_MAGIC: u32 = 1229739607u32;
@@ -8,7 +13,7 @@ const TERMINAL_LINE_RESPONSE_HEADER_BYTES: u32 = 32u32;
 const TERMINAL_LINE_MAXIMUM_BYTES: u32 = 3072u32;
 const TERMINAL_LINE_PROVIDER_GENERATION: u64 = 1u64;
 
-export enum Terminalˉlineˉstatus {
+export enum Terminalˉlineˉstatus: i32 {
     Completed = 0;
     Endˉofˉinput = 1;
     Interrupted = 2;

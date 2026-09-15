@@ -1,6 +1,11 @@
-module Compilerˉadmissionˉsourceˉset profile portable;
+#!wv/1 en@1
+module Compilerˉadmissionˉsourceˉset;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉadmissionˉsourceˉsetˉstatus {
+
+export enum Compilerˉadmissionˉsourceˉsetˉstatus: i32 {
     Valid = 0;
     Tooˉshort = 1;
     Tooˉlarge = 2;

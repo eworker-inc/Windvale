@@ -1,11 +1,16 @@
-module Windvaleˉdatabaseˉtransactionˉcommit profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉcommit;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉtransactionˉtreeˉcompletion as Completion;
 
-export enum Databaseˉtransactionˉcommitˉerror {
+export enum Databaseˉtransactionˉcommitˉerror: i32 {
     Valid = 0;
     Treeˉcompletionˉfailed = 1;
     Invalidˉtreeˉcompletion = 2;

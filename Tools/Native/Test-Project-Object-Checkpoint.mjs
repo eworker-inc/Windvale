@@ -15,6 +15,13 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { strict as Assert } from 'node:assert';
+import { symlink } from 'node:fs/promises';
+import {
+    Getˉnativeˉprojectˉcacheˉrequest,
+    Prepareˉnativeˉprojectˉcacheˉcontext,
+    Requireˉnativeˉprojectˉcacheˉrequestˉunchanged,
+} from './Native-Project-Cache-Key-Core.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const REPOSITORY_ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..', '..');
@@ -230,13 +237,101 @@ async function Removeˉtestˉroot(testRoot) {
     await rm(canonical, { recursive: true, force: false, maxRetries: 2 });
 }
 
+async function Testˉprojectˉinputs() {
+    const Work = path.join(REPOSITORY_ROOT, 'Artifacts', 'Work');
+    await mkdir(Work, { recursive: true });
+    const Temporary = await mkdtemp(path.join(Work, 'project-input-key-'));
+    const Relative = path.relative(REPOSITORY_ROOT, Temporary).split(path.sep).join('/');
+    const Project = path.join(Temporary, 'Input.wvproj');
+    const Context = await Prepareˉnativeˉprojectˉcacheˉcontext('project-input-test', [SCRIPT_PATH]);
+    const Base = 'windvale-project 4\n' +
+        'root "Libraries/Foundation/Values/Option.wv"\nemit wvb\n';
+    const Inputs = [
+        ['source-input-lock', 'Input.wvlock'],
+        ['source-profile', 'Input.wvsp'],
+        ['target-descriptor', 'Input.wvtd'],
+    ];
+    const Declarations = Inputs.map(([Kind, Name]) => `${Kind} "${Relative}/${Name}"\n`).join('');
+    const Request = () => Getˉnativeˉprojectˉcacheˉrequest(Context, Project);
+    let Cases = 0;
+    try {
+        for (const [, Name] of Inputs) await writeFile(path.join(Temporary, Name), 'original\n');
+        await writeFile(Project, Base + Declarations);
+        const Original = await Request();
+        Assert.equal(Original.inputEvidence.length, 5);
+        Assert.equal((await Request()).key, Original.key);
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Original);
+        Cases += 1;
+        for (const [, Name] of Inputs) {
+            await writeFile(path.join(Temporary, Name), 'modified\n');
+            Assert.notEqual((await Request()).key, Original.key);
+            await Assert.rejects(() => Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Original), /project input/);
+            await writeFile(path.join(Temporary, Name), 'original\n');
+            Assert.equal((await Request()).key, Original.key);
+            Cases += 1;
+        }
+        for (const [Kind, Name] of Inputs) {
+            for (const Invalid of [
+                `${Kind} "${Relative}/Missing${path.extname(Name)}"\n`,
+                `${Kind} "../${Name}"\n`,
+                `${Kind} "${Relative}/${Name}"\n${Kind} "${Relative}/${Name}"\n`,
+                `${Kind}\t"${Relative}/${Name}"\n`,
+                `${Kind} "${Relative}/Wrong.bin"\n`,
+            ]) {
+                await writeFile(Project, Base + Invalid);
+                await Assert.rejects(Request, /cache-key/);
+                Cases += 1;
+            }
+        }
+        const Link = path.join(Temporary, 'Link');
+        await symlink(Temporary, Link, WINDOWS ? 'junction' : 'dir');
+        try {
+            await writeFile(Project, Base + `target-descriptor "${Relative}/Link/Input.wvtd"\n`);
+            await Assert.rejects(Request, /canonical repository file/);
+            Cases += 1;
+        } finally {
+            await rm(Link);
+        }
+        await writeFile(Project, Base.replace('project 4', 'project 2'));
+        const Legacy = await Request();
+        Assert.equal(Legacy.inputEvidence.length, 2);
+        const Legacyˉhash = Context.hash.copy();
+        for (const [Label, Bytes] of [
+            [`project:${Relative}/Input.wvproj`, await readFile(Project)],
+            ['source:Libraries/Foundation/Values/Option.wv', await readFile(
+                path.join(REPOSITORY_ROOT, 'Libraries/Foundation/Values/Option.wv'))],
+        ]) {
+            const Labelˉbytes = Buffer.from(Label, 'utf8');
+            const Frame = Buffer.alloc(16);
+            Frame.writeBigUInt64LE(BigInt(Labelˉbytes.length), 0);
+            Frame.writeBigUInt64LE(BigInt(Bytes.length), 8);
+            Legacyˉhash.update(Frame).update(Labelˉbytes).update(Bytes);
+        }
+        Assert.equal(Legacy.key, Legacyˉhash.digest('hex'));
+        await writeFile(path.join(Temporary, 'Input.wvsp'), 'unreferenced change\n');
+        Assert.equal((await Request()).key, Legacy.key);
+        Cases += 1;
+        process.stdout.write(`native project input identity status=Passed cases=${Cases}\n`);
+    } finally {
+        const Canonical = await realpath(Temporary);
+        if (path.dirname(Canonical) !== await realpath(Work) ||
+            !path.basename(Canonical).startsWith('project-input-key-')) {
+            Reject('Unexpected project-input test directory.');
+        }
+        await rm(Canonical, { recursive: true, force: false });
+    }
+}
+
 async function Main() {
-    if (process.argv.length !== 2) {
+    const Inputsˉonly = process.argv.length === 3 && process.argv[2] === '--project-inputs';
+    if (process.argv.length !== 2 && !Inputsˉonly) {
         process.stderr.write(
-            'Usage: node Tools/Native/Test-Project-Object-Checkpoint.mjs\n'
+            'Usage: node Tools/Native/Test-Project-Object-Checkpoint.mjs [--project-inputs]\n'
         );
         process.exit(64);
     }
+    await Testˉprojectˉinputs();
+    if (Inputsˉonly) return;
     const testRoot = await mkdtemp(path.join(
         os.tmpdir(),
         'windvale-project-object-checkpoint-test-'

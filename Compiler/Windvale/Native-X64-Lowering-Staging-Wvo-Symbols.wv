@@ -1,9 +1,14 @@
-module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 
-export enum Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus {
+export enum Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus: i32 {
     Valid = 0;
     Envelope = 1;
     Symbolˉchunk = 2;

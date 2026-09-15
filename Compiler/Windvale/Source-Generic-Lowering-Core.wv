@@ -1,6 +1,11 @@
-module Compilerˉsourceˉgenericˉlowering profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉgenericˉlowering;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉsourceˉgenericˉstatus {
+
+export enum Compilerˉsourceˉgenericˉstatus: i32 {
     Valid = 0;
     Invalidˉparameter = 1;
     Parameterˉlimit = 2;

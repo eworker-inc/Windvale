@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉlogicalˉrecordˉwrite profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉlogicalˉrecordˉwrite;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const DATABASE_LOGICAL_WRITE_KEY_MAGIC: u32 = 1380669015u32;
 const DATABASE_LOGICAL_WRITE_RECORD_MAGIC: u32 = 1146246743u32;
@@ -7,7 +12,7 @@ const DATABASE_LOGICAL_WRITE_HEADER_BYTES: u32 = 32u32;
 const DATABASE_LOGICAL_WRITE_MAXIMUM_IDENTITY_BYTES: u32 = 4064u32;
 const DATABASE_LOGICAL_WRITE_MAXIMUM_PAYLOAD_BYTES: u32 = 61408u32;
 
-export enum Databaseˉlogicalˉwriteˉerror {
+export enum Databaseˉlogicalˉwriteˉerror: i32 {
     Valid = 0;
     Invalidˉcollection = 1;
     Invalidˉidentityˉlength = 2;

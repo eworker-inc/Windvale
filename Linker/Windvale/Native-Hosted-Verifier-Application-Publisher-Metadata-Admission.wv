@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉadmission profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
     var Index: u32 = 0u32;

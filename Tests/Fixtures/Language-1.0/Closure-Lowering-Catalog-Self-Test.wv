@@ -1,4 +1,9 @@
-module Languageˉoneˉclosureˉloweringˉcatalogˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉclosureˉloweringˉcatalogˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉclosureˉlowering as Closureˉlowering;
 

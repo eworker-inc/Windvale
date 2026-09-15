@@ -1,12 +1,16 @@
-module Processˉcodeˉextractorˉtool profile hosted;
+#!wv/1 en@1
+module Processˉcodeˉextractorˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Wvoˉobjectˉverification as Verification;
 
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Processˉsectionˉname: bytes = [
     46, 116, 101, 120, 116, 46, 112, 114, 111, 99, 101, 115, 115

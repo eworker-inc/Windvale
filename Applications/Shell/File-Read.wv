@@ -1,13 +1,17 @@
-module Fileˉread profile hosted;
+#!wv/1 en@1
+module Fileˉread;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability diagnostic.write_line version 1;
+requires capability filesystem.directory_read_v1 version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+requires capability standard_output.write_v1 version 1;
 
 import Readˉonlyˉdirectory as Directory;
 import Windvaleˉstandardˉbyteˉoutput as Output;
 
-capability diagnostic.write_line;
-capability filesystem.directory_read_v1;
-capability process.argument;
-capability process.argument_count;
-capability standard_output.write_v1;
 
 fn Fileˉreadˉusage() -> i32 {
     diagnostic.write_line("Usage: file-read <name>");

@@ -37,23 +37,23 @@ echo 'native offline package stage step=build-tools item=1/8'
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 613470 \
-    ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 || exit 1
+verify_file "$work/Writer.wvb" 675300 \
+    4a1e137b7c4695e6c516626d658c985aa960a91478b1eafab4cbffcba5c232d0 || exit 1
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 632763 \
-    cb8c959e44b24aa380f2a0f6b838d371ed2815d51c586e3e96a36190f52319c7 || exit 1
+verify_file "$work/Verifier.wvb" 694665 \
+    8807ee7605fc2d133f8b57921953f9e2c4861e7ba8c487caa30dcc084972e8b8 || exit 1
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Installation-Generation-Verifier.wvproj" \
     "$work/Generation-Verifier.wvb" || exit $?
-verify_file "$work/Generation-Verifier.wvb" 42364 \
-    2beb02ba0ea13b1552a0c3bf9b92bebe438ac65b2eb49000a4fc1762ed8f7e9f || exit 1
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+verify_file "$work/Generation-Verifier.wvb" 29250 \
+    dbb8274612dc194d4e524bbaa8353f60746e0e101b7becac4ada4e96a6081aae || exit 1
+node "$script_directory/Package-Current-Segmented-Wvb.mjs" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+node "$script_directory/Package-Current-Segmented-Wvb.mjs" 6 \
     "$work/Verifier.wvb" "$work/Verifier.elf" || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$work/Generation-Verifier.wvb" "$work/Generation-Verifier.elf" linux || exit $?
 
 echo 'native offline package stage step=build-packages item=2/8 packages=2'

@@ -3,6 +3,11 @@ set -uo pipefail
 
 image_mode=0
 plan_mode=0
+current_lowerer=0
+if [[ ${1:-} == current ]]; then
+    current_lowerer=1
+    shift
+fi
 if [[ ($# -eq 3 || $# -eq 4) && $1 =~ ^[1-8]$ && $2 == *.wvb ]]; then
     profile=$1
     input_argument=$2
@@ -33,9 +38,13 @@ elif [[ ($# -eq 8 || $# -eq 9) && $1 == plan && $2 =~ ^[1-8]$ &&
     output_argument=$8
     target=${9:-linux}
 else
-    echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh <profile-1-through-8> <input.wvb> <output.elf|output.exe> [linux|windows]' >&2
+    echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh [current] <profile-1-through-8> <input.wvb> <output.elf|output.exe> [linux|windows]' >&2
     echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-8> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <output.elf|output.exe> [linux|windows]' >&2
     echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh plan <profile-1-through-8> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <runtime.wvhr> <plan.wvcd> [linux|windows]' >&2
+    exit 64
+fi
+if [[ $current_lowerer -eq 1 && $image_mode -eq 1 ]]; then
+    echo 'Current lowering requires a source WVB, not an external image or plan.' >&2
     exit 64
 fi
 if [[ $plan_mode -eq 0 ]]; then
@@ -167,7 +176,11 @@ application_segments="$temporary_directory/Application-Segments"
 if [[ $image_mode -eq 1 ]]; then
     bundle_sources=$external_bundle_sources
 else
-    "$script_directory/Lower-Wvb-To-Wvo.sh" "$input" "$temporary_directory/Input.wvo" >"$temporary_directory/Lower.txt" || exit $?
+    if [[ $current_lowerer -eq 1 ]]; then
+        node "$script_directory/Lower-Wvb-To-Wvo.mjs" --current "$input" "$temporary_directory/Input.wvo" || exit $?
+    else
+        "$script_directory/Lower-Wvb-To-Wvo.sh" "$input" "$temporary_directory/Input.wvo" >"$temporary_directory/Lower.txt" || exit $?
+    fi
     "$script_directory/Link-Wvo.sh" 0 Main "$temporary_directory/Native.bin" "$temporary_directory/Input.wvo" >"$temporary_directory/Link.txt" || exit $?
     native_entry=$(sed -n 's/^entry name=Main address=//p' "$temporary_directory/Link.txt")
     case "$native_entry" in

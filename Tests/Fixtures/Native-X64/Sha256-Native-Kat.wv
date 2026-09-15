@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉsha256ˉnativeˉkat profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉsha256ˉnativeˉkat;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉsha256ˉstreamingˉselfˉtest as Streaming;
 

@@ -4,6 +4,12 @@ setlocal EnableExtensions DisableDelayedExpansion
 call :count_arguments %*
 if errorlevel 10 goto :usage
 set "ArgumentCount=%ERRORLEVEL%"
+set "CurrentLowerer=0"
+if /I "%~1"=="current" (
+    set "CurrentLowerer=1"
+    shift /1
+    set /a ArgumentCount-=1
+)
 set "ImageMode=0"
 set "PlanMode=0"
 if /I "%~1"=="image" goto :image_arguments
@@ -55,6 +61,7 @@ set "Target=%~9"
 if not defined Target set "Target=windows"
 
 :arguments_ready
+if "%CurrentLowerer%"=="1" if "%ImageMode%"=="1" goto :usage
 if "%PlanMode%"=="1" if /I "%RuntimeOutput%"=="%PlanOutput%" goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -164,7 +171,11 @@ set "Result=1"
 if "%ImageMode%"=="1" (
     set "BundleSources=%ExternalBundleSources%"
 ) else (
-    call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Input%" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Lower.txt"
+    if "%CurrentLowerer%"=="1" (
+        node "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.mjs" --current "%Input%" "%TemporaryDirectory%\Input.wvo"
+    ) else (
+        call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Input%" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Lower.txt"
+    )
     if errorlevel 1 goto :cleanup
     call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\Native.bin" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Link.txt"
     if errorlevel 1 goto :cleanup
@@ -309,7 +320,7 @@ shift /1
 goto :count_arguments_loop
 
 :usage
->&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^|output.elf^> [windows^|linux]
+>&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd [current] ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^|output.elf^> [windows^|linux]
 >&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-8^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<output.exe^|output.elf^> [windows^|linux]
 >&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd plan ^<profile-1-through-8^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<runtime.wvhr^> ^<plan.wvcd^> [windows^|linux]
 exit /b 64

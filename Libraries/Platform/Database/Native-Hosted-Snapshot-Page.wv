@@ -1,8 +1,12 @@
-module Nativeˉhostedˉsnapshotˉpage profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉsnapshotˉpage;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability file.read_bytes version 1;
 
 import Windvaleˉdatabaseˉstorageˉpage as Page;
 
-capability file.read_bytes;
 
 const SNAPSHOT_GENERATION: u64 = 1u64;
 

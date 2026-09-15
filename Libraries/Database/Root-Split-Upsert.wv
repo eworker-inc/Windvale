@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉrootˉsplitˉupsert profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉrootˉsplitˉupsert;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -7,7 +12,7 @@ import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉrootˉsplitˉupsertˉerror {
+export enum Databaseˉrootˉsplitˉupsertˉerror: i32 {
     Valid = 0;
     Invalidˉcurrent = 1;
     Invalidˉrootˉpage = 2;

@@ -1,11 +1,15 @@
-module Databaseˉsuperblockˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Databaseˉsuperblockˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉbyteˉconstruction as Construction;
 import Foundationˉsha256ˉstreaming as Sha256;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 
-capability process.argument;
-capability process.argument_count;
 
 data BASE_CHECKSUM: bytes = [
     211, 221, 204, 111, 1, 244, 160, 11,

@@ -1,4 +1,9 @@
-module Compilerˉsourceˉwirˉconsumer profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwirˉconsumer;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
@@ -6,7 +11,7 @@ import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 
-export enum Compilerˉsourceˉwirˉstatus {
+export enum Compilerˉsourceˉwirˉstatus: i32 {
     Valid = 0;
     Sourceˉbindings = 1;
     Evidenceˉlimit = 2;

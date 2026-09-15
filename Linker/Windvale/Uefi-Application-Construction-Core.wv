@@ -1,9 +1,14 @@
-module Linkerˉuefiˉapplicationˉconstruction profile portable;
+#!wv/1 en@1
+module Linkerˉuefiˉapplicationˉconstruction;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 import Linkerˉuefiˉapplicationˉverification as Verification;
 
-export enum Uefiˉapplicationˉconstructionˉstatus {
+export enum Uefiˉapplicationˉconstructionˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;

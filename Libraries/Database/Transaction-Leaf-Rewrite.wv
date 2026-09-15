@@ -1,9 +1,14 @@
-module Windvaleˉdatabaseˉtransactionˉleafˉrewrite profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉleafˉrewrite;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-export enum Databaseˉtransactionˉleafˉrewriteˉerror {
+export enum Databaseˉtransactionˉleafˉrewriteˉerror: i32 {
     Valid = 0;
     Invalidˉmutations = 1;
     Invalidˉleaf = 2;

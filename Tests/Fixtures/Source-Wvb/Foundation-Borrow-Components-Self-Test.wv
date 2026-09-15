@@ -1,4 +1,9 @@
-module Foundationˉborrowˉcomponentsˉselfˉtest profile portable;
+#!wv/1 en@1
+module Foundationˉborrowˉcomponentsˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Foundationˉvalueˉborrowˉplanˉselfˉtest as Plan;
 import Wvbˉtypedˉdirectoriesˉselfˉtest as Directories;

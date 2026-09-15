@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉsha256 profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉsha256;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 // Relocation-free x86-64 SHA-256 helper: 1,350 code bytes followed by the
 // aligned 32-byte initial state and 256-byte round table. It is derived from

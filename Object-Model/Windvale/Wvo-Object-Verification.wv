@@ -1,8 +1,13 @@
-module Wvoˉobjectˉverification profile portable;
+#!wv/1 en@1
+module Wvoˉobjectˉverification;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉbyteˉordering as Byteˉordering;
 
-export enum Wvoˉstatus {
+export enum Wvoˉstatus: i32 {
     Valid = 0;
     Shortˉheader = 1;
     Badˉmagic = 2;

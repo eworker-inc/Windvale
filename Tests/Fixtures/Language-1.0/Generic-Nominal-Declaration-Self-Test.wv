@@ -1,4 +1,9 @@
-module Languageˉoneˉgenericˉnominalˉdeclarationˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉnominalˉdeclarationˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 

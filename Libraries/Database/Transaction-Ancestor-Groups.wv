@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉancestorˉgroups profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉancestorˉgroups;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -17,7 +22,7 @@ const DATABASE_TRANSACTION_ANCESTOR_GROUPS_MAXIMUM_GROUPS: u32 = 32u32;
 const DATABASE_TRANSACTION_ANCESTOR_GROUPS_MAXIMUM_BRANCHES: u32 = 95u32;
 const DATABASE_TRANSACTION_ANCESTOR_GROUPS_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉancestorˉgroupsˉerror {
+export enum Databaseˉtransactionˉancestorˉgroupsˉerror: i32 {
     Valid = 0;
     Invalidˉdepth = 1;
     Invalidˉmutations = 2;

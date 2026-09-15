@@ -1,13 +1,17 @@
-module Durableˉlocalˉopen profile hosted;
+#!wv/1 en@1
+module Durableˉlocalˉopen;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 
-capability storage.random_access_v1;
 
-export enum Databaseˉdurableˉlocalˉopenˉstatus {
+export enum Databaseˉdurableˉlocalˉopenˉstatus: i32 {
     Opened = 0;
     Storageˉfailure = 1;
     Invalidˉdatabase = 2;

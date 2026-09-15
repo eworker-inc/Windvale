@@ -325,7 +325,7 @@ function Generateˉreader(Reader) {
             `Artifact reader has a declaration after its first function: ${Reader.source}`
         );
     }
-    const Moduleˉmatch = Source.match(/^module ([^ ]+) profile /mu);
+    const Moduleˉmatch = Source.match(/^module ([^\s;]+)(?: profile (?:portable|hosted|system))?;$/mu);
     if (Moduleˉmatch === null) {
         throw new Error(`Module declaration is absent: ${Reader.source}`);
     }

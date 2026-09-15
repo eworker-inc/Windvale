@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiationˉbridge profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiationˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiation as Instantiation;
 

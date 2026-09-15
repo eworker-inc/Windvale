@@ -1,4 +1,9 @@
-module Linkerˉuefiˉapplicationˉverificationˉbridge profile portable;
+#!wv/1 en@1
+module Linkerˉuefiˉapplicationˉverificationˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉuefiˉapplicationˉverification as Verification;
 

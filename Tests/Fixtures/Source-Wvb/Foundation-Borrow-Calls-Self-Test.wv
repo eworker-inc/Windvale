@@ -1,4 +1,9 @@
-module Foundationˉborrowˉcallsˉselfˉtest profile portable;
+#!wv/1 en@1
+module Foundationˉborrowˉcallsˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
 

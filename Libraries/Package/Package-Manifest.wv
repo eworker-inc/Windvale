@@ -1,8 +1,12 @@
-module Windvaleˉpackageˉmanifest profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉmanifest;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉpackageˉstatus {
+export enum Windvaleˉpackageˉstatus: i32 {
     Valid = 0;
     Invalidˉtext = 1001;
     Invalidˉheader = 1002;

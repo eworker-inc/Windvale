@@ -1,12 +1,16 @@
-module Databaseˉdurableˉcommitˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Databaseˉdurableˉcommitˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 
-capability process.argument;
-capability process.argument_count;
 
 const NO_PAGE: u64 = 18446744073709551615u64;
 

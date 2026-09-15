@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉlogicalˉrecord profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉlogicalˉrecord;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉlogicalˉrecordˉwrite as Write;
 
@@ -11,13 +16,13 @@ const DATABASE_LOGICAL_MAXIMUM_IDENTITY_BYTES: u32 = 4064u32;
 const DATABASE_LOGICAL_MAXIMUM_VALUE_BYTES: u32 = 61440u32;
 const DATABASE_LOGICAL_MAXIMUM_PAYLOAD_BYTES: u32 = 61408u32;
 
-export enum Databaseˉlogicalˉkeyˉkind {
+export enum Databaseˉlogicalˉkeyˉkind: i32 {
     Collection = 1;
     Record = 2;
     Schema = 3;
 }
 
-export enum Databaseˉlogicalˉerror {
+export enum Databaseˉlogicalˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

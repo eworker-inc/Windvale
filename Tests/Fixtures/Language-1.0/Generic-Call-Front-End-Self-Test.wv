@@ -1,4 +1,9 @@
-module Languageˉoneˉgenericˉcallˉfrontˉendˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉcallˉfrontˉendˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉbodyˉparser as Bodies;
 

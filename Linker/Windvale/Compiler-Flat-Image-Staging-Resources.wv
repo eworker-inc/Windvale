@@ -1,8 +1,13 @@
-module Linkerˉcompilerˉflatˉimageˉstagingˉresources profile portable;
+#!wv/1 en@1
+module Linkerˉcompilerˉflatˉimageˉstagingˉresources;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 
-export enum Linkerˉcompilerˉflatˉimageˉresourceˉstatus {
+export enum Linkerˉcompilerˉflatˉimageˉresourceˉstatus: i32 {
     Valid = 0;
     Name = 1;
     Prefix = 2;

@@ -145,6 +145,34 @@ separate boundaries.
 
 ## Ordered path
 
+### Explicit current-source development tools
+
+`Package-Hosted-Wvb current <profile> <input.wvb> <output> [target]` selects
+`Lower-Wvb-To-Wvo.mjs --current` for the ordinary single-fragment path. It
+requires a prepared current compiler checkpoint, builds the current lowerer
+through authenticated Project 4, and packages it with existing Profile 7.
+The lowerer retains its 4 MiB object-buffer bound and native object publication.
+The original pinned mode remains the bootstrap entry point; `current` does not
+combine with `image` or `plan`.
+
+For larger current products, use
+`node Tools/Native/Package-Current-Segmented-Wvb.mjs <profile> <input.wvb> <output> [target]`.
+This explicit development path builds the current staging tool through the same
+prepared compiler and uses existing native linking and canonical transport.
+Its `current-segmented-native-image-v1` checkpoint binds the source project,
+compiler identity, staging executable, coordinator and image producers, host,
+Node version, and input WVB. It validates a private copy of the image checkpoint
+and unchanged inputs before invoking native hosted-container publication.
+It accepts at most 16 MiB of input WVB and retains the existing sixteen-fragment
+image limit. Construction after checkpoint lookup is bounded to twenty minutes;
+the single-fragment current-lowerer coordinator is bounded to ten minutes.
+Neither route promotes bootstrap artifacts or replaces native binary admission
+and final publication. Package-format, bundle, staging, and dispatch owners
+exercise these paths; generic cache correctness remains with existing cache
+owners.
+
+### Native container composition
+
 After the existing native lowerer and linker produce the raw fragment, or after
 image mode accepts its canonical fragment inputs, the command executes the
 fixed-service and enum-service producers, source geometry,

@@ -27,18 +27,18 @@ echo native offline package stage step=build-tools item=1/8
 call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 613470 ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 "bundle writer WVB" || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 675300 4a1e137b7c4695e6c516626d658c985aa960a91478b1eafab4cbffcba5c232d0 "bundle writer WVB" || goto :cleanup
 call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 632763 cb8c959e44b24aa380f2a0f6b838d371ed2815d51c586e3e96a36190f52319c7 "bundle verifier WVB" || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 694665 8807ee7605fc2d133f8b57921953f9e2c4861e7ba8c487caa30dcc084972e8b8 "bundle verifier WVB" || goto :cleanup
 call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Generation-Verifier.wvproj" ^
     "%Work%\Generation-Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Generation-Verifier.wvb" 42364 2beb02ba0ea13b1552a0c3bf9b92bebe438ac65b2eb49000a4fc1762ed8f7e9f "generation verifier WVB" || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Generation-Verifier.wvb" "%Work%\Generation-Verifier.exe" windows || goto :cleanup
+call :verify_file "%Work%\Generation-Verifier.wvb" 29250 dbb8274612dc194d4e524bbaa8353f60746e0e101b7becac4ada4e96a6081aae "generation verifier WVB" || goto :cleanup
+node "%Native%\Package-Current-Segmented-Wvb.mjs" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
+node "%Native%\Package-Current-Segmented-Wvb.mjs" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" || goto :cleanup
+call "%Native%\Package-Hosted-Wvb.cmd" current 6 "%Work%\Generation-Verifier.wvb" "%Work%\Generation-Verifier.exe" windows || goto :cleanup
 
 echo native offline package stage step=build-packages item=2/8 packages=2
 call "%Native%\Build-Wvdb-Query-Package.cmd" ^

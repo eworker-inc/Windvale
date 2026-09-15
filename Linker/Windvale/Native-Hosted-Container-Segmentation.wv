@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉcontainerˉsegmentation profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉcontainerˉsegmentation;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Core;
 

@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-source-edition-package-integration",
+  "date": "2026-09-15",
+  "subject": "Connected source-edition migration and current-source package integration",
+  "claim": "The connected 394 Project 4 manifests and 593 edition-1 sources pass native admission on both hosts, with a focused recheck after the final runner repair. The selected six package workflows and the 40-case production-admission owner execute successfully on Windows and Debian. Compiler reconstruction produces identical analyzer/emitter WVB through two fresh generations; compiler-scale verification uses the existing Profile 7. This record does not qualify every repository owner or promote installed artifacts.",
+  "source": {
+    "kind": "Other",
+    "value": "Base commit 992ba7bbebbbf3356966bdcc0ea1d2b0e5923720 plus pending source changes. Final connected input identity: 991 files, 12271243 payload bytes, SHA-256 a39c1beec1fcfba2395e4b77c1d95d5207e5c6e7677963845d78e22901611f56. Derive the set from every tracked Project 4 manifest under Projects, every declared root/source/source-input-lock/source-profile/target-descriptor path, and Windvale.wvws. Sort distinct repository-relative ASCII paths; concatenate UTF-8 records path + NUL + canonical decimal byte length + NUL + lowercase payload SHA-256 + LF. The derived record stream is 130680 bytes. It is a reproducible digest definition, not a retained artifact file."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "394 projects / 593 sources: native admission, before final runner exit-helper repair",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --repository-source-edition <current-reader> <current-admitter> <current-authenticator>",
+      "result": "Passed",
+      "elapsedMilliseconds": 567022
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Same complete project/source admission inventory, before final runner exit-helper repair",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --repository-source-edition <current-reader> <current-admitter> <current-authenticator>",
+      "result": "Passed",
+      "elapsedMilliseconds": 816595
+    },
+    {
+      "host": "Windows x64",
+      "target": "Final runner repair: the sole consuming project, plus following WVO publisher inventory (2 projects, 26 sources)",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --repository-source-edition <current-reader> <current-admitter> <current-authenticator> --start-at Projects/Tools/Windvale-Wvb-Runner.wvproj",
+      "result": "Passed",
+      "elapsedMilliseconds": 5706
+    },
+    {
+      "host": "Windows x64",
+      "target": "82 groups, six modules, seven builds, twelve cross-target images; execute current-host images",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Package-Format.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "12 cases, two applications/bundles, nine objects, idempotent store publication",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Package-Bundle.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "27 cases: 12 planner and 15 lifecycle, rollback/uninstall/preservation",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Offline-Generation-Lifecycle.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Eight resolution and rejection cases",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Installation-Command-Resolution.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Nine cases, two executions, four integrity and three policy rejections",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Installation-Command-Dispatch.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Eight cases, exact two-package staging, deterministic output and tamper rejection",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Offline-Package-Stage.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Eleven exact historical package reproduction and rejection cases",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "Tools/Native/Test-Wvdb-Query-Package.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Nine ordinary Project 4 launcher/native publication cases, including replacement, aliases, malformed WVB and bad-lock preservation",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-launcher",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "43 native lowering cases (18 valid, 25 malformed), including 12 Foundation borrow cases; Linux additionally executes registered foreign providers",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows <repository> --lowerer <current-native-lowerer> <exact-lowerer-sha256>",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Exact shipped browser-compiler reproduction from manifest-recorded historical source",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "node Tools/WebAssembly/Build-Compiler-Wvb.mjs --check",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Final runner repair: the sole consuming project, plus following WVO publisher inventory (2 projects, 26 sources)",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --repository-source-edition <current-reader> <current-admitter> <current-authenticator> --start-at Projects/Tools/Windvale-Wvb-Runner.wvproj",
+      "result": "Passed",
+      "elapsedMilliseconds": 13668
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "82 groups, six modules, seven builds, twelve cross-target images; execute current-host images",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Package-Format.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "12 cases, two applications/bundles, nine objects, idempotent store publication",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Package-Bundle.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "27 cases: 12 planner and 15 lifecycle, rollback/uninstall/preservation",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Offline-Generation-Lifecycle.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Eight resolution and rejection cases",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Installation-Command-Resolution.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Nine cases, two executions, four integrity and three policy rejections",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Installation-Command-Dispatch.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Eight cases, exact two-package staging, deterministic output and tamper rejection",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Offline-Package-Stage.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Eleven exact historical package reproduction and rejection cases",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "Tools/Native/Test-Wvdb-Query-Package.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Nine ordinary Project 4 launcher/native publication cases, including replacement, aliases, malformed WVB and bad-lock preservation",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-launcher",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "43 native lowering cases (18 valid, 25 malformed), including 12 Foundation borrow cases; Linux additionally executes registered foreign providers",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs linux <repository> --lowerer <current-native-lowerer> <exact-lowerer-sha256>",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Exact shipped browser-compiler reproduction from manifest-recorded historical source",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "node Tools/WebAssembly/Build-Compiler-Wvb.mjs --check",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Two fresh generation builds with exact byte equality; separately resumed Profile-7 verification of both second-generation products and malformed rejection",
+      "tool": "Node.js 24.19.0, PowerShell and native Windvale tools",
+      "command": "node Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs <repository>; repackage retained Verifier.wvb with Profile 7 and verify retained Analyzer-Stage2.wvb, Emitter-Stage2.wvb and Malformed.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Analyzer-Stage1.wvb",
+          "size": 1683975,
+          "sha256": "93c9a17809691c6fd773572a3ff67c8654e7ae2e7ee272b4e3993c67eaec90ae"
+        },
+        {
+          "path": "Emitter-Stage1.wvb",
+          "size": 1595320,
+          "sha256": "9a966be316be81d4b80aa2a9eab49884ea88127ec41ac5ec2ff9fa7566d321c1"
+        },
+        {
+          "path": "Verifier.wvb",
+          "size": 569102,
+          "sha256": "70ce983784096e7e1e6fb87666f4ea0f9812cdfbb4a08b6f64d2cb08d3de49b7"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Complete two-generation compiler convergence and Profile-7 verifier execution; fresh isolated emission caches, reusable packaging",
+      "tool": "Node.js 24.20.0, Bash and independently constructed Linux-native Windvale tools",
+      "command": "node Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs <repository>",
+      "result": "Passed",
+      "elapsedMilliseconds": 1478270,
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs",
+          "size": 9000,
+          "sha256": "3c25e69b3da1867b9c407ce304ea4109e18e13bbf33b075ba70ffa11cb697c2e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Analyzer-Stage1.wvb",
+          "size": 1683975,
+          "sha256": "93c9a17809691c6fd773572a3ff67c8654e7ae2e7ee272b4e3993c67eaec90ae"
+        },
+        {
+          "path": "Emitter-Stage1.wvb",
+          "size": 1595320,
+          "sha256": "9a966be316be81d4b80aa2a9eab49884ea88127ec41ac5ec2ff9fa7566d321c1"
+        },
+        {
+          "path": "Verifier.wvb",
+          "size": 569102,
+          "sha256": "70ce983784096e7e1e6fb87666f4ea0f9812cdfbb4a08b6f64d2cb08d3de49b7"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "40 production-admission cases: 24 ingress and 16 Project 4 cases; deterministic source compilation, compiler verification, scalar execution, foreign runtime boundary and malformed-input rejection",
+      "tool": "Node.js 24.19.0 and current native Windvale products",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Package-Current-Segmented-Wvb.mjs",
+          "size": 9420,
+          "sha256": "677a84ba43e3473bf6d9639aa5cf06aaeaed8853bac318405176be25549882b9"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 167259,
+          "sha256": "ce727ae646faeb9eb71773b5d0568292f860d14189ce536da3fb6a69c69b354e"
+        },
+        {
+          "path": "Tools/Windvale.Run/Wvb-Runner-Tool.wv",
+          "size": 25438,
+          "sha256": "642b7fa033035f3011e1041052997e31fa7aea163d86cdefcc18cf633d48d938"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "wvrun.wvb",
+          "size": 1152920,
+          "sha256": "32cad363cd44d54641a33977e7a3af9b184bfe9a5763dcb0945123d6cadfaf08"
+        },
+        {
+          "path": "wvrun.exe",
+          "size": 11959296,
+          "sha256": "6b4c015cbc5435e4380e7bb0e0e056514b4976438e90e8247ff6bbe732b2421b"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "40 production-admission cases: 24 ingress and 16 Project 4 cases; deterministic source compilation, compiler verification, scalar execution, foreign runtime boundary and malformed-input rejection",
+      "tool": "Node.js 24.20.0 and independently constructed Linux-native Windvale products",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Package-Current-Segmented-Wvb.mjs",
+          "size": 9420,
+          "sha256": "677a84ba43e3473bf6d9639aa5cf06aaeaed8853bac318405176be25549882b9"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 167259,
+          "sha256": "ce727ae646faeb9eb71773b5d0568292f860d14189ce536da3fb6a69c69b354e"
+        },
+        {
+          "path": "Tools/Windvale.Run/Wvb-Runner-Tool.wv",
+          "size": 25438,
+          "sha256": "642b7fa033035f3011e1041052997e31fa7aea163d86cdefcc18cf633d48d938"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "wvrun.wvb",
+          "size": 1152920,
+          "sha256": "32cad363cd44d54641a33977e7a3af9b184bfe9a5763dcb0945123d6cadfaf08"
+        },
+        {
+          "path": "wvrun.elf",
+          "size": 11960320,
+          "sha256": "58bda60d941b65da64b7d6f96d14c88e27cded868b2d9365fe6a66408e43c76c"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Full Windows admission aggregate was 9b6c79e2334407ccd5663e196e56f19760f1cd6f349be80e0b11165c862f5818; full Debian aggregate was 505d2f8ed9a37b3c390bdcbecfed742608592ca5cb0d80e08fc92867c163e614. These aggregates include host-specific producers and the then-loaded audit script, so they are not cross-host byte-equality claims. Final two-project rechecks: Windows a448f22d68381392b657920ee70f3a791a8598243961155a5d50fc8f358955ad; Debian ac40c76f9b74a0e6e248cfbc42390ff414c61606b4f8d531fe989aac8298bfbb.",
+    "Recorded predecessor source is commit 992ba7bbebbbf3356966bdcc0ea1d2b0e5923720, tree c6231310843c24a03b0253f6f5a062d77db9f73f. Its checked inventory has 5111 files and 600259818 bytes. Both hosts constructed predecessor/current products through existing qualified WVB pins; valid native intermediates were reused. This is not a claim of an empty-cache bootstrap at every stage.",
+    "Current compiler keys: Windows cc9a60c5ef462f0ca46f868bb27cf1ddbacbcfb52f1361d90a0909f42128ff67 during package/convergence work, then a521fceac4b0230f631139a41c4d056baf745bb2031c5db1aa2dada99f9b1837 after normalizing the Windows packager to required CRLF; Debian 6ef8328a4c182c4af0a9767a0cd433294e8401b3d3768ebe9c6e4f37c71ef6e1. Windows rebuilding after normalization preserved exact native compiler product identities.",
+    "The first Windows convergence invocation exhausted the Profile-2 verifier after completing both fresh generations. Identical retained WVBs passed separately under Profile 7; the failed invocation is not relabeled as a successful complete run. The Linux gate completed all thirteen phases. Afterward, its rejection check was tightened to require exit 1 and a semantic-invalid diagnostic, and internal identifiers were mechanically renamed. The malformed native rejection was separately confirmed on Windows and Debian; unchanged generations were not rebuilt for that guard change.",
+    "All six compiler/admission WVB identities match across hosts. Native Windows and Linux executable bytes are intentionally host-specific. Current lowerer WVB is 1309723 bytes, bd153e4cd06db4fb66fabf769119ff423400cb5968de8f17215f2462f7239251; Windows lowerer fdf426428b3617de1f22e333316645ac100f1918aae8efe1e5995934e1b6b992 and Linux lowerer a37fa4fe4ac08856f48577f44298a2173cf83f024bea79a48ddde59177aa764a.",
+    "Historical application package locks, bootstrap pins, and shipped browser artifacts remain unchanged. The recorded browser output is 919577 bytes, 2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e. Locked WVDB output is 26145 bytes, 77cb6034402942734be316b9a135d6c1b46ace5cb43a198b2aafe2d1b098027b.",
+    "The changed-file plan was inspected and not mechanically executed: it selected 82 owners with 17970 expected seconds, including broad OS/storage/legacy reconstruction beyond the selected package and compiler claims. No full repository qualification, GitHub CI result, arbitrary unit/never native lowering, Seed removal, installed promotion, full Libraries 1.0 completion, release, independent human review, or measured peak-memory claim is made.",
+    "Earlier production-admission attempts exposed the runner unit-return lowering boundary. The repaired private diagnostic helper returns its existing failure code directly to all three callers; the final full owner passes 24 ingress and 16 Project 4 cases on each host. Native acceptance and resource bounds were not widened. General unit/never native lowering remains outside this delivery."
+  ],
+  "related": [
+    "Documents/Project/Repository-Source-Edition-Rollout.md",
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Specifications/Windvale-Native-Hosted-Container-Packaging.md",
+    "Documents/Evidence/2026-09-15-Package-Lock-Borrowed-Content.json",
+    "Documents/Evidence/2026-09-15-Source-Edition-Cache-Inputs.json"
+  ]
+}

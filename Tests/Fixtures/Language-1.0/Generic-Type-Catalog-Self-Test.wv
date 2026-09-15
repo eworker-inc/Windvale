@@ -1,4 +1,9 @@
-module Languageˉoneˉgenericˉtypeˉcatalogˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉgenericˉtypeˉcatalogˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉgenericˉlowering as Generics;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;

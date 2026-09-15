@@ -1,4 +1,9 @@
-module Foundationˉbyteˉconstruction profile portable;
+#!wv/1 en@1
+module Foundationˉbyteˉconstruction;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Foundationˉbytesˉresult {
     Valid: bool;

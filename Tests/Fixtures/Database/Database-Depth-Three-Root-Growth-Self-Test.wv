@@ -1,4 +1,9 @@
-module Databaseˉdepthˉthreeˉgrowthˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉdepthˉthreeˉgrowthˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉcommitˉbatch as Batch;
 import Windvaleˉdatabaseˉdepthˉthreeˉrootˉgrowth as Growth;

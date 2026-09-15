@@ -1,10 +1,15 @@
-module Linkerˉconsoleˉapplicationˉsegmentedˉconstruction profile portable;
+#!wv/1 en@1
+module Linkerˉconsoleˉapplicationˉsegmentedˉconstruction;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉconsoleˉapplicationˉconstruction as Applicationˉconstruction;
 import Linkerˉconsoleˉapplicationˉsegmentedˉrecipe as Segmentedˉrecipe;
 import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
 
-export enum Consoleˉapplicationˉsegmentedˉstatus {
+export enum Consoleˉapplicationˉsegmentedˉstatus: i32 {
     Valid = 0;
     Invalidˉrequest = 1;
     Invalidˉrecipe = 2;

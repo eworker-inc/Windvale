@@ -1,4 +1,9 @@
-module Nativeˉhostedˉorchestrationˉcontrol profile portable;
+#!wv/1 en@1
+module Nativeˉhostedˉorchestrationˉcontrol;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉimmutableˉsourceˉregions as Sources;
 

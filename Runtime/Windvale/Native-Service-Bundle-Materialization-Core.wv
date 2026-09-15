@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉserviceˉbundleˉmaterialization profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉserviceˉbundleˉmaterialization;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉpublication as Nativeˉpublication;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;

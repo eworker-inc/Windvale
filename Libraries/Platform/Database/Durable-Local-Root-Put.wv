@@ -1,4 +1,9 @@
-module Durableˉlocalˉrootˉput profile hosted;
+#!wv/1 en@1
+module Durableˉlocalˉrootˉput;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉrootˉwriter as Writer;
 import Randomˉaccessˉstorage as Storage;
@@ -8,9 +13,8 @@ import Windvaleˉdatabaseˉlocalˉput as Put;
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
-export enum Databaseˉdurableˉlocalˉputˉstatus {
+export enum Databaseˉdurableˉlocalˉputˉstatus: i32 {
     Committed = 0;
     Rejected = 1;
     Reopenˉrequired = 2;

@@ -1,4 +1,8 @@
-module Windvaleˉinstallationˉgenerationˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉinstallationˉgenerationˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
 
 import Windvaleˉinstallationˉgeneration as Generation;
 import Windvaleˉpackageˉtext as Packageˉtext;

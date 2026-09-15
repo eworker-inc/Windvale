@@ -28,11 +28,11 @@ echo 'native installation command resolution step=build item=1/3'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Installation-Command-Resolver.wvproj" \
     "$work/Resolver.wvb" || exit $?
-verify_file "$work/Resolver.wvb" 60732 \
-    521cd77ee53f20cec3157208e4f0b9c93841c212dcabec88f4e7cbc6a9229679 || exit 1
+verify_file "$work/Resolver.wvb" 56033 \
+    d8a815ea9c6c159c50f0d55f4ff0c28174dcf276e1f0814b6ff81d90df90e2f2 || exit 1
 
 echo 'native installation command resolution step=package item=2/3 target=linux-x64'
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$work/Resolver.wvb" "$work/Resolver.elf" linux || exit $?
 
 echo 'native installation command resolution step=resolve item=3/3 cases=8'

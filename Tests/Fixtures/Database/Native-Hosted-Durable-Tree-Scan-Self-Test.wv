@@ -1,10 +1,14 @@
-module Nativeˉhostedˉdurableˉtreeˉscanˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Nativeˉhostedˉdurableˉtreeˉscanˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability storage.random_access_v1 version 1;
 
 import Randomˉaccessˉstorage as Storage;
 import Durableˉtreeˉscan as Scan;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 
-capability storage.random_access_v1;
 
 const COMMITTED_LENGTH: u64 = 20992u64;
 const UPDATED_LENGTH: u64 = 33280u64;

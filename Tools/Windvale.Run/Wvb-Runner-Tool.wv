@@ -1,15 +1,19 @@
-module Wvbˉrunnerˉtool profile hosted;
+#!wv/1 en@1
+module Wvbˉrunnerˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import WebAssemblyˉwvbˉscalarˉinterpreter as Interpreter;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Moduleˉisˉadmitted(Module: bytes) -> bool {
     if Bytesˉlength(Module) < 8u32 ||
@@ -249,13 +253,14 @@ fn Buildˉstructuredˉtaskˉrequest(
     return Bytesˉconcat(Request, Module);
 }
 
-fn Reportˉfailure(Status: u32, Instructions: u32) -> void {
+fn Reportˉfailure(Status: u32, Instructions: u32) -> i32 {
     var Report: text = Textˉconcat(
         "wvb run status=Failed code=",
         U32ˉformat(Status)
     );
     Report = Textˉconcat(Report, " instructions=");
     diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Instructions)));
+    return 1;
 }
 
 fn Isˉreportˉsteps(Input: text) -> bool {
@@ -409,11 +414,10 @@ fn Runˉscript(Module: bytes, Arguments: u32) -> i32 {
     }
     let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
     if Status != 0u32 {
-        Reportˉfailure(
+        return Reportˉfailure(
             Status,
             Bytesˉreadˉu32ˉlittle(Response, 12u32)
         );
-        return 1;
     }
     let Result: i32 = Bytesˉreadˉi32ˉlittle(Response, 16u32);
     if Result < 0 || Result > 255 {
@@ -483,11 +487,10 @@ fn Runˉcontextˉentry(
     }
     let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
     if Status != 0u32 {
-        Reportˉfailure(
+        return Reportˉfailure(
             Status,
             Bytesˉreadˉu32ˉlittle(Response, 12u32)
         );
-        return 1;
     }
     let Result: i32 = Bytesˉreadˉi32ˉlittle(Response, 16u32);
     if Result < 0 || Result > 255 {
@@ -704,8 +707,7 @@ export fn Main() -> i32 {
     let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
     let Instructions: u32 = Bytesˉreadˉu32ˉlittle(Response, 12u32);
     if Status != 0u32 {
-        Reportˉfailure(Status, Instructions);
-        return 1;
+        return Reportˉfailure(Status, Instructions);
     }
     console.write_line(Textˉconcat(
         "Result: ",

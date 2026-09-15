@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉdescriptorˉcalls profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉdescriptorˉcalls;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 record Descriptorˉreturnˉprefix {
     Output: bytes;

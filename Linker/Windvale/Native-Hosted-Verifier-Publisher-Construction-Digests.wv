@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉdigests profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉdigests;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 fn Expectedˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
     if Identity == 1u32 {

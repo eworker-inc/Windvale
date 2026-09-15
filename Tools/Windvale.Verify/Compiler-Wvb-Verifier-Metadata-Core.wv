@@ -1,4 +1,9 @@
-module Windvaleˉcompilerˉwvbˉverifierˉmetadata profile portable;
+#!wv/1 en@1
+module Windvaleˉcompilerˉwvbˉverifierˉmetadata;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
 import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;

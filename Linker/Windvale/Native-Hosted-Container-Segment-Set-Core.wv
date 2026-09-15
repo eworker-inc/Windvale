@@ -1,8 +1,13 @@
-module Linkerˉnativeˉhostedˉcontainerˉsegmentˉsetˉcore profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉcontainerˉsegmentˉsetˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
 
-export enum Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus {
+export enum Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus: i32 {
     Valid = 0;
     Invalidˉplan = 1;
     Truncated = 2;

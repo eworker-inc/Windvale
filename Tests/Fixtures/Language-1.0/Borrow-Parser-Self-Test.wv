@@ -1,4 +1,9 @@
-module Languageˉoneˉborrowˉparserˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉborrowˉparserˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbodyˉparser as Bodies;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;

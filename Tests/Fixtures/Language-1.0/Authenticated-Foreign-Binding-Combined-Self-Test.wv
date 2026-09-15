@@ -1,12 +1,16 @@
-module Languageˉoneˉauthenticatedˉforeignˉbindingˉcombinedˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉauthenticatedˉforeignˉbindingˉcombinedˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Languageˉoneˉauthenticatedˉforeignˉbindingˉselfˉtest as Core;
 import Languageˉoneˉforeignˉloweringˉpairingˉselfˉtest as Pairing;
 import Languageˉoneˉauthenticatedˉforeignˉbindingˉportableˉselfˉtest as Portable;
 import Languageˉoneˉtypedˉforeignˉcallˉwirˉvalidationˉselfˉtest as Validation;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Selectedˉcase() -> u32 {
     if process.argument_count() != 1u32 { return 0u32; }

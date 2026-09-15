@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉcontainerˉlayout profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉcontainerˉlayout;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Nativeˉhostedˉcontainerˉlayout {
     Valid: bool;

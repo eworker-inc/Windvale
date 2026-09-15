@@ -1,10 +1,14 @@
-module Windvaleˉpackageˉresourceˉadmission profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉresourceˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉpackageˉresourceˉkind {
+export enum Windvaleˉpackageˉresourceˉkind: i32 {
     Origin = 1;
     Manifest = 2;
     Compiler = 3;
@@ -13,7 +17,7 @@ export enum Windvaleˉpackageˉresourceˉkind {
     Output = 6;
 }
 
-export enum Windvaleˉpackageˉresourceˉstatus {
+export enum Windvaleˉpackageˉresourceˉstatus: i32 {
     Valid = 0;
     Invalidˉlock = 1301;
     Invalidˉindex = 1302;

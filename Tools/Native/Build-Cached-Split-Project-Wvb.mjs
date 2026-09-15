@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import {
+    chmod,
     copyFile,
     lstat,
     mkdir,
@@ -18,6 +19,8 @@ import {
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import {
     Getˉnativeˉprojectˉcacheˉrequest,
     Prepareˉnativeˉprojectˉcacheˉcontext,
@@ -35,11 +38,15 @@ const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_CLEANUP_DIAGNOSTIC_CHARACTERS = 1_024;
 const MAXIMUM_PRIMARY_DIAGNOSTIC_CHARACTERS = 4_096;
 const PRODUCER_TIMEOUT_MILLISECONDS = 300_000;
+// The authenticated coordinator runs multiple bounded producers in sequence.
+const AUTHENTICATED_TIMEOUT_MILLISECONDS = 900_000;
 const HOST = `${process.platform}-${process.arch}`;
 const TEST_HOOKS = Readˉtestˉhooks();
 
-if ((process.argv.length !== 8 && process.argv.length !== 9) ||
-    (process.argv.length === 9 && process.argv[8] !== '--symbol-checkpoint')) {
+const Authenticatedˉproject = process.argv.length === 13 &&
+    process.argv[8] === '--authenticated-project4';
+if (!Authenticatedˉproject && ((process.argv.length !== 8 && process.argv.length !== 9) ||
+    (process.argv.length === 9 && process.argv[8] !== '--symbol-checkpoint'))) {
     Usage();
 }
 const Symbolˉcheckpointˉanalysis = process.argv.length === 9;
@@ -71,7 +78,10 @@ const Projectˉtext = (await Readˉbounded(
     'project manifest',
     MAXIMUM_PROJECT_BYTES,
 )).toString('utf8');
-const Projectˉinputs = Parseˉprojectˉ2(Projectˉtext);
+if (Authenticatedˉproject && Projectˉtext.split(/\r?\n/u)[0] !== 'windvale-project 4') {
+    Reject('Authenticated split construction requires a Project 4 manifest.');
+}
+const Projectˉinputs = Authenticatedˉproject ? [] : Parseˉprojectˉ2(Projectˉtext);
 const Outputˉparent = path.dirname(Outputˉpath);
 await Requireˉordinaryˉdirectory(Outputˉparent, 'output parent');
 const Analyzerˉidentity = await Readˉproducerˉidentity(
@@ -84,11 +94,29 @@ const Emitterˉidentity = await Readˉproducerˉidentity(
 );
 
 const Cacheˉroot = await Prepareˉcacheˉroot();
-const Analysisˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
+const Authenticatedˉtools = Authenticatedˉproject ? process.argv.slice(9).map(Value => path.resolve(Value)) : [];
+if (Authenticatedˉtools.some(Value => Sameˉpath(Value, Outputˉpath))) {
+    Reject('The split compiler output overlaps an admission producer.');
+}
+const Authenticatedˉevidence = Authenticatedˉproject ? await Readˉauthenticatedˉproducers() : null;
+const Authenticatedˉcontext = Authenticatedˉproject ? await Prepareˉnativeˉprojectˉcacheˉcontext(
+    'project-authenticated-split-wvb-v1',
+    [Analyzerˉidentityˉpath, Emitterˉidentityˉpath, fileURLToPath(import.meta.url),
+        ...['Run-Split-Compiler.mjs', 'Split-Project-Source-Ordering-Core.mjs',
+            'Development-Command-Core.mjs', 'Native-Project-Cache-Key-Core.mjs']
+            .map(Name => path.join(REPOSITORY_ROOT, 'Tools', 'Native', Name))],
+) : null;
+if (Authenticatedˉproject) {
+    // Role-ordered content identities bind explicit predecessors, not cache locations.
+    Authenticatedˉcontext.hash.update(JSON.stringify({ host: HOST, producers: Authenticatedˉevidence }) + '\n');
+    await Verifyˉproducer(Analyzerˉpath, Analyzerˉidentity);
+    await Verifyˉproducer(Emitterˉpath, Emitterˉidentity);
+}
+const Analysisˉcontext = Authenticatedˉproject ? null : await Prepareˉnativeˉprojectˉcacheˉcontext(
     'project-analysis-wvca-v3',
     [Analyzerˉidentityˉpath],
 );
-const Analysisˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(
+const Analysisˉrequest = Authenticatedˉproject ? null : await Getˉnativeˉprojectˉcacheˉrequest(
     Analysisˉcontext,
     Projectˉpath,
 );
@@ -131,7 +159,7 @@ async function Acquireˉrequiredˉanalysis() {
     );
 }
 
-const Emissionˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
+const Emissionˉcontext = Authenticatedˉcontext ?? await Prepareˉnativeˉprojectˉcacheˉcontext(
     'project-split-wvb-optimized-v3',
     [Analyzerˉidentityˉpath, Emitterˉidentityˉpath],
 );
@@ -149,18 +177,21 @@ await Requireˉproducerˉidentityˉunchanged(
 );
 const Emissionˉfamily = await Prepareˉfamily(
     Cacheˉroot,
-    'project-split-wvb-optimized-v3',
+    Authenticatedˉproject ? 'project-authenticated-split-wvb-v1' : 'project-split-wvb-optimized-v3',
 );
 const Emissionˉcheckpoint = await Acquireˉemission(
     Emissionˉfamily,
     Emissionˉrequest,
-    Analysisˉrequest.key,
+    Authenticatedˉproject ? Emissionˉrequest.key : Analysisˉrequest.key,
     Acquireˉrequiredˉanalysis,
     Emitterˉpath,
     Emitterˉidentity,
+    Authenticatedˉproject ? Buildˉauthenticatedˉproject : null,
 );
 
 const Productˉpath = path.join(Emissionˉcheckpoint, 'Product.wvb');
+if (Authenticatedˉproject) await Requireˉauthenticatedˉproducersˉunchanged();
+await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Emissionˉrequest);
 await copyFile(Productˉpath, Outputˉpath);
 await Syncˉfile(Outputˉpath);
 const Productˉevidence = await Fileˉevidence(
@@ -181,6 +212,40 @@ console.log(
     `split project status=Published target=portable-wvb-optimized-v1 ` +
     `wvb-bytes=${Outputˉevidence.bytes} wvb-sha256=${Outputˉevidence.sha256}`,
 );
+
+async function Readˉauthenticatedˉproducers() {
+    const Values = [];
+    for (const Candidate of [process.execPath, Analyzerˉpath, Emitterˉpath, ...Authenticatedˉtools]) {
+        Values.push(await Fileˉevidence(Candidate, 'authenticated split producer', 134_217_728));
+    }
+    return Values;
+}
+
+async function Requireˉauthenticatedˉproducersˉunchanged() {
+    if (JSON.stringify(await Readˉauthenticatedˉproducers()) !== JSON.stringify(Authenticatedˉevidence)) {
+        Reject('An authenticated split producer changed during construction.');
+    }
+}
+
+async function Buildˉauthenticatedˉproject(Output) {
+    const [Admitter, Authenticator, Reader, Binder] = Authenticatedˉtools;
+    await Requireˉauthenticatedˉproducersˉunchanged();
+    const Result = await Runˉdevelopmentˉcommand(process.execPath, [
+        path.join(REPOSITORY_ROOT, 'Tools', 'Native', 'Run-Split-Compiler.mjs'),
+        Admitter, Authenticator, Analyzerˉpath, Emitterˉpath,
+        '--foreign-binder', Binder,
+        '--workspace', path.join(REPOSITORY_ROOT, 'Windvale.wvws'),
+        '--project', Projectˉpath, '--manifest-reader', Reader, Output,
+    ], Date.now() + AUTHENTICATED_TIMEOUT_MILLISECONDS, true, MAXIMUM_DIAGNOSTIC_BYTES);
+    if (Result.Code !== 0 || Result.Error !== '') {
+        if (Result.Error !== '') process.stderr.write(Result.Error);
+        Reject(`Authenticated split construction failed: status=${Result.Code}.`);
+    }
+    await Requireˉauthenticatedˉproducersˉunchanged();
+    // Run-Split publishes read-only bytes. This is our private cache candidate,
+    // not the caller's final destination; the checkpoint owner must sync it.
+    await chmod(Output, 0o600);
+}
 
 async function Acquireˉanalysis(
     Family,
@@ -488,6 +553,7 @@ async function Acquireˉemission(
     Acquireˉanalysisˉcheckpoint,
     Emitter,
     Identity,
+    Buildˉauthenticated = null,
 ) {
     const Checkpoint = path.join(Family, Request.key);
     if (await Exists(Checkpoint)) {
@@ -495,7 +561,7 @@ async function Acquireˉemission(
         console.log(`split project step=emission cache=Hit key=${Request.key}`);
         return Checkpoint;
     }
-    const Analysisˉcheckpoint = await Acquireˉanalysisˉcheckpoint();
+    const Analysisˉcheckpoint = Buildˉauthenticated === null ? await Acquireˉanalysisˉcheckpoint() : null;
     let Temporary = null;
     let Failure = null;
     try {
@@ -507,7 +573,9 @@ async function Acquireˉemission(
         );
         await Applyˉtestˉhook('afterTemporaryIdentified', Temporary);
         await Verifyˉproducer(Emitter, Identity);
-        await Run(Emitter, [
+        if (Buildˉauthenticated !== null) {
+            await Buildˉauthenticated(path.join(Temporary.path, 'Product.wvb'));
+        } else await Run(Emitter, [
             path.join(Analysisˉcheckpoint, 'Source.wvss'),
             path.join(Analysisˉcheckpoint, 'Manifest.wvca'),
             path.join(Analysisˉcheckpoint, 'Bindings.wvlb'),
@@ -1151,7 +1219,8 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Build-Cached-Split-Project-Wvb.mjs ' +
         '<project.wvproj> <output.wvb> <analyzer> <analyzer.identity> ' +
-        '<emitter> <emitter.identity> [--symbol-checkpoint]\n',
+        '<emitter> <emitter.identity> [--symbol-checkpoint | ' +
+        '--authenticated-project4 <admitter> <authenticator> <manifest-reader> <foreign-binder>]\n',
     );
     process.exit(64);
 }

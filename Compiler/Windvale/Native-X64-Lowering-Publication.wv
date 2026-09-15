@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉpublication profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉpublication;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
@@ -6,7 +11,7 @@ import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 
-export enum Compilerˉnativeˉx64ˉpublicationˉstatus {
+export enum Compilerˉnativeˉx64ˉpublicationˉstatus: i32 {
     Valid = 0;
     Complete = 1;
     Invalidˉplan = 2;
@@ -14,7 +19,7 @@ export enum Compilerˉnativeˉx64ˉpublicationˉstatus {
     Loweringˉfailure = 4;
 }
 
-export enum Compilerˉnativeˉx64ˉpublicationˉkind {
+export enum Compilerˉnativeˉx64ˉpublicationˉkind: i32 {
     Prefix = 0;
     Code = 1;
     Padding = 2;

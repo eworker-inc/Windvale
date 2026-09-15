@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉleafˉpages profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉleafˉpages;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
@@ -19,7 +24,7 @@ const DATABASE_TRANSACTION_LEAF_PAGES_MAXIMUM_PAGES: u32 = 64u32;
 const DATABASE_TRANSACTION_LEAF_PAGES_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉleafˉpagesˉerror {
+export enum Databaseˉtransactionˉleafˉpagesˉerror: i32 {
     Valid = 0;
     Groupsˉfailed = 1;
     Generationˉexhausted = 2;

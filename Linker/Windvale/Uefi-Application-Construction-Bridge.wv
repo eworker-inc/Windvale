@@ -1,4 +1,9 @@
-module Linkerˉuefiˉapplicationˉconstructionˉbridge profile portable;
+#!wv/1 en@1
+module Linkerˉuefiˉapplicationˉconstructionˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉuefiˉapplicationˉconstruction as Construction;
 

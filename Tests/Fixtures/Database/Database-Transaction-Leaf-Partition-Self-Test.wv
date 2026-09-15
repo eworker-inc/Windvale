@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉpartition profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉpartition;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉtransactionˉleafˉpartition as Partition;
 import Windvaleˉdatabaseˉtransactionˉmutations as Transaction;

@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉbundleˉadmission profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉbundleˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 

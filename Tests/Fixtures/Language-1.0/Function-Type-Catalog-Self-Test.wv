@@ -1,4 +1,9 @@
-module Languageˉoneˉfunctionˉtypeˉcatalogˉselfˉtest profile portable;
+#!wv/1 en@1
+module Languageˉoneˉfunctionˉtypeˉcatalogˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
 

@@ -1,4 +1,9 @@
-module Nativeˉhostedˉverifierˉserviceˉbundleˉrequest profile portable;
+#!wv/1 en@1
+module Nativeˉhostedˉverifierˉserviceˉbundleˉrequest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉpublication as Publication;
 

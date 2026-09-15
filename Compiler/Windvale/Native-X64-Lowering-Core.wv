@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉlowering profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉlowering;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉmetadata as Nativeˉmetadata;
@@ -28,7 +33,7 @@ import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation as Bytesˉconcatena
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
 import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Completeˉverifier;
 
-export enum Compilerˉnativeˉx64ˉstatus {
+export enum Compilerˉnativeˉx64ˉstatus: i32 {
     Valid = 0;
     Invalidˉwvb = 1;
     Unsupportedˉprofile = 2;

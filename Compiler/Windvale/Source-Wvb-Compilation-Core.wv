@@ -1,4 +1,9 @@
-module Compilerˉsourceˉwvbˉcompilation profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwvbˉcompilation;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉprofile as Sourceˉprofile;

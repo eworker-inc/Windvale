@@ -1,5 +1,5 @@
 import Assert from 'node:assert/strict';
-import { Acquireˉcurrentˉsplitˉcompiler, Constructˉcurrentˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
+import { Acquireˉcurrentˉsplitˉcompiler, Constructˉcurrentˉsplitˉcompiler, CURRENT_ADMISSION_PROJECTS } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -33,17 +33,18 @@ const IDENTITY_WRITER = path.join(
     SCRIPT_DIRECTORY,
     'Write-Split-Compiler-Producer-Identity.mjs',
 );
-const PROJECT = path.join(
-    REPOSITORY_ROOT,
-    'Projects',
-    'Tests',
-    'Windvale-Native-Test-Source-Descriptor.wvproj',
-);
+let PROJECT;
 const HOST = `${process.platform}-${process.arch}`;
 const TEMPORARY_PREFIX = 'windvale-split-cache-test-';
 const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS = 4_096;
 const FAILURE_TIMEOUT_MILLISECONDS = 30_000;
+
+if (process.argv[2] === '--project4') {
+    if (process.argv.length !== 11) Reject('Expected --project4 analyzer analyzer.identity emitter emitter.identity admit auth reader binder.');
+    await Verifyˉauthenticatedˉprojectˉcache(process.argv.slice(3).map(Value => path.resolve(Value)));
+    process.exit(0);
+}
 
 if (process.arch !== 'x64' ||
     (process.platform !== 'win32' && process.platform !== 'linux')) {
@@ -61,7 +62,14 @@ try {
     await rm(Allocatedˉtestˉroot, { recursive: true, force: true });
     throw Error;
 }
+const Projectˉparent = realpathSync.native(path.join(REPOSITORY_ROOT, 'Artifacts', 'Work'));
+const Projectˉroot = await mkdtemp(path.join(Projectˉparent, TEMPORARY_PREFIX));
 try {
+    PROJECT = path.join(Projectˉroot, 'Legacy.wvproj');
+    const Legacyˉsource = path.join(Projectˉroot, 'Legacy.wv');
+    await writeFile(Legacyˉsource, 'module Legacy profile portable;\nexport fn Main() -> i32 { return 42; }\n');
+    await writeFile(PROJECT, 'windvale-project 2\nroot "' +
+        path.relative(REPOSITORY_ROOT, Legacyˉsource).replaceAll('\\', '/') + '"\nemit wvb\n');
     const Root = Buffer.from('module Root;\n', 'utf8');
     const Mainˉfile = Buffer.from(
         'module WebAssemblyˉinterpreter;\n',
@@ -503,17 +511,7 @@ try {
         env: {
             ...process.env,
             WINDVALE_NATIVE_CACHE_ROOT: path.join(Testˉroot, 'raw-cache'),
-            WINDVALE_TEST_EXPECTED_ANALYZER_INPUTS: JSON.stringify([
-                path.join(
-                    REPOSITORY_ROOT,
-                    'Tests', 'Fixtures', 'Language-1.0',
-                    'Source-Descriptor-Self-Test.wv',
-                ),
-                path.join(
-                    REPOSITORY_ROOT,
-                    'Compiler', 'Windvale', 'Source-Descriptor-Core.wv',
-                ),
-            ]),
+            WINDVALE_TEST_EXPECTED_ANALYZER_INPUTS: JSON.stringify([Legacyˉsource]),
         },
         maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
         timeout: FAILURE_TIMEOUT_MILLISECONDS,
@@ -530,7 +528,7 @@ try {
     await Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot);
     await Verifyˉcompilerˉconstructionˉbranches(Testˉroot);
     console.log(
-        'split project cache test cases=28 status=Passed current-compiler-pair=Verified ' +
+        'split project cache test cases=39 status=Passed current-compiler-pair=Verified ' +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -547,6 +545,11 @@ try {
         Reject('Refusing to remove an unexpected split cache test directory.');
     }
     await rm(Resolved, { recursive: true, force: true });
+    if (!Sameˉpath(path.dirname(Projectˉroot), Projectˉparent) ||
+        !path.basename(Projectˉroot).startsWith(TEMPORARY_PREFIX)) {
+        Reject('Refusing to remove an unexpected legacy project fixture directory.');
+    }
+    await rm(Projectˉroot, { recursive: true, force: false });
 }
 
 function Childˉdiagnostic(Result) {
@@ -896,6 +899,9 @@ async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
             await writeFile(path.join(Place, `${Name}.${Suffix}`), Bytes, { mode: 0o755 });
             await writeFile(path.join(Place, `${Name}.identity`), Identity(Role, Bytes.length, Digest));
         }
+        for (const [Name] of CURRENT_ADMISSION_PROJECTS) {
+            await writeFile(path.join(Place, `${Name}.${Suffix}`), Buffer.from(Name), { mode: 0o755 });
+        }
     };
     const Neverˉproduce = async () => Reject('Unexpected current compiler reconstruction.');
     const Cold = await Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, Unchanged);
@@ -919,6 +925,14 @@ async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
     await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
         Family, Key, Neverˉproduce, Unchanged), /checkpoint record differs/);
     await writeFile(Record, Originalˉrecord);
+    for (const [Name] of CURRENT_ADMISSION_PROJECTS) {
+        const Admission = path.join(Cold.directory, `${Name}.${Suffix}`);
+        const Originalˉadmission = await readFile(Admission);
+        await writeFile(Admission, Buffer.from('corrupt admission producer'));
+        await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+            Family, Key, Neverˉproduce, Unchanged), /checkpoint record differs/);
+        await writeFile(Admission, Originalˉadmission);
+    }
 
     const Productˉidentity = path.join(Cold.directory, 'Analyzer.identity');
     const Originalˉidentity = await readFile(Productˉidentity);
@@ -1003,10 +1017,26 @@ async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
 
 async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
     const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
-    for (const Mode of ['complete', 'analyzer-failure', 'emitter-failure', 'both-failures', 'preparation-failure']) {
-        const Work = path.join(Testˉroot, Mode);
+    for (const Edition of [2, 4]) {
+    for (const Mode of ['complete', 'analyzer-failure', 'emitter-failure', 'both-failures', 'preparation-failure', 'admission-failure']) {
+        const Work = path.join(Testˉroot, `${Edition}-${Mode}`);
         const Candidate = path.join(Work, 'Pair');
         await mkdir(Candidate, { recursive: true });
+        const Projects = path.join(Work, 'Projects');
+        await mkdir(Projects);
+        for (const Name of ['Windvale-Compiler-Analysis-Driver.wvproj',
+            'Windvale-Compiler-Emission-Driver.wvproj', ...CURRENT_ADMISSION_PROJECTS.map(([, Name]) => Name)]) {
+            await writeFile(path.join(Projects, Name), `windvale-project ${Edition}\n`);
+        }
+        const Predecessor = {};
+        for (const Name of ['Analyzer', 'Emitter', 'Admitter', 'Authenticator', 'Reader', 'Binder']) {
+            Predecessor[Name] = path.join(Work, 'Predecessor-' + Name + Suffix);
+            await writeFile(Predecessor[Name], Buffer.from(Name));
+        }
+        for (const Name of ['Analyzer', 'Emitter']) {
+            Predecessor[Name + 'ˉidentity'] = path.join(Work, 'Predecessor-' + Name + '.identity');
+            await writeFile(Predecessor[Name + 'ˉidentity'], Buffer.from(Name));
+        }
         const Calls = [];
         const Completed = new Set();
         let Active = 0;
@@ -1026,6 +1056,9 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
             try {
                 if (Label === 'stage1-analyzer-build' && Mode === 'preparation-failure') {
                     throw new Error('preparation-failure');
+                }
+                if (Label === 'current-Admitter-build' && Mode === 'admission-failure') {
+                    throw new Error('admission-failure');
                 }
                 const Branch = Label === 'stage1-analyzer-package' ? 'analyzer' :
                     Label === 'stage1-emitter-build' ? 'emitter' : null;
@@ -1050,9 +1083,18 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                     await readFile(Arguments[1]);
                     Assert.equal(Arguments[0], Label.includes('emitter') ? 'emitter' : 'analyzer');
                     await writeFile(Arguments[2], Buffer.from(Label));
+                } else if (Name === 'Build-Cached-Segmented-Hosted-Wvb.mjs') {
+                    Assert.equal(Arguments.length, 3);
+                    Assert.equal(Arguments[0], '7');
+                    await readFile(Arguments[1]);
+                    await writeFile(Arguments[2], Buffer.from(Label), { mode: 0o755 });
                 } else {
                     Assert.equal(Name, 'Build-Cached-Split-Project-Wvb.mjs');
-                    Assert.equal(Arguments.length, Label === 'stage1-emitter-build' ? 7 : 6);
+                    Assert.equal(Arguments.length, Edition === 4 ? 11 : Label === 'stage1-analyzer-build' ? 6 : 7);
+                    if (Edition === 4) {
+                        Assert.deepEqual(Arguments.slice(6), ['--authenticated-project4',
+                            Predecessor.Admitter, Predecessor.Authenticator, Predecessor.Reader, Predecessor.Binder]);
+                    }
                     if (Arguments.length === 7) {
                         Assert.equal(Arguments[6], '--symbol-checkpoint');
                         Assert.equal(path.basename(Arguments[2]), 'Checkpoint-Analyzer' + Suffix);
@@ -1065,7 +1107,8 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                 Completed.add(Label);
             } finally { Active -= 1; }
         };
-        const Construction = Constructˉcurrentˉsplitˉcompiler(Work, Candidate, Run, Run)
+        const Construction = Constructˉcurrentˉsplitˉcompiler(Work, Candidate, Run, Run,
+            async () => { Assert.equal(Edition, 4); return Predecessor; }, Projects)
             .then(() => { Settled = true; return null; }, Error => { Settled = true; return Error; });
         try {
             if (Mode !== 'preparation-failure') {
@@ -1084,8 +1127,9 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
             if (Mode === 'complete') {
                 Assert.equal(Failure, null);
                 Assert.equal(Maximumˉactive, 2);
-                Assert.equal(Calls.length, 12);
-                const Products = ['Analyzer' + Suffix, 'Analyzer.identity', 'Emitter' + Suffix, 'Emitter.identity'];
+                Assert.equal(Calls.length, Edition === 4 ? 16 : 20);
+                const Products = ['Analyzer' + Suffix, 'Analyzer.identity', 'Emitter' + Suffix, 'Emitter.identity',
+                    ...CURRENT_ADMISSION_PROJECTS.map(([Name]) => Name + Suffix)];
                 Assert.deepEqual((await readdir(Candidate)).sort(), Products.sort());
                 for (const Product of Products) {
                     Assert.deepEqual(await readFile(path.join(Candidate, Product)),
@@ -1096,7 +1140,9 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                 if (Mode === 'preparation-failure') {
                     Assert.equal(Failure.message, Mode);
                     Assert.equal(Arrivals, 0);
-                    Assert.equal(Calls.length, 5);
+                    Assert.equal(Calls.length, Edition === 4 ? 1 : 5);
+                } else if (Mode === 'admission-failure') {
+                    Assert.equal(Failure.message, Mode);
                 } else {
                     Assert.ok(Failure instanceof AggregateError);
                     const Expected = Mode === 'both-failures'
@@ -1108,5 +1154,125 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                 }
             }
         } finally { clearTimeout(Timer); Release(); await Construction; }
+    }
+    }
+}
+
+async function Verifyˉauthenticatedˉprojectˉcache(Producers) {
+    const Parent = await realpath(path.join(REPOSITORY_ROOT, 'Artifacts', 'Work'));
+    const Work = await mkdtemp(path.join(Parent, 'Authenticated-Split-Cache-Test-'));
+    let Cases = 0;
+    try {
+        const Relative = path.relative(REPOSITORY_ROOT, Work).split(path.sep).join('/');
+        const Project = path.join(Work, 'Test.wvproj');
+        const Output = path.join(Work, 'Test.wvb');
+        const Cache = path.join(Work, 'Cache');
+        let Manifest = await readFile(path.join(REPOSITORY_ROOT,
+            'Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj'), 'utf8');
+        const Metadata = [];
+        for (const Kind of ['source-input-lock', 'source-profile', 'target-descriptor']) {
+            const Match = new RegExp(`^${Kind} "([^"]+)"$`, 'm').exec(Manifest);
+            Assert.ok(Match, `Missing ${Kind}`);
+            const Name = path.posix.basename(Match[1]);
+            const File = path.join(Work, Name);
+            const Bytes = await readFile(path.join(REPOSITORY_ROOT, Match[1]));
+            await writeFile(File, Bytes, { flag: 'wx' });
+            Metadata.push({ Kind, File, Bytes });
+            Manifest = Manifest.replace(Match[0], `${Kind} "${Relative}/${Name}"`);
+        }
+        await writeFile(Project, Manifest, { flag: 'wx' });
+        const Arguments = [CACHE_SCRIPT, Project, Output, ...Producers.slice(0, 4),
+            '--authenticated-project4', ...Producers.slice(4)];
+        function Run(Values = Arguments, Cacheˉpath = Cache) {
+            return spawnSync(process.execPath, Values, { cwd: REPOSITORY_ROOT,
+                env: { ...process.env, WINDVALE_NATIVE_CACHE_ROOT: Cacheˉpath },
+                encoding: 'utf8', windowsHide: true, timeout: 45_000,
+                maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES });
+        }
+        function Pass(Name) { Cases += 1; console.log(`split project4 cache item=${Cases} case=${Name} status=Passed`); }
+        function Successful(Result, State) {
+            Assert.equal(Result.status, 0, Childˉdiagnostic(Result));
+            Assert.equal(Result.stderr, '', Childˉdiagnostic(Result));
+            Assert.ok(Result.stdout.includes(`cache=${State}`), Childˉdiagnostic(Result));
+        }
+        Successful(Run(), 'Created');
+        const Product = await readFile(Output);
+        Assert.equal(Product.subarray(0, 3).toString('ascii'), 'WVB');
+        Pass('cold-authenticated-construction');
+        Successful(Run(), 'Hit');
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('authenticated-cache-reuse');
+        Successful(Run(Arguments, path.join(Work, 'Independent-Cache')), 'Created');
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('independent-cache-determinism');
+        async function Rejected(Name, Values = Arguments) {
+            const Result = Run(Values);
+            Assert.notEqual(Result.status, 0, Childˉdiagnostic(Result));
+            Assert.equal(Result.error, undefined, Childˉdiagnostic(Result));
+            Assert.ok(!Result.stdout.includes('cache=Hit'), Childˉdiagnostic(Result));
+            Assert.deepEqual(await readFile(Output), Product, 'Rejection changed the previous output.');
+            Pass(Name);
+        }
+        await Rejected('project4-needs-explicit-producers', Arguments.slice(0, 7));
+        await writeFile(Project, Manifest.replace(/source-input-lock-sha256 [0-9a-f]{64}/u,
+            'source-input-lock-sha256 ' + '0'.repeat(64)));
+        await Rejected('wrong-lock-digest');
+        await writeFile(Project, Manifest);
+        for (const Item of Metadata) {
+            const Changed = Buffer.from(Item.Bytes);
+            Changed[0] ^= 1;
+            await writeFile(Item.File, Changed);
+            await Rejected(`${Item.Kind}-content-invalidation`);
+            await writeFile(Item.File, Item.Bytes);
+        }
+        const Invalidˉidentity = path.join(Work, 'Invalid.identity');
+        const Originalˉidentity = await readFile(Producers[1], 'ascii');
+        await writeFile(Invalidˉidentity, Originalˉidentity.replace(/sha256 [0-9a-f]{64}/u,
+            'sha256 ' + '0'.repeat(64)));
+        const Wrongˉproducer = [...Arguments];
+        Wrongˉproducer[4] = Invalidˉidentity;
+        await Rejected('wrong-analyzer-identity', Wrongˉproducer);
+        const Missingˉproducer = [...Arguments];
+        Missingˉproducer[8] = path.join(Work, 'Missing-Admitter');
+        await Rejected('missing-admission-producer', Missingˉproducer);
+        Successful(Run(), 'Hit');
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('restored-inputs-reuse-evidence');
+        await writeFile(path.join(Work, 'Hosted.wv'),
+            '#!wv/1 en@1\nmodule Hostedˉcacheˉfixture;\nprofile hosted;\n' +
+            'platform linux, windows;\nauthority application;\n' +
+            'requires capability console.write_line version 1;\n' +
+            'import Foundationˉoption as Option;\n' +
+            'export fn Main() -> i32 { console.write_line("metadata"); return 0; }\n');
+        const Hostedˉmanifest = Manifest.replace(/^root "[^"]+"$/mu, `root "${Relative}/Hosted.wv"`)
+            .replace(/^source "Libraries\/Package\/Canonical-Package-Text.wv"\r?\n/mu, '');
+        await writeFile(Project, Hostedˉmanifest);
+        Successful(Run(), 'Created');
+        const Hosted = await readFile(Output);
+        Assert.equal(Hosted[20], 2, 'The hosted profile was lost.');
+        let Cursor = 25 + Hosted.readUInt32LE(21);
+        Assert.equal(Hosted[Cursor++], 1);
+        Assert.equal(Hosted[Cursor++], 1);
+        Assert.equal(Hosted[Cursor++], 2, 'Application authority was lost.');
+        function Number() { const Value = Hosted.readUInt32LE(Cursor); Cursor += 4; return Value; }
+        function Text() { const Length = Number(); const Value = Hosted.subarray(Cursor, Cursor + Length).toString('utf8'); Cursor += Length; return Value; }
+        Assert.equal(Number(), 2);
+        Assert.deepEqual([Text(), Text()], ['linux', 'windows']);
+        Assert.equal(Number(), 1, 'The versioned capability requirement was lost.');
+        Assert.equal(Text(), 'console.write_line');
+        Assert.equal(Number(), 1);
+        Assert.equal(Number(), 0);
+        Assert.equal(Cursor, 20 + Hosted.readUInt32LE(16));
+        Pass('hosted-header-metadata-preserved');
+        Successful(Run(), 'Hit');
+        Assert.deepEqual(await readFile(Output), Hosted);
+        Pass('hosted-metadata-cache-reuse');
+        console.log(`split project4 cache cases=${Cases} status=Passed wvb-sha256=` +
+            createHash('sha256').update(Product).digest('hex'));
+    } finally {
+        Assert.equal(path.dirname(path.resolve(Work)), Parent);
+        Assert.ok(path.basename(Work).startsWith('Authenticated-Split-Cache-Test-'));
+        Assert.equal(await realpath(Work), Work);
+        await rm(Work, { recursive: true, force: true });
     }
 }

@@ -1,11 +1,16 @@
-module Windvaleˉboundedˉoperationˉcore profile portable;
+#!wv/1 en@1
+module Windvaleˉboundedˉoperationˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const OPERATION_EVENT_BYTES: u32 = 48u32;
 const OPERATION_MINIMUM_QUEUE_CAPACITY: u32 = 3u32;
 const OPERATION_MAXIMUM_QUEUE_CAPACITY: u32 = 64u32;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Operationˉerror {
+export enum Operationˉerror: i32 {
     Valid = 0;
     Invalidˉidentity = 1;
     Invalidˉgeneration = 2;
@@ -21,14 +26,14 @@ export enum Operationˉerror {
     Empty = 12;
 }
 
-export enum Operationˉphase {
+export enum Operationˉphase: i32 {
     Invalid = 0;
     Queued = 1;
     Dispatched = 2;
     Terminal = 3;
 }
 
-export enum Operationˉoutcome {
+export enum Operationˉoutcome: i32 {
     None = 0;
     Completed = 1;
     Rejected = 2;
@@ -40,7 +45,7 @@ export enum Operationˉoutcome {
     Tornˉdown = 8;
 }
 
-export enum Operationˉcause {
+export enum Operationˉcause: i32 {
     None = 0;
     Immediateˉrejection = 1;
     Completion = 2;
@@ -52,7 +57,7 @@ export enum Operationˉcause {
     Teardown = 8;
 }
 
-export enum Operationˉeventˉkind {
+export enum Operationˉeventˉkind: i32 {
     None = 0;
     Dispatch = 1;
     Progress = 2;
@@ -64,7 +69,7 @@ export enum Operationˉeventˉkind {
     Teardown = 8;
 }
 
-export enum Operationˉwaitˉstatus {
+export enum Operationˉwaitˉstatus: i32 {
     Ready = 0;
     Empty = 1;
     Closed = 2;

@@ -1,4 +1,9 @@
-module Foundationˉsha256 profile portable;
+#!wv/1 en@1
+module Foundationˉsha256;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Foundationˉsha256ˉhex(Value: bytes) -> bytes {
     let Length: u32 = Bytesˉlength(Value);

@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉtransactionˉchildˉreplacements profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉtransactionˉchildˉreplacements;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
@@ -14,7 +19,7 @@ const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_MAXIMUM_GROUP_CHILDREN: u32 = 64u3
 const DATABASE_TRANSACTION_CHILD_REPLACEMENTS_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉtransactionˉchildˉreplacementsˉerror {
+export enum Databaseˉtransactionˉchildˉreplacementsˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

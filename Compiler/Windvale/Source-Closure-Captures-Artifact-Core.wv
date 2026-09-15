@@ -1,11 +1,15 @@
-module Compilerˉsourceˉclosureˉcaptures profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉclosureˉcaptures;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
-export enum Compilerˉsourceˉclosureˉcaptureˉstatus {
+export enum Compilerˉsourceˉclosureˉcaptureˉstatus: i32 {
 Valid = 0;
 Invalidˉexpression = 1;
 Invalidˉbindingˉevidence = 2;
@@ -20,7 +24,7 @@ Bodyˉbinding = 10;
 Invalidˉeffects = 11;
 Evidenceˉlimit = 12;
 }
-export enum Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus {
+export enum Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus: i32 {
 Valid = 0;
 Invalid = 1;
 }

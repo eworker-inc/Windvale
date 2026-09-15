@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉdurableˉcommitˉrecord profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉdurableˉcommitˉrecord;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 
@@ -13,7 +18,7 @@ const DATABASE_COMMIT_SUPERBLOCK_REGION_BYTES: u64 = 512u64;
 const DATABASE_COMMIT_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉcommitˉrecordˉerror {
+export enum Databaseˉcommitˉrecordˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

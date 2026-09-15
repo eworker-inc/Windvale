@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉbootstrap profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉbootstrap;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉcommitˉpublication as Commitˉpublication;
 import Windvaleˉdatabaseˉdurableˉpage as Page;
@@ -10,7 +15,7 @@ const DATABASE_BOOTSTRAP_SUPERBLOCK_BYTES: u32 = 256u32;
 const DATABASE_BOOTSTRAP_ROOT_POSITION: u64 = 512u64;
 const DATABASE_BOOTSTRAP_NO_PAGE: u64 = 18446744073709551615u64;
 
-export enum Databaseˉbootstrapˉerror {
+export enum Databaseˉbootstrapˉerror: i32 {
     Valid = 0;
     Invalidˉdatabaseˉidentity = 1;
     Invalidˉpageˉsize = 2;

@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉcollectionˉcatalog profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉcollectionˉcatalog;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 
@@ -8,7 +13,7 @@ const DATABASE_COLLECTION_HEADER_BYTES: u32 = 40u32;
 const DATABASE_COLLECTION_MAXIMUM_NAME_BYTES: u32 = 256u32;
 const DATABASE_COLLECTION_MAXIMUM_BYTES: u32 = 296u32;
 
-export enum Databaseˉcollectionˉerror {
+export enum Databaseˉcollectionˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

@@ -1,6 +1,11 @@
-module Linkerˉuefiˉapplicationˉverification profile portable;
+#!wv/1 en@1
+module Linkerˉuefiˉapplicationˉverification;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Uefiˉapplicationˉverificationˉstatus {
+
+export enum Uefiˉapplicationˉverificationˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉdos = 2;

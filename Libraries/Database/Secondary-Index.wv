@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉsecondaryˉindex profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉsecondaryˉindex;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
 import Windvaleˉdatabaseˉtypedˉrow as Typed;
@@ -19,18 +24,18 @@ const DATABASE_SECONDARY_MAXIMUM_NAME_BYTES: u32 = 128u32;
 const DATABASE_SECONDARY_MAXIMUM_IDENTITY_BYTES: u32 = 4064u32;
 const DATABASE_SECONDARY_MAXIMUM_KEY_BYTES: u32 = 4096u32;
 
-export enum Databaseˉsecondaryˉdirection {
+export enum Databaseˉsecondaryˉdirection: i32 {
     Ascending = 1;
     Descending = 2;
 }
 
-export enum Databaseˉsecondaryˉnullˉpolicy {
+export enum Databaseˉsecondaryˉnullˉpolicy: i32 {
     Exclude = 1;
     First = 2;
     Last = 3;
 }
 
-export enum Databaseˉsecondaryˉerror {
+export enum Databaseˉsecondaryˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;
@@ -58,7 +63,7 @@ export enum Databaseˉsecondaryˉerror {
     Keyˉtooˉlarge = 24;
 }
 
-export enum Databaseˉsecondaryˉownerˉstatus {
+export enum Databaseˉsecondaryˉownerˉstatus: i32 {
     Available = 1;
     Sameˉowner = 2;
     Conflict = 3;

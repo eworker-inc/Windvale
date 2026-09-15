@@ -1,4 +1,14 @@
-module Windvaleˉcompilerˉanalysisˉdriver profile hosted;
+#!wv/1 en@1
+module Windvaleˉcompilerˉanalysisˉdriver;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉanalysis as Analysis;
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
@@ -8,12 +18,6 @@ import Compilerˉsourceˉset as Sourceˉsets;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Empty() -> bytes {
     return Textˉtoˉutf8("");

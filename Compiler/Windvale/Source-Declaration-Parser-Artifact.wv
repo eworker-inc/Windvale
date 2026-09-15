@@ -1,6 +1,10 @@
-module Compilerˉsourceˉdeclarationˉparser profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉdeclarationˉparser;
+profile core;
+platform linux, windows, windvale;
+authority library;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
-export enum Compilerˉparseˉstatus {
+export enum Compilerˉparseˉstatus: i32 {
 Valid = 0;
 Lexicalˉerror = 1;
 Expectedˉtoken = 2;
@@ -20,13 +24,13 @@ Invalidˉforeignˉsignature = 15;
 Unknownˉplatform = 16;
 Duplicateˉplatform = 17;
 }
-export enum Compilerˉsourceˉprofile {
+export enum Compilerˉsourceˉprofile: i32 {
 None = 0;
 Portable = 1;
 Hosted = 2;
 System = 3;
 }
-export enum Compilerˉsourceˉtypeˉkind {
+export enum Compilerˉsourceˉtypeˉkind: i32 {
 Unknown = 0;
 I32 = 1;
 U8 = 2;
@@ -55,7 +59,7 @@ Function = 23;
 export const COMPILER_SOURCE_BORROW_MODE_VALUE: u32 = 0u32;
 export const COMPILER_SOURCE_BORROW_MODE_IMMUTABLE: u32 = 1u32;
 export const COMPILER_SOURCE_BORROW_MODE_MUTABLE: u32 = 2u32;
-export enum Compilerˉsourceˉdeclarationˉkind {
+export enum Compilerˉsourceˉdeclarationˉkind: i32 {
 End = 0;
 Import = 1;
 Capability = 2;

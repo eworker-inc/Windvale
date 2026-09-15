@@ -1,5 +1,9 @@
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { Acquireˉcurrentˉwvbˉpublisher } from './Current-Wvb-Publisher-Core.mjs';
+import {
+    Prepareˉnativeˉprojectˉcacheˉcontext, Getˉnativeˉprojectˉcacheˉrequest,
+    Requireˉnativeˉprojectˉcacheˉrequestˉunchanged,
+} from './Native-Project-Cache-Key-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
     lstatSync,
@@ -23,7 +27,6 @@ const MAXIMUM_PROJECT_BYTES = 65_536;
 const MAXIMUM_PRODUCT_BYTES = 134_217_728;
 const MAXIMUM_WVB_BYTES = 16_777_216;
 const PRODUCT_TIMEOUT_MILLISECONDS = 600_000;
-const PACKAGE_TIMEOUT_MILLISECONDS = 1_200_000;
 const BUILD_TIMEOUT_MILLISECONDS = 600_000;
 const WINDOWS = process.platform === 'win32';
 const HOST_APPLICATION_EXTENSION = WINDOWS ? '.exe' : '.elf';
@@ -85,7 +88,7 @@ async function Main() {
             },
         );
         if (Compilerˉcheckpoint.status === 'Hit' && Step === 0) {
-            Totalˉsteps = 16;
+            Totalˉsteps = 8;
         }
         process.stdout.write(
             `project4 build compiler-cache status=${Compilerˉcheckpoint.status} ` +
@@ -110,70 +113,44 @@ async function Main() {
             Requireˉordinaryˉfile(Candidate, MAXIMUM_PRODUCT_BYTES, Label);
         }
 
-        const Products = {};
-        for (const Product of [
-            {
-                name: 'wvproject',
-                project: 'Windvale-Project-Manifest.wvproj',
-                role: 'Project 4 manifest reader',
-            },
-            {
-                name: 'wvadmit',
-                project: 'Windvale-Compiler-Admission-Driver.wvproj',
-                role: 'source admission',
-            },
-            {
-                name: 'wvauth',
-                project: 'Windvale-Compiler-Source-Authenticator.wvproj',
-                role: 'source authentication',
-            },
-            {
-                name: 'wvbind',
-                project: 'Windvale-Compiler-Foreign-Binding-Driver.wvproj',
-                role: 'foreign binding',
-            },
-        ]) {
-            Products[Product.name] = await Acquireˉproduct(
-                Product.name,
-                path.join(Repositoryˉroot, 'Projects', 'Tools', Product.project),
-                Product.role,
-                Analyzer,
-                Analyzerˉidentity,
-                Emitter,
-                Emitterˉidentity,
-            );
-        }
+        const Products = Object.fromEntries([
+            ['wvproject', 'Reader'], ['wvadmit', 'Admitter'],
+            ['wvauth', 'Authenticator'], ['wvbind', 'Binder'],
+        ].map(([Name, Product]) => [Name, path.join(Compilerˉcheckpoint.directory,
+            Product + HOST_APPLICATION_EXTENSION)]));
 
         const Candidate = path.join(Work, 'Candidate.wvb');
-        await Runˉnode('project4-authenticated-build', 'Run-Split-Compiler.mjs', [
-            Products.wvadmit,
-            Products.wvauth,
-            Analyzer,
-            Emitter,
-            '--foreign-binder',
-            Products.wvbind,
-            '--workspace',
-            Workspace,
-            '--project',
-            Project,
-            '--manifest-reader',
-            Products.wvproject,
-            Candidate,
+        const Publicationˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
+            'project4-native-publication-inputs-v1', [fileURLToPath(import.meta.url)]);
+        const Projectˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(Publicationˉcontext, Project);
+        await Runˉnode('project4-authenticated-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+            Project, Candidate, Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
+            '--authenticated-project4', Products.wvadmit, Products.wvauth,
+            Products.wvproject, Products.wvbind,
         ], BUILD_TIMEOUT_MILLISECONDS);
         const Evidence = Fileˉevidence(
             Candidate, 'Project 4 build candidate', MAXIMUM_WVB_BYTES
         );
         const Publisherˉwvb = path.join(Work, 'Publisher.wvb');
+        const Publisherˉproject = path.join(Repositoryˉroot, 'Projects', 'Tools', 'Windvale-Wvb-Publisher.wvproj');
+        const Publisherˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(Publicationˉcontext, Publisherˉproject);
+        const Modernˉpublisher = readFileSync(Publisherˉproject, 'utf8').split(/\r?\n/u)[0] === 'windvale-project 4';
         await Runˉnode('publisher-source-build', 'Build-Cached-Split-Project-Wvb.mjs', [
-            path.join(Repositoryˉroot, 'Projects', 'Tools', 'Windvale-Wvb-Publisher.wvproj'),
+            Publisherˉproject,
             Publisherˉwvb, Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
-            '--symbol-checkpoint',
+            ...(Modernˉpublisher ? ['--authenticated-project4', Products.wvadmit,
+                Products.wvauth, Products.wvproject, Products.wvbind] : ['--symbol-checkpoint']),
         ]);
         const Publisher = await Acquireˉcurrentˉwvbˉpublisher(
             Publisherˉwvb, path.join(Work, `Publisher${HOST_APPLICATION_EXTENSION}`),
             Compilerˉkey, Runˉnative, Runˉnode,
         );
         Totalˉsteps = Step + 1;
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Projectˉrequest);
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Publisherˉrequest);
+        if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
+            Reject('Current compiler inputs changed before native publication.');
+        }
         try {
             await Run('project4-native-publication', Publisher.Path, [Candidate, Output],
                 BUILD_TIMEOUT_MILLISECONDS);
@@ -193,36 +170,6 @@ async function Main() {
         }
         rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
     }
-}
-
-async function Acquireˉproduct(
-    Name,
-    Projectˉpath,
-    Role,
-    Analyzer,
-    Analyzerˉidentity,
-    Emitter,
-    Emitterˉidentity,
-) {
-    Requireˉordinaryˉfile(Projectˉpath, MAXIMUM_PROJECT_BYTES, `${Role} project`);
-    const Wvb = path.join(Work, `${Name}.wvb`);
-    const Application = path.join(Work, `${Name}${HOST_APPLICATION_EXTENSION}`);
-    await Runˉnode(`project4-${Name}-wvb`, 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath,
-        Wvb,
-        Analyzer,
-        Analyzerˉidentity,
-        Emitter,
-        Emitterˉidentity,
-        '--symbol-checkpoint',
-    ], PRODUCT_TIMEOUT_MILLISECONDS);
-    await Runˉnode(`project4-${Name}-package`, 'Build-Cached-Segmented-Hosted-Wvb.mjs', [
-        '7',
-        Wvb,
-        Application,
-    ], PACKAGE_TIMEOUT_MILLISECONDS);
-    Requireˉordinaryˉfile(Application, MAXIMUM_PRODUCT_BYTES, Role);
-    return Application;
 }
 
 async function Runˉnative(Label, Name, Arguments, Timeout = PRODUCT_TIMEOUT_MILLISECONDS) {

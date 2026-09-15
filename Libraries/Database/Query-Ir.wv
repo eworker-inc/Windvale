@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉqueryˉir profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉqueryˉir;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
 
@@ -13,7 +18,7 @@ const DATABASE_QUERY_MAXIMUM_PARAMETERS: u32 = 32u32;
 const DATABASE_QUERY_MAXIMUM_ROWS: u32 = 500u32;
 const DATABASE_QUERY_NO_PARAMETER: u32 = 4294967295u32;
 
-export enum Databaseˉqueryˉoperator {
+export enum Databaseˉqueryˉoperator: i32 {
     Invalid = 0;
     Equal = 1;
     Notˉequal = 2;
@@ -25,13 +30,13 @@ export enum Databaseˉqueryˉoperator {
     Isˉnotˉnull = 8;
 }
 
-export enum Databaseˉqueryˉdirection {
+export enum Databaseˉqueryˉdirection: i32 {
     Invalid = 0;
     Ascending = 1;
     Descending = 2;
 }
 
-export enum Databaseˉqueryˉerror {
+export enum Databaseˉqueryˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;

@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉlocalˉput profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉlocalˉput;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;

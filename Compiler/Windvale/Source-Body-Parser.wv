@@ -1,9 +1,14 @@
-module Compilerˉsourceˉbodyˉparser profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉbodyˉparser;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 
-export enum Compilerˉbodyˉparseˉstatus {
+export enum Compilerˉbodyˉparseˉstatus: i32 {
     Valid = 0;
     Lexicalˉerror = 1;
     Invalidˉspan = 2;
@@ -16,7 +21,7 @@ export enum Compilerˉbodyˉparseˉstatus {
     Unsafeˉprofile = 9;
 }
 
-export enum Compilerˉsourceˉstatementˉkind {
+export enum Compilerˉsourceˉstatementˉkind: i32 {
     End = 0;
     Block = 1;
     Local = 2;
@@ -36,7 +41,7 @@ export enum Compilerˉsourceˉstatementˉkind {
     Unsafe = 16;
 }
 
-export enum Compilerˉsourceˉexpressionˉkind {
+export enum Compilerˉsourceˉexpressionˉkind: i32 {
     Invalid = 0;
     Integer = 1;
     String = 2;

@@ -1,10 +1,14 @@
-module Nativeˉx64ˉfoundationˉborrowˉmachineˉprobe profile hosted;
+#!wv/1 en@1
+module Nativeˉx64ˉfoundationˉborrowˉmachineˉprobe;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Nativeˉx64ˉloweringˉdataˉlimitˉselfˉtest as Probe;
 
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Prolog: bytes = [72u8, 129u8, 236u8, 0u8, 4u8, 0u8, 0u8];
 data Epilog: bytes = [72u8, 129u8, 196u8, 0u8, 4u8, 0u8, 0u8, 195u8];

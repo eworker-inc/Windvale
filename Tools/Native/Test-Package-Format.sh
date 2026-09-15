@@ -54,55 +54,74 @@ generation_wvb="$temporary_directory/Generation.wvb"
 generation_windows_application="$temporary_directory/Generation.exe"
 generation_linux_application="$temporary_directory/Generation.elf"
 
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$canonical_project" "$canonical_wvb" >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$canonical_wvb" "$canonical_windows_application" windows >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$canonical_wvb" "$canonical_linux_application" linux >/dev/null || exit $?
 "$canonical_linux_application" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$project" "$first" >/dev/null || exit $?
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$project" "$second" >/dev/null || exit $?
 cmp --silent "$first" "$second" || exit 1
 
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$first" "$windows_application" windows >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$first" "$linux_application" linux >/dev/null || exit $?
 "$linux_application" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$lock_project" "$lock_wvb" >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$lock_wvb" "$lock_windows_application" windows >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$lock_wvb" "$lock_linux_application" linux >/dev/null || exit $?
 "$lock_linux_application" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$consistency_project" "$consistency_wvb" >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$consistency_wvb" "$consistency_windows_application" windows >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$consistency_wvb" "$consistency_linux_application" linux >/dev/null || exit $?
 "$consistency_linux_application" "$manifest" "$lock" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 "$consistency_linux_application" "$inspector_manifest" "$inspector_lock" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$admission_project" "$admission_wvb" >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$admission_wvb" "$admission_windows_application" windows >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$admission_wvb" "$admission_linux_application" linux >/dev/null || exit $?
 "$admission_linux_application" "$repository_root" >/dev/null
 [[ $? -eq 42 ]] || exit 1
 
+echo "native package format step=build-or-package status=Started"
 "$script_directory/Build-Wvb.sh" "$generation_project" "$generation_wvb" >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$generation_wvb" "$generation_windows_application" windows >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+echo "native package format step=build-or-package status=Started"
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$generation_wvb" "$generation_linux_application" linux >/dev/null || exit $?
 "$generation_linux_application" >/dev/null
 [[ $? -eq 42 ]] || exit 1

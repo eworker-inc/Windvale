@@ -1,4 +1,9 @@
-module Foundationˉborrowˉmetadataˉselfˉtest profile portable;
+#!wv/1 en@1
+module Foundationˉborrowˉmetadataˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semantic;
 import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Complete;

@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉverifierˉpublisherˉfileˉtoolˉsupport profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉfileˉtoolˉsupport;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
     let Leftˉbytes: bytes = Textˉtoˉutf8(Left);

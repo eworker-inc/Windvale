@@ -1,4 +1,9 @@
-module Compilerˉsourceˉclosureˉcaptureˉeffects profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉclosureˉcaptureˉeffects;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;

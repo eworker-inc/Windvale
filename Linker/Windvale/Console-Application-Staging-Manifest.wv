@@ -1,6 +1,11 @@
-module Linkerˉconsoleˉapplicationˉstagingˉmanifest profile portable;
+#!wv/1 en@1
+module Linkerˉconsoleˉapplicationˉstagingˉmanifest;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Consoleˉapplicationˉstagingˉmanifestˉstatus {
+
+export enum Consoleˉapplicationˉstagingˉmanifestˉstatus: i32 {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;

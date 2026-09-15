@@ -1,4 +1,9 @@
-module Durableˉtransactionˉwriter profile hosted;
+#!wv/1 en@1
+module Durableˉtransactionˉwriter;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability storage.random_access_v1 version 1;
 
 import Durableˉtreeˉpath as Path;
 import Randomˉaccessˉdatabaseˉpage as Pageˉreader;
@@ -12,12 +17,11 @@ import Windvaleˉdatabaseˉtransactionˉmutations as Mutations;
 import Windvaleˉdatabaseˉtransactionˉpaths as Paths;
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 
-capability storage.random_access_v1;
 
 const DATABASE_TRANSACTION_WRITER_MAXIMUM_DEPTH: u32 = 8u32;
 const DATABASE_TRANSACTION_WRITER_MAXIMUM_RETAINED_BYTES: u32 = 4194304u32;
 
-export enum Databaseˉdurableˉtransactionˉwriteˉstatus {
+export enum Databaseˉdurableˉtransactionˉwriteˉstatus: i32 {
     Committed = 0;
     Noˉchange = 1;
     Active = 2;

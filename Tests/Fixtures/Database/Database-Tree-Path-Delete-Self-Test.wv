@@ -1,4 +1,9 @@
-module Databaseˉtreeˉpathˉdeleteˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉtreeˉpathˉdeleteˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉdurableˉpage as Page;
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;

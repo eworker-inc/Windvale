@@ -1,4 +1,9 @@
-module Compilerˉsourceˉwir profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉwir;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
@@ -18,7 +23,7 @@ import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-export enum Compilerˉsourceˉwirˉstatus {
+export enum Compilerˉsourceˉwirˉstatus: i32 {
     Valid = 0;
     Sourceˉbindings = 1;
     Evidenceˉlimit = 2;
@@ -70,7 +75,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Invalidˉunsafeˉvalue = 48;
 }
 
-enum Compilerˉsourceˉwirˉterminator {
+enum Compilerˉsourceˉwirˉterminator: i32 {
     None = 0;
     Jump = 1;
     Branch = 2;
@@ -292,7 +297,7 @@ const WIR_FUNCTION_TYPE_EVIDENCE_LIMIT: u32 = 131072u32;
 const WIR_FUNCTION_TYPE_SHAPE_BASE: u32 = 2147483904u32;
 const WIR_FUNCTION_PUBLICATION_BATCH_LIMIT: u32 = 16u32;
 
-enum Compilerˉsourceˉwirˉdataˉkind {
+enum Compilerˉsourceˉwirˉdataˉkind: i32 {
     None = 0;
     I32ˉarray = 1;
     Text = 2;

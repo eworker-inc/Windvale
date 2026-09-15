@@ -1,4 +1,8 @@
-module Windvaleˉpackageˉmanifestˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉmanifestˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
 
 import Windvaleˉpackageˉmanifest as Manifest;
 import Windvaleˉpackageˉtext as Packageˉtext;

@@ -1,12 +1,16 @@
-module Testˉcurrentˉpublisherˉobject profile hosted;
+#!wv/1 en@1
+module Testˉcurrentˉpublisherˉobject;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Linkerˉnativeˉcurrentˉpublisherˉobjectˉadmission as Current;
 import Wvoˉobjectˉverification as Wvo;
 
-capability console.write_line;
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
     return Bytesˉconcat(

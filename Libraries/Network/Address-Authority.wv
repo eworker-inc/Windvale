@@ -1,4 +1,9 @@
-module Windvaleˉnetworkˉaddressˉauthority profile portable;
+#!wv/1 en@1
+module Windvaleˉnetworkˉaddressˉauthority;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const IPV4_BYTES: u32 = 4u32;
 const IPV6_BYTES: u32 = 16u32;
@@ -7,7 +12,7 @@ const SERVICE_NAME_MAXIMUM_BYTES: u32 = 253u32;
 const SERVICE_LABEL_MAXIMUM_BYTES: u32 = 63u32;
 const PORT_MAXIMUM: u32 = 65535u32;
 
-export enum Networkˉerror {
+export enum Networkˉerror: i32 {
     Valid = 0;
     Invalidˉaddress = 1;
     Noncanonicalˉaddress = 2;
@@ -25,13 +30,13 @@ export enum Networkˉerror {
     Invalidˉlifetime = 14;
 }
 
-export enum Networkˉaddressˉkind {
+export enum Networkˉaddressˉkind: i32 {
     Invalid = 0;
     Ipv4 = 1;
     Ipv6 = 2;
 }
 
-export enum Networkˉscope {
+export enum Networkˉscope: i32 {
     Invalid = 0;
     Global = 1;
     Unspecified = 2;
@@ -40,20 +45,20 @@ export enum Networkˉscope {
     Multicast = 5;
 }
 
-export enum Networkˉselectorˉkind {
+export enum Networkˉselectorˉkind: i32 {
     Invalid = 0;
     Service = 1;
     Prefix = 2;
 }
 
-export enum Networkˉtransport {
+export enum Networkˉtransport: i32 {
     Invalid = 0;
     Tcp = 1;
     Udp = 2;
     Any = 3;
 }
 
-export enum Networkˉdirection {
+export enum Networkˉdirection: i32 {
     Invalid = 0;
     Outbound = 1;
     Listen = 2;

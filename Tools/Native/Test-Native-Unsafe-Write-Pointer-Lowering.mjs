@@ -107,7 +107,7 @@ try {
     );
     await Requireˉsuccess(
         Packageˉlowerer,
-        ['6', Lowererˉwvb, Lowerer, '--development-cache'],
+        ['7', Lowererˉwvb, Lowerer, '--development-cache'],
         'compiler-package',
         CONSTRUCTION_TIMEOUT_MILLISECONDS,
     );

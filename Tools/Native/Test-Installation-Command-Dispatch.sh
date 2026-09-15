@@ -28,16 +28,16 @@ echo 'native installation command dispatch step=build-selection-and-bundle-tools
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Installation-Command-Resolver.wvproj" \
     "$work/Resolver.wvb" || exit $?
-verify_file "$work/Resolver.wvb" 60732 \
-    521cd77ee53f20cec3157208e4f0b9c93841c212dcabec88f4e7cbc6a9229679 || exit 1
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
+verify_file "$work/Resolver.wvb" 56033 \
+    d8a815ea9c6c159c50f0d55f4ff0c28174dcf276e1f0814b6ff81d90df90e2f2 || exit 1
+"$script_directory/Package-Hosted-Wvb.sh" current 6 \
     "$work/Resolver.wvb" "$work/Resolver.elf" linux || exit $?
 "$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 613470 \
-    ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 || exit 1
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+verify_file "$work/Writer.wvb" 675300 \
+    4a1e137b7c4695e6c516626d658c985aa960a91478b1eafab4cbffcba5c232d0 || exit 1
+node "$script_directory/Package-Current-Segmented-Wvb.mjs" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" || exit $?
 
 echo 'native installation command dispatch step=build-package-payloads item=2/7 packages=2'
@@ -74,10 +74,10 @@ echo 'native installation command dispatch step=lower-wvdb-host item=4/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$work/Lowerer.wvb" || exit $?
-verify_file "$work/Lowerer.wvb" 747997 \
-    d5a514e72203ab530c6df6da8f444e6bd7f93130921e02042e70c7a7723942dc || exit 1
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
-    "$work/Lowerer.wvb" "$work/Lowerer.elf" || exit $?
+verify_file "$work/Lowerer.wvb" 1309723 \
+    bd153e4cd06db4fb66fabf769119ff423400cb5968de8f17215f2462f7239251 || exit 1
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+    "$work/Lowerer.wvb" "$work/Lowerer.elf" --development-cache || exit $?
 "$work/Lowerer.elf" "$work/Wvdb-Query.wvb" "$work/Wvdb-Query.wvo" >/dev/null || exit $?
 verify_file "$work/Wvdb-Query.wvo" 235564 \
     182d5d49e56bff03de1fb30c179310a814fa120055884e60e23c53e01b41c0f3 || exit 1

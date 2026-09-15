@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export fn Collectionˉelementˉshape(
     Module: bytes,

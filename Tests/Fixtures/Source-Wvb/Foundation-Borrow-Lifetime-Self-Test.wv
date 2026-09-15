@@ -1,4 +1,9 @@
-module Foundationˉborrowˉlifetimeˉselfˉtest profile portable;
+#!wv/1 en@1
+module Foundationˉborrowˉlifetimeˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow as Owners;
 import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;

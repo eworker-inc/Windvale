@@ -1,4 +1,9 @@
-module Windvaleˉdatabaseˉdurableˉsuperblock profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉdurableˉsuperblock;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256ˉstreaming as Sha256;
 
@@ -13,7 +18,7 @@ const SUPERBLOCK_CHECKSUM_BYTES: u32 = 32u32;
 const SUPERBLOCK_NO_PAGE: u64 = 18446744073709551615u64;
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉsuperblockˉerror {
+export enum Databaseˉsuperblockˉerror: i32 {
     Valid = 0;
     Invalidˉlength = 1;
     Invalidˉmagic = 2;
@@ -70,14 +75,14 @@ export record Databaseˉsuperblockˉresult {
     Bytes: bytes;
 }
 
-export enum Databaseˉsuperblockˉselectionˉstatus {
+export enum Databaseˉsuperblockˉselectionˉstatus: i32 {
     Valid = 0;
     Noˉvalidˉsuperblock = 1;
     Conflictingˉdatabase = 2;
     Conflictingˉgeneration = 3;
 }
 
-export enum Databaseˉsuperblockˉslot {
+export enum Databaseˉsuperblockˉslot: i32 {
     None = 0;
     First = 1;
     Second = 2;

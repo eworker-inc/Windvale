@@ -1,4 +1,9 @@
-module Linkerˉconsoleˉapplicationˉadmission profile portable;
+#!wv/1 en@1
+module Linkerˉconsoleˉapplicationˉadmission;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Linkerˉconsoleˉapplicationˉverification as Versionˉone;
 import Linkerˉhostedˉconsoleˉapplicationˉverificationˉcommon as Hostedˉcommon;

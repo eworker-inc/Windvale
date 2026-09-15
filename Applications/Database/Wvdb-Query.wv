@@ -1,13 +1,17 @@
-module Wvdbˉquery profile hosted;
+#!wv/1 en@1
+module Wvdbˉquery;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability filesystem.directory_read_v1 version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉdecimalˉparsing as Decimal;
 import Readˉonlyˉwvdb as Snapshot;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability filesystem.directory_read_v1;
-capability process.argument;
-capability process.argument_count;
 
 fn Wvdbˉqueryˉusage() -> i32 {
     diagnostic.write_line("Usage: wvdb-query <name.wvdb> <u32-key>");

@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequestˉbridge profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequestˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequest as Request;
 

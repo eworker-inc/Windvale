@@ -1,8 +1,13 @@
-module Compilerˉnativeˉx64ˉloweringˉstagingˉresources profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉstagingˉresources;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 
-export enum Compilerˉnativeˉx64ˉstagingˉresourceˉstatus {
+export enum Compilerˉnativeˉx64ˉstagingˉresourceˉstatus: i32 {
     Valid = 0;
     Invalidˉresource = 1;
     Invalidˉprefix = 2;

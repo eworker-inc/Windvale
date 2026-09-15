@@ -1,14 +1,18 @@
-module Compilerˉnativeˉx64ˉloweringˉtool profile hosted;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉtool;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 export fn Main() -> i32 {
     if process.argument_count() != 2u32 {

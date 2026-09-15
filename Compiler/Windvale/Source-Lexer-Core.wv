@@ -1,6 +1,11 @@
-module Compilerˉsourceˉlexer profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉlexer;
+profile core;
+platform linux, windows, windvale;
+authority library;
 
-export enum Compilerˉtokenˉkind {
+
+export enum Compilerˉtokenˉkind: i32 {
     End = 0;
     Bad = 1;
     Identifier = 2;
@@ -119,7 +124,7 @@ export enum Compilerˉtokenˉkind {
     Foreign = 115;
 }
 
-export enum Compilerˉnumericˉkind {
+export enum Compilerˉnumericˉkind: i32 {
     None = 0;
     I32 = 1;
     U8 = 2;
@@ -133,7 +138,7 @@ export enum Compilerˉnumericˉkind {
     F64 = 10;
 }
 
-export enum Compilerˉlexˉstatus {
+export enum Compilerˉlexˉstatus: i32 {
     Valid = 0;
     Sourceˉtooˉlarge = 1;
     Invalidˉutf8 = 2;

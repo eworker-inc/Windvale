@@ -1,4 +1,8 @@
-module Windvaleˉpackageˉlockˉselfˉtest profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉlockˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
 
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉtext as Packageˉtext;
@@ -130,8 +134,89 @@ fn Rejectionˉcases() -> bool {
     );
 }
 
+fn Contentˉlock(Changedˉline: u32, Number: text, Contentˉdigest: text) -> text {
+    var Value: text = "windvale-lock 1\nresolver local-source-1\nroot windvale.example 1 a\ntarget hosted-wvb-v1\nlicense MIT\n";
+    var Line: u32 = 6u32;
+    while Line <= 11u32 {
+        var Prefix: text = "origin workspace ";
+        var Suffix: text = " Windvale.wvws\n";
+        if Line == 7u32 { Prefix = "package "; Suffix = " Distribution/Example.wvpack\n"; }
+        if Line == 8u32 { Prefix = "compiler "; Suffix = " Artifacts/Compiler.wvb\n"; }
+        if Line == 9u32 { Prefix = "project "; Suffix = " Projects/Example.wvproj\n"; }
+        if Line == 10u32 { Prefix = "part a hosted "; Suffix = " Applications/A.wv\n"; }
+        if Line == 11u32 { Prefix = "output "; Suffix = "\n"; }
+        var Size: text = "1";
+        var Hash: text = Digest();
+        if Line == Changedˉline { Size = Number; Hash = Contentˉdigest; }
+        Value = Textˉconcat(Value, Prefix);
+        Value = Textˉconcat(Value, Hash);
+        Value = Textˉconcat(Value, " ");
+        Value = Textˉconcat(Value, Size);
+        Value = Textˉconcat(Value, Suffix);
+        Line = Line + 1u32;
+    }
+    return Value;
+}
+
+fn Contentˉcase(
+    Line: u32,
+    Number: text,
+    Contentˉdigest: text,
+    Expected: Lock.Windvaleˉlockˉstatus,
+    Expectedˉbytes: u64
+) -> bool {
+    let Input: bytes = Textˉtoˉutf8(Contentˉlock(Line, Number, Contentˉdigest));
+    let Scan: Lock.Windvaleˉlockˉscan = Lock.Windvaleˉpackageˉscanˉlock(Input);
+    if Scan.Status != Expected { return false; }
+    if Expected != Lock.Windvaleˉlockˉstatus.Valid {
+        return Scan.Failureˉline == Line && Scan.Failureˉcolumn == 1u32;
+    }
+    if Line == 6u32 { return Scan.Originˉbytes == Expectedˉbytes; }
+    if Line == 7u32 { return Scan.Packageˉbytes == Expectedˉbytes; }
+    if Line == 8u32 { return Scan.Compilerˉbytes == Expectedˉbytes; }
+    if Line == 9u32 { return Scan.Projectˉbytes == Expectedˉbytes; }
+    if Line == 10u32 {
+        let Part: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(Scan, 0u32);
+        return Part.Found && Part.Bytes == Expectedˉbytes;
+    }
+    return Scan.Outputˉbytes == Expectedˉbytes;
+}
+
+fn Contentˉcases() -> bool {
+    var Line: u32 = 6u32;
+    while Line <= 11u32 {
+        if !Contentˉcase(Line, "0", Digest(), Lock.Windvaleˉlockˉstatus.Valid, 0u64) {
+            return false;
+        }
+        if !Contentˉcase(
+            Line, "18446744073709551615", Digest(),
+            Lock.Windvaleˉlockˉstatus.Valid, 18446744073709551615u64
+        ) { return false; }
+        if !Contentˉcase(
+            Line, "18446744073709551616", Digest(),
+            Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64
+        ) { return false; }
+        if !Contentˉcase(Line, "01", Digest(), Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64) {
+            return false;
+        }
+        if !Contentˉcase(Line, "-1", Digest(), Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64) {
+            return false;
+        }
+        if !Contentˉcase(Line, "1x", Digest(), Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64) {
+            return false;
+        }
+        // Digest rejection must still precede decimal rejection on every record.
+        if !Contentˉcase(Line, "01", "bad", Lock.Windvaleˉlockˉstatus.Invalidˉdigest, 0u64) {
+            return false;
+        }
+        Line = Line + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
     if !Validˉcase() { return 1; }
     if !Rejectionˉcases() { return 2; }
+    if !Contentˉcases() { return 3; }
     return 42;
 }

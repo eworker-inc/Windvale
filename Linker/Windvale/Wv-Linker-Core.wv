@@ -1,4 +1,14 @@
-module Wvˉlinkerˉcore profile hosted;
+#!wv/1 en@1
+module Wvˉlinkerˉcore;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability console.write_line version 1;
+requires capability diagnostic.write_line version 1;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 import Foundationˉbyteˉordering as Byteˉordering;
@@ -6,12 +16,6 @@ import Foundationˉdecimalˉparsing as Decimalˉparsing;
 import Foundationˉmachineˉcontracts as Machineˉcontracts;
 import Foundationˉsha256 as Sha256;
 
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 data Emptyˉbytes: bytes = [];
 data Unitˉbyte: bytes = [0];
@@ -49,7 +53,7 @@ data Sampleˉobject: bytes = [
     252, 255, 255, 255
 ];
 
-enum Wvoˉstatus {
+enum Wvoˉstatus: i32 {
     Valid = 0;
     Shortˉheader = 1;
     Badˉmagic = 2;
@@ -123,7 +127,7 @@ record Wvoˉscan {
     Failureˉoffset: u32;
 }
 
-enum Linkˉstatus {
+enum Linkˉstatus: i32 {
     Valid = 0;
     WVL1001 = 1;
     WVL1002 = 2;

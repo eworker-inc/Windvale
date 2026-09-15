@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉtaskˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉtaskˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 const TASK_STATE_MAGIC: u32 = 1414746967u32;
 const TASK_STATE_VERSION: u32 = 3u32;

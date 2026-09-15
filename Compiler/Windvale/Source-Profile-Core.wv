@@ -1,10 +1,15 @@
-module Compilerˉsourceˉprofile profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉprofile;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉset as Sourceˉset;
 import Foundationˉsha256 as Sha256;
 
-export enum Compilerˉsourceˉprofileˉstatus {
+export enum Compilerˉsourceˉprofileˉstatus: i32 {
     Valid = 0;
     Invalidˉdescriptor = 1;
     Invalidˉlockˉhash = 2;

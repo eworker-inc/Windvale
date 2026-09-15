@@ -1,4 +1,9 @@
-module Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories profile portable;
+#!wv/1 en@1
+module Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 export record Hˉcontrolˉdirectory {
     Valid: bool;

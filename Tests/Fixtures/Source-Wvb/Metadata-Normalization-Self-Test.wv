@@ -1,4 +1,9 @@
-module Wvbˉmetadataˉnormalizationˉselfˉtest profile portable;
+#!wv/1 en@1
+module Wvbˉmetadataˉnormalizationˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉwvbˉmetadataˉnormalization as Metadata;
 

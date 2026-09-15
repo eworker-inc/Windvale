@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉhostedˉtoolˉmetadataˉconstructionˉbridge profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉhostedˉtoolˉmetadataˉconstructionˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Runtimeˉnativeˉhostedˉtoolˉmetadataˉconstruction as Metadataˉconstruction;
 

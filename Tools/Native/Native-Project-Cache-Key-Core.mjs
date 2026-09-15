@@ -212,8 +212,29 @@ export async function Getˉnativeˉprojectˉcacheˉrequest(
     }
 
     const declaredPaths = [];
+    const Admissionˉinputs = new Map();
     let rootCount = 0;
     for (const line of projectText.split(/\r?\n/u)) {
+        const Admissionˉkind = /^(source-input-lock|source-profile|target-descriptor)(?:\s|$)/u.exec(line);
+        if (Admissionˉkind !== null) {
+            const Declaration = /^(source-input-lock|source-profile|target-descriptor) "([^"\r\n]+)"$/u.exec(line);
+            if (Declaration === null || Admissionˉinputs.has(Admissionˉkind[1])) {
+                Reject('The cache-key project contains a malformed or repeated admission input.');
+            }
+            const Declared = Declaration[2];
+            const Extension = {
+                'source-input-lock': '.wvlock',
+                'source-profile': '.wvsp',
+                'target-descriptor': '.wvtd',
+            }[Declaration[1]];
+            if (!Declared.endsWith(Extension) || Declared.includes('\\') ||
+                path.posix.isAbsolute(Declared) || Declared.split('/').some(
+                    Part => Part === '' || Part === '.' || Part === '..')) {
+                Reject(`The cache-key admission input path is not canonical: ${Declared}`);
+            }
+            Admissionˉinputs.set(Declaration[1], Declared);
+            continue;
+        }
         if (!line.startsWith('root ') && !line.startsWith('source ')) {
             continue;
         }
@@ -273,6 +294,23 @@ export async function Getˉnativeˉprojectˉcacheˉrequest(
         }
         Addˉfield(hash, `source:${declared}`, sourceBytes);
         inputEvidence.push(Evidence(sourcePath, sourceBytes));
+    }
+
+    // Identity and stale-input checks include admission bytes, not just paths.
+    // Native admission still owns their format, digest, and semantic validation.
+    for (const [Kind, Declared] of Admissionˉinputs) {
+        const Candidate = path.resolve(REPOSITORY_ROOT, ...Declared.split('/'));
+        if (!Isˉwithinˉrepository(Candidate) ||
+            !Isˉsameˉpath(await realpath(Candidate).catch(() => ''), Candidate)) {
+            Reject(`The cache-key admission input must be a canonical repository file: ${Declared}`);
+        }
+        const Bytes = await Readˉboundedˉordinaryˉfile(Candidate, 'project admission input');
+        inputBytes += Bytes.length;
+        if (inputBytes > MAXIMUM_PROJECT_BYTES) {
+            Reject('The cache-key project input set exceeds 256 MiB.');
+        }
+        Addˉfield(hash, `${Kind}:${Declared}`, Bytes);
+        inputEvidence.push(Evidence(Candidate, Bytes));
     }
 
     return {

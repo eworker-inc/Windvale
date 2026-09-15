@@ -1,4 +1,9 @@
-module Modelˉchatˉcoreˉselfˉtest profile portable;
+#!wv/1 en@1
+module Modelˉchatˉcoreˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉmodelˉchatˉcore as Chat;
 import Windvaleˉmodelˉprotocol as Protocol;

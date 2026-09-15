@@ -1,4 +1,9 @@
-module Nativeˉx64ˉloweringˉdataˉlimitˉselfˉtest profile portable;
+#!wv/1 en@1
+module Nativeˉx64ˉloweringˉdataˉlimitˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Compilerˉnativeˉx64ˉloweringˉdata as Dataˉreader;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Typeˉreader;

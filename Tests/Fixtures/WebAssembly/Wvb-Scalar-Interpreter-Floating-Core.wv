@@ -1,4 +1,9 @@
-module WebAssemblyˉwvbˉscalarˉinterpreterˉfloatingˉcore profile portable;
+#!wv/1 en@1
+module WebAssemblyˉwvbˉscalarˉinterpreterˉfloatingˉcore;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 record Floatingˉformat {
     Precision: u32;

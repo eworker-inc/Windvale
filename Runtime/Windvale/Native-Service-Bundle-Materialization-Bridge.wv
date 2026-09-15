@@ -1,4 +1,9 @@
-module Runtimeˉnativeˉserviceˉbundleˉmaterializationˉbridge profile portable;
+#!wv/1 en@1
+module Runtimeˉnativeˉserviceˉbundleˉmaterializationˉbridge;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Runtimeˉnativeˉserviceˉbundleˉmaterialization as Materialization;
 

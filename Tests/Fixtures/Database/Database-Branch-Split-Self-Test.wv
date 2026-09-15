@@ -1,4 +1,9 @@
-module Databaseˉbranchˉsplitˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉbranchˉsplitˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉtreeˉnode as Tree;
 import Windvaleˉdatabaseˉtreeˉbranchˉsplit as Split;

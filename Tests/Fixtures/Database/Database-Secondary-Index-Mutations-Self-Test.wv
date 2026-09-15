@@ -1,4 +1,9 @@
-module Databaseˉsecondaryˉindexˉmutationsˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉsecondaryˉindexˉmutationsˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉschemaˉdefinition as Schema;
 import Windvaleˉdatabaseˉsecondaryˉindex as Secondary;

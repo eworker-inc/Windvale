@@ -1,4 +1,9 @@
-module Databaseˉsingleˉwriterˉcommitˉselfˉtest profile portable;
+#!wv/1 en@1
+module Databaseˉsingleˉwriterˉcommitˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉcommitˉpublication as Publication;
 import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;

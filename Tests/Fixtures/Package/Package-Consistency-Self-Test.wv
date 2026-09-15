@@ -1,10 +1,13 @@
-module Windvaleˉpackageˉconsistencyˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Windvaleˉpackageˉconsistencyˉselfˉtest;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Windvaleˉpackageˉconsistency as Consistency;
-
-capability file.read_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Digest() -> text {
     return "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";

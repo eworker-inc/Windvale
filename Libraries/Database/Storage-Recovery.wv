@@ -1,11 +1,16 @@
-module Windvaleˉdatabaseˉstorageˉrecovery profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉstorageˉrecovery;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉstorageˉpublication as Storage;
 
 const U64_MAXIMUM: u64 = 18446744073709551615u64;
 
-export enum Databaseˉstorageˉrecoveryˉstage {
+export enum Databaseˉstorageˉrecoveryˉstage: i32 {
     Invalid = 0;
     Resizeˉtail = 1;
     Flushˉtail = 2;
@@ -14,7 +19,7 @@ export enum Databaseˉstorageˉrecoveryˉstage {
     Stopped = 5;
 }
 
-export enum Databaseˉstorageˉrecoveryˉerror {
+export enum Databaseˉstorageˉrecoveryˉerror: i32 {
     None = 0;
     Invalidˉselection = 1;
     Invalidˉgeneration = 2;

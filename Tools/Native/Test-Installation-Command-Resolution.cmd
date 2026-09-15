@@ -17,10 +17,10 @@ echo native installation command resolution step=build item=1/3
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Command-Resolver.wvproj" ^
     "%Work%\Resolver.wvb" || goto :cleanup
-call :verify_file "%Work%\Resolver.wvb" 60732 521cd77ee53f20cec3157208e4f0b9c93841c212dcabec88f4e7cbc6a9229679 || goto :cleanup
+call :verify_file "%Work%\Resolver.wvb" 56033 d8a815ea9c6c159c50f0d55f4ff0c28174dcf276e1f0814b6ff81d90df90e2f2 || goto :cleanup
 
 echo native installation command resolution step=package item=2/3 target=windows-x64
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 6 ^
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" current 6 ^
     "%Work%\Resolver.wvb" "%Work%\Resolver.exe" windows || goto :cleanup
 
 echo native installation command resolution step=resolve item=3/3 cases=8

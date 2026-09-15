@@ -1,4 +1,9 @@
-module Localˉdatabaseˉserviceˉselfˉtest profile portable;
+#!wv/1 en@1
+module Localˉdatabaseˉserviceˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉlocalˉcontracts as Contracts;

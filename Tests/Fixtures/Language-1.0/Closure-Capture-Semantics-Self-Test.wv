@@ -1,4 +1,10 @@
-module Languageˉoneˉclosureˉcaptureˉsemanticsˉselfˉtest profile hosted;
+#!wv/1 en@1
+module Languageˉoneˉclosureˉcaptureˉsemanticsˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
@@ -14,8 +20,6 @@ import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-capability process.argument;
-capability process.argument_count;
 
 fn Selectedˉcase() -> u32 {
     if process.argument_count() != 1u32 { return 0u32; }

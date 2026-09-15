@@ -1,4 +1,9 @@
-module Compilerˉadmissionˉevidenceˉvalidator profile portable;
+#!wv/1 en@1
+module Compilerˉadmissionˉevidenceˉvalidator;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉadmissionˉevidence as Evidence;
 import Compilerˉadmissionˉsourceˉset as Sourceˉset;
@@ -6,7 +11,7 @@ import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
 import Compilerˉsourceˉtarget as Target;
 
-export enum Compilerˉadmissionˉevidenceˉvalidationˉphase {
+export enum Compilerˉadmissionˉevidenceˉvalidationˉphase: i32 {
     Valid = 0;
     Input = 1;
     Wvss = 2;

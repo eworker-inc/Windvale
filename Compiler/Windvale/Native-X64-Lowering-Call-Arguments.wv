@@ -1,4 +1,9 @@
-module Compilerˉnativeˉx64ˉloweringˉcallˉarguments profile portable;
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉcallˉarguments;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 

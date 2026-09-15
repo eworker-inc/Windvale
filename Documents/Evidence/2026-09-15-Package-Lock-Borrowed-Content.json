@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-package-lock-borrowed-content",
+  "date": "2026-09-15",
+  "subject": "Bounded immutable borrowing in the maintained package-lock content reader",
+  "claim": "The previous inline borrowed matches exceeded the specified WVIR proof limit: the scanner had 281 blocks and 87 parameter/local slots, versus limits of 64 each. Extracting repeated digest-and-size validation into Readˉcontent leaves its single borrowed match within seven blocks, six slots, 28 operations and 25 temporaries. The existing lock tests and 42 added cases pass on Windows and Debian. Normal Project 4 build and native replacement produce identical WVB bytes. No compiler limit, public API or package wire format changed.",
+  "source": {
+    "kind": "Other",
+    "value": "Tooling and compiler at 992ba7bbebbbf3356966bdcc0ea1d2b0e5923720; uncommitted maintained package migration with exact tested closure hashes below. This evidence does not commit or promote that migration."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "WVIR 1.33 inline-borrow rejection diagnosis",
+      "tool": "Current split compiler key 8dd2bef573ec2b0ef009bcfc16ec319ee5b952c217658c57b1932483020022e1; Analyzer SHA256 c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1; Emitter SHA256 149cc58fe1d6e6537edc4689596dd2c810e3bff3e497bb60c9848e1cb1d22d30",
+      "command": "Admit and authenticate the previously recorded package-lock closure with only its four ordinary matches changed to Option.Borrow(borrow owner). Analyzer --internal-source-set Admitted.wvss Analyzed.wvss Manifest.wvca Bindings.wvlb Wir.wvir succeeds; Emitter Analyzed.wvss Manifest.wvca Bindings.wvlb Wir.wvir Product.wvb exits 1 with Invalidˉanalysis / Invalidˉwir. Inspect the 48-byte function entries: scanner index 29 has 281 blocks, 87 slots, 1080 operations, 949 temporaries and four operation-191 borrows. The unchanged ordinary-match control emits successfully.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/borrowed/Analyzed.wvss",
+          "size": 57996,
+          "sha256": "82515fbef15488045ab5df812432965f2e541639516d6b2f645b96af7121d2f5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/borrowed/Wir.wvir",
+          "size": 123620,
+          "sha256": "a97779f46ec7bfb3d384351e22a21d00f20fe8017942341eb7170e4c23f69b4f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 construction; Windows x64 and Debian WSL2 execution",
+      "target": "Maintained package-lock test, candidate WVB with immutable payload borrowing, hosted application profile 6",
+      "tool": "Node.js v24.19.0; current split compiler and publisher caches reused; selected Windows native lowerer SHA256 fdf426428b3617de1f22e333316645ac100f1918aae8efe1e5995934e1b6b992 (hosted profile 7)",
+      "command": "Tools/Native/Build-Wvb.cmd Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj Artifacts/Work/Borrow-Lock-Diagnosis/Lock.wvb twice, including native replacement; compare bytes against the independently emitted refactored analysis product. Lowerer.exe Lock.wvb Lock.wvo; Tools/Native/Check-Wvo.cmd Lock.wvo; Tools/Native/Link-Wvo.cmd 0 Main Lock.bin Lock.wvo; retain linked image as Lock-Image.chunk-0. Tools/Native/Package-Hosted-Wvb.cmd image 6 Lock.wvb Lock-Image 1 84281 Lock.exe windows and the corresponding Lock.elf linux invocation. Execute Lock.exe and wsl -d Debian -- /mnt/d/windvale/dev01/Artifacts/Work/Borrow-Lock-Diagnosis/Lock.elf; both exit 42. Artifact basenames are relative to Artifacts/Work/Borrow-Lock-Diagnosis. The final run used a 180-second deadline and completed in 56991 milliseconds.",
+      "result": "Passed",
+      "elapsedMilliseconds": 56991,
+      "inputs": [
+        {
+          "path": "Libraries/Package/Package-Lock.wv",
+          "size": 34618,
+          "sha256": "e92a913023132db14a890c1b1dfe9f5575926fffff49206f88c48c92ac01da83"
+        },
+        {
+          "path": "Tests/Fixtures/Package/Package-Lock-Self-Test.wv",
+          "size": 10520,
+          "sha256": "ffdfb1e03d8598dbb8f2ea4b3fdec5b8885158e75dd5430ef952b1c6143ad08b"
+        },
+        {
+          "path": "Libraries/Package/Canonical-Package-Text.wv",
+          "size": 15085,
+          "sha256": "8d36c8b832807a8cc898c370f337112e9b9e4b3c83d405e0a8c46f57f229439d"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Option.wv",
+          "size": 172,
+          "sha256": "b6778dccb5b85a59e4209ffd15627218b704d672bdd667ed68da7ceef85aff3d"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj",
+          "size": 667,
+          "sha256": "41da6d0f5712f644dd14dd9ab65eb902d177b83897a7f94430263cc9bd3869b3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/refactored/Wir.wvir",
+          "size": 133560,
+          "sha256": "e594486665ba2a1b692eb7efcb2c31defcf9ea87557dfe0ff1e0034e2b6d83bc"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/Lock.wvb",
+          "size": 57977,
+          "sha256": "682a2677419c12a37c47159345a4d5099c746e1ccd302a6686a9deeb265982ef"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/Lock.wvo",
+          "size": 970011,
+          "sha256": "b10e256b451a79b9eb7c51e1d5003a366c8033d56e85d564d0d917426fb9786e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/Lock.exe",
+          "size": 983040,
+          "sha256": "a9eafc1033d702597fcd5b1e25a17847b9a6f9b0e158c7f8b94e5d35b78c855e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Lock-Diagnosis/Lock.elf",
+          "size": 983040,
+          "sha256": "3d840a0461295e4cda87d8fc7c7eb90764454a275ab16f73d52c7930c8ffedff"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "The 42 new cases cover six record positions (origin, package, compiler, project, part, output), each with zero, maximum u64, overflow, leading zero, negative and non-digit input, and simultaneous invalid digest/decimal. Rejections check the exact line and column; digest rejection precedes decimal rejection. Existing valid-lock, ordering, missing-record and duplicate-path cases also run.",
+    "The compiler proof bounds are unchanged. The large scanner still has 265 blocks and 79 slots but no payload-borrow operation; the small reader owns the borrow. No general large-function borrowing or improved compiler diagnostic is claimed.",
+    "Debian executes a Windows-constructed Linux image. This is not independent Linux construction or complete dual-host qualification.",
+    "Only the affected maintained lock fixture was rebuilt and executed in the final run. The unchanged canonical-parser test and lowerer owner retain their prior exact-input evidence; unrelated package, installation and bundle suites were not rerun.",
+    "The automatic changed-file plan included pending migration work with expected duration 660 seconds and maximum 2400 seconds. It was inspected but not executed; focused diagnosis and final checks stayed below the ten-minute development budget.",
+    "Current lowerer selection remains explicit. The normal package-format owner still needs integration, and shared SHA-256 source-edition reconciliation remains pending. The package migration is not committed; pinned packaging and installed identities are unchanged.",
+    "No full transaction fault injection, concurrency suite, installed promotion, peak-memory measurement or independent human review was performed."
+  ],
+  "related": [
+    "Specifications/Compiler-Source-Wir.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-15-Current-Lowerer-Package-Execution.json",
+    "Documents/Evidence/2026-09-15-Project4-Native-Publication.json"
+  ]
+}

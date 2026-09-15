@@ -1,4 +1,9 @@
-module Windvaleˉpackageˉbundleˉwriter profile portable;
+#!wv/1 en@1
+module Windvaleˉpackageˉbundleˉwriter;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Foundationˉsha256 as Sha256;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
@@ -8,7 +13,7 @@ import Windvaleˉpackageˉmanifest as Manifest;
 import Windvaleˉpackageˉresourceˉadmission as Resourceˉadmission;
 import Windvaleˉpackageˉtext as Packageˉtext;
 
-export enum Windvaleˉpackageˉbundleˉwriteˉstatus {
+export enum Windvaleˉpackageˉbundleˉwriteˉstatus: i32 {
     Valid = 0;
     Invalidˉmanifestˉlock = 1501;
     Unsupportedˉtarget = 1502;

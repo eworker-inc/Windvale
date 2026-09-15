@@ -1,9 +1,14 @@
-module Windvaleˉdatabaseˉlocalˉcontracts profile portable;
+#!wv/1 en@1
+module Windvaleˉdatabaseˉlocalˉcontracts;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
 import Windvaleˉdatabaseˉlogicalˉrecord as Logical;
 
-export enum Databaseˉlocalˉsessionˉstatus {
+export enum Databaseˉlocalˉsessionˉstatus: i32 {
     Closed = 0;
     Ready = 1;
     Busyˉget = 2;
@@ -12,7 +17,7 @@ export enum Databaseˉlocalˉsessionˉstatus {
     Failed = 5;
 }
 
-export enum Databaseˉlocalˉserviceˉstatus {
+export enum Databaseˉlocalˉserviceˉstatus: i32 {
     Opened = 0;
     Getˉprepared = 1;
     Putˉprepared = 2;
@@ -31,7 +36,7 @@ export enum Databaseˉlocalˉserviceˉstatus {
     Failed = 15;
 }
 
-export enum Databaseˉlocalˉcompletion {
+export enum Databaseˉlocalˉcompletion: i32 {
     Found = 0;
     Missing = 1;
     Putˉcommitted = 2;

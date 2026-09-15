@@ -1,4 +1,9 @@
-module Compilerˉsourceˉgenericˉtypeˉbinding profile portable;
+#!wv/1 en@1
+module Compilerˉsourceˉgenericˉtypeˉbinding;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
 
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;

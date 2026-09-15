@@ -1,4 +1,9 @@
-module Windvaleˉnativeˉtestˉdatabaseˉstorageˉpublicationˉrecoveryˉbundle profile portable;
+#!wv/1 en@1
+module Windvaleˉnativeˉtestˉdatabaseˉstorageˉpublicationˉrecoveryˉbundle;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Databaseˉstorageˉpublicationˉselfˉtest as Publication;
 import Databaseˉstorageˉrecoveryˉselfˉtest as Recovery;

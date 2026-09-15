@@ -1,4 +1,9 @@
-module Linkerˉnativeˉhostedˉcontainerˉconstruction profile portable;
+#!wv/1 en@1
+module Linkerˉnativeˉhostedˉcontainerˉconstruction;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
 
 import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
 import Linkerˉnativeˉhostedˉcontainerˉlayout as Layout;
