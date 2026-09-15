@@ -239,6 +239,23 @@ from actual delivery time, unresolved API rows, and cold verification costs.
 
 ## Verification rhythm
 
+The maintainer approved these qualification checkpoints on 15 September 2026:
+
+1. During implementation, retain focused Windows/Debian checks and check the
+   normal GitHub CI gate. Investigate failed CI now; deferring full qualification
+   does not waive ordinary verification or turn a bypassed gate into a pass.
+2. Before promoting a selected generation into the installed toolchain, integrate
+   its compiler/runtime changes and maintained consumers, then run complete
+   independent Windows/Linux qualification against that exact candidate.
+3. Before release, close the required migration and product gates and qualify
+   the final identified artifacts. Do not postpone a selected promotion gate
+   until every draft library proposal is implemented.
+
+These checkpoints apply the existing verification policy; they do not remove
+earlier qualification required by a security, bootstrap, ABI, or explicit
+conformance claim. Reuse unchanged evidence and rerun invalidated owners rather
+than treating every commit as a new full-qualification event.
+
 - During implementation, write coverage with the code and run only short checks
   needed to detect the changed contract's failures. Exercise ownership,
   authority, malformed-input, and mutation failures as those boundaries change.
