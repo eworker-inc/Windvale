@@ -2297,6 +2297,16 @@ $NativeCases = @(
         Project4LauncherMaximumSeconds = 2400
     },
     @{
+        Name = 'Current transactional publisher launcher integration'
+        Paths = @('Tools/Native/Current-Wvb-Publisher-Core.mjs')
+        Suites = @('language-1-production-admission-ingress', 'compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+        Project4LauncherDevelopment = $true
+        Project4LauncherExpectedSeconds = 1200
+        Project4LauncherMaximumSeconds = 2400
+    },
+    @{
         Name = 'WVB runner reconstruction owner'
         Paths = @(
             'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd',
@@ -5769,7 +5779,7 @@ foreach ($Contract in @(
         Required = @(
             '$Suite -eq ''language-1-production-admission-ingress''',
             '$NativePlan.UseProject4LauncherDevelopment',
-            'mode=project4-launcher cases=2 expected-seconds=900',
+            'mode=project4-launcher cases=9 expected-seconds=900',
             '''--project4-launcher'''
         )
     },

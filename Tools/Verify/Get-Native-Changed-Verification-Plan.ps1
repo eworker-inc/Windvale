@@ -1455,7 +1455,7 @@ function Add-Native-Tool-Suite {
         )
         return
     }
-    if ($Stem -eq 'Build-Wvb-Project4') {
+    if ($Stem -in @('Build-Wvb-Project4', 'Current-Wvb-Publisher-Core')) {
         Add-Suite @(
             'language-1-production-admission-ingress',
             'compiler-split-development'
@@ -4842,6 +4842,7 @@ $Project4LauncherInputs = @(
     'Projects/Targets/Windows-X64-No-Foreign.wvtd',
     'Projects/Targets/Linux-X64-No-Foreign.wvtd',
     'Tools/Native/Build-Wvb-Project4.mjs',
+    'Tools/Native/Current-Wvb-Publisher-Core.mjs',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.cmd',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh'

@@ -1,4 +1,5 @@
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
+import { Acquireˉcurrentˉwvbˉpublisher } from './Current-Wvb-Publisher-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
     lstatSync,
@@ -35,7 +36,7 @@ const Workspace = path.join(Repositoryˉroot, 'Windvale.wvws');
 const Project = path.resolve(process.argv[2]);
 const Output = path.resolve(process.argv[3]);
 let Step = 0;
-let Totalˉsteps = 21;
+let Totalˉsteps = 28;
 let Work = '';
 
 try {
@@ -53,13 +54,17 @@ async function Main() {
     Requireˉordinaryˉfile(Workspace, MAXIMUM_PROJECT_BYTES, 'workspace marker');
     Requireˉordinaryˉfile(Project, MAXIMUM_PROJECT_BYTES, 'project manifest');
     Requireˉproject4ˉmanifest(Project);
-    Requireˉordinaryˉdirectory(path.dirname(Output), 'output parent');
+    Canonicalˉordinaryˉdirectory(path.dirname(Output), 'output parent');
     if (path.extname(Project).toLowerCase() !== '.wvproj' ||
         path.extname(Output).toLowerCase() !== '.wvb') {
         Usage();
     }
     if (Exists(Output)) {
-        Reject('The Project 4 build output must be a new .wvb path.');
+        const Existing = lstatSync(Output);
+        if (!Existing.isFile() || Existing.isSymbolicLink() || Existing.nlink !== 1 ||
+            !Sameˉpath(realpathSync(Output), Output)) {
+            Reject('The Project 4 output must be an unaliased ordinary file.');
+        }
     }
 
     const Temporaryˉroot = Canonicalˉordinaryˉdirectory(os.tmpdir(), 'temporary root');
@@ -80,7 +85,7 @@ async function Main() {
             },
         );
         if (Compilerˉcheckpoint.status === 'Hit' && Step === 0) {
-            Totalˉsteps = 9;
+            Totalˉsteps = 16;
         }
         process.stdout.write(
             `project4 build compiler-cache status=${Compilerˉcheckpoint.status} ` +
@@ -139,6 +144,7 @@ async function Main() {
             );
         }
 
+        const Candidate = path.join(Work, 'Candidate.wvb');
         await Runˉnode('project4-authenticated-build', 'Run-Split-Compiler.mjs', [
             Products.wvadmit,
             Products.wvauth,
@@ -152,11 +158,29 @@ async function Main() {
             Project,
             '--manifest-reader',
             Products.wvproject,
-            Output,
+            Candidate,
         ], BUILD_TIMEOUT_MILLISECONDS);
         const Evidence = Fileˉevidence(
-            Output, 'Project 4 build output', MAXIMUM_WVB_BYTES
+            Candidate, 'Project 4 build candidate', MAXIMUM_WVB_BYTES
         );
+        const Publisherˉwvb = path.join(Work, 'Publisher.wvb');
+        await Runˉnode('publisher-source-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+            path.join(Repositoryˉroot, 'Projects', 'Tools', 'Windvale-Wvb-Publisher.wvproj'),
+            Publisherˉwvb, Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
+            '--symbol-checkpoint',
+        ]);
+        const Publisher = await Acquireˉcurrentˉwvbˉpublisher(
+            Publisherˉwvb, path.join(Work, `Publisher${HOST_APPLICATION_EXTENSION}`),
+            Compilerˉkey, Runˉnative, Runˉnode,
+        );
+        Totalˉsteps = Step + 1;
+        try {
+            await Run('project4-native-publication', Publisher.Path, [Candidate, Output],
+                BUILD_TIMEOUT_MILLISECONDS);
+        } catch (Error) {
+            process.stderr.write('Project 4 publication did not report success; inspect the native completion status. Do not automatically retry.\n');
+            throw Error;
+        }
         process.stdout.write(
             `project4 build status=Published wvb-bytes=${Evidence.bytes} ` +
             `wvb-sha256=${Evidence.sha256}\n`,
@@ -236,7 +260,8 @@ async function Run(Label, Command, Arguments, Timeout) {
     );
     if (Result.Code !== 0 || Result.Error !== '') {
         if (Result.Error !== '') process.stderr.write(Result.Error);
-        Reject(`${Label} failed: status=${Result.Code}.`);
+        throw Object.assign(new Error(`${Label} failed: status=${Result.Code}.`),
+            { exitCode: Result.Code || 1 });
     }
     process.stdout.write(
         `PASS  project4 build step=${Currentˉstep}/${Totalˉsteps} phase=${Label} ` +
@@ -325,7 +350,7 @@ function Sameˉpath(Left, Right) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Build-Wvb-Project4.mjs ' +
-        '<project.wvproj> <new-output.wvb>\n',
+        '<project.wvproj> <output.wvb>\n',
     );
     process.exit(64);
 }

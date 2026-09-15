@@ -155,9 +155,23 @@ Project 2 and Project 3 manifests continue to use the pinned native front-door
 inventory. A Project 4 manifest is handed to the development
 `Build-Wvb-Project4.mjs` helper, which acquires current-host manifest-reader,
 admission, authentication, foreign-binding, analyzer, and emitter products before
-calling the split coordinator's authenticated project mode. That helper inherits
-the coordinator's new-output requirement and remains a development path, not an
-installed product identity or release qualification.
+calling the split coordinator's authenticated project mode into a private new
+candidate. It then acquires a current-source native transactional publisher and
+publishes that candidate to the requested output. An existing output must be an
+ordinary, canonical, single-link file; compilation and construction failures do
+not replace it. Native publication preserves its exact completion status, and a
+failed or indeterminate publication is never automatically retried. There is no
+JavaScript or shell-copy fallback for destination publication.
+
+The publisher checkpoint binds the candidate publisher WVB, current compiler
+identity, host, Node runtime, native stage/link producers, six native publication
+objects, linkage/import materializers, and hosted-container inputs. Changed
+inputs invalidate reuse. The existing production-admission owner's
+`--project4-launcher` selection checks four launcher cases plus five native
+publication cases; its direct `--project4-publisher <publisher> <candidate.wvb>`
+selection checks the native cases on a named host. This remains a development
+path, not an installed product identity or release qualification. Full injected
+fault, concurrency, and independent dual-host construction gates remain open.
 
 Maintained [explicit target inputs](../Projects/Targets/README.md) provide the
 registered Windows and Linux x64/no-foreign descriptors. The target writer's

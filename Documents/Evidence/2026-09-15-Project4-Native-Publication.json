@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-project4-native-publication",
+  "date": "2026-09-15",
+  "subject": "Project 4 current-source native publication integration",
+  "claim": "The development Project 4 launcher builds privately and publishes through the current-source native transaction. Nine focused Windows launcher/native cases pass. The borrowed package-parser WVB additionally passes five native publication cases on Windows and five on Debian: fresh publication, replacement, malformed-input preservation, input/destination hard-link alias rejection, and same-resource rejection. Selected parser executions return 42 on both hosts; this does not close package-lock or source-closure delivery.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 160a6c4ffec291eca5303ed4d6664996ab44425d. Each run records its test-driver identity: the final launcher run includes later launcher-only temporary-directory, home-directory and usage fixes. Exact uncommitted parser input identities are recorded below; other publisher source, native object and container inputs are unchanged from that commit."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Nine Project 4 launcher and native publication cases; warm compiler and publisher checkpoints",
+      "tool": "Node.js v24.19.0; current split compiler key 8dd2bef573ec2b0ef009bcfc16ec319ee5b952c217658c57b1932483020022e1",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-launcher",
+      "result": "Passed",
+      "elapsedMilliseconds": 13495,
+      "inputs": [
+        {
+          "path": "Tools/Native/Current-Wvb-Publisher-Core.mjs",
+          "size": 9750,
+          "sha256": "c636fdd882afcf99b71bb3cf5dee9be47b1cb5f44793a3280a101e32787c057c"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 13403,
+          "sha256": "67e0c791076f81e9ef37284a3cacbbbc49e951511b01501722dc9a2a7d49ecc7"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 159809,
+          "sha256": "c243e89a065db5522cd9e4e63c85c81f956436f1cbce3fc6f96fa29eb6a04dba"
+        },
+        {
+          "path": "Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj",
+          "size": 626,
+          "sha256": "629d1180e4c9902b71f545d3f1e1435259904c417bb0162068d7cef9c5228a17"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Publisher.wvproj",
+          "size": 633,
+          "sha256": "2993cc5babc311452f4673bb6790ba62f80abe1620fd312b5b8e140292933f4d"
+        },
+        {
+          "path": "Artifacts/Work/Project4-Publisher-Linux-cZSAb8/Publisher.wvb",
+          "size": 569364,
+          "sha256": "aa5a28656176f20f2f723a396acdd73839d0c610691c07869e9d1289a7a2ce98"
+        },
+        {
+          "path": "native-tool-cache/current-transactional-wvb-publisher-v1/windows-x64/a1775e89a436108274f9532ac8ab0911163916233b7e480daceb78c1b30fa1eb/Product.exe",
+          "size": 4872704,
+          "sha256": "a7d714b5a0afa74805a98344432bbc781314df5d28dffa1f30a1c1fc2050b956"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/Foundation-Generic-Result-Project4.wvb",
+          "size": 4302,
+          "sha256": "3b3977f202c432587f9759098c31d6ae4424ab94c73596c3f1c595e11d8dc42c"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Linux x64 current-source native publisher construction, including staging, linkage, binding and materialization",
+      "tool": "Node.js v24.19.0 with pinned native staging/linking and hosted container tools",
+      "command": "Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Publisher.wvproj <Publisher.wvb> <current analyzer/identity/emitter/identity> --symbol-checkpoint; Stage-Compiler-Wvb.cmd <Publisher.wvb> <Object> <Object.wvop>; Link-Staged-Compiler-Wvo.cmd <Object> <Object.wvop> <Image> <Image.wvli>; Build-Current-Publisher-Binding.mjs <Publisher.wvb> <Object> <Object.wvop> <Image> <Image.wvli> Linker/Reference/Consumers <Binding.wvcp>; Plan-Current-Publisher-Linkage.mjs <Binding.wvcp> <Image> <Image.wvli> Linker/Reference/Consumers <Linkage.wvcl>; Materialize-Current-Publisher-Executable.mjs <Linkage.wvcl> linux-x64 <Image> <Image.wvli> Linker/Reference/Consumers <Publisher.wvb> <Publisher.elf> <Imports.wvci>. Outputs are under Artifacts/Work/Project4-Publisher-Linux-cZSAb8.",
+      "result": "Passed",
+      "elapsedMilliseconds": 65965,
+      "inputs": [
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Publisher.wvproj",
+          "size": 633,
+          "sha256": "2993cc5babc311452f4673bb6790ba62f80abe1620fd312b5b8e140292933f4d"
+        },
+        {
+          "path": "Artifacts/Work/Project4-Publisher-Linux-cZSAb8/Publisher.wvb",
+          "size": 569364,
+          "sha256": "aa5a28656176f20f2f723a396acdd73839d0c610691c07869e9d1289a7a2ce98"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Project4-Publisher-Linux-cZSAb8/Publisher.elf",
+          "size": 4870144,
+          "sha256": "f8d488b42326b1bda13325999511a12ab6431c920952ec1a3952c459f2cf6c4a"
+        },
+        {
+          "path": "Artifacts/Work/Project4-Publisher-Linux-cZSAb8/Imports.wvci",
+          "size": 1867,
+          "sha256": "741863cf088166caa7f1f38161c2dc5950cadec7977d2f31b98be6df3701c011"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Five native publication cases with the borrowed parser WVB",
+      "tool": "Node.js v24.19.0 and hash-identified current native publisher",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-publisher <Windows publisher identified in inputs> Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 680,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 159674,
+          "sha256": "c3af2adfcfe106a8f8f46d4a096de59a1a65b88437520141ac86fe6731045c99"
+        },
+        {
+          "path": "native-tool-cache/current-transactional-wvb-publisher-v1/windows-x64/a1775e89a436108274f9532ac8ab0911163916233b7e480daceb78c1b30fa1eb/Product.exe",
+          "size": 4872704,
+          "sha256": "a7d714b5a0afa74805a98344432bbc781314df5d28dffa1f30a1c1fc2050b956"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        }
+      ]
+    },
+    {
+      "host": "Debian WSL2 x64",
+      "target": "Five native publication cases with the same borrowed parser WVB",
+      "tool": "Node.js v24.20.0 and Windows-constructed Linux x64 native publisher",
+      "command": "wsl -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-publisher /mnt/d/windvale/dev01/Artifacts/Work/Project4-Publisher-Linux-cZSAb8/Publisher.elf /mnt/d/windvale/dev01/Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 7092,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 159674,
+          "sha256": "c3af2adfcfe106a8f8f46d4a096de59a1a65b88437520141ac86fe6731045c99"
+        },
+        {
+          "path": "Artifacts/Work/Project4-Publisher-Linux-cZSAb8/Publisher.elf",
+          "size": 4870144,
+          "sha256": "f8d488b42326b1bda13325999511a12ab6431c920952ec1a3952c459f2cf6c4a"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Canonical parser fixture, including zero, maximum, overflow, absent, malformed, invalid-span and repeated immutable borrow cases; exit 42",
+      "tool": "September 8 native borrow lowerer and hosted image-mode packager profile 6; not the ordinary pinned lowerer",
+      "command": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Libraries/Package/Canonical-Package-Text.wv",
+          "size": 15085,
+          "sha256": "8d36c8b832807a8cc898c370f337112e9b9e4b3c83d405e0a8c46f57f229439d"
+        },
+        {
+          "path": "Tests/Fixtures/Package/Canonical-Package-Text-Self-Test.wv",
+          "size": 10186,
+          "sha256": "546a0456a5324ef84301ab2bdebe01abbbebd7cceb0c56c8c1e00849c4afffbe"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj",
+          "size": 634,
+          "sha256": "47caa629a69f19198a2abfb5b0ea01f99117a9f0236c41b82a389fce841dc5d6"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Candidate-Charge.exe",
+          "size": 15504896,
+          "sha256": "f585b5b8eeef2060641ebab457608631958de63118c8ad73c734973f9c0167dd"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.exe",
+          "size": 278016,
+          "sha256": "42dbe6f3c3f291e3cc4d3f7b4bf740593244aa5e0a83fb6e039382dcfecfac8f"
+        }
+      ]
+    },
+    {
+      "host": "Debian WSL2 x64",
+      "target": "The same Windows-constructed canonical parser fixture; exit 42",
+      "tool": "Linux x64 hosted image-mode package, profile 6",
+      "command": "wsl -d Debian -- /mnt/d/windvale/dev01/Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.elf",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.elf",
+          "size": 278528,
+          "sha256": "436fa0a78bf683defad6377621dfc6c354860df33b8ffb7008122c07227256c4"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This record does not establish package-parser milestone completion, release qualification, installed-toolchain promotion, or independent Linux reconstruction. The complete Project 4 launcher was run on Windows only.",
+    "The uncommitted package migration is not included in the publication implementation commit. The isolated parser fixtures and binaries are identified here so their evidence is not mistaken for a committed source-closure pass.",
+    "Package-lock compiles with ordinary Option matching, but the selected September 8 lowerer rejects its WVB. Changing its four matches to immutable borrowing caused emitter Invalid analysis / Invalid WIR rejection; those unsuccessful changes were withdrawn.",
+    "The ordinary pinned hosted packager rejects the borrowed parser WVB. Successful parser execution used the explicitly selected September 8 lowerer and image-mode packaging; that diagnostic lowerer was not promoted.",
+    "Injected failures, concurrency, directory-durability failures, indeterminate completion, full package owners, and complete cross-host qualification were not executed. Native exit statuses are preserved and publication is not automatically retried.",
+    "A native destination with an unrelated hard-link alias is not the same-resource rejection case. The launcher imposes an additional single-link output precondition; direct native tests reject aliases between input and destination.",
+    "Windows publisher cache creation took approximately 66 seconds for native staging/linkage/materialization after a cached publisher WVB. The final launcher run reused the checkpoint. Peak working-set memory was not measured; input, product and diagnostic bounds remain enforced by the tools.",
+    "Validation of these checkpoints establishes declared input identity and local behavior, not an independent trust root."
+  ],
+  "related": [
+    "Specifications/Windvale-Project.md",
+    "Specifications/Windvale-Wvb-Publication-Transaction.md",
+    "Documents/Decisions/0962-Construct-Current-Source-Wvb-Publishers.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}

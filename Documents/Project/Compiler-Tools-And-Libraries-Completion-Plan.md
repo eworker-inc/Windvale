@@ -59,12 +59,23 @@ coordinator or replay unrelated suites. This milestone does not wait for every
 Option/Result operation or installed-toolchain qualification. It does not claim
 arbitrary payload or target support when only its declared subset passes.
 
-The 15 September checkout review found an incomplete package migration, no
-current Windows compiler-cache entry, and a package plan estimated at 645 seconds
-before accounting for unknown cold construction. The Project 4 helper plan
-estimates 1,200 seconds, with a 2,400-second maximum. Neither plan was executed
-under the ten-minute development budget. These are planning observations, not
-passing execution evidence or estimates for the whole feature.
+The 15 September implementation connects Project 4 to the current-source native
+publisher. Nine focused Windows cases pass, including replacement, deterministic
+bytes, bad source-lock rejection, malformed WVB, and resource aliases. Five
+native publisher cases also pass on Debian using a Windows-constructed Linux
+executable. This is not independent Linux construction or fault-injection
+qualification; exact inputs and exclusions are in the
+[publication evidence](../Evidence/2026-09-15-Project4-Native-Publication.json).
+
+The package migration remains uncommitted. The canonical parser builds and its
+tests execute on Windows/Debian using the selected September 8 native lowerer.
+Package-lock builds with ordinary Option matching, but the selected lowerer
+rejects its WVB. Moving its four matches to immutable borrowing also exposes an
+emitter `Invalid analysis / Invalid WIR` rejection; those unsuccessful changes
+were withdrawn. Next: construct the current lowerer, close these consumer
+failures, and reconcile shared SHA-256's legacy callers before committing the
+source migration. Do not promote the diagnostic lowerer or claim full package
+delivery from the isolated parser result.
 
 #### Following milestones: complete Option/Result operations
 

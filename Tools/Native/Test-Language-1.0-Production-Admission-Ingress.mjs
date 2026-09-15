@@ -13,7 +13,7 @@ import {
     stat,
     writeFile,
 } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -3204,7 +3204,8 @@ async function Runˉproject4ˉlauncherˉcase() {
     if (!['win32', 'linux'].includes(process.platform) || process.arch !== 'x64') {
         Reject(`Unsupported Project 4 launcher host: ${process.platform}-${process.arch}.`);
     }
-    const Temporaryˉroot = await realpath(resolve(tmpdir()));
+    await mkdir(join(REPOSITORY_ROOT, 'Artifacts', 'Work'), { recursive: true });
+    const Temporaryˉroot = await realpath(join(REPOSITORY_ROOT, 'Artifacts', 'Work'));
     const Work = await mkdtemp(join(Temporaryˉroot, TEMPORARY_PREFIX));
     const Manifest = join(
         REPOSITORY_ROOT,
@@ -3218,21 +3219,24 @@ async function Runˉproject4ˉlauncherˉcase() {
         const Existing = join(Work, 'Existing.wvb');
         const Preserved = Buffer.from('preserve-project4-launcher-output', 'ascii');
         await writeFile(Existing, Preserved, { flag: 'wx' });
+        const Alias = join(Work, 'Alias.wvb');
+        await link(Existing, Alias);
         const Rejected = await Runˉbounded(
             Builder,
             [Manifest, Existing],
-            'project4-launcher-existing-output',
+            'project4-launcher-aliased-output',
             CASE_TIMEOUT_MILLISECONDS,
         );
-        Requireˉcleanˉtermination(Rejected, 'project4-launcher-existing-output');
+        Requireˉcleanˉtermination(Rejected, 'project4-launcher-aliased-output');
         Require(Rejected.code !== 0,
-            'The Project 4 launcher accepted a pre-existing output.');
+            'The Project 4 launcher accepted an aliased output.');
         Require((await readFile(Existing)).equals(Preserved),
             'The Project 4 launcher changed a preserved output.');
-        Require(Rejected.error.toString('utf8').includes('must be a new .wvb path'),
-            'The Project 4 launcher missed the helper new-output boundary.');
+        Require(Rejected.error.toString('utf8').includes('unaliased ordinary file'),
+            'The Project 4 launcher missed the aliased-output boundary.');
+        await rm(Alias);
         process.stdout.write(
-            'PASS project4 launcher case=existing-output item=1/2\n',
+            'PASS project4 launcher case=aliased-output item=1/4\n',
         );
 
         const Output = join(Work, 'Foundation-Generic-Result-Project4.wvb');
@@ -3253,6 +3257,8 @@ async function Runˉproject4ˉlauncherˉcase() {
             Built.error.toString('utf8'));
         const Diagnostic = Built.output.toString('utf8');
         Require(Diagnostic.includes('project4 build compiler-cache status=') &&
+            Diagnostic.includes('current publisher cache status=') &&
+            Diagnostic.includes('phase=project4-native-publication') &&
             Diagnostic.includes('project4 build status=Published '),
         'The Project 4 launcher did not report authenticated build publication.');
         const Information = await lstat(Output);
@@ -3266,22 +3272,102 @@ async function Runˉproject4ˉlauncherˉcase() {
             bytes: Bytes.length,
             sha256: Sha256(Bytes),
         };
+        const Publisherˉkey = /current publisher cache status=\w+ key=([0-9a-f]{64}) /u.exec(Diagnostic);
+        Require(Publisherˉkey !== null, 'The launcher omitted its publisher identity.');
+        const Cacheˉroot = process.env.WINDVALE_NATIVE_CACHE_ROOT ?? (WINDOWS
+            ? join(process.env.LOCALAPPDATA, 'Windvale', 'Native-Tool-Cache')
+            : join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'),
+                'windvale', 'native-tool-cache'));
+        await Runˉproject4ˉpublisherˉcases(join(Cacheˉroot,
+            'current-transactional-wvb-publisher-v1', WINDOWS ? 'windows-x64' : 'linux-x64',
+            Publisherˉkey[1], `Product.${NATIVE_APPLICATION_EXTENSION}`), Output);
         process.stdout.write(
-            'PASS project4 launcher case=maintained-build item=2/2 ' +
+            'PASS project4 launcher case=maintained-build item=2/4 ' +
             `wvb-bytes=${Evidence.bytes} wvb-sha256=${Evidence.sha256}\n`,
         );
+        const Replacement = await Runˉbounded(Builder, [Manifest, Existing],
+            'project4-launcher-replace', PROJECT4_LAUNCHER_BUILD_TIMEOUT_MILLISECONDS,
+            process.env, true, MAXIMUM_PROJECT4_LAUNCHER_OUTPUT_BYTES);
+        Requireˉcleanˉtermination(Replacement, 'project4-launcher-replace');
+        Require(Replacement.code === 0 && Replacement.error.length === 0 &&
+            Replacement.output.toString('utf8').includes('current publisher cache status=Hit'),
+        'The Project 4 replacement did not reuse the authenticated native publisher.');
+        Require((await readFile(Existing)).equals(Bytes),
+            'Fresh and replacement builds did not publish identical bytes.');
+        process.stdout.write('PASS project4 launcher case=deterministic-replacement item=3/4\n');
+
+        const Invalid = join(Work, 'Invalid.wvproj');
+        const Text = await readFile(Manifest, 'utf8');
+        await writeFile(Invalid, Text.replace(/source-input-lock-sha256 [0-9a-f]{64}/u,
+            `source-input-lock-sha256 ${'0'.repeat(64)}`), { flag: 'wx' });
+        const Failed = await Runˉbounded(Builder, [Invalid, Existing],
+            'project4-launcher-rejected-admission', PROJECT4_LAUNCHER_BUILD_TIMEOUT_MILLISECONDS,
+            process.env, true, MAXIMUM_PROJECT4_LAUNCHER_OUTPUT_BYTES);
+        Requireˉcleanˉtermination(Failed, 'project4-launcher-rejected-admission');
+        Require(Failed.code !== 0 &&
+            (Failed.output.toString('utf8') + Failed.error.toString('utf8')).includes(
+                'source admission status=Rejected') &&
+            !Failed.output.toString('utf8').includes('phase=project4-native-publication'),
+        'Rejected source admission reached native publication.');
+        Require((await readFile(Existing)).equals(Bytes),
+            'Rejected source admission changed the existing output.');
+        process.stdout.write('PASS project4 launcher case=rejected-admission-preserves-output item=4/4\n');
     } finally {
         await Removeˉwork(Work, Temporaryˉroot);
     }
     process.stdout.write(
-        'project4 launcher status=Passed cases=2 manifest=' +
+        'project4 launcher status=Passed cases=9 manifest=' +
         'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj ' +
         `wvb-bytes=${Evidence.bytes} wvb-sha256=${Evidence.sha256} ` +
         'qualification=false\n',
     );
 }
 
+async function Runˉproject4ˉpublisherˉcases(Publisher, Candidate) {
+    const Product = await lstat(Publisher);
+    const Input = await lstat(Candidate);
+    Require(Product.isFile() && !Product.isSymbolicLink() && Product.size > 0 &&
+        Product.size <= 67_108_864 && Input.isFile() && !Input.isSymbolicLink() &&
+        Input.size > 16 && Input.size <= 16_777_216, 'Invalid publisher test inputs.');
+    const Bytes = await readFile(Candidate);
+    const Root = await realpath(resolve(tmpdir()));
+    const Work = await mkdtemp(join(Root, TEMPORARY_PREFIX));
+    let Count = 0;
+    try {
+        const Source = join(Work, 'Source.wvb');
+        const Output = join(Work, 'Output.wvb');
+        await writeFile(Source, Bytes, { flag: 'wx' });
+        const Case = async (Name, From, To, Expectedˉsuccess, Expectedˉbytes) => {
+            const Result = await Runˉbounded(Publisher, [From, To], Name, CASE_TIMEOUT_MILLISECONDS);
+            Requireˉcleanˉtermination(Result, Name);
+            Require(Expectedˉsuccess ? Result.code === 0 && Result.error.length === 0 &&
+                Result.output.toString('utf8').includes('publication status=Complete') : Result.code !== 0,
+            `Unexpected native publication result: ${Name}, exit=${Result.code}.`);
+            Require((await readFile(To)).equals(Expectedˉbytes), `Wrong destination bytes: ${Name}.`);
+            process.stdout.write(`PASS project4 native publisher case=${Name} item=${++Count}/5\n`);
+        };
+        await Case('fresh', Source, Output, true, Bytes);
+        await writeFile(Output, Buffer.from('previous-output'));
+        await Case('replace', Source, Output, true, Bytes);
+        const Invalid = join(Work, 'Invalid.wvb');
+        await writeFile(Invalid, Bytes.subarray(0, 16), { flag: 'wx' });
+        await Case('malformed-preserves-output', Invalid, Output, false, Bytes);
+        const Alias = join(Work, 'Alias.wvb');
+        await link(Source, Alias);
+        await Case('aliased-input-destination', Source, Alias, false, Bytes);
+        Require((await readFile(Alias)).equals(Bytes), 'Publication changed the destination alias.');
+        await Case('same-resource', Source, Source, false, Bytes);
+    } finally {
+        await Removeˉwork(Work, Root);
+    }
+    process.stdout.write(`project4 native publisher status=Passed cases=${Count} host=${process.platform} qualification=false\n`);
+}
+
 async function Main() {
+    if (process.argv.length === 5 && process.argv[2] === '--project4-publisher') {
+        await Runˉproject4ˉpublisherˉcases(resolve(process.argv[3]), resolve(process.argv[4]));
+        return;
+    }
     if (process.argv.length === 3 && process.argv[2] === '--project4-launcher') {
         await Runˉproject4ˉlauncherˉcase();
         return;
@@ -3308,7 +3394,7 @@ async function Main() {
         return;
     }
     if (process.argv.length !== 2) {
-        Reject('Usage: Test-Language-1.0-Production-Admission-Ingress.mjs [--project4-launcher]');
+        Reject('Usage: Test-Language-1.0-Production-Admission-Ingress.mjs [--project4-launcher | --project4-publisher <publisher> <candidate.wvb>]');
     }
     const Buildˉmode = Getˉproductˉbuildˉmode();
     await Verifyˉcontracts();
