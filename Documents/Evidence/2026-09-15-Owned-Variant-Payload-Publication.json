@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-owned-variant-payload-publication",
+  "date": "2026-09-15",
+  "subject": "Owned record transfer into Option and Result variants",
+  "claim": "The emitter transfers owned variant-construction operands instead of copying them. Four source cases publish deterministic, byte-identical WVB on Windows and Debian and pass the unchanged complete verifier. Three copied-payload mutations reject. Only the Copy control executes successfully; owned-payload execution remains unsupported.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 69ae7472432a96dd8bd1d0d0a04f88b5637d0622; exact changed compiler and fixture inputs below. The emitter was constructed with that commit's authenticated native compiler, not a promoted bootstrap pin."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Four publication scenarios, three copied-payload mutations at both verifier and runner boundaries, one successful Copy execution, and three unsupported owned executions",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <baseline-admitter> <baseline-authenticator> <baseline-analyzer> <updated-emitter> Projects/Targets/Windows-X64-No-Foreign.wvtd <baseline-complete-verifier> <baseline-runner>",
+      "result": "Passed",
+      "elapsedMilliseconds": 6582,
+      "inputs": [
+        { "path": "Compiler/Windvale/Source-Wvb-Core.wv", "size": 306009, "sha256": "ff323b84f3a3632ee7fe8f23ad24afbf85d88a6e1290dd0f1f48b5cc0ced0f7d" },
+        { "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv", "size": 229524, "sha256": "2daa09aa561f8f7c777c14f7a4787f42b4eb616d152658dfec1b2b2750e78acd" },
+        { "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Vector-Executable.wv", "size": 1088, "sha256": "e72d956dcc51fd6af60dbea01c7d5dba59fdde511148422b6d4d3d0f367c25ea" },
+        { "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs", "size": 156147, "sha256": "fc79c505426957b61702c1d6dc02074382a525403ac19985ee11b7899cc4725c" },
+        { "path": "Emitter.wvb", "size": 1595413, "sha256": "ebb37e6097ca24d871b5fb4ff4a1eaa5e8f25fa052a8aed39ce3c801594d9cbc" },
+        { "path": "Emitter.exe", "size": 32663040, "sha256": "29e68769c9b0de4e053bca059e21d5098713b91fead112fbfadf9ce0a778223a" }
+      ],
+      "outputs": [
+        { "path": "option-record-vector-a.wvb", "size": 1500, "sha256": "0231439b52541b2b1208197f476c3198f42f0b43559755feb70b72d4e522d4c3" },
+        { "path": "result-valid-record-vector-a.wvb", "size": 1564, "sha256": "177661c589f3355d2e105ffb91b937fbd1e562fd05174459459fa7d3e0425115" },
+        { "path": "result-failure-record-vector-a.wvb", "size": 1564, "sha256": "c7c72c0af452be021ad157d44cd09d91f64e5fcc0af7e14222fbd3513d20efff" },
+        { "path": "option-record-copy-a.wvb", "size": 1168, "sha256": "e78861b0413f1879c50d03bb8239909de924c61b6b24b998c4b3c1c3097b83cb" }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "The same four publication scenarios and rejection/runtime boundaries; all four WVB digests match Windows",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "timeout 60s node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <baseline-linux-admitter> <baseline-linux-authenticator> <baseline-linux-analyzer> <updated-linux-emitter> Projects/Targets/Windows-X64-No-Foreign.wvtd <baseline-linux-complete-verifier> <baseline-linux-runner>",
+      "result": "Passed",
+      "elapsedMilliseconds": 10389,
+      "inputs": [
+        { "path": "Emitter.elf", "size": 32661504, "sha256": "3d8631798ff45d09e40929e4fcc29c03610c92e4315a2e7af8592421082ab930" }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "Passed describes the publication checkpoint, not the owned-payload execution milestone. Each owned program reports Unsupported at phase=execution; the Copy control returns 42.",
+    "Before the fix, the nested owned-record source published but failed the complete verifier at phase=typed-execution. Restoring the copying opcode reproduces that exact verifier rejection; the runner refuses those mutated modules at phase=envelope.",
+    "The Windows-constructed updated emitter WVB and unchanged runner WVB were packaged for both hosts. Debian executed native Linux producers but did not independently reconstruct the updated emitter. Both compilation runs deliberately used the same target descriptor to compare output bytes.",
+    "The maintained package consumers use shared immutable bytes, not move-owned Vectors. No maintained real consumer was migrated in this checkpoint. Repeated allocation/reclamation, general lifetime composition, direct Vector extraction, borrowed Vector helper observations, arbitrary owned shapes, exclusive borrowing, take, and mapping remain pending.",
+    "The new selection requires explicit preconstructed products. It is not a complete default owner run, installed toolchain promotion, or whole-repository qualification. Broader reconstruction, native lowerer, and runtime suites were not run because the implementation changes only variant operand transfer.",
+    "Documentation verification, generated-reader checks, JavaScript syntax, and git diff --check passed. Existing unrelated untracked Project4 self-test files were preserved."
+  ],
+  "related": [
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}

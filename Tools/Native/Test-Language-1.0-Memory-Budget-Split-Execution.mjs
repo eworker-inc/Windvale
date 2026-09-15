@@ -70,6 +70,8 @@ const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
 const Foundationˉsourceˉonly = process.argv.length === 8 &&
     process.argv[2] === '--foundation-source-ownership';
+const Foundationˉownedˉonly = process.argv.length === 10 &&
+    process.argv[2] === '--foundation-owned-payloads';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-borrow-runtime';
 const Foundationˉenumˉonly = process.argv.length === 4 &&
@@ -89,7 +91,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-owners';
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
-const Developmentˉonly = Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
+const Developmentˉonly = Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length >= 5) {
@@ -120,6 +122,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-enum-metadata <text-fixture.wvb>|--foundation-native-execution <lowerer> <text-fixture.wvb>|' +
         '--foundation-native-staging <producer> <text-fixture.wvb> [--admitter <checker>]|' +
         '--foundation-source-ownership <admitter> <validator> <analyzer> <emitter> <target.wvtd>|' +
+        '--foundation-owned-payloads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -194,7 +197,11 @@ let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
 try {
-    if (Foundationˉsourceˉonly) {
+    if (Foundationˉownedˉonly) {
+        Validator = path.resolve(process.argv[4]);
+        Targetˉdescriptor = path.resolve(process.argv[7]);
+        await Verifyˉfoundationˉownedˉpayloads(...process.argv.slice(3).map(Value => path.resolve(Value)));
+    } else if (Foundationˉsourceˉonly) {
         Validator = path.resolve(process.argv[4]);
         Targetˉdescriptor = path.resolve(process.argv[7]);
         await Verifyˉfoundationˉsourceˉownership(path.resolve(process.argv[3]),
@@ -232,7 +239,7 @@ try {
     }
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
-if (Developmentˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
+if (Developmentˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
     const Elapsed = Date.now() - Started;
     if (Elapsed > Maximumˉrunˉmilliseconds) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
@@ -1564,6 +1571,114 @@ async function Compileˉfoundationˉvalueˉborrow(
         ),
         Output,
     ]);
+}
+
+async function Verifyˉfoundationˉownedˉpayloads(Admitter, Authenticator, Analyzer, Emitter, Target, Verifier, Runner) {
+    // Explicit products keep cold compiler/runner construction out of this selection.
+    for (const Product of [Admitter, Authenticator, Analyzer, Emitter, Verifier, Runner]) {
+        Requireˉordinaryˉfile(Product, 134_217_728, 'owned payload predecessor');
+    }
+    const Fixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Vector-Executable.wv');
+    Requireˉordinaryˉfile(Fixture, 8192, 'owned payload fixture');
+    const Source = readFileSync(Fixture, 'utf8');
+    function Replace(Source, Before, After) {
+        if (Source.split(Before).length !== 2) Reject('Owned payload mutation is ambiguous.');
+        return Source.replace(Before, After);
+    }
+    function Resultˉsource(Failure) {
+        let Text = Replace(Source, 'Option.Option<Payload<T> >',
+            Failure ? 'Result.Result<u32, Payload<T> >' : 'Result.Result<Payload<T>, u32>');
+        Text = Replace(Text, 'Option.Option.Present<Payload<T> >', Failure
+            ? 'Result.Result.Failure<u32, Payload<T> >' : 'Result.Result.Valid<Payload<T>, u32>');
+        if (Failure) Text = Replace(Text, 'Value: Payload<T>', 'Error: Payload<T>');
+        return Replace(Text, 'Option.Borrow(borrow Owner)',
+            Failure ? 'Result.Borrowˉfailure(borrow Owner)' : 'Result.Borrowˉvalid(borrow Owner)');
+    }
+    const Cases = [
+        ['option-record-vector', Source, true],
+        ['result-valid-record-vector', Resultˉsource(false), true],
+        ['result-failure-record-vector', Resultˉsource(true), true],
+        ['option-record-copy', Source.slice(0, Source.indexOf('export fn Main(')) +
+            'export fn Main() -> i32 { return Observe(7); }\n', false],
+    ];
+    let Completed = 0;
+    for (const [Label, Text, Owned] of Cases) {
+        const Input = path.join(Work, Label + '.wv');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        let First = null;
+        for (const Generation of ['a', 'b']) {
+            const Output = path.join(Work, Label + '-' + Generation + '.wvb');
+            await Runˉnode(Label + '-' + Generation, 'Run-Split-Compiler.mjs', [
+                Admitter, Authenticator, Analyzer, Emitter,
+                '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+                '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
+                Input, ...['Collections/Collections.wv', 'Memory/Memory.wv',
+                    'Values/Option.wv', 'Values/Result.wv'].map(Name =>
+                    path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output,
+            ]);
+            const Bytes = readFileSync(Output);
+            if (Bytes.readUInt16LE(6) !== 39 || Bytes.length > 8192) {
+                Reject('Owned payload fixture has an unexpected version or size.');
+            }
+            const Sections = Parseˉsections(Bytes);
+            const Functions = Parseˉfunctionˉentries(Bytes, Sections[4]);
+            if (Functions.length < 2) Reject('Owned payload helper was not emitted.');
+            if (First !== null && !First.equals(Bytes)) Reject('Owned payload publication is not deterministic.');
+            First = Bytes;
+            if (Generation === 'a') {
+                const Verified = await Run(Label + '-verify', Verifier, [Output]);
+                if (Normalize(Verified) !== 'wvb status=Valid profile=compiler-aligned\n') {
+                    Reject('Owned payload verifier output differs.');
+                }
+                if (Owned) {
+                    // Publication is the current checkpoint; do not silently open the runtime profile.
+                    const Execution = await Runˉdevelopmentˉcommand(Runner, [Output],
+                        Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+                    if (Execution.Code !== 1 || Execution.Output !== '' || Normalize(Execution.Error) !==
+                        'wvb run status=Unsupported profile=portable-main-i32 phase=execution\n') {
+                        Reject(`Owned payload runtime boundary changed; qualify execution explicitly: ${Execution.Output}${Execution.Error}`);
+                    }
+                    process.stdout.write(`PENDING owned payload execution case=${Label} status=Unsupported\n`);
+                } else {
+                    const Executed = await Run(Label + '-execute', Runner, [Output]);
+                    if (Normalize(Executed) !== 'Result: 42\n') Reject('Copy payload execution result differs.');
+                }
+                const Transfers = [];
+                for (const Function of Functions) {
+                    const Begin = Sections[5].payload + Function.codeOffset;
+                    const End = Begin + Function.codeLength;
+                    for (let Cursor = Begin; Cursor < End;) {
+                        const Width = Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+                        if (Width < 1 || Cursor + Width > End) Reject('Invalid fixture instruction extent.');
+                        if (Bytes[Cursor] === 205 && Cursor + 5 < End && Bytes[Cursor + 5] === 151) {
+                            Transfers.push(Cursor);
+                        }
+                        Cursor += Width;
+                    }
+                }
+                if (Transfers.length !== (Owned ? 1 : 0)) Reject('Variant payload transfer disagrees with its ownership.');
+                if (Owned) {
+                    const Copied = Buffer.from(Bytes);
+                    Copied[Transfers[0]] = 4;
+                    const Broken = path.join(Work, Label + '-copied.wvb');
+                    writeFileSync(Broken, Copied, { flag: 'wx' });
+                    for (const [Tool, Diagnostic] of [
+                        [Verifier, 'wvb status=Invalid phase=typed-execution\n'],
+                        [Runner, 'wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n'],
+                    ]) {
+                        const Rejected = await Runˉdevelopmentˉcommand(Tool, [Broken],
+                            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+                        if (Rejected.Code !== 1 || Rejected.Output !== '' || Normalize(Rejected.Error) !== Diagnostic) {
+                            Reject(`Owned payload copy did not reject before execution: ${Rejected.Output}${Rejected.Error}`);
+                        }
+                    }
+                }
+            }
+        }
+        Completed += 1;
+        process.stdout.write(`PASS owned payload item=${Completed}/${Cases.length} case=${Label} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
+    }
+    process.stdout.write(`native Foundation owned payloads publication=Passed cases=${Completed} owned-execution=Pending qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 
 async function Verifyˉfoundationˉsourceˉownership(Admitter, Analyzer, Emitter) {
@@ -2946,6 +3061,7 @@ function Requireˉnativeˉfunctionˉlimits(Bytes) {
 
 function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {
     const Opcode = Bytes[Cursor];
+    if (Opcode === 225) return 13;
     if (Opcode === 192) return Bytes[Cursor + 2] === 0 ? 5 : 3;
     if (Opcode === 193) return Bytes[Cursor + 1] === 0 ? 6 : 2;
     if (Opcode === 194) {
@@ -3122,7 +3238,15 @@ function Readˉstring(Bytes, Offset) {
 }
 
 function Readˉshape(Bytes, Offset) {
+    if (Offset >= Bytes.length) Reject('Truncated WVB shape.');
     const Shape = Bytes[Offset];
+    if (Shape === 37) {
+        if (Offset + 1 >= Bytes.length || Bytes[Offset + 1] === 37) {
+            Reject('Invalid borrowed payload wrapper.');
+        }
+        const Inner = Readˉshape(Bytes, Offset + 1);
+        return { shape: Shape, shapeOffset: Offset, typeIndex: null, inner: Inner, end: Inner.end };
+    }
     const Nominal = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35]
         .includes(Shape);
     return {

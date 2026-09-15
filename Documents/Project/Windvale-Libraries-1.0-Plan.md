@@ -33,17 +33,16 @@ The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Librarie
 coordinates this library sequence with compiler/runtime support, installed tools,
 real consumers, and testing at substantial chunk boundaries.
 
-The active result is the maintained package parser using canonical Option/Result
-through the ordinary project build, safe publication, and Windows/Debian
-execution. The [delivery gates](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)
-name its source closure, build/publication, consumer behavior, and evidence work.
-Bounded immutable-borrow verification and interpreter/native execution already
-have selected paired-host evidence; they must not be reported as wholly missing.
-Consumer migration and ordinary publication integration remain unfinished.
+The maintained package parser now uses canonical `Option<u64>` and immutable
+borrowing through ordinary project build, safe publication, and Windows/Debian
+execution. Its [completed delivery gates](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)
+cover the selected source closure, publication, and consumer behavior. Installed
+promotion and complete repository qualification remain separate.
 
-Wider owned payloads, exclusive borrowing, take, and mapping have separate
-following milestones. Completing all of them is not a prerequisite for closing
-the declared immutable-borrow consumer result. Preserve exact ownership, failure
+Wider owned payloads are the next active milestone; exclusive borrowing, take,
+and mapping follow separately. The immediate prerequisite is executable
+owned-aggregate composition: existing component evidence and an uncalled owned
+borrow helper did not establish that source-generated path. Preserve exact ownership, failure
 behavior, authority, and target limits. The broader library catalog remains a
 draft; this delivery split does not accept unreviewed API signatures or weaken
 the complete Libraries 1.0 gate.

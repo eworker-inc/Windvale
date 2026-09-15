@@ -4653,7 +4653,7 @@ Temporaryˉmapping
 );
 }
 }
-if (Operation == 17u32 || Operation == 19u32 ||
+if (Operation == 17u32 || Operation == 19u32 || Operation == 65u32 ||
 Operation == 165u32) &&
 (Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
 Input, Scan, Symbols, Bindings, Wir, Operandˉshape, Orders

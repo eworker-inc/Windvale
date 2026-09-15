@@ -1,0 +1,36 @@
+#!wv/1 en@1
+module Foundationˉvalueˉborrowˉvectorˉexecutable;
+profile core;
+platform linux, windows;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+
+record Payload<T> {
+    Values: T;
+    Marker: i32;
+}
+
+fn Observe<T>(Values: T) -> i32 {
+    let Owner: Option.Option<Payload<T> > = Option.Option.Present<Payload<T> > {
+        Value: Payload<T> { Values: Values, Marker: 42 }
+    };
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Item } { return Item.Marker; }
+        case Option.Option.Absent { return 2; }
+    }
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Owner: Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Owner {
+        case Result.Result.Valid { Value: Values } {
+            Observe(Values)
+        }
+        case Result.Result.Failure { Error: Failure } { 1 }
+    };
+}

@@ -4838,7 +4838,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
                 );
             }
         }
-        if (Operation == 17u32 || Operation == 19u32 ||
+        // Variant construction transfers owned payloads just like records and arrays.
+        if (Operation == 17u32 || Operation == 19u32 || Operation == 65u32 ||
                 Operation == 165u32) &&
             (Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
                 Input, Scan, Symbols, Bindings, Wir, Operandˉshape, Orders

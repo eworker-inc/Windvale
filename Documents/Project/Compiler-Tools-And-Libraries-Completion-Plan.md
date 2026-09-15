@@ -111,6 +111,24 @@ Track these as separate deliverables, not additions to the active consumer gate:
 3. Take with exact ownership transfer and post-take owner state on every path.
 4. Mapping with payload/callback ownership, failure, and bounded resource use.
 
+The owned-payload audit found a prerequisite compiler defect: constructing a
+variant from an owned record used a copying load instead of an ownership
+transfer. The emitter now selects the existing transfer instruction for variant
+construction, as it already does for records and arrays. The focused regression
+source is `Foundation-Value-Borrow-Vector-Executable.wv`; the existing
+`language-1-memory-budget-split-execution` owner has an explicit
+`--foundation-owned-payloads` selection with supplied compiler, verifier, and
+runner products, avoiding hidden cold construction. Its declared shapes are
+Option and either Result side containing a generic record that owns an
+`i32` Vector, plus a Copy-record control. This prerequisite does not close the
+named-consumer milestone, direct Vector extraction, borrowed Vector helper
+observations, arbitrary payload composition, or installed/native promotion.
+The [paired-host publication checkpoint](../Evidence/2026-09-15-Owned-Variant-Payload-Publication.json)
+passes complete verification and copied-payload rejection for those shapes.
+The Copy control executes; the three owned programs still report unsupported
+execution. Runtime integration and allocation/reclamation evidence are the next
+gate before selecting and migrating a maintained owned-resource consumer.
+
 Before starting each, enumerate its finite accepted public operations, existing
 implementation, missing implementation, consumer, targets, and focused verifier.
 An operation is complete only when those rows have evidence on its claimed hosts.
@@ -238,6 +256,8 @@ from actual delivery time, unresolved API rows, and cold verification costs.
 - Report implemented, verified, deferred, elapsed time, and the next gate
   separately. This planning change needs documentation checks only.
 
-The active result is chunk 1's package-parser milestone. Status updates name its
-unfinished gate and next executable result, rather than repeating "Option/Result
-pending" or estimating a percentage for the entire draft Libraries 1.0 catalog.
+The package-parser milestone is delivered. Chunk 1 now targets wider owned
+payloads, beginning with executable composition and its ownership regressions.
+Status updates name the exact remaining consumer or execution gate, rather than
+repeating "Option/Result pending" or estimating a percentage for the entire
+draft Libraries 1.0 catalog.
