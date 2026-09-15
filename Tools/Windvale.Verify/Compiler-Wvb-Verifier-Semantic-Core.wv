@@ -63,7 +63,7 @@ export fn Aˉidentifier(Input: bytes) -> bytes {
 
 fn Bˉeffectiveˉminor(Input: bytes) -> u32 {
     let Declared: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
-    if Declared == 38u32 || Declared == 39u32 { return 37u32; }
+    if Declared == 38u32 || Declared == 39u32 || Declared == 40u32 { return 37u32; }
     return Declared;
 }
 
@@ -133,7 +133,7 @@ fn Bˉfunctionˉshapesˉend(
         var Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Next));
         var Width: u32 = 1u32;
         if Raw == 37u32 {
-            if Declaredˉminor != 39u32 || End - Next < 2u32 { return 0u32; }
+            if (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) || End - Next < 2u32 { return 0u32; }
             Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Next + 1u32));
             if !Bˉborrowˉpayloadˉkind(Raw) { return 0u32; }
             Width = 2u32;
@@ -502,7 +502,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
         Declaredˉminor != 33u32 && Declaredˉminor != 34u32 &&
         Declaredˉminor != 35u32 && Declaredˉminor != 36u32 &&
         Declaredˉminor != 37u32 && Declaredˉminor != 38u32 &&
-        Declaredˉminor != 39u32 {
+        (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) {
         return Invalid;
     }
     let Minor: u32 = Bˉeffectiveˉminor(Input);
@@ -939,12 +939,16 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     Width = 13u32;
                 }
                 if Raw == 224u32 {
-                    if Declaredˉminor != 38u32 && Declaredˉminor != 39u32 { return Invalid; }
+                    if Declaredˉminor != 38u32 && (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) { return Invalid; }
                     Width = 13u32;
                 }
                 if Raw == 225u32 {
-                    if Declaredˉminor != 39u32 { return Invalid; }
+                    if (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) { return Invalid; }
                     Width = 13u32;
+                }
+                if Raw == 226u32 {
+                    if Declaredˉminor != 40u32 { return Invalid; }
+                    Width = 9u32;
                 }
                 if Width == 0u32 { return Invalid; }
                 if Width > Payloadˉend - Payloadˉcursor { return Invalid; }
@@ -1454,7 +1458,7 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
         Bytesˉreadˉu32ˉlittle(Input, Functionsˉpayload);
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typesˉpayload);
     var Foundationˉtypes: bytes = Invalid;
-    if Declaredˉminor == 39u32 {
+    if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32) {
         Foundationˉtypes = Executableˉverifier.Hˉfoundationˉtypes(
             Input, Typesˉpayload, Typeˉcount);
         if Bytesˉlength(Foundationˉtypes) != Typeˉcount * 11u32 { return Invalid; }
@@ -1550,7 +1554,7 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                 Rawˉshape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
                 Cursor = Cursor + 1u32;
                 if Rawˉshape == 37u32 {
-                    if Declaredˉminor != 39u32 || Shapeˉstage == 1u32 {
+                    if (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) || Shapeˉstage == 1u32 {
                         return Invalid;
                     }
                     Rawˉshape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
@@ -1590,7 +1594,7 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                     return Invalid;
                 }
                 if Rawˉshape == 34u32 {
-                    if Declaredˉminor == 39u32 && Bytesˉreadˉu8(Input, 20u32) == 1u8 {
+                    if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32) && Bytesˉreadˉu8(Input, 20u32) == 1u8 {
                         return Invalid;
                     }
                     if Minor != 29u32 && Minor != 30u32 && Minor != 31u32 &&
@@ -1711,7 +1715,7 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                     if Rawˉshape == 28u32 || Rawˉshape == 29u32 ||
                         Rawˉshape == 30u32 {
                         var Foundationˉview: bool = false;
-                        if Declaredˉminor == 39u32 && Rawˉshape == 29u32 &&
+                        if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32) && Rawˉshape == 29u32 &&
                             Shapeˉstage == 2u32 {
                             Foundationˉview = Bytesˉreadˉu8(
                                 Foundationˉtypes, Nominalˉindex * 11u32) == 1u8;
@@ -2440,7 +2444,7 @@ fn Fˉforeignˉcallˉrelations(
     let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Instruction + 9u32
     );
-    if (Declaredˉminor != 38u32 && Declaredˉminor != 39u32) || Binding != 1u32 ||
+    if (Declaredˉminor != 38u32 && (Declaredˉminor != 39u32 && Declaredˉminor != 40u32)) || Binding != 1u32 ||
         Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount ||
         !Executableˉverifier.Hˉunsafeˉscratchˉisˉexact(
             Input, Types, Typeˉcount, Pointerˉtype
@@ -2530,7 +2534,7 @@ fn Fˉboundaryˉinstructionˉwidth(Opcode: u32) -> u32 {
         Opcode == 215u32 || Opcode == 218u32 {
         return 9u32;
     }
-    if Opcode == 221u32 { return 9u32; }
+    if Opcode == 221u32 || Opcode == 226u32 { return 9u32; }
     if Opcode == 209u32 || Opcode == 213u32 || Opcode == 216u32 ||
         Opcode == 217u32 || Opcode == 220u32 || Opcode == 222u32 ||
         Opcode == 223u32 || Opcode == 224u32 || Opcode == 225u32 {
@@ -2790,7 +2794,7 @@ fn Fˉexportsˉareˉvalid(
 }
 
 export fn Fˉinstructionˉauthority(Declaredˉminor: u32, Profile: u8, Opcode: u32) -> bool {
-    if Declaredˉminor != 39u32 { return true; }
+    if (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) { return true; }
     if Opcode >= 220u32 && Opcode <= 224u32 { return Profile == 3u8; }
     if Opcode == 210u32 || (Opcode >= 214u32 && Opcode <= 219u32) {
         return Profile == 2u8 || Profile == 3u8;
@@ -2829,7 +2833,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typesˉpayload);
 
     var Foundationˉtypes: bytes = Invalid;
-    if Declaredˉminor == 39u32 {
+    if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32) {
         Foundationˉtypes = Executableˉverifier.Hˉfoundationˉtypes(
             Input, Typesˉpayload, Typeˉcount);
         if Bytesˉlength(Foundationˉtypes) != Typeˉcount * 11u32 { return Invalid; }
@@ -2920,6 +2924,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     var Unsafeˉwriteˉpointerˉinstructions: u32 = 0u32;
     var Foreignˉcallˉinstructions: u32 = 0u32;
     var Foundationˉborrowˉinstructions: u32 = 0u32;
+    var Vectorˉparameterˉreads: u32 = 0u32;
     var Unsafeˉscratchˉabiˉrelations: bytes =
         Bytesˉslice(Input, 0u32, 0u32);
     var Unsafeˉscratchˉlengthˉrelations: bytes =
@@ -2967,7 +2972,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
         Functionˉcursor = Functionˉcursor + 12u32;
         Localˉslots = Parameterˉcount + Localˉcount;
         var Functionˉshapes: bytes = Invalid;
-        if Declaredˉminor == 39u32 {
+        if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32) {
             Functionˉshapes = Typedˉdirectories.Hˉlocalˉshapes(Input,
                 Functionˉparameterˉtypes, Parameterˉcount,
                 Functionˉlocalˉtypes, Localˉcount);
@@ -2979,27 +2984,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             Opcode = U32ˉfromˉu8(
                 Bytesˉreadˉu8(Input, Codeˉpayload + Codeˉoffset + Cursor)
             );
-            Width = 1u32;
-            if Opcode == 1u32 { Width = 5u32; }
-            if Opcode == 2u32 { Width = 2u32; }
-            if Opcode >= 3u32 {
-                if Opcode <= 7u32 { Width = 5u32; }
-            }
-            if Opcode == 8u32 { Width = 2u32; }
-            if Opcode == 9u32 { Width = 5u32; }
-            if Opcode == 10u32 { Width = 5u32; }
-            if Opcode == 48u32 { Width = 5u32; }
-            if Opcode == 49u32 { Width = 5u32; }
-            if Opcode == 64u32 { Width = 5u32; }
-            if Opcode == 65u32 { Width = 5u32; }
-            if Opcode == 104u32 { Width = 5u32; }
-            if Opcode == 105u32 { Width = 5u32; }
-            if Opcode == 106u32 { Width = 9u32; }
-            if Opcode == 128u32 { Width = 9u32; }
-            if Opcode == 129u32 { Width = 9u32; }
-            if Opcode >= 151u32 {
-                if Opcode <= 154u32 { Width = 9u32; }
-            }
+            Width = Fˉboundaryˉinstructionˉwidth(Opcode);
             if Opcode == 192u32 {
                 Width = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -3029,30 +3014,6 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                     }
                 }
             }
-            if Opcode == 196u32 { Width = 9u32; }
-            if Opcode == 197u32 { Width = 5u32; }
-            if Opcode == 199u32 || Opcode == 200u32 ||
-                (Opcode >= 202u32 && Opcode <= 205u32) {
-                Width = 5u32;
-            }
-            if Opcode == 201u32 { Width = 9u32; }
-            if Opcode == 206u32 { Width = 9u32; }
-            if Opcode == 207u32 { Width = 9u32; }
-            if Opcode == 208u32 { Width = 9u32; }
-            if Opcode == 209u32 { Width = 13u32; }
-            if Opcode == 210u32 { Width = 5u32; }
-            if Opcode == 211u32 { Width = 9u32; }
-            if Opcode == 212u32 { Width = 5u32; }
-            if Opcode == 213u32 { Width = 13u32; }
-            if Opcode >= 214u32 && Opcode <= 218u32 { Width = 9u32; }
-            if Opcode == 216u32 || Opcode == 217u32 { Width = 13u32; }
-            if Opcode == 219u32 { Width = 6u32; }
-            if Opcode == 220u32 { Width = 13u32; }
-            if Opcode == 221u32 { Width = 9u32; }
-            if Opcode == 222u32 { Width = 13u32; }
-            if Opcode == 223u32 { Width = 13u32; }
-            if Opcode == 224u32 { Width = 13u32; }
-            if Opcode == 225u32 { Width = 13u32; }
             Operand = 0u32;
             if Width >= 5u32 {
                 Operand = Bytesˉreadˉu32ˉlittle(
@@ -3066,6 +3027,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 (Opcode >= 214u32 && Opcode <= 218u32) ||
                 Opcode == 220u32 || Opcode == 221u32 || Opcode == 222u32 ||
                 Opcode == 223u32 || Opcode == 224u32 || Opcode == 225u32 ||
+                Opcode == 226u32 ||
                 (Opcode >= 151u32 && Opcode <= 153u32) {
                 Secondˉoperand = Bytesˉreadˉu32ˉlittle(
                     Input,
@@ -3080,13 +3042,26 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                     Codeˉpayload + Codeˉoffset + Cursor + 9u32
                 );
             }
-            if Declaredˉminor == 39u32 && !Fˉinstructionˉauthority(Declaredˉminor,
+            if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32) && !Fˉinstructionˉauthority(Declaredˉminor,
                 Bytesˉreadˉu8(Input, 20u32), Opcode) { return Invalid; }
             if Opcode == 225u32 {
-                if Declaredˉminor != 39u32 || !Executableˉverifier.Hˉfoundationˉborrowˉisˉvalid(
+                if (Declaredˉminor != 39u32 && Declaredˉminor != 40u32) || !Executableˉverifier.Hˉfoundationˉborrowˉisˉvalid(
                     Functionˉshapes, Foundationˉtypes, Operand,
                     Secondˉoperand, Thirdˉoperand) { return Invalid; }
                 Foundationˉborrowˉinstructions = Foundationˉborrowˉinstructions + 1u32;
+            }
+            if Opcode == 226u32 {
+                if Declaredˉminor != 40u32 || Operand >= Parameterˉcount ||
+                    Secondˉoperand < Firstˉvector || Secondˉoperand >= Firstˉsequence {
+                    return Invalid;
+                }
+                let Parameterˉkind: u8 = Bytesˉreadˉu8(Functionˉshapes, Operand * 5u32);
+                if (Parameterˉkind != 23u8 && Parameterˉkind != 26u8 && Parameterˉkind != 27u8) ||
+                    Bytesˉreadˉu32ˉlittle(Functionˉshapes, Operand * 5u32 + 1u32) != Secondˉoperand {
+                    return Invalid;
+                }
+                Vectorˉparameterˉreads = Vectorˉparameterˉreads + 1u32;
+                if Vectorˉparameterˉreads > 4096u32 { return Invalid; }
             }
             if Opcode == 4u32 {
                 if Operand >= Localˉslots { return Invalid; }
@@ -3511,6 +3486,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     if Declaredˉminor == 39u32 && Foundationˉborrowˉinstructions == 0u32 {
         return Invalid;
     }
+    if Declaredˉminor == 40u32 && Vectorˉparameterˉreads == 0u32 { return Invalid; }
     if !Fˉunsafeˉscratchˉrelationsˉareˉcovered(
             Unsafeˉscratchˉabiˉrelations,
             Unsafeˉscratchˉlengthˉrelations

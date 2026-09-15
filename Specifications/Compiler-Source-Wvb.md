@@ -1559,6 +1559,29 @@ The static multi-module behavior was first qualified at `cb1db235`, the fused ty
 
 For Decision 0058, Stage 0 compiled the then-canonical 12-module source inventory into a 599,868-byte Stage 1 tool. Stage 1 then compiled the same inventory in 6,700,562,174 VM instructions and produced an independently verified 599,868-byte Stage 2 module with the same SHA-256. Stage 1 and Stage 2 compare byte for byte. The dedicated bootstrap verifier reconstructs both stages from the explicit inventory and refuses any verification, size, digest, or byte-identity mismatch. This retained historical proof and artifact set are cross-host qualified at `5c16547`; they do not qualify the candidate identities above.
 
+## Candidate Vector parameter length lowering
+
+Status: candidate implementation verified by focused Windows and Debian tests;
+not installed or qualified.
+WVIR operation `169` retains its existing exact Vector slot/type and `u64`
+result contract. For a parameter target, candidate emission now uses WVB 1.40
+`E2 vector.parameter_length` followed by the ordinary result-temporary store.
+The parameter may be by-value, immutable-borrowed, or exclusive-borrowed. Source
+ownership validation still rejects observation after a move and consumption of
+a borrowed parameter. Other collection operations do not gain parameter support.
+
+The instruction contributes nine bytes and one stack value, rather than the
+owned local's fifteen-byte take/length/restore sequence and two stack values.
+Local targets keep their existing emitted bytes and version. Only a reachable
+parameter length read selects minor 40; its metadata and borrow representation
+otherwise inherit minor 39. The existing memory-budget split-execution owner
+provides `--vector-parameter-reads` with explicit analyzer, emitter, verifier,
+and runner products, with deterministic publication and negative ownership and
+bytecode cases. The [paired-host evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json)
+records the passing direct-read cases. Borrowed-parameter forwarding through
+another helper and repeated borrowing across a loop backedge remain open
+call-lowering/lifetime gaps; their generated programs do not pass verification.
+
 ## Expansion path
 
 Exact bytecode compiler self-reproduction is cross-host qualified under Decision 0058. The 4 MiB WVSS envelope is sufficient for the real compiler closure, while parity with Stage 0's larger input limit remains a separate future contract decision.

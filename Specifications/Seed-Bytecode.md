@@ -120,9 +120,8 @@ Candidate WVB 1.39 serializes direct-owner immutable payload borrowing for the
 canonical Foundation `Option` and `Result` identities. It adds one instruction
 that names the owner, exact projected `Option` type, and projection kind, plus
 one recursive non-owning payload shape for compiler-generated locals. The
-source writer and a bounded independent structural reader implement this
-candidate. The complete compiler-aligned verifier and every runtime remain
-closed to WVB 1.39. The writer preserves exact direct borrowed-payload
+source writer, complete compiler-aligned verifier, and bounded host scalar
+runner implement the selected candidate. The writer preserves exact direct borrowed-payload
 call-parameter identity under the candidate rules below.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
@@ -152,8 +151,9 @@ borrowed `Memoryˉbudget` parameter. WVB 1.35 is selected when
 `unsafe.write-region.borrow` is present. Candidate WVB 1.37 is selected when
 `unsafe.write-pointer.borrow` is present. Candidate WVB 1.38 is selected when
 `foreign.call` is present. Candidate WVB 1.39 is selected when
-`foundation.value.borrow` is present. The compiler-aligned verifier accepts all
-twenty-eight versions through candidate WVB 1.38 and never admits an
+`foundation.value.borrow` is present, unless a parameter length read requires
+candidate WVB 1.40. The source-built compiler-aligned verifier accepts versions
+through candidate minor 40 and never admits an
 extension under an earlier header. The source-built native scalar runner
 accepts WVB 1.33 through candidate WVB 1.37 only through the bounded provider
 below. The native x86-64 lowerer admits the same focused unsafe-scratch,
@@ -162,8 +162,10 @@ write-pointer matrix. Candidate WVB 1.38 has source-writer, independent-reader,
 and complete compiler-aligned verification evidence; scalar and native
 execution, browser, WebAssembly-package, and Windvale OS consumers retain
 explicit narrower version boundaries until their own slices land.
-Candidate WVB 1.39 has source-writer, independent-reader, and focused verifier
-component evidence; complete verification and execution remain closed.
+Candidate WVB 1.39 has complete verification and selected Windows/Debian scalar
+execution evidence under the [host scalar borrow decision](../Documents/Decisions/0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md).
+The [owned-payload reclamation checkpoint](../Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+adds exact record-owned Vector scenarios, not arbitrary payload or target support.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -595,11 +597,48 @@ by `CD`, `CF`, `D6`, `D9`, `DB`, `DC`, and `DE`; later borrowed reads, including
 pending stack values, must not outlive that consumption. These component checks
 do not enable candidate execution or complete admission.
 
-No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
-admits minor 39. Remaining operand families, owned-payload projections, and
-authority-operation composition, source value-classification reconciliation,
-the complete admission audit, and runtime execution remain open. These probes do not qualify arbitrary payload
-classes, wider capture classes, or Linux reproduction.
+The complete verifier and selected source-built host scalar runner now admit
+minor 39 under the linked host execution decision. The isolated component probes
+remain narrower evidence and do not qualify arbitrary payload classes, wider
+captures, independent Linux reconstruction, or installed-toolchain promotion.
+Direct owned Vector payload extraction and general authority-operation
+composition remain separate gates.
+
+## Candidate WVB 1.40 read-only Vector parameter access
+
+Status: candidate implementation with focused Windows and Debian execution
+[evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json);
+full qualification and installed promotion remain pending.
+This version inherits minor 39's metadata, type, authority, and ownership rules,
+except that its required distinguishing feature is `E2`, not `E1`.
+
+```text
+E2 vector.parameter_length u32 parameter index, u32 exact Vector type index
+```
+
+The instruction is exactly nine bytes. Both operands are unsigned little-endian
+32-bit integers. It consumes no stack values and pushes one `u64` length. The
+parameter index must be below the current function's parameter count (at most
+64), never a local slot. Its declared shape must be `23`, `26`, or `27`, and its
+nominal index must equal the second operand, which names a kind-5 Vector type.
+The module contains 1 through 4,096 such instructions. Existing type, code,
+stack, control-flow, and resource limits remain unchanged.
+
+A by-value parameter must remain live on every incoming path. Immutable and
+exclusive parameters retain their declared call modes and caller lifetime;
+the read neither transfers ownership nor relaxes alias restrictions. It does
+not allocate, retain a descriptor, mutate backing storage, or extend a loan.
+The existing `CA vector.length` still requires and preserves a unique Vector.
+`E2` is invalid in earlier versions. Wrong type, non-parameter index, truncated
+operands, consumed owner, inconsistent call mode, and missing required feature
+reject before execution.
+
+The candidate scalar host envelope requires the complete verifier and request
+major 1, a capability-free synchronous module, and valid live collection backing.
+It retains minor 39's host restrictions and adds Main-owned `D0` append to
+exercise nonempty collections. Native lowering, browser admission, installed
+identities, and OS execution are not promoted by this candidate. See
+[read-only Vector parameter decision](../Documents/Decisions/0963-Read-Vector-Parameters-Without-Transferring-Ownership.md).
 
 ## Encoding
 
@@ -1636,8 +1675,8 @@ focused independent 1.38 reader remains a separate source-publication oracle
 and is not a substitute for the complete metadata, typed-stack, control-flow,
 and affine-lifetime checks.
 The focused WVB 1.39 reader is likewise only a bounded structural publication
-oracle. The complete verifier rejects minor 39 until shape `37`, opcode `E1`,
-cross-call borrowed-payload identity, and their lifetime rules are implemented.
+oracle. Complete verification additionally checks shape `37`, opcode `E1`,
+cross-call borrowed-payload identity, and their lifetime rules before admission.
 
 The current-source control-phase component additionally checks `E1` owner flow
 in isolation. An owner must be an ordinary variant local, initialized on every
@@ -1649,7 +1688,7 @@ borrows are permitted, but borrowing an uninitialized or already-taken owner
 rejects. The check consumes the validated instruction directory and five-byte
 local-shape cells; it does not establish nominal Option/Result relationships,
 typed operand-stack validity, ordinary call-loan lifetimes, or non-escape. The
-complete verifier still rejects minor 39 at its earlier admission boundary.
+complete verifier combines this proof with those other admission boundaries.
 
 The isolated direct-call checker also decodes shape `37` parameters into exact
 borrowed stack cells, including their nominal identity. An ordinary owned cell

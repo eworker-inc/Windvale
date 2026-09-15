@@ -14,7 +14,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Implemented | 499 |
 | Proposed | 4 |
 | Qualified | 95 |
-| Recorded | 7 |
+| Recorded | 8 |
 | Superseded | 14 |
 
 ## Open or unclassified records
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0963: read Vector parameters without transferring ownership](0963-Read-Vector-Parameters-Without-Transferring-Ownership.md) | Recorded |
 | [Construct current-source WVB publishers](0962-Construct-Current-Source-Wvb-Publishers.md) | Accepted |
 | [Require an explicit target in Project 4](0961-Require-An-Explicit-Target-In-Project-4.md) | Accepted |
 | [Decision 0960: admit verified Foundation borrows in the host scalar runner](0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md) | Implemented |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0941: raise the native type-directory capacity for self-host convergence](0941-Raise-The-Native-Type-Directory-Capacity-For-Self-Host-Convergence.md) | Accepted |
 | [Decision 0940: separate the Profile 8 compiler-scale instruction ceiling](0940-Separate-The-Profile-8-Compiler-Scale-Instruction-Ceiling.md) | Accepted |
 | [Decision 0939: raise native x64 static-data capacity for compiler convergence](0939-Raise-Native-X64-Static-Data-Capacity-For-Compiler-Convergence.md) | Accepted |
-| [Decision 0938: lower authenticated WVB 1.38 Foreign calls through the native x64 ABI](0938-Lower-Authenticated-WVB-1.38-Foreign-Calls-Through-The-Native-X64-ABI.md) | Accepted |
 
 ## Superseded or historical records
 

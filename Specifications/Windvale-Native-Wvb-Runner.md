@@ -46,6 +46,24 @@ chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
 
+## Candidate WVB 1.40 Vector parameter reads
+
+Status: focused Windows and Debian execution verified; not qualified. The candidate
+source runner admits minor 40 only through the complete verifier and the same
+capability-free synchronous request-major-1 boundary as minor 39. Instruction
+`E2` reads the length of the exact live Vector parameter without taking it,
+retaining it, or allocating collection storage. Value, immutable, and exclusive
+parameter modes keep their existing frame and call ownership rules. Existing
+Main-owned reserved Vector construction and append supply empty and nonempty
+collections; mutation through borrowed parameters is not newly enabled.
+
+All existing resource limits and explicit failure behavior remain. The new
+focused selection in the memory-budget split-execution owner passes for direct
+parameter reads; see the [paired-host evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json).
+Borrowed forwarding and loop-lifetime gaps remain outside that passing claim.
+The candidate does not change installed identities, native lowering, browser
+execution, or full qualification.
+
 ## WVB 1.33 through WVB 1.38 focused System execution
 
 Execution-request major `1` admits a capability-free System-profile

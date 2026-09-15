@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-vector-parameter-length",
+  "date": "2026-09-15",
+  "subject": "Candidate WVB 1.40 direct Vector parameter-length reads",
+  "claim": "The current-source compiler emits the same 2,403-byte candidate module on Windows and Debian. Direct reads of empty and nonempty Vectors work through by-value, immutable and exclusive parameters; a later ownership transfer remains valid. Eleven malformed mutations reject at complete-verifier and runner boundaries, including read-after-move and wrong call mode; two invalid ownership sources reject during WIR validation. Existing owned-payload and borrow-runtime regressions pass on both hosts.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 46cfa827760721c7321fed9cb6c3f99c22798077, with exact changed implementation/test identities below. Authenticated predecessor analyzer and Emitter-Indexed-Budgets constructed candidate tool WVBs. Native packaging includes complete WVB verification. Debian executables package the Windows-produced native images; this is paired-host execution, not independent compiler reconstruction."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Source-built analyzer, emitter, compact verifier and runner",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs <profile> <tool.wvb> <tool.exe>; profiles: Analyzer=8, Emitter=8, Verifier=7, Runner=5",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wir-Core.wv",
+          "size": 780143,
+          "sha256": "e90b78197ab1e67c010917b35debf2b7a1750b008c21fcc0b410727b62fa0852"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Validation-Core.wv",
+          "size": 359609,
+          "sha256": "c5eaffe7c5ce1511ef11ccb05eaf1ca98ecf9962864ed26735c2682c12c88678"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 230291,
+          "sha256": "cc1ea21437af8411ff9e5a5cd23b5edeb160a88085e3a21e00ab5b4c40300aee"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 307145,
+          "sha256": "75a3dc80d429f09e596f5d393d3b0fc79b7cfc09f15c7b639ca1822d339133c5"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+          "size": 40263,
+          "sha256": "890fdd4a89b7b96d3a9843ad64c745d1eea6c482170dd54886d2cdce4466be9b"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv",
+          "size": 24833,
+          "sha256": "3bc477ed61f6bb55e7b92af877c7725d7b63d0e1cdcd25ee782977eabaad2e7e"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 374567,
+          "sha256": "0cf7bc6836c9901e011e6e8e6bac79b09e06ee00491cd61c287aa15e3d8754db"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 169063,
+          "sha256": "a8f44d760c7fb5b79f86a17eebd38b43af9a2e8ccbf6f6046681c19ca134c913"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 353662,
+          "sha256": "8b586e464c926b7e745c7c8c5bfb9ff8c2791c5585bcfe055069371c304b12d4"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 245441,
+          "sha256": "87c9eeb0f906d48af1ee38428ab49e9d6c5c3df5278d35406c6c1a068acd4f5a"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 179647,
+          "sha256": "9668a864297d98968c26ec8558695de29d7539b45155d29780af3500d3cf7eba"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10588,
+          "sha256": "090b4d0ddefb79c78d103139fa762504fcea8ace4170bd226086f365d428355c"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14964,
+          "sha256": "f05f8939eb8ea4ead8070e01ffe6f07356e3fc2379c5bdc7ce00cd71c8f59a9b"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv",
+          "size": 1948,
+          "sha256": "2dbdb8d575a543679be7b082ef0d016567ebc06b8db7956b14349f942e0554ae"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Analyzer-Vector40.wvb",
+          "size": 1684068,
+          "sha256": "5795cdc7207de465867fa226a0576e360f073c21ee9c40b2bb1240a41c1b87d8"
+        },
+        {
+          "path": "Analyzer-Vector40.exe",
+          "size": 54543872,
+          "sha256": "ec5b14b00836939e995dddb757b9d5e2a71597160f99a6b022df09a05dba473c"
+        },
+        {
+          "path": "Emitter-Vector40.wvb",
+          "size": 1597854,
+          "sha256": "41303d518c3b13574f718565ca5b6d7a1668942c449fada1d6674f553f6c29e4"
+        },
+        {
+          "path": "Emitter-Vector40.exe",
+          "size": 32692736,
+          "sha256": "15cd7d3d7c8fb59d38c06621b020cc2f032d5a31567d76d3c4aeb75a0bff66b8"
+        },
+        {
+          "path": "Verifier-Vector40-Compact.wvb",
+          "size": 572187,
+          "sha256": "2339ada975546eb85bd7e0fa47e6480e6bd1a75bf072b21401fd4bcbc61885e3"
+        },
+        {
+          "path": "Verifier-Vector40-Compact.exe",
+          "size": 4890112,
+          "sha256": "0aae1764cc98438180f7f4d8f43649d0aafb1c1695ebdb35fc04ba2c311e4ed6"
+        },
+        {
+          "path": "Runner-Vector40-Compact.wvb",
+          "size": 1160456,
+          "sha256": "477a76ce63897fa29cf8359af64be49b9cf3f3d8f68406a726619a67bb7be6ef"
+        },
+        {
+          "path": "Runner-Vector40-Compact.exe",
+          "size": 12029952,
+          "sha256": "315cb6337f452b73c954f1cd3c9ee8a473c49c42ff034b5c2c611c4e3d3dba73"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 packaging for Debian x64",
+      "target": "Paired ELF packages using the same validated native images",
+      "tool": "Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "Tools/Native/Package-Hosted-Wvb.cmd image <profile> <tool.wvb> <validated-image-prefix> <fragment-count> <entry-offset> <tool.elf> linux",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Analyzer-Vector40.elf",
+          "size": 54542336,
+          "sha256": "a01887cb55bfe9ee5f1e57498726a283f8afd1358b735caa86fd5ea47ffd2648"
+        },
+        {
+          "path": "Emitter-Vector40.elf",
+          "size": 32694272,
+          "sha256": "e9a34cd26c903c9bb6c2516f944880bd770679905ec70e3257e24780f256d02f"
+        },
+        {
+          "path": "Verifier-Vector40-Compact.elf",
+          "size": 4890624,
+          "sha256": "ad96681e45d0079d4d6fbe3095051fc548cb55aef45572579f344cb723067152"
+        },
+        {
+          "path": "Runner-Vector40-Compact.elf",
+          "size": 12029952,
+          "sha256": "2e3b321d6ba60f09cc0a3090f67a8dc1c219ce2174b91786a7a666bf46d28d30"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Three parameter modes, deterministic publication, 11 malformed controls and two source rejections",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads <baseline-Admitter.exe> <baseline-Authenticator.exe> <Analyzer-Vector40.exe> <Emitter-Vector40.exe> Projects/Targets/Windows-X64-No-Foreign.wvtd <Verifier-Vector40-Compact.exe> <Runner-Vector40-Compact.exe>",
+      "result": "Passed",
+      "elapsedMilliseconds": 4645,
+      "inputs": [
+        {
+          "path": "Analyzer-Vector40.exe",
+          "size": 54543872,
+          "sha256": "ec5b14b00836939e995dddb757b9d5e2a71597160f99a6b022df09a05dba473c"
+        },
+        {
+          "path": "Emitter-Vector40.exe",
+          "size": 32692736,
+          "sha256": "15cd7d3d7c8fb59d38c06621b020cc2f032d5a31567d76d3c4aeb75a0bff66b8"
+        },
+        {
+          "path": "Verifier-Vector40-Compact.exe",
+          "size": 4890112,
+          "sha256": "0aae1764cc98438180f7f4d8f43649d0aafb1c1695ebdb35fc04ba2c311e4ed6"
+        },
+        {
+          "path": "Runner-Vector40-Compact.exe",
+          "size": 12029952,
+          "sha256": "315cb6337f452b73c954f1cd3c9ee8a473c49c42ff034b5c2c611c4e3d3dba73"
+        },
+        {
+          "path": "baseline-Admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "baseline-Authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Vector-Parameters-a.wvb",
+          "size": 2403,
+          "sha256": "9a1040362281c106afb0d1ff83cc645a628e370eee83264cb32063558e408430"
+        }
+      ]
+    },
+    {
+      "host": "Debian under WSL2; Linux 6.18.33.2-microsoft-standard-WSL2 x86_64",
+      "target": "Same direct-read and rejection cases with identical WVB bytes",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads <baseline-Admitter.elf> <baseline-Authenticator.elf> <Analyzer-Vector40.elf> <Emitter-Vector40.elf> Projects/Targets/Windows-X64-No-Foreign.wvtd <Verifier-Vector40-Compact.elf> <Runner-Vector40-Compact.elf>",
+      "result": "Passed",
+      "elapsedMilliseconds": 9093,
+      "inputs": [
+        {
+          "path": "Analyzer-Vector40.elf",
+          "size": 54542336,
+          "sha256": "a01887cb55bfe9ee5f1e57498726a283f8afd1358b735caa86fd5ea47ffd2648"
+        },
+        {
+          "path": "Emitter-Vector40.elf",
+          "size": 32694272,
+          "sha256": "e9a34cd26c903c9bb6c2516f944880bd770679905ec70e3257e24780f256d02f"
+        },
+        {
+          "path": "Verifier-Vector40-Compact.elf",
+          "size": 4890624,
+          "sha256": "ad96681e45d0079d4d6fbe3095051fc548cb55aef45572579f344cb723067152"
+        },
+        {
+          "path": "Runner-Vector40-Compact.elf",
+          "size": 12029952,
+          "sha256": "2e3b321d6ba60f09cc0a3090f67a8dc1c219ce2174b91786a7a666bf46d28d30"
+        },
+        {
+          "path": "baseline-Admitter.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "baseline-Authenticator.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Vector-Parameters-a.wvb",
+          "size": 2403,
+          "sha256": "9a1040362281c106afb0d1ff83cc645a628e370eee83264cb32063558e408430"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Nine owned Option/Result publication/execution scenarios, eight copied-payload mutations at both boundaries and two invalid budget sources",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <baseline-Admitter.exe> <baseline-Authenticator.exe> <Analyzer-Vector40.exe> <Emitter-Vector40.exe> Projects/Targets/Windows-X64-No-Foreign.wvtd <Verifier-Vector40-Compact.exe> <Runner-Vector40-Compact.exe>",
+      "result": "Passed",
+      "elapsedMilliseconds": 17636
+    },
+    {
+      "host": "Windows x64",
+      "target": "Ten existing Foundation borrow-runtime cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime <Runner-Vector40-Compact.exe>",
+      "result": "Passed",
+      "elapsedMilliseconds": 597
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Nine owned Option/Result publication/execution scenarios, eight copied-payload mutations at both boundaries and two invalid budget sources",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <baseline-Admitter.elf> <baseline-Authenticator.elf> <Analyzer-Vector40.elf> <Emitter-Vector40.elf> Projects/Targets/Windows-X64-No-Foreign.wvtd <Verifier-Vector40-Compact.elf> <Runner-Vector40-Compact.elf>",
+      "result": "Passed",
+      "elapsedMilliseconds": 40787
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Ten existing Foundation borrow-runtime cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime <Runner-Vector40-Compact.elf>",
+      "result": "Passed",
+      "elapsedMilliseconds": 1044
+    },
+    {
+      "host": "Windows x64",
+      "target": "Initial broader fixture including borrowed forwarding and repeated loop borrows",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "Initial --vector-parameter-reads fixture; isolated function bodies using same-width directories and unchanged verifier",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Vector40-Diagnostic.wvb",
+          "size": 2596,
+          "sha256": "4e457e0d84ae52bedde93d618991fc293fa5dab548ec81908fab0e669e6d0d59"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The claim is the narrowed direct-read checkpoint, not completion of the compiler/tools/Libraries 1.0 migration.",
+    "Initial broader fixture failed typed verification. Isolating function bodies showed borrowed forwarding fails typed-execution and loop borrowing fails control-reachability. These cases remain unsupported; the passing fixture does not contain them.",
+    "Original verifier/runner native packaging failed because F-code-and-exports used 2,115 slots. Reusing the existing fixed-width decoder kept the native bound unchanged. Rebuilt verifier maximum geometry reported 1,882 slots; rebuilt runner largest function reported 2,043 slots, and native staging/packaging passed.",
+    "No installed or bootstrap identity, candidate-minor-40 native lowering, browser, OS, provider authority, full dual-host Qualification or release artifact was promoted.",
+    "Debian products reuse Windows-generated WVB/native images; there is no independent reconstruction claim.",
+    "Full automatic changed-file plan was not run: its approximately 64-minute expected duration exceeded this approved 45-minute focused construction/execution run.",
+    "Peak working-set memory was not captured. Test modules remain below 8,192 bytes; existing runtime resource bounds and malformed-input admission stay enforced.",
+    "No human inspection or independent external review is claimed."
+  ],
+  "related": [
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Windvale-Native-Wvb-Runner.md",
+    "Documents/Decisions/0963-Read-Vector-Parameters-Without-Transferring-Ownership.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json"
+  ]
+}

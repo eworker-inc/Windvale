@@ -6676,9 +6676,13 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                     WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
                 Operationˉkind == WIR_OPERATION_PLATFORM_SOURCE_LENGTH {
-                if Operationˉtarget >= Slotˉcount || Bytesˉreadˉu8(
-                        Slotˉstate, Operationˉtarget
-                    ) != 1u8 {
+                if Operationˉtarget >= Slotˉcount { return false; }
+                let Collectionˉstate: u8 = Bytesˉreadˉu8(
+                    Slotˉstate, Operationˉtarget
+                );
+                if Collectionˉstate != 1u8 &&
+                    !(Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH &&
+                        Operationˉtarget < Range.Parameters && Collectionˉstate == 2u8) {
                     return false;
                 }
                 if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE {
@@ -7325,7 +7329,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         }
         if Operationˉkind == 169u32 || Operationˉkind == 170u32 ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
-            if Operationˉtarget < Range.Parameters ||
+            if (Operationˉtarget < Range.Parameters && Operationˉkind != 169u32) ||
                 Operationˉtarget >= Range.Parameters + Range.Locals {
                 return false;
             }

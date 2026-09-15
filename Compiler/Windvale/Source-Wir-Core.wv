@@ -9829,7 +9829,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             Valueˉexpression.Offset
         );
     if !Local.Found ||
-        Local.Kind == Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter {
+        (Local.Kind == Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter &&
+            Operation != WIR_OPERATION_FOUNDATION_VECTOR_LENGTH) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
             Callable.Module,

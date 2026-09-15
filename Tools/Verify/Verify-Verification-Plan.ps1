@@ -5323,7 +5323,7 @@ $QualificationPipelineExpected = @{
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|86'
+    'Run-Split-Compiler' = '3|88'
     'Run-Authenticated-Source-Admission' = '2|32'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {

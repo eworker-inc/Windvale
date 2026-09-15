@@ -126,6 +126,7 @@ const WVB_UNSAFE_WRITE_REGION_FEATURE: u32 = 33554432u32;
 const WVB_UNSAFE_WRITE_POINTER_FEATURE: u32 = 67108864u32;
 const WVB_FOREIGN_CALL_FEATURE: u32 = 134217728u32;
 const WVB_FOUNDATION_VALUE_BORROW_FEATURE: u32 = 268435456u32;
+const WVB_VECTOR_PARAMETER_READ_FEATURE: u32 = 536870912u32;
 
 export record Compilerˉsourceˉwvbˉsummary {
     Status: Compilerˉsourceˉwvbˉstatus;
@@ -3974,7 +3975,8 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
                         Auxiliary, Symbols, Orders
                     );
-                if Target < Parameters || Target >= Parameters + Locals ||
+                if (Target < Parameters && Operation != 169u32) ||
+                    Target >= Parameters + Locals ||
                     Plannedˉvector < 327680u32 ||
                     Plannedˉvector >= 393216u32 {
                     return Compilerˉsourceˉwvbˉanalysisˉfailure(
@@ -4368,16 +4370,22 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
             var Operationˉstack: u32 = Operands;
             if Operation == 64u32 { Operationˉstack = 0u32; }
             if Operation == 167u32 { Operationˉstack = 2u32; }
-            if Operation == 169u32 { Operationˉstack = 2u32; }
+            if Operation == 169u32 {
+                Operationˉstack = 2u32;
+                if Target < Parameters { Operationˉstack = 1u32; }
+            }
             if Operation == 170u32 { Operationˉstack = 1u32; }
             if Operation == 174u32 { Operationˉstack = 1u32; }
             if Shape != 0u32 {
                 if Operationˉstack == 0u32 { Operationˉstack = 1u32; }
             }
             if Operationˉstack > Maximumˉstack { Maximumˉstack = Operationˉstack; }
-            let Added: u32 = Compilerˉsourceˉwvbˉoperationˉlength(
+            var Added: u32 = Compilerˉsourceˉwvbˉoperationˉlength(
                 Operation, Shape, Operands
             );
+            // E2 reads a parameter directly: nine opcode bytes instead of
+            // the owned local's take/length/restore sequence of fifteen.
+            if Operation == 169u32 && Target < Parameters { Added = Added - 6u32; }
             if Added == 0u32 && Operation != 64u32 {
                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉoperation,
@@ -5231,7 +5239,12 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             )
         );
     }
-    if Operation == 169u32 || Operation == 170u32 {
+    if Operation == 169u32 && Target < Parameters {
+        Result = Bytesˉconcat(Result, Compilerˉsourceˉwvbˉinstructionˉu32(226u8, Target));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(Auxiliary, Symbols, Orders) - 327680u32
+        ));
+    } else if Operation == 169u32 || Operation == 170u32 {
         Result = Bytesˉconcat(
             Result, Compilerˉsourceˉwvbˉinstructionˉu32(205u8, Target)
         );
@@ -5605,7 +5618,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     if Operation == 167u32 || Operation == 168u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu8(80u8));
     }
-    if Operation == 169u32 {
+    if Operation == 169u32 && Target >= Parameters {
         Result = Bytesˉconcat(
             Result, Compilerˉsourceˉwvbˉinstructionˉu32(5u8, Target)
         );
@@ -6460,6 +6473,10 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 if Operationˉkind == 169u32 || Operationˉkind == 170u32 {
                     Features = Features | 256u32;
                     Features = Features | 512u32;
+                    if Operationˉkind == 169u32 &&
+                        Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32) < Parameters {
+                        Features = Features | WVB_VECTOR_PARAMETER_READ_FEATURE;
+                    }
                 }
                 if Operationˉkind == 171u32 {
                     Features = Features | 4096u32;
@@ -7376,6 +7393,9 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     }
     if (Features & WVB_FOUNDATION_VALUE_BORROW_FEATURE) != 0u32 {
         Wvbˉminor = 39u32;
+    }
+    if (Features & WVB_VECTOR_PARAMETER_READ_FEATURE) != 0u32 {
+        Wvbˉminor = 40u32;
     }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));

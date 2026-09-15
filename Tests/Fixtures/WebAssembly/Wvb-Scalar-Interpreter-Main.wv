@@ -323,7 +323,7 @@ fn Readˉfunctionˉdirectory(
             ));
             var Borrowedˉpayload: bool = false;
             if Shapeˉkind == 37u32 {
-                if Moduleˉminor != 39u32 || Functionˉcursor + 1u32 >= Functionsˉend {
+                if (Moduleˉminor != 39u32 && Moduleˉminor != 40u32) || Functionˉcursor + 1u32 >= Functionsˉend {
                     return Invalidˉfunctionˉdirectory(Module);
                 }
                 Functionˉcursor = Functionˉcursor + 1u32;
@@ -335,7 +335,7 @@ fn Readˉfunctionˉdirectory(
                 if Moduleˉminor == 33u32 || Moduleˉminor == 34u32 ||
                     Moduleˉminor == 35u32 || Moduleˉminor == 36u32 ||
                     Moduleˉminor == 37u32 || Moduleˉminor == 38u32 ||
-                    Moduleˉminor == 39u32 {
+                    (Moduleˉminor == 39u32 || Moduleˉminor == 40u32) {
                     if Functionˉindex == Mainˉindex {
                         if Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                             Mainˉhasˉmemoryˉbudget {
@@ -474,7 +474,7 @@ fn Readˉfunctionˉdirectory(
             ));
             var Borrowedˉlocal: bool = false;
             if Shapeˉkind == 37u32 {
-                if Moduleˉminor != 39u32 || Functionˉcursor + 1u32 >= Functionsˉend {
+                if (Moduleˉminor != 39u32 && Moduleˉminor != 40u32) || Functionˉcursor + 1u32 >= Functionsˉend {
                     return Invalidˉfunctionˉdirectory(Module);
                 }
                 Functionˉcursor = Functionˉcursor + 1u32;
@@ -489,7 +489,7 @@ fn Readˉfunctionˉdirectory(
                     (Moduleˉminor != 34u32 && Moduleˉminor != 33u32 &&
                         Moduleˉminor != 35u32 && Moduleˉminor != 36u32 &&
                         Moduleˉminor != 37u32 && Moduleˉminor != 38u32 &&
-                        Moduleˉminor != 39u32 && Moduleˉminor != 32u32 &&
+                        (Moduleˉminor != 39u32 && Moduleˉminor != 40u32) && Moduleˉminor != 32u32 &&
                         (Moduleˉminor < 23u32 || Moduleˉminor > 28u32 ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget))) ||
@@ -515,7 +515,7 @@ fn Readˉfunctionˉdirectory(
                 Nominalˉtoken = Nominalˉtoken + 1u32;
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
-            if Borrowedˉlocal || (Moduleˉminor == 39u32 && Shapeˉkind == 29u32) {
+            if Borrowedˉlocal || ((Moduleˉminor == 39u32 || Moduleˉminor == 40u32) && Shapeˉkind == 29u32) {
                 Shapeˉkind = Shapeˉkind + 64u32;
             }
             Localˉshapes = Bytesˉconcat(
@@ -619,7 +619,7 @@ fn Readˉfunctionˉdirectory(
             Borrowedˉbudgetˉparameterˉcount == 0u32) ||
         ((Moduleˉminor == 33u32 || Moduleˉminor == 35u32 ||
             Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 || Moduleˉminor == 39u32) &&
+            Moduleˉminor == 38u32 || (Moduleˉminor == 39u32 || Moduleˉminor == 40u32)) &&
             Versionˉfeatureˉinstructions == 0u32) {
         return Invalidˉfunctionˉdirectory(Module);
     }
@@ -5628,6 +5628,33 @@ fn Executeˉextended(
         Mainˉfound = true;
     }
 
+    if Payloadˉlength == 226u32 {
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 40u32 { return Invalid; }
+        let Parameter: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+        let Vectorˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata, Functionˉindex * 8u32);
+        if Parameter >= Parameterˉcount || Parameter >= Functionˉcursor / 8u32 ||
+            Vectorˉtype >= Typeˉcount { return Invalid; }
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉshapeˉoffsets, Functionˉindex * 4u32) + Parameter * 8u32;
+        if Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape) != 23u32 ||
+            Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape + 4u32) != Vectorˉtype + 1u32 {
+            return Invalid;
+        }
+        let Value: bytes = Bytesˉslice(Locals, Parameter * 8u32, 8u32);
+        if !Collections.Collectionˉbackingˉvalid(
+            Heap, Heapˉallocations, Heapˉallocationˉcount, Value) { return Invalid; }
+        Stack = Bytesˉconcat(Stack, Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Collections.Collectionˉlength(Heap, Value)),
+            Bytesˉfromˉu32ˉlittle(0u32)));
+        Stackˉconsumed = 0u32;
+        Stackˉproduced = true;
+        Stackˉproducedˉkind = 0u32;
+        Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+        Mainˉfound = true;
+    }
+
     if Payloadˉlength == 206u32 {
         if !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
@@ -5659,7 +5686,7 @@ fn Executeˉextended(
     if Payloadˉlength == 207u32 {
         let Vectorˉmoduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
         if ((Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 28u32) &&
-                Vectorˉmoduleˉminor != 39u32) ||
+                (Vectorˉmoduleˉminor != 39u32 && Vectorˉmoduleˉminor != 40u32)) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -5689,8 +5716,9 @@ fn Executeˉextended(
     }
 
     if Payloadˉlength == 208u32 {
-        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) < 25u32 ||
-            Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) ||
+        if ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 25u32 ||
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 40u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -8571,7 +8599,7 @@ export fn Main(Request: bytes) -> bytes {
         Stackˉproducedˉkind = (Stackˉeffect >> 3u32) & 1u32;
 
         var Borrowˉhandled: bool = false;
-        if Moduleˉminor == 39u32 {
+        if (Moduleˉminor == 39u32 || Moduleˉminor == 40u32) {
             let Borrowˉresult: Valueˉcore.Borrowˉstep = Valueˉcore.Prepareˉborrowˉstep(
                 Borrowˉstate, Module, Requestˉmajor, Payload, Payloadˉlength,
                 Typeˉoffsets, Localˉshapes,
@@ -8974,7 +9002,7 @@ export fn Main(Request: bytes) -> bytes {
                 Exportˉindex, Effectiveˉcallˉdepth
             );
             if !Call.Valid { return Invalid; }
-            if Moduleˉminor == 39u32 && Call.Depth > Exportˉindex {
+            if (Moduleˉminor == 39u32 || Moduleˉminor == 40u32) && Call.Depth > Exportˉindex {
                 if Call.Consumed > Bytesˉlength(Borrowˉstack) { return Invalid; }
                 var Argument: u32 = Bytesˉlength(Borrowˉstack) - Call.Consumed;
                 while Argument < Bytesˉlength(Borrowˉstack) {
@@ -9410,7 +9438,7 @@ export fn Main(Request: bytes) -> bytes {
             Sectionˉkind = Committed.Status;
         }
         if Sectionˉkind == 0u32 {
-            if Moduleˉminor == 39u32 {
+            if (Moduleˉminor == 39u32 || Moduleˉminor == 40u32) {
                 let Tracked: bytes = Borrowˉframes.Track(Borrowˉstack, Stackˉconsumed,
                     Stackˉproduced, Stackˉproducedˉkind == 5u32);
                 if Bytesˉlength(Tracked) == 0u32 ||
@@ -9451,7 +9479,7 @@ export fn Main(Request: bytes) -> bytes {
         Running = Sectionˉkind == 0u32;
     }
     if Sectionˉkind != 0u32 {
-        if Moduleˉminor == 39u32 {
+        if (Moduleˉminor == 39u32 || Moduleˉminor == 40u32) {
             Borrowˉstate = Borrowˉframes.Teardown(Borrowˉstate);
             if !Borrowˉstate.Valid { return Invalid; }
         }

@@ -72,6 +72,8 @@ const Foundationˉsourceˉonly = process.argv.length === 8 &&
     process.argv[2] === '--foundation-source-ownership';
 const Foundationˉownedˉonly = process.argv.length === 10 &&
     process.argv[2] === '--foundation-owned-payloads';
+const Vectorˉparameterˉonly = process.argv.length === 10 &&
+    process.argv[2] === '--vector-parameter-reads';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-borrow-runtime';
 const Foundationˉenumˉonly = process.argv.length === 4 &&
@@ -91,7 +93,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-owners';
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
-const Developmentˉonly = Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
+const Developmentˉonly = Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length >= 5) {
@@ -123,6 +125,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-native-staging <producer> <text-fixture.wvb> [--admitter <checker>]|' +
         '--foundation-source-ownership <admitter> <validator> <analyzer> <emitter> <target.wvtd>|' +
         '--foundation-owned-payloads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
+        '--vector-parameter-reads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -197,7 +200,9 @@ let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
 try {
-    if (Foundationˉownedˉonly) {
+    if (Vectorˉparameterˉonly) {
+        await Verifyˉvectorˉparameterˉreads(...process.argv.slice(3).map(Value => path.resolve(Value)));
+    } else if (Foundationˉownedˉonly) {
         Validator = path.resolve(process.argv[4]);
         Targetˉdescriptor = path.resolve(process.argv[7]);
         await Verifyˉfoundationˉownedˉpayloads(...process.argv.slice(3).map(Value => path.resolve(Value)));
@@ -239,7 +244,7 @@ try {
     }
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
-if (Developmentˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
+if (Developmentˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
     const Elapsed = Date.now() - Started;
     if (Elapsed > Maximumˉrunˉmilliseconds) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
@@ -1571,6 +1576,140 @@ async function Compileˉfoundationˉvalueˉborrow(
         ),
         Output,
     ]);
+}
+
+async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyzer, Emitter, Target, Verifier, Runner) {
+    for (const Product of [Admitter, Authenticator, Analyzer, Emitter, Verifier, Runner]) {
+        Requireˉordinaryˉfile(Product, 134_217_728, 'Vector parameter predecessor');
+    }
+    const Fixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv');
+    Requireˉordinaryˉfile(Fixture, 8192, 'Vector parameter fixture');
+    const Source = readFileSync(Fixture, 'utf8');
+    function Arguments(Input, Output) {
+        return [Admitter, Authenticator, Analyzer, Emitter,
+            '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+            '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
+            Input, ...['Collections/Collections.wv', 'Memory/Memory.wv', 'Values/Result.wv']
+                .map(Name => path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output];
+    }
+    const Modules = [];
+    for (const Generation of ['a', 'b']) {
+        const Output = path.join(Work, 'Vector-Parameters-' + Generation + '.wvb');
+        await Runˉnode('vector-parameters-' + Generation, 'Run-Split-Compiler.mjs', Arguments(Fixture, Output));
+        const Bytes = readFileSync(Output);
+        if (Bytes.readUInt16LE(6) !== 40 || Bytes.length > 8192) Reject('Vector parameter version or size differs.');
+        Modules.push(Bytes);
+        if (Generation === 'a') {
+            if (Normalize(await Run('vector-parameters-verify', Verifier, [Output])) !==
+                'wvb status=Valid profile=compiler-aligned\n') Reject('Vector parameter verification differs.');
+            if (Normalize(await Run('vector-parameters-execute', Runner, [Output])) !==
+                'Result: 42\n') Reject('Vector parameter execution differs.');
+        }
+    }
+    if (!Modules[0].equals(Modules[1])) Reject('Vector parameter publication is not deterministic.');
+    const Bytes = Modules[0];
+    const Sections = Parseˉsections(Bytes);
+    const Reads = [];
+    for (const Function of Parseˉfunctionˉentries(Bytes, Sections[4])) {
+        const Begin = Sections[5].payload + Function.codeOffset;
+        const End = Begin + Function.codeLength;
+        for (let Cursor = Begin; Cursor < End;) {
+            const Width = Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+            if (Cursor + Width > End) Reject('Vector parameter instruction is truncated.');
+            if (Bytes[Cursor] === 226) Reads.push({ offset: Cursor, function: Function });
+            Cursor += Width;
+        }
+    }
+    if (Reads.length !== 3 || new Set(Reads.map(Read => Read.function.index)).size !== 3) {
+        Reject('Expected separate by-value, immutable and exclusive parameter reads.');
+    }
+    for (const [Name, Mode, Slot] of [['Read', 26, 1], ['Readˉexclusive', 27, 0], ['Consume', 23, 0]]) {
+        const Function = Parseˉfunction(Bytes, Sections[4], Name);
+        if (Function.parameterCount !== Slot + 1 || Bytes[Function.parameterShapeOffsets[Slot]] !== Mode ||
+            !Reads.some(Read => Read.function.name === Name && Bytes.readUInt32LE(Read.offset + 1) === Slot)) {
+            Reject(`Vector parameter mode differs for ${Name}.`);
+        }
+    }
+    const First = Reads[0].offset;
+    const Types = Parseˉtypes(Bytes, Sections[7]);
+    const Wrongˉtype = Types.findIndex(Type => Type.kind !== 5);
+    if (Wrongˉtype < 0) Reject('The fixture lacks a non-Vector type control.');
+    const Owned = Reads.find(Read => Read.function.name === 'Consume');
+    if (Owned === undefined) Reject('The by-value Vector observer is missing.');
+    const Ownerˉslot = Bytes.readUInt32LE(Owned.offset + 1);
+    const Ownedˉend = Sections[5].payload + Owned.function.codeOffset + Owned.function.codeLength;
+    let Transfer = null;
+    for (let Cursor = Owned.offset + 9; Cursor < Ownedˉend;) {
+        const Opcode = Bytes[Cursor];
+        if (Opcode === 205 && Bytes.readUInt32LE(Cursor + 1) === Ownerˉslot && Bytes[Cursor + 5] === 5) {
+            Transfer = Cursor;
+            break;
+        }
+        if ([48, 49, 64, 65, 81].includes(Opcode)) Reject('The owner transfer is not in the read block.');
+        Cursor += Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+    }
+    if (Transfer === null) Reject('The owned parameter has no explicit transfer.');
+    const Immutable = Parseˉfunction(Bytes, Sections[4], 'Read');
+    const Mutations = [
+        ['old-minor', Broken => Broken.writeUInt16LE(39, 6)],
+        ['unknown-opcode', Broken => { Broken[First] = 227; }],
+        ['parameter-boundary', Broken => Broken.writeUInt32LE(Reads[0].function.parameterCount, First + 1)],
+        ['parameter-overflow', Broken => Broken.writeUInt32LE(0xffffffff, First + 1)],
+        ['type-boundary', Broken => Broken.writeUInt32LE(Types.length, First + 5)],
+        ['type-overflow', Broken => Broken.writeUInt32LE(0xffffffff, First + 5)],
+        ['wrong-type', Broken => Broken.writeUInt32LE(Wrongˉtype, First + 5)],
+        ['truncated', Broken => Broken.subarray(0, First + 8)],
+        ['old-owned-length', Broken => { Broken[First] = 202; }],
+        ['read-after-move', Broken => Broken.set(Buffer.concat([
+            Bytes.subarray(Transfer, Transfer + 10), Bytes.subarray(Owned.offset, Transfer),
+        ]), Owned.offset)],
+        ['wrong-call-mode', Broken => { Broken[Immutable.parameterShapeOffsets[1]] = 23; }],
+    ];
+    for (const [Label, Mutate] of Mutations) {
+        let Broken = Buffer.from(Bytes);
+        const Replacement = Mutate(Broken);
+        if (Buffer.isBuffer(Replacement)) Broken = Replacement;
+        if (Broken.equals(Bytes)) Reject(`Vector mutation did not change bytes: ${Label}.`);
+        const Input = path.join(Work, 'Vector-' + Label + '.wvb');
+        writeFileSync(Input, Broken, { flag: 'wx' });
+        // A damaged instruction must not pass merely because an unrelated
+        // admission boundary or an internal verifier error rejected the file.
+        const Verifierˉpattern = Label === 'read-after-move'
+            ? /^wvb status=Invalid phase=control-reachability\n$/u
+            : Label === 'wrong-call-mode'
+                ? /^wvb status=Invalid phase=typed-execution\n$/u
+                : /^wvb status=Invalid phase=(?:semantic step=[a-z-]+|typed-execution|control-reachability)\n$/u;
+        for (const [Tool, Pattern] of [[Verifier, Verifierˉpattern],
+            [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u]]) {
+            const Result = await Runˉdevelopmentˉcommand(Tool, [Input],
+                Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
+                Reject(`Malformed Vector parameter read did not reject: ${Label}\n${Result.Output}${Result.Error}`);
+            }
+        }
+        process.stdout.write(`PASS Vector parameter malformed case=${Label}\n`);
+    }
+    const Invalidˉsources = [
+        ['consumed-parameter', Source.replace('fn Consume(Value: Collections.Vector<i32>) -> i32 {',
+            'fn Consume(Value: Collections.Vector<i32>) -> i32 {\n    let Consumedˉbeforeˉread: Collections.Vector<i32> = Value;')],
+        ['consume-borrowed', Source.replace('return Collections.Vectorˉlength(borrow Value);',
+            'let Moved: Collections.Vector<i32> = Value;\n    return 1u64;')],
+    ];
+    for (const [Label, Text] of Invalidˉsources) {
+        if (Text === Source) Reject('Vector source mutation did not change its input.');
+        const Input = path.join(Work, Label + '.wv');
+        const Output = path.join(Work, Label + '.wvb');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(process.execPath,
+            [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output)],
+            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || existsSync(Output) || !Normalize(Result.Error).includes('Invalidˉwir')) {
+            Reject(`Invalid Vector ownership did not reject at WIR validation: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS Vector parameter source rejection case=${Label}\n`);
+    }
+    process.stdout.write(`native Vector parameter reads status=Passed reads=${Reads.length} malformed=${Mutations.length} source-rejections=${Invalidˉsources.length} ` +
+        `wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)} qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 
 async function Verifyˉfoundationˉownedˉpayloads(Admitter, Authenticator, Analyzer, Emitter, Target, Verifier, Runner) {
@@ -3132,6 +3271,7 @@ function Requireˉnativeˉfunctionˉlimits(Bytes) {
 
 function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {
     const Opcode = Bytes[Cursor];
+    if (Opcode === 226) return 9;
     if (Opcode === 225) return 13;
     if (Opcode === 192) return Bytes[Cursor + 2] === 0 ? 5 : 3;
     if (Opcode === 193) return Bytes[Cursor + 1] === 0 ? 6 : 2;

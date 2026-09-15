@@ -334,7 +334,7 @@ fn Readˉmetadata(
             Expectedˉprofile = 2u8;
         }
     }
-    if Minor == 39u32 {
+    if Minor == 39u32 || Minor == 40u32 {
         // Payload borrowing is profile-neutral. Preserve declared host/system
         // scope; semantic instruction checks still enforce required authority.
         if U32ˉfromˉu8(Profile) < U32ˉfromˉu8(Expectedˉprofile) ||
@@ -352,7 +352,7 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
-        Minor < 11u32 || Minor > 39u32 ||
+        Minor < 11u32 || Minor > 40u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
         return Invalid;
     }

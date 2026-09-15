@@ -137,6 +137,22 @@ ownership-proof limits. The next gate is a maintained owned-resource consumer;
 direct Vector extraction, borrowed Vector helpers, arbitrary composition,
 native lowering, and installed promotion remain outside this checkpoint.
 
+The owned-consumer work exposed a missing collection prerequisite. Candidate
+WVB 1.40 now lets helpers directly observe a Vector parameter's length using a
+read-only parameter instruction without weakening the existing unique-owner
+length instruction. Compiler, verifier, and runner pass focused Windows and
+Debian direct-read tests with identical bytes; see the
+[paired-host evidence](../Evidence/2026-09-15-Vector-Parameter-Length.json) and
+[Vector parameter-read decision](../Decisions/0963-Read-Vector-Parameters-Without-Transferring-Ownership.md).
+
+The next call-lowering work must close two gaps exposed by the broader fixture:
+forwarding a borrowed Vector through another helper currently emits a temporary
+that fails typed verification, and repeated borrowing inside a loop fails the
+control-flow ownership check. Keep these as separate unfinished work, then
+connect useful owned Option/Result consumers. Direct payload extraction,
+exclusive Option/Result borrowing, Take, mapping, installed promotion, and full
+qualification are still open; this prerequisite does not close them.
+
 Before starting each, enumerate its finite accepted public operations, existing
 implementation, missing implementation, consumer, targets, and focused verifier.
 An operation is complete only when those rows have evidence on its claimed hosts.

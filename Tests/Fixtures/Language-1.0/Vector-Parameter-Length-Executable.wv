@@ -1,0 +1,49 @@
+#!wv/1 en@1
+module Foundationˉvectorˉparameterˉlengthˉexecutable;
+profile core;
+platform linux, windows;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+
+fn Read(Marker: u32, Value: borrow Collections.Vector<i32>) -> u64 {
+    if Marker != 7u32 { return 999u64; }
+    return Collections.Vectorˉlength(borrow Value);
+}
+
+fn Readˉexclusive(Value: borrow mut Collections.Vector<i32>) -> u64 {
+    return Collections.Vectorˉlength(borrow Value);
+}
+
+fn Consume(Value: Collections.Vector<i32>) -> i32 {
+    let Length: u64 = Collections.Vectorˉlength(borrow Value);
+    let Moved: Collections.Vector<i32> = Value;
+    if Length != 1u64 { return 5; }
+    if Read(7u32, borrow Moved) != 1u64 { return 6; }
+    return 42;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Created: Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Created {
+        case Result.Result.Valid { Value: Initial } {
+            var Values: Collections.Vector<i32> = Initial;
+            if Read(7u32, borrow Values) != 0u64 { return 7; }
+            if Readˉexclusive(borrow mut Values) != 0u64 { return 8; }
+            let Appended: Result.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+                Collections.Vectorˉappend::<i32>(borrow mut Values, 7);
+            match Appended {
+                case Result.Result.Valid { Value: Accepted } {
+                    if Read(7u32, borrow Values) != 1u64 { return 2; }
+                    if Readˉexclusive(borrow mut Values) != 1u64 { return 3; }
+                    Consume(Values)
+                }
+                case Result.Result.Failure { Error: Appendˉfailure } { 4 }
+            }
+        }
+        case Result.Result.Failure { Error: Allocationˉfailure } { 1 }
+    };
+}
