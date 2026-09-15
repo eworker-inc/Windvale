@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-15-current-lowerer-package-execution",
+  "date": "2026-09-15",
+  "subject": "Current native lowerer rebuild and maintained parser/package-lock execution",
+  "claim": "The current-source Windows native lowerer rebuild completed in 130094 milliseconds under the maintainer-approved 30-minute limit. It accepts both retained maintained-consumer WVBs, including the package-lock WVB rejected by the September 8 lowerer. The existing focused lowering owner passes 43 cases on Windows. Both consumer programs return 42 on Windows and Debian using Windows-constructed native images.",
+  "source": {
+    "kind": "Other",
+    "value": "Compiler, native producers and test tooling from cfde6b85bc311b017e1dd4ed1c973448b4d0f8aa without implementation edits. Uncommitted maintained package source/test/project identities and their retained WVBs are recorded below; these consumer changes are not promoted or committed by this evidence."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Current-source native lowerer, hosted profile 7",
+      "tool": "Node.js v24.19.0; current split compiler key 8dd2bef573ec2b0ef009bcfc16ec319ee5b952c217658c57b1932483020022e1",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.wvb; node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs 7 Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.wvb Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 130094,
+      "inputs": [
+        {
+          "path": "Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj",
+          "size": 2561,
+          "sha256": "9615ee372a0649f6d15bafbd89b6c7be04f9d849aa0889d8b2e813a325f81881"
+        },
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 10331,
+          "sha256": "af177f7e76898db949236d110c0f3847820fb9f98600f6d51270a01227b6a92b"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 39011,
+          "sha256": "48b51c16602173645193901dba4c863f789e5dab3f8c191053d3db48a1992786"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.wvb",
+          "size": 1309533,
+          "sha256": "8a0e6345aeb6c4751e1d76816bbd69e7bcb7fea43e92f5e0160cad63c47dded6"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe",
+          "size": 15506432,
+          "sha256": "fdf426428b3617de1f22e333316645ac100f1918aae8efe1e5995934e1b6b992"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Two retained maintained-consumer WVBs lowered to native WVO",
+      "tool": "Hash-identified current-source Lowerer.exe from the preceding run",
+      "command": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Canonical-Package-Text.wvo; Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Package-Lock.wvb Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Package-Lock.wvo",
+      "result": "Passed",
+      "elapsedMilliseconds": 2943,
+      "inputs": [
+        {
+          "path": "Libraries/Package/Canonical-Package-Text.wv",
+          "size": 15085,
+          "sha256": "8d36c8b832807a8cc898c370f337112e9b9e4b3c83d405e0a8c46f57f229439d"
+        },
+        {
+          "path": "Libraries/Package/Package-Lock.wv",
+          "size": 35586,
+          "sha256": "6aa848b8bde4681e1b2a82590db6b2f9bc62dec17e095fd68cbb504d1fcd520e"
+        },
+        {
+          "path": "Tests/Fixtures/Package/Canonical-Package-Text-Self-Test.wv",
+          "size": 10186,
+          "sha256": "546a0456a5324ef84301ab2bdebe01abbbebd7cceb0c56c8c1e00849c4afffbe"
+        },
+        {
+          "path": "Tests/Fixtures/Package/Package-Lock-Self-Test.wv",
+          "size": 7013,
+          "sha256": "b872a02cca3c703b13ba948f899c1e64dca52ef7fe3211feb2cccdf7f011a6a9"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj",
+          "size": 634,
+          "sha256": "47caa629a69f19198a2abfb5b0ea01f99117a9f0236c41b82a389fce841dc5d6"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj",
+          "size": 667,
+          "sha256": "41da6d0f5712f644dd14dd9ab65eb902d177b83897a7f94430263cc9bd3869b3"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe",
+          "size": 15506432,
+          "sha256": "fdf426428b3617de1f22e333316645ac100f1918aae8efe1e5995934e1b6b992"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Package-Lock.wvb",
+          "size": 53188,
+          "sha256": "fa6ff154827a8e23e581c55d5d7fe718c80c67986dc642fbf21c95ed45f19853"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Canonical-Package-Text.wvo",
+          "size": 263253,
+          "sha256": "2ffc04509ad050273d9d6aafeb517b03b80e0be63de46ba7fd57cb83b8ec991e"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Package-Lock.wvo",
+          "size": 893100,
+          "sha256": "a68c216ba067d8c02267fc3b4dacb26338c813cba7a2f5ec879c6cde5be1cb5a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "43 focused lowering cases, including Option<u64>, malformed bytecode and native execution; suite reports 18 valid and 25 malformed cases",
+      "tool": "Existing Test-Native-Unsafe-Write-Pointer-Lowering.mjs with supplied current lowerer",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows D:/windvale/dev01 --lowerer Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe fdf426428b3617de1f22e333316645ac100f1918aae8efe1e5995934e1b6b992",
+      "result": "Passed",
+      "elapsedMilliseconds": 30465,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+          "size": 33588,
+          "sha256": "53cd048c2dea621c3f1b92aea05291b31056925277987731a916db96f3a37147"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Lowerer.exe",
+          "size": 15506432,
+          "sha256": "fdf426428b3617de1f22e333316645ac100f1918aae8efe1e5995934e1b6b992"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 and Debian WSL2 x64",
+      "target": "Two maintained programs, four successful native executions returning 42; executable containers constructed on Windows",
+      "tool": "Current native lowerer WVOs, native linker and Package-Hosted-Wvb image mode, profile 6",
+      "command": "For each Canonical-Package-Text and Package-Lock: Check-Wvo.cmd <name.wvo>; Link-Wvo.cmd 0 Main <name.bin> <name.wvo>; retain the linked image as <name-Image.chunk-0>; Package-Hosted-Wvb.cmd image 6 <name.wvb> <name-Image> 1 <linked Main address> <name.exe|name.elf> <windows|linux>; execute <name.exe> on Windows and wsl -d Debian -- /mnt/d/windvale/dev01/Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/<name.elf>. All four executions returned 42. WVB inputs are under Artifacts/Work/Package-Parser-Delivery-m5o8Sc; WVO/image/application outputs are under Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb.",
+      "result": "Passed",
+      "elapsedMilliseconds": 44194,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Canonical-Package-Text.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        },
+        {
+          "path": "Artifacts/Work/Package-Parser-Delivery-m5o8Sc/Package-Lock.wvb",
+          "size": 53188,
+          "sha256": "fa6ff154827a8e23e581c55d5d7fe718c80c67986dc642fbf21c95ed45f19853"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Canonical-Package-Text.wvo",
+          "size": 263253,
+          "sha256": "2ffc04509ad050273d9d6aafeb517b03b80e0be63de46ba7fd57cb83b8ec991e"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Package-Lock.wvo",
+          "size": 893100,
+          "sha256": "a68c216ba067d8c02267fc3b4dacb26338c813cba7a2f5ec879c6cde5be1cb5a"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Canonical-Package-Text.exe",
+          "size": 278016,
+          "sha256": "42dbe6f3c3f291e3cc4d3f7b4bf740593244aa5e0a83fb6e039382dcfecfac8f"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Canonical-Package-Text.elf",
+          "size": 278528,
+          "sha256": "436fa0a78bf683defad6377621dfc6c354860df33b8ffb7008122c07227256c4"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Package-Lock.exe",
+          "size": 907776,
+          "sha256": "ab597c70dc9f7f2284d5ccc90e5730ed1fa901336d8cce526ab2aa39c703ed7f"
+        },
+        {
+          "path": "Artifacts/Work/Current-Lowerer-Rebuild-Riwtfb/Package-Lock.elf",
+          "size": 909312,
+          "sha256": "fc338c881e7c7006aef7e0c97b3815e354f629520c9ed1224143c6584f6de68f"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is selected current-source development construction and consumer execution, not installed-toolchain promotion, a release, or complete cross-host qualification.",
+    "Only the Windows lowerer was constructed and ran the 43-case suite. Debian executed the Windows-constructed consumer ELF files; independent Debian lowerer reconstruction and the full Linux lowering owner were not run.",
+    "The lowerer executable uses hosted profile 7: a 301465600-byte dynamic arena and 2^37 instruction bound. The existing lowering owner's default construction uses profile 6; this evidence does not claim that default profile's narrower runtime limits. Consumer executables use profile 6. Peak working-set memory was not measured.",
+    "Compiler and analysis checkpoints were hits; WVB emission created key 8ddc6a27c35386bd7346e9eb51619ec4c2b54b16d6b657692406636af1430279. Complete WVB verification ran, the segmented image cache was a hit, and hosted packaging created key 817d15cfc6c6ab08545ec7d9a3fa1b16eb99018a736d06cd9bcb26d4a85da628. This was not an entirely cold bootstrap.",
+    "The retained WVBs were compiled in the preceding publication work. This run did not repeat source compilation or claim a new deterministic consumer build result.",
+    "Package-lock retains ordinary Option matching. The separate emitter rejection when replacing its four matches with immutable borrowing remains pending and was not retried in this run.",
+    "The ordinary pinned hosted packager and installed identities are unchanged. Execution used explicit current lowering plus image-mode packaging.",
+    "The broader package migration remains uncommitted: shared SHA-256 legacy source dependencies, package/bundle/installation closure and full owner verification remain pending.",
+    "No source/compiler implementation was changed or new verifier added by this run. The rebuilt products remain ignored local artifacts and reusable construction checkpoints."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-15-Project4-Native-Publication.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Specifications/Windvale-Native-Hosted-Tool-Runtime-Header.md"
+  ]
+}

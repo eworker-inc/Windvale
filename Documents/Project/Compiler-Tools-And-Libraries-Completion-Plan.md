@@ -67,15 +67,23 @@ executable. This is not independent Linux construction or fault-injection
 qualification; exact inputs and exclusions are in the
 [publication evidence](../Evidence/2026-09-15-Project4-Native-Publication.json).
 
-The package migration remains uncommitted. The canonical parser builds and its
-tests execute on Windows/Debian using the selected September 8 native lowerer.
-Package-lock builds with ordinary Option matching, but the selected lowerer
-rejects its WVB. Moving its four matches to immutable borrowing also exposes an
-emitter `Invalid analysis / Invalid WIR` rejection; those unsuccessful changes
-were withdrawn. Next: construct the current lowerer, close these consumer
-failures, and reconcile shared SHA-256's legacy callers before committing the
-source migration. Do not promote the diagnostic lowerer or claim full package
-delivery from the isolated parser result.
+The package migration remains uncommitted, but its native-lowering blocker is
+resolved for the selected current product. The approved current-lowerer rebuild
+completed in 2 minutes 10 seconds; 43 focused Windows cases passed. Both the
+canonical parser and package-lock tests now return 42 on Windows and Debian
+using explicitly selected native lowering and image-mode packaging. The earlier
+package-lock rejection came from the older lowerer. See the
+[current-lowerer execution evidence](../Evidence/2026-09-15-Current-Lowerer-Package-Execution.json)
+for exact identities, runtime profiles, cache reuse, and host limits.
+
+Package-lock still uses ordinary Option matching. Moving its four matches to
+immutable borrowing exposes an emitter `Invalid analysis / Invalid WIR`
+rejection; those unsuccessful changes were withdrawn. Next: close that compiler
+boundary, integrate the selected lowerer into the maintained package verification
+path, and reconcile shared SHA-256's legacy callers before committing the source
+migration. The pinned packager and installed identities are unchanged. These
+selected executions do not establish full package delivery or independent
+dual-host lowerer construction.
 
 #### Following milestones: complete Option/Result operations
 
