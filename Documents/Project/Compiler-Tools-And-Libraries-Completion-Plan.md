@@ -198,8 +198,10 @@ points, including collections reached through a marked record. The scan is
 bounded by the heap and allocation limits and rejects stale or wrong-type
 record handles. The focused
 [trace probe](../../Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Probe.wv)
-checks the nested record-to-Vector-to-record path; it is not record-element
-source admission or paired-host qualification. Next extend source/WIR
+checks the nested record-to-Vector-to-record path; the
+[paired-host checkpoint](../Evidence/2026-09-22-Record-Vector-Trace-Checkpoint.json)
+records its limited result. This is not record-element source admission or
+paired-host qualification. Next extend source/WIR
 admission, complete WVB verification, and interpreter execution together under
 a versioned candidate; reject copied borrows, malformed backing, and budget
 exhaustion before the Package-Lock migration.

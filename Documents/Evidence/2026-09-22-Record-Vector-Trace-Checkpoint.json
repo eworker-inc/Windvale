@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-22-record-vector-trace-checkpoint",
+  "date": "2026-09-22",
+  "subject": "Current-source interpreter tracing of record handles in live collections",
+  "claim": "At source commit c7df2583b36eb303d4d285e5858c6f2d4dd00e83, a current-source portable runner built on Windows passed the focused owned-payload owner on Windows and Debian. Both hosts verified and executed the same synthetic record-to-Vector-to-record trace probe, rejected stale and wrong-type handles in that probe, and passed nine owned-payload cases and two budget-rejection cases.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "c7df2583b36eb303d4d285e5858c6f2d4dd00e83"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Current-source portable WVB runner",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.wvb --deadline-ms 1790114509960",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.wvb",
+          "size": 1196351,
+          "sha256": "2ae6e6d91549e8ef877edf1a0466e124ecd6b7c2690cfabc2bac11cf9c8c84ff"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Verified Windows x64 hosted runner package",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs 5 Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.wvb Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.exe",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.exe",
+          "size": 12372480,
+          "sha256": "21953c40763dc261bcb3191b949ceb6ecccb36e2548aac7414d45b0fc75e7607"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL on local Windows host",
+      "target": "Verified Linux x64 hosted runner package from Windows-produced portable WVB",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh",
+      "command": "wsl --cd /mnt/d/windvale/dev01 -d Debian -- ./Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh 5 Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.wvb Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.elf",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.elf",
+          "size": 12374016,
+          "sha256": "d2945db719116b760a5cdb04197074339d9532043e46b9e8078682cc1be29bbc"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Focused Foundation owned-payload owner with synthetic record Vector trace probe",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 25065
+    },
+    {
+      "host": "Debian x64 WSL on local Windows host",
+      "target": "Focused Foundation owned-payload owner with synthetic record Vector trace probe",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl --cd /mnt/d/windvale/dev01 -d Debian -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Analyzer.elf Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf Projects/Targets/Linux-X64-No-Foreign.wvtd Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 63724
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The trace probe supplies synthetic internal type and heap bytes; source-level record Vector admission, WVB verification of that feature, and a complete end-to-end application remain open.",
+    "The portable runner WVB was built from current source on Windows and packaged for Debian; this does not establish independent Debian source reconstruction.",
+    "The focused owner is development evidence. Full Windows and Linux qualification, the complete WebAssembly engine suite, and release signing were not run for this source state.",
+    "The intermediate compiler, verifier, and hosted runner products are local work artifacts, not published release artifacts."
+  ],
+  "related": [
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Probe.wv",
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv",
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+    "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs"
+  ]
+}
