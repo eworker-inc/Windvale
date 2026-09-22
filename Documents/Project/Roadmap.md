@@ -2,7 +2,7 @@
 
 > Status: Current dependency plan for the direct Windvale 1.0 product
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-15
+> Last reviewed: 2026-09-22
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -79,13 +79,13 @@ independent library contracts and consumers may advance in parallel.
 
 Immediate sequence:
 
-1. close the [package-parser delivery milestone](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing):
-   reconcile the maintained source closure, use the normal Project 4 build and
-   native publication path, and demonstrate the consumer on Windows/Debian;
-   bounded immutable-borrow interpreter/native execution already has selected
-   paired-host evidence;
-2. complete wider owned-payload composition and exclusive borrowing as separately
-   scoped and verified deliverables;
+1. preserve the [completed package-parser delivery milestone](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing),
+   then deliver a maintained owned-resource consumer. The selected Package-Lock
+   typed-directory migration first needs record-element Vector storage/tracing,
+   budget threading, and scanner ownership; selected scalar indexed borrowing
+   already has paired-host evidence;
+2. complete wider owned-payload composition and exclusive borrowing as
+   separately scoped and verified deliverables;
 3. complete Option/Result take and mapping operations as separate deliverables;
 4. add primitive ordering, collection mutation and slicing, and bounded byte
    construction; and

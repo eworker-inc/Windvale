@@ -4,39 +4,37 @@
 > Authority: Informative; existing specifications and accepted decisions remain authoritative
 > Last reviewed: 2026-09-22
 
-Project 4 metadata and normal repository routing now exist. The remaining
-consumer work is source-closure migration, safe output replacement, and execution
-evidence, not simply adding a target directive to project files. The
+The selected package parser and lock consumer now build through Project 4,
+publish safely, and run on Windows and Debian. The
 [package-parser milestone](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)
-owns the finite delivery result; later Option/Result operations and installed
-toolchain promotion have separate gates.
+is complete. Installed toolchain promotion, full transaction fault-injection
+qualification, broader library migration, and later Option/Result operations
+have separate gates.
 
 ## Current delivery boundary
 
-- Project 4 launchers use the authenticated split pipeline but require a new
-  `.wvb` output path. They do not yet invoke the current transactional publisher
-  to replace an existing output. New-file publication is not replacement evidence.
-- Current-source publisher construction has advanced past validation-only
-  execution: Windows/Linux executables can be materialized, with the recorded
-  Windows smoke test below. Native failure/recovery behavior and launcher
-  integration still need their own tests before claiming the consumer milestone.
-- The local package migration is incomplete. Some affected projects still mix
-  modern package sources with legacy dependencies such as shared SHA-256.
-  Reconcile the complete dependency closure without duplicate implementations,
-  source-header rewriting, or implicit targets.
-- The 15 September read-only preflight found no current Windows compiler-cache
-  entry. The focused Project 4 helper plan estimates 1,200 seconds, maximum
-  2,400 seconds; the package plan estimates 645 seconds. Neither was launched
-  under the then-applicable ten-minute development budget. Future cold
-  acquisition follows the [standing local-run approval](../../AGENTS.md#testing-and-verification):
-  announce the command, expected duration, and finite maximum without asking
-  for duration approval again.
+- The selected Project 4 package closure includes 394 connected manifests and
+  593 edition-1 sources with one shared SHA-256 implementation. The ordinary
+  launcher uses authenticated target admission and current-source native
+  publication; the [integration evidence](../Evidence/2026-09-15-Source-Edition-Package-Integration.json)
+  records exact Windows/Debian consumer and build results.
+- Focused publication cases cover deterministic replacement, malformed WVB,
+  bad-lock preservation, and resource aliases on both hosts. Full transaction
+  fault injection and installed publisher promotion remain separate.
+- Current compiler construction can exceed the default local development budget.
+  A longer selected run follows the [standing local-run approval](../../AGENTS.md#testing-and-verification)
+  with a stated command, cold estimate, and finite maximum. Cold construction
+  remains a throughput issue for selected verification paths.
 
-Once target and source closure are known, convert manifests mechanically and
-review their exact inputs. Do not count each converted manifest as a separate
-product milestone or weaken target admission to make migration appear complete.
+Further suite migration must preserve exact inputs. Do not count each converted
+manifest as a separate product milestone or weaken target admission to make
+migration appear complete.
 
-## Development checkpoint
+## Earlier development checkpoints
+
+The following checkpoints explain the path to the completed selected consumer.
+Their narrower claims and then-open gaps remain historical; the current delivery
+boundary above and the linked integration evidence own present standing.
 
 The native manifest tool and split coordinator now have a Project 4 development
 path. The maintained admission verifier's `--project4-products` selection passes
@@ -87,10 +85,9 @@ narrows the checked behavior relative to the full owner, but cold package
 acquisition can still require a named longer local run; it does not replace the
 full production-admission owner or cross-host qualification.
 
-The next integration checkpoint is broader maintained package/library manifest
-migration and publication promotion. Retained diagnostic executables must not be
-substituted into installer inventories or labeled current solely because selected
-consumer tests pass.
+Broader library manifest migration and installed publication promotion remain
+separate. Retained diagnostic executables must not be substituted into installer
+inventories or labeled current solely because selected consumer tests pass.
 
 The earlier publication checkpoint found that both frozen native publishers
 rejected the migrated package test bytecode, while a rebuilt current publisher's
@@ -123,7 +120,7 @@ publisher promotion. The current Debian compiler cache is absent and requires
 separately budgeted reconstruction before the full current-source owner can run
 there.
 
-## Current boundary
+## Historical Project 3 boundary
 
 [Project 3](../../Specifications/Windvale-Project.md#project-3-text-format)
 selects a source-input lock and source profile for the complete source closure.
