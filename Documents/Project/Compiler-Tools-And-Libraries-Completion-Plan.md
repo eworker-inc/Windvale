@@ -21,6 +21,12 @@ requirements. “Complete” means the required Windows/Linux 1.0 host surface i
 the [product plan](Windvale-1.0-Product-Plan.md), with explicit target limits.
 Windvale OS and optional profiles retain their own gates.
 
+The [1.0 completion matrix](Compiler-Tools-And-Libraries-1.0-Matrix.md) tracks
+the finite Foundation registry, required host families, draft API decisions,
+package/target evidence and installed-toolchain gates. It separates accepted
+contracts from proposals and names the next owned-resource consumer's missing
+collection operations; no row closes from a filename or isolated passing test.
+
 ## What the review establishes
 
 | Area | What already works | Remaining work |

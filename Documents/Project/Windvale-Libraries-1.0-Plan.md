@@ -33,6 +33,11 @@ The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Librarie
 coordinates this library sequence with compiler/runtime support, installed tools,
 real consumers, and testing at substantial chunk boundaries.
 
+Use the [1.0 completion matrix](Compiler-Tools-And-Libraries-1.0-Matrix.md) for
+the finite accepted/candidate inventory, required/optional distinctions,
+consumer dependencies and per-row completion evidence. In particular, the
+wider catalog below is not automatically accepted by the implementation goal.
+
 The maintained package parser now uses canonical `Option<u64>` and immutable
 borrowing through ordinary project build, safe publication, and Windows/Debian
 execution. Its [completed delivery gates](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)

@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-22-frozen-foundation-identity-repair",
+  "date": "2026-09-22",
+  "subject": "Restore the accepted Foundation source-design identity after editorial drift",
+  "claim": "Both permanent-host migration-fixture checks pass after restoring the exact Foundation specification bytes accepted by Decision 0942. Only implementation-status prose introduced by e64bc8c7 is removed from that frozen input; the current execution contracts and results remain in unfrozen specifications, Decision 0964 and its evidence. No manifest, expected identity, source implementation, or verifier rule is changed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on e64bc8c705c154781775f443588e20304a51ab18; the Foundation file is restored byte-for-byte to its parent state and the immutable Decision-0942 identity. The exact restored file and verification inputs are recorded below."
+  },
+  "runs": [
+    {
+      "host": "GitHub Actions, Windows and Linux development jobs",
+      "target": "Observed CI jobs failed at e64bc8c7; log retrieval itself succeeded",
+      "tool": "GitHub Actions Verify; gh run view",
+      "command": "gh run view 35700377875 --log-failed; gh run view 35700377875 --job 106656916017 --log; inspect first failure in both development jobs",
+      "result": "Failed",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "host": "Windows 10.0.26200 x64; Node.js 24.18.0",
+      "target": "Immutable source-freeze chain and maintained migration fixture inventory: 251 frozen inputs, 72 source fixtures",
+      "tool": "Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 210,
+      "inputs": [
+        {
+          "path": "Specifications/Windvale-Language-1.0-Foundation.md",
+          "size": 87284,
+          "sha256": "28915c949c34244d03f6a3c99967788ddff530855a100573c0441bc222f5d409"
+        },
+        {
+          "path": "Documents/Project/Windvale-Language-1.0-Source-Amendment-0942-Candidate.txt",
+          "size": 3792,
+          "sha256": "ede1ccee0a91282f3e34bff520c0e67646d73183f671b9c005d84aab27c92a2f"
+        },
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs",
+          "size": 8901,
+          "sha256": "f5bccee39fd54c6fe39a6560c88fde67e2eb102eda8e78970af2ecd162430f7d"
+        },
+        {
+          "path": "Tests/Native/Language-1.0-Fixture-Inventory.txt",
+          "size": 3165,
+          "sha256": "94e0ba2ca87902b2419c23dcccf2baa70bc949bcb4ab66619df14ee045b94793"
+        }
+      ]
+    },
+    {
+      "host": "Debian under WSL2 Linux 6.18.33.2 x64; Node.js 20.19.2",
+      "target": "Same immutable source-freeze chain and maintained migration fixture inventory: 251 frozen inputs, 72 source fixtures",
+      "tool": "Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs",
+      "command": "wsl.exe -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 16389,
+      "inputs": [
+        {
+          "path": "Specifications/Windvale-Language-1.0-Foundation.md",
+          "size": 87284,
+          "sha256": "28915c949c34244d03f6a3c99967788ddff530855a100573c0441bc222f5d409"
+        },
+        {
+          "path": "Documents/Project/Windvale-Language-1.0-Source-Amendment-0942-Candidate.txt",
+          "size": 3792,
+          "sha256": "ede1ccee0a91282f3e34bff520c0e67646d73183f671b9c005d84aab27c92a2f"
+        },
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs",
+          "size": 8901,
+          "sha256": "f5bccee39fd54c6fe39a6560c88fde67e2eb102eda8e78970af2ecd162430f7d"
+        },
+        {
+          "path": "Tests/Native/Language-1.0-Fixture-Inventory.txt",
+          "size": 3165,
+          "sha256": "94e0ba2ca87902b2419c23dcccf2baa70bc949bcb4ab66619df14ee045b94793"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The diagnostic CI run failed at step=frozen-inputs with Frozen core input differs: Specifications/Windvale-Language-1.0-Foundation.md. Classification and documentation passed; this is an identity failure, not the earlier run's fifteen-minute timeout.",
+    "The recorded failed run is retained as diagnosis; result Passed applies only to the focused restoration checks, not to the complete CI pipeline. No remote rerun or broad front-door suite was performed for this repair.",
+    "Verify-Changed.ps1 -PlanOnly was inspected before the narrow checks. The isolated restoration proposed a 329-case front-door owner with expected 330 seconds and maximum 600 seconds; the causal check was its frozen-input/fixture prerequisite, run on both hosts within a two-minute cap. No compiler construction or implementation changed.",
+    "Frozen historical implementation-status prose remains historical. Current supported shapes and targets are owned by the unfrozen source-WVB, bytecode and runner specifications and their linked evidence; restoring a frozen file does not retract those exact execution results.",
+    "This does not change the language freeze, accept new library signatures, promote installed products, establish full qualification, or imply human inspection or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0942-Advance-The-Frozen-Source-Identity-For-Foreign-And-Payload-Borrowing.md",
+    "Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md",
+    "Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-1.0-Matrix.md",
+    "https://github.com/eworker-inc/Windvale/actions/runs/35700377875"
+  ]
+}
