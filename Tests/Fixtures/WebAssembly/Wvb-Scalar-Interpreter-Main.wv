@@ -2276,10 +2276,32 @@ record Vectorˉgrowˉexecution {
     Allocationˉleases: bytes;
 }
 
+fn Vectorˉlocalˉtype(
+    Localˉshapes: bytes,
+    Functionˉshapeˉoffsets: bytes,
+    Functionˉindex: u32,
+    Functionˉcursor: u32,
+    Typeˉcount: u32,
+    Slot: u32
+) -> u32 {
+    if Slot >= Functionˉcursor / 8u32 { return 4294967295u32; }
+    let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+        Functionˉshapeˉoffsets, Functionˉindex * 4u32
+    ) + Slot * 8u32;
+    let Token: u32 = Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape + 4u32);
+    if Borrowˉframes.Valueˉkind(
+        Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape)
+    ) != 23u32 || Token == 0u32 || Token - 1u32 >= Typeˉcount {
+        return 4294967295u32;
+    }
+    return Token - 1u32;
+}
+
 fn Executeˉvectorˉgrowˉreserved(
     Module: bytes,
     Typeˉoffsets: bytes,
     Typeˉcount: u32,
+    Expectedˉvectorˉtype: u32,
     Payload: u32,
     Initialˉstack: bytes,
     Initialˉlocals: bytes,
@@ -2338,7 +2360,8 @@ fn Executeˉvectorˉgrowˉreserved(
         ) != 1u32 {
         return Invalid;
     }
-    if Collections.Collectionˉtype(Initialˉheap, Vector) >= Typeˉcount {
+    if Collections.Collectionˉtype(Initialˉheap, Vector) !=
+        Expectedˉvectorˉtype {
         return Invalid;
     }
     let Oldˉmaximum: u32 = Collections.Collectionˉmaximum(
@@ -2499,6 +2522,7 @@ fn Executeˉvectorˉappend(
     Module: bytes,
     Typeˉoffsets: bytes,
     Typeˉcount: u32,
+    Expectedˉvectorˉtype: u32,
     Payload: u32,
     Initialˉstack: bytes,
     Locals: bytes,
@@ -2524,7 +2548,8 @@ fn Executeˉvectorˉappend(
     let Vector: bytes = Bytesˉslice(Locals, Vectorˉlocal * 8u32, 8u32);
     if !Collections.Collectionˉbackingˉvalid(
         Initialˉheap, Heapˉallocations, Heapˉallocationˉcount, Vector
-    ) {
+    ) || Collections.Collectionˉtype(Initialˉheap, Vector) !=
+        Expectedˉvectorˉtype {
         return Invalid;
     }
     let Value: bytes = Bytesˉslice(
@@ -5797,9 +5822,16 @@ fn Executeˉextended(
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
+        let Appendˉexpectedˉvectorˉtype: u32 = Vectorˉlocalˉtype(
+            Localˉshapes, Functionˉshapeˉoffsets, Functionˉindex,
+            Functionˉcursor, Typeˉcount,
+            Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32)
+        );
+        if Appendˉexpectedˉvectorˉtype == 4294967295u32 { return Invalid; }
         let Appendˉresult: Vectorˉappendˉexecution =
             Executeˉvectorˉappend(
-                Module, Typeˉoffsets, Typeˉcount, Payload, Stack, Locals,
+                Module, Typeˉoffsets, Typeˉcount, Appendˉexpectedˉvectorˉtype,
+                Payload, Stack, Locals,
                 Recordˉmetadata, Records, Heap, Heapˉallocations,
                 Heapˉallocationˉcount, Zeroˉcell
             );
@@ -5822,9 +5854,16 @@ fn Executeˉextended(
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
+        let Growˉexpectedˉvectorˉtype: u32 = Vectorˉlocalˉtype(
+            Localˉshapes, Functionˉshapeˉoffsets, Functionˉindex,
+            Functionˉcursor, Typeˉcount,
+            Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32)
+        );
+        if Growˉexpectedˉvectorˉtype == 4294967295u32 { return Invalid; }
         let Growˉresult: Vectorˉgrowˉexecution =
             Executeˉvectorˉgrowˉreserved(
-                Module, Typeˉoffsets, Typeˉcount, Payload, Stack, Locals,
+                Module, Typeˉoffsets, Typeˉcount, Growˉexpectedˉvectorˉtype,
+                Payload, Stack, Locals,
                 Memoryˉbudgetˉstate, Recordˉmetadata, Records,
                 Heap, Heapˉallocations, Heapˉallocationˉcount,
                 Allocationˉleases, Zeroˉcell
