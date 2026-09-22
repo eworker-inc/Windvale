@@ -200,5 +200,23 @@ export fn Main() -> i32 {
             Repeat(Bytesˉconcat(Cell(5u8, 0u32), Cell(71u8, 4294967295u32)), Index)) { return 24; }
         Index = Index + 1u32;
     }
+    let Vectorˉheader: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(826431063u32),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(1u32), Bytesˉfromˉu16ˉlittle(40u32)));
+    let Borrowˉvector: bytes = Bytesˉconcat(Wrapper, Cell(23u8, 4294967295u32));
+    let Vectorˉinput: bytes = Bytesˉconcat(Vectorˉheader, Borrowˉvector);
+    if !Equal(Directories.Hˉlocalˉshapes(Vectorˉinput, 8u32, 0u32, 8u32, 1u32),
+        Cell(87u8, 4294967295u32)) { return 25; }
+    let Priorˉvector: bytes = Bytesˉconcat(Bytesˉslice(Vectorˉheader, 0u32, 6u32),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(39u32), Borrowˉvector));
+    if Bytesˉlength(Directories.Hˉlocalˉshapes(Vectorˉinput, 8u32, 1u32, 14u32, 0u32)) != 0u32 ||
+        Bytesˉlength(Directories.Hˉlocalˉshapes(Priorˉvector, 8u32, 0u32, 8u32, 1u32)) != 0u32 {
+        return 26;
+    }
+    Index = 0u32;
+    while Index < 6u32 {
+        if Bytesˉlength(Directories.Hˉlocalˉshapes(Bytesˉslice(Vectorˉinput, 0u32, 8u32 + Index),
+            8u32, 0u32, 8u32, 1u32)) != 0u32 { return 27; }
+        Index = Index + 1u32;
+    }
     return 42;
 }

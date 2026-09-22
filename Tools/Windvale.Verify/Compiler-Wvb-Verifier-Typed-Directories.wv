@@ -53,11 +53,13 @@ export fn Hˉlocalˉshapes(
                 Borrowed = true;
                 Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
                 Cursor = Cursor + 1u32;
-                // Decode ordinary payloads only; nested and special-owner views
-                // retain their separate contracts. This is not module admission.
+                // The minor-40 Vector payload extension is local-only. Existing
+                // Vector parameters retain their distinct modes 23, 26, and 27.
+                if Kind == 23u32 && (Stage != 1u32 || Length < 8u32 ||
+                    Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32) { return Empty; }
                 if !((Kind >= 1u32 && Kind <= 11u32) ||
                     (Kind >= 14u32 && Kind <= 20u32) ||
-                    Kind == 22u32 || Kind == 24u32 || Kind == 35u32) {
+                    Kind == 22u32 || Kind == 23u32 || Kind == 24u32 || Kind == 35u32) {
                     return Empty;
                 }
             } else {

@@ -136,9 +136,17 @@ compiler-supplied immutable observation lowered to the ordinary variant case
 test. The payload-borrow checkpoint additionally admits canonical
 `Option.Borrow(borrow Owner)` for one direct named owner and exposes its payload
 only through an ephemeral `Option<borrow T>` match view. Typed validation keeps
-the owner frozen through function exit and rejects view or payload escape,
-duplication, consuming use, and serialization. This checkpoint ends at WVIR;
-WVB execution, `Borrowˉmut`, `Take`, and `Map` remain candidate library work.
+the owner frozen through function exit and rejects escape, consuming use, and
+serialization of non-owning views or payloads. Proven Copy/shared payload reads
+retain their ordinary value rules. The selected WVB 1.39 path now includes
+complete admission and Windows/Debian host execution. The maintained package
+parser and lock reader use `Option<u64>` through the normal build and
+publication path; see the
+[consumer integration evidence](../Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json).
+Owned-record payload observation and reclamation have their separately bounded
+[paired-host evidence](../Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json).
+These delivered shapes do not establish arbitrary payload composition.
+`Borrowˉmut`, `Take`, and `Map` remain candidate library work.
 
 No operation traps merely because the option is absent. An explicit
 `Requireˉpresent` contract may trap only when its source precondition proves
@@ -181,8 +189,17 @@ case tests. The payload-borrow checkpoint additionally admits canonical
 `Result.Borrowˉfailure(borrow Owner)`. Each produces an ephemeral
 `Option<borrow T>` or `Option<borrow E>` match view under the same direct-owner,
 owner-freezing, non-escape, and no-serialization rules as `Option.Borrow`.
-Executable WVB lowering and the mapping declarations remain candidate library
-work.
+Selected WVB 1.39 lowering, complete verification, and host execution cover both
+Result sides, including the owned-record shapes in the linked reclamation
+evidence. Exclusive borrowing and mapping remain candidate library work.
+
+The [borrowed Vector helper candidate](../Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md)
+extends WVB 1.40 only: a compiler-generated borrowed Vector local may pass to an
+exact immutable Vector parameter at a synchronous direct call. It does not
+transfer the payload, change the public signatures, or permit a borrowed result
+to escape. Its nine deterministic payload scenarios and ownership rejections
+have [Windows/Debian evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json).
+It does not promote native lowering, browser execution, or installed tools.
 
 `Result<unit, E>` is the standard recoverable no-data completion. A function that
 cannot fail returns `unit`, not `Result<unit, never>`.

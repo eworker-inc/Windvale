@@ -203,7 +203,8 @@ export fn Check(Candidate: bytes) -> i32 {
     let Shortˉcallable: bytes = Word(Bytesˉslice(Withˉcallable, 0u32,
         Bytesˉlength(Withˉcallable) - 1u32), Types - 4u32, 215u32);
     if Failureˉstage(Shortˉcallable) != 2u32 { return 135; }
-    if Failureˉstage(Byte(Candidate, 6u32, 40u8)) != 1u32 { return 136; }
+    // Minor 40 normalizes, but still requires E2 or projected Vector metadata.
+    if Failureˉstage(Byte(Candidate, 6u32, 40u8)) != 6u32 { return 136; }
     if Complete.Compilerˉwvbˉverifyˉmetadata(Earlier) != 0u32 { return 137; }
     return 0;
 }

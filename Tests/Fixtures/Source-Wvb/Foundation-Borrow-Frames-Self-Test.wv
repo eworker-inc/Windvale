@@ -46,6 +46,109 @@ fn Scalarˉstate(Result: Values.Borrowˉstep) -> Frames.State {
     return Frames.State(Result.Valid, Result.Views, Result.Bindings, Result.Frames, Result.Base);
 }
 
+// Component fragments carry the real version header for the minor-40 boundary.
+// Complete nominal/type admission remains owned by the module verifier.
+fn Vectorˉmodule(Minor: u32) -> bytes {
+    let Header: bytes = Bytesˉconcat(Textˉtoˉutf8("WVB1"),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(1u32), Bytesˉfromˉu16ˉlittle(Minor)));
+    let Fragment: bytes = Optionˉtype(23u8);
+    let Option: bytes = Bytesˉconcat(Bytesˉslice(Fragment, 0u32, 29u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉslice(Fragment, 29u32, 9u32)));
+    let Vector: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉconcat(Textˉtoˉutf8("V"), Bytesˉfromˉu8(1u8))));
+    return Bytesˉconcat(Header, Bytesˉconcat(Option, Vector));
+}
+
+fn Vectorˉstep(Current: Frames.State, Minor: u32, Instruction: bytes,
+    Locals: bytes, Shapes: bytes, Metadata: bytes, Payload: bytes,
+    Stack: bytes, Flags: bytes, Consumed: u32, Allocations: bytes) -> Values.Borrowˉstep {
+    let Types: bytes = Vectorˉmodule(Minor);
+    return Values.Prepareˉborrowˉstep(Current, Bytesˉconcat(Types, Instruction),
+        1u32, Bytesˉlength(Types), U32ˉfromˉu8(Bytesˉreadˉu8(Instruction, 0u32)),
+        Cell(8u32, 50u32), Shapes, 0u32, Locals, Metadata, Payload,
+        Stack, Allocations, Bytesˉlength(Allocations) / 12u32, Flags, Consumed);
+}
+
+fn Checkˉprojectedˉvector() -> i32 {
+    if Frames.Payloadˉkind(23u32) || Frames.Payloadˉlocalˉkind(23u32, 39u32) ||
+        Frames.Payloadˉlocalˉkind(23u32, 41u32) || !Frames.Payloadˉlocalˉkind(23u32, 40u32) ||
+        Frames.Payloadˉlocalˉkind(26u32, 40u32) || Frames.Payloadˉlocalˉkind(27u32, 40u32) ||
+        Frames.Valueˉkind(87u32) != 23u32 { return 47; }
+    let Module: bytes = Vectorˉmodule(40u32);
+    let Wrapped: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8),
+        Bytesˉconcat(Bytesˉfromˉu8(23u8), Bytesˉfromˉu32ˉlittle(1u32)));
+    if Values.Shapeˉwidthˉat(Bytesˉconcat(Module, Wrapped), Bytesˉlength(Module)) != 6u32 ||
+        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(39u32), Wrapped), Bytesˉlength(Module)) != 0u32 ||
+        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(41u32), Wrapped), Bytesˉlength(Module)) != 0u32 {
+        return 48;
+    }
+    let Zero: bytes = Cell(0u32, 0u32);
+    let Empty: bytes = Bytesˉslice(Zero, 0u32, 0u32);
+    let Owner: bytes = Cell(0u32, 2147483904u32);
+    let Descriptor: bytes = Cell(0u32, 32u32);
+    let Allocation: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
+    let Shapes: bytes = Cell(11u32, 1u32);
+    let Flag: bytes = Bytesˉfromˉu8(1u8);
+    var Metadata: bytes = Cell(2147483904u32, 1u32);
+    var Index: u32 = 1u32;
+    while Index < 768u32 { Metadata = Bytesˉconcat(Metadata, Zero); Index = Index + 1u32; }
+    let Instruction: bytes = Code(0u32, 0u32, 1u32);
+    let Borrowed: Values.Borrowˉstep = Vectorˉstep(Frames.Begin(), 40u32, Instruction,
+        Owner, Shapes, Metadata, Descriptor, Empty, Empty, 0u32, Allocation);
+    let Earlier: Values.Borrowˉstep = Vectorˉstep(Frames.Begin(), 39u32, Instruction,
+        Owner, Shapes, Metadata, Descriptor, Empty, Empty, 0u32, Allocation);
+    if !Borrowed.Valid || !Borrowed.Handled || Borrowed.Kind != 5u32 || Earlier.Valid ||
+        Bytesˉlength(Borrowed.Roots) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Borrowed.Roots, 4u32) != 2147483904u32 { return 49; }
+    let Current: Frames.State = Scalarˉstate(Borrowed);
+    let Project: bytes = Bytesˉconcat(Bytesˉfromˉu8(153u8), Cell(0u32, 0u32));
+    Index = 0u32;
+    while Index < 128u32 {
+        let Repeated: Values.Borrowˉstep = Vectorˉstep(Current, 40u32, Instruction,
+            Owner, Shapes, Metadata, Descriptor, Empty, Empty, 0u32, Allocation);
+        let Read: Values.Borrowˉstep = Vectorˉstep(Current, 40u32, Project,
+            Owner, Shapes, Metadata, Descriptor, Borrowed.Stack, Flag, 1u32, Allocation);
+        if !Repeated.Valid || Bytesˉlength(Repeated.Bindings) != 28u32 ||
+            Repeated.Views.Nextˉgeneration != 2u32 || !Read.Valid || Read.Kind != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Read.Stack, 4u32) != 32u32 ||
+            Bytesˉreadˉu32ˉlittle(Read.Allocations, 8u32) != 2u32 { return 50; }
+        let Released: bytes = Values.Releaseˉdescriptor(Read.Allocations, 1u32, Read.Stack);
+        if Bytesˉlength(Released) != 12u32 || Bytesˉreadˉu32ˉlittle(Released, 8u32) != 1u32 {
+            return 50;
+        }
+        Index = Index + 1u32;
+    }
+    let Child: Frames.State = Frames.Enter(Current);
+    let Returned: Values.Borrowˉstep = Vectorˉstep(Child, 40u32, Bytesˉfromˉu8(81u8),
+        Descriptor, Cell(23u32, 2u32), Metadata, Descriptor, Zero,
+        Bytesˉfromˉu8(0u8), 1u32, Allocation);
+    let Observed: View.Projectionˉresult = View.Observe(Returned.Views,
+        Bytesˉreadˉu32ˉlittle(Borrowed.Stack, 0u32),
+        Bytesˉreadˉu32ˉlittle(Borrowed.Stack, 4u32), 0u32);
+    if !Child.Valid || !Returned.Valid || Bytesˉlength(Returned.Frames) != 0u32 ||
+        Bytesˉlength(Returned.Roots) != 8u32 || !Observed.Valid ||
+        Observed.Root != View.Payloadˉroot.Descriptor ||
+        Bytesˉreadˉu32ˉlittle(Observed.Value, 4u32) != 32u32 { return 51; }
+    let Live: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
+        Module, Cell(8u32, 50u32), Descriptor, Metadata, Returned.Roots, Zero);
+    let Exited: Frames.State = Frames.Teardown(Scalarˉstate(Returned));
+    let Dead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
+        Module, Cell(8u32, 50u32), Descriptor, Live.Metadata, Empty, Zero);
+    if !Live.Valid || Bytesˉlength(Live.Releasedˉdescriptors) != 0u32 || !Exited.Valid ||
+        Bytesˉlength(Frames.Roots(Exited)) != 1u32 || !Dead.Valid ||
+        Bytesˉlength(Dead.Releasedˉdescriptors) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Dead.Releasedˉdescriptors, 4u32) != 32u32 { return 52; }
+    let Stale: View.Projectionˉresult = View.Observe(Exited.Views,
+        Bytesˉreadˉu32ˉlittle(Borrowed.Stack, 0u32),
+        Bytesˉreadˉu32ˉlittle(Borrowed.Stack, 4u32), 0u32);
+    let Finalˉrelease: bytes = Values.Releaseˉdescriptor(Allocation, 1u32, Dead.Releasedˉdescriptors);
+    let Deadˉread: Values.Borrowˉstep = Vectorˉstep(Current, 40u32, Project,
+        Owner, Shapes, Metadata, Descriptor, Borrowed.Stack, Flag, 1u32, Finalˉrelease);
+    if Stale.Valid || Deadˉread.Valid || Bytesˉreadˉu32ˉlittle(Finalˉrelease, 8u32) != 0u32 ||
+        Bytesˉlength(Values.Releaseˉdescriptor(Finalˉrelease, 1u32, Descriptor)) != 0u32 { return 53; }
+    return 0;
+}
+
 fn Checkˉsequenceˉcollection() -> i32 {
     let Zero: bytes = Cell(0u32, 0u32);
     let Empty: bytes = Bytesˉslice(Zero, 0u32, 0u32);
@@ -87,7 +190,7 @@ fn Checkˉsequenceˉcollection() -> i32 {
         Arrayˉmodule, Arrayˉoffsets, Descriptor, Arrayˉmetadata, Empty, Zero);
     if !Arrayˉdead.Valid || Bytesˉlength(Arrayˉdead.Releasedˉdescriptors) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Arrayˉdead.Releasedˉdescriptors, 4u32) != 3u32 { return 46; }
-    return 0;
+    return Checkˉprojectedˉvector();
 }
 
 fn Checkˉnestedˉcollection() -> i32 {
@@ -408,7 +511,7 @@ export fn Check() -> i32 {
         Scanner.Scanˉfunction(Bytesˉconcat(Many, Instruction), 0u32, Bytesˉlength(Many) + 13u32, 39u32, 1u32) != 0u32 { return 25; }
     let Return: bytes = Bytesˉfromˉu8(81u8);
     if Scanner.Scanˉfunction(Return, 0u32, 1u32, 38u32, 1u32) != 1u32 ||
-        Scanner.Scanˉfunction(Return, 0u32, 1u32, 40u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Return, 0u32, 1u32, 40u32, 1u32) != 1u32 ||
         Scanner.Scanˉfunction(Bytesˉconcat(Bytesˉfromˉu8(214u8), Value), 0u32, 9u32, 39u32, 1u32) != 0u32 { return 26; }
     return Checkˉscalar();
 }

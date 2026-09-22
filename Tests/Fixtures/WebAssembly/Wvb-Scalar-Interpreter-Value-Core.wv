@@ -500,13 +500,20 @@ export fn Variantˉcaseˉfields(
     return Invalid;
 }
 
+fn Projectedˉpayloadˉkind(Module: bytes, Kind: u32) -> bool {
+    if Borrowˉframes.Payloadˉkind(Kind) { return true; }
+    if Bytesˉlength(Module) < 8u32 ||
+        Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return false; }
+    return Borrowˉframes.Payloadˉlocalˉkind(Kind, Bytesˉreadˉu16ˉlittle(Module, 6u32));
+}
+
 export fn Shapeˉwidthˉat(Module: bytes, Cursor: u32) -> u32 {
     var Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
     var Prefix: u32 = 0u32;
     if Kind == 37u32 {
         if Cursor + 1u32 >= Bytesˉlength(Module) { return 0u32; }
         Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor + 1u32));
-        if !Borrowˉframes.Payloadˉkind(Kind) { return 0u32; }
+        if !Projectedˉpayloadˉkind(Module, Kind) { return 0u32; }
         Prefix = 1u32;
     }
     if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
@@ -556,7 +563,7 @@ fn Executeˉfoundationˉborrow(
         Index = Index + 1u32;
     }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
-    if !Borrowˉframes.Payloadˉkind(Kind) { return Invalid; }
+    if !Projectedˉpayloadˉkind(Module, Kind) { return Invalid; }
     return Borrowˉframes.Execute(Current, Bytesˉslice(Module, Instruction, 13u32), Locals,
         Ownerˉtype, Type, Kind, Metadata, Values);
 }
@@ -662,7 +669,7 @@ export fn Prepareˉborrowˉstep(
     if Stackˉdescriptorˉcount > 0u32 {
         Topˉisˉview = Bytesˉreadˉu8(Borrowˉstack, Stackˉdescriptorˉcount - 1u32) == 1u8;
     }
-    // The caller selects WVB 1.39; this path is synchronous and capability-free.
+    // The caller admits WVB 1.39/1.40; this path is synchronous and capability-free.
     if Requestˉmajor != 1u32 || Payloadˉlength == 65u32 ||
         (Payloadˉlength >= 214u32 && Payloadˉlength <= 224u32) { return Invalid; }
     if Payloadˉlength == 225u32 {

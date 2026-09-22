@@ -250,7 +250,7 @@ if (Developmentˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly &&
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 349 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 402 : Foundationˉsourceˉrunner === null ? 375 : 378) : Foundationˉplanˉonly ? 20 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 366 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 419 : Foundationˉsourceˉrunner === null ? 392 : 395) : Foundationˉplanˉonly ? 20 : Foundationˉdirectoriesˉonly ? 27 : 319} ` +
         `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
         (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
         (Borrowˉcomponentˉbytes === null ? '' :
@@ -1472,7 +1472,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${538 + Growˉmalformedˉcases.length +
+        `cases=${555 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=26 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1485,7 +1485,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=20 foundation-borrow-directory-cases=24 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=18 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=46 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=20 foundation-borrow-directory-cases=27 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=53 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         'foundation-source-ownership-cases=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
@@ -1745,22 +1745,6 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     const Pendingˉnamedˉmove = Pendingˉmove.replace(
         'Forward(borrow Values, Consumeˉmarker(Values))',
         'Read(Value: borrow Values, Marker: Consumeˉmarker(Values))');
-    const Foundationˉprojection = Source.replace('import Foundationˉcollections as Collections;',
-        'import Foundationˉcollections as Collections;\nimport Foundationˉoption as Option;')
-        .replace('export fn Main(', `fn Observeˉprojection(Values: Collections.Vector<i32>) -> i32 {
-    let Owner: Option.Option<Collections.Vector<i32> > =
-        Option.Option.Present<Collections.Vector<i32> > { Value: Values };
-    match Option.Borrow(borrow Owner) {
-        case Option.Option.Present { Value: Item } {
-            if Forward(borrow Item, 7u32) != 1u64 { return 15; }
-            return 42;
-        }
-        case Option.Option.Absent { return 16; }
-    }
-}
-export fn Main(`)
-        .replace('Consumeˉwithˉmarker(Marker: Forward(borrow Values, 7u32), Value: Values)',
-            'Observeˉprojection(Values)');
     const Invalidˉsources = [
         ['consumed-parameter', Source.replace('fn Consume(Value: Collections.Vector<i32>) -> i32 {',
             'fn Consume(Value: Collections.Vector<i32>) -> i32 {\n    let Consumedˉbeforeˉread: Collections.Vector<i32> = Value;')],
@@ -1776,7 +1760,6 @@ export fn Main(`)
         ['move-before-nested-read', Movedˉbeforeˉread, /Invalidˉwir|Unsupportedˉoperation/u],
         ['move-before-direct-length', Movedˉbeforeˉlength, /Invalidˉwir|Unsupportedˉoperation/u],
         ['named-pending-owner-move', Pendingˉnamedˉmove, /Invalidˉwir|Unsupportedˉoperation/u],
-        ['foundation-projected-vector', Foundationˉprojection, /Invalidˉwir|Unsupportedˉoperation/u],
     ];
     for (const [Label, Text, Diagnostic = /Invalidˉwir/u] of Invalidˉsources) {
         if (Text === Source) Reject('Vector source mutation did not change its input.');
@@ -1785,7 +1768,7 @@ export fn Main(`)
         writeFileSync(Input, Text, { flag: 'wx' });
         const Result = await Runˉdevelopmentˉcommand(process.execPath,
             [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'),
-                ...Arguments(Input, Output, Label === 'foundation-projected-vector')],
+                ...Arguments(Input, Output)],
             Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
             Reject(`Invalid Vector ownership did not reject before publication: ${Label}\n${Result.Output}${Result.Error}`);
@@ -1827,8 +1810,206 @@ export fn Main(`)
         }
         process.stdout.write(`PASS Vector call regression fixture=${Name} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
     }
+    const Payloads = await Verifyˉvectorˉpayloadˉborrows(Arguments, Verifier, Runner);
     process.stdout.write(`native Vector parameter reads status=Passed reads=${Reads.length} malformed=${Mutations.length} source-rejections=${Invalidˉsources.length} ` +
+        `payload-cases=${Payloads.cases} payload-malformed=${Payloads.malformed} payload-source-rejections=${Payloads.rejections} ` +
         `wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)} qualification=false elapsed-ms=${Date.now() - Started}\n`);
+}
+
+async function Verifyˉvectorˉpayloadˉborrows(Arguments, Verifier, Runner) {
+    const Fixture = path.join(Repositoryˉroot,
+        'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv');
+    Requireˉordinaryˉfile(Fixture, 8192, 'borrowed Vector payload fixture');
+    const Source = readFileSync(Fixture, 'utf8');
+    function Replace(Text, Before, After) {
+        if (Text.split(Before).length !== 2) Reject('Vector payload mutation is ambiguous: ' + Before);
+        return Text.replace(Before, After);
+    }
+    const Owner = 'Option.Option.Present<Collections.Vector<i32> > { Value: Values }';
+    const Absent = Replace(Replace(Source, Owner,
+        'Option.Option.Absent<Collections.Vector<i32> > {}'),
+        'case Option.Option.Absent { return 15; }', 'case Option.Option.Absent { return 42; }');
+    function Resultˉsource(Failure, Missing) {
+        const Shape = Failure ? 'Result.Result<u32, Collections.Vector<i32> >' :
+            'Result.Result<Collections.Vector<i32>, u32>';
+        let Text = Replace(Source, 'let Owner: Option.Option<Collections.Vector<i32> >', 'let Owner: ' + Shape);
+        const Constructor = Failure
+            ? Missing ? 'Result.Result.Valid<u32, Collections.Vector<i32> > { Value: 7u32 }'
+                : 'Result.Result.Failure<u32, Collections.Vector<i32> > { Error: Values }'
+            : Missing ? 'Result.Result.Failure<Collections.Vector<i32>, u32> { Error: 7u32 }'
+                : 'Result.Result.Valid<Collections.Vector<i32>, u32> { Value: Values }';
+        Text = Replace(Text, Owner, Constructor);
+        Text = Replace(Text, 'Option.Borrow(borrow Owner)',
+            Failure ? 'Result.Borrowˉfailure(borrow Owner)' : 'Result.Borrowˉvalid(borrow Owner)');
+        if (Missing) Text = Replace(Text, 'case Option.Option.Absent { return 15; }',
+            'case Option.Option.Absent { return 42; }');
+        return Text;
+    }
+    const Noˉread = Replace(Replace(Source,
+        'return Collections.Vectorˉlength(borrow Value);', 'return 1u64;'),
+        'Observe(Values, 0u64)', 'Observe(Values, 1u64)');
+    // Separate guest-budget reuse from helper-loop work to stay within the
+    // hosted interpreter's fixed text arena; neither limit is raised.
+    const Repeated = Replace(Replace(Source, 'while Iteration < 1u32',
+        'while Iteration < 4u32'), 'while Iteration < 128u32', 'while Iteration < 16u32');
+    const Phantom = Replace(Replace(Source, 'fn Read(', `record Copyˉmarker<T> { Marker: u32; }
+fn Copyˉtwice(Value: Copyˉmarker<Collections.Vector<i32> >) -> u32 {
+    let First: Copyˉmarker<Collections.Vector<i32> > = Value;
+    let Second: Copyˉmarker<Collections.Vector<i32> > = Value;
+    return First.Marker + Second.Marker;
+}
+fn Read(`), 'fn Observe(Values: Collections.Vector<i32>, Expected: u64) -> i32 {',
+        `fn Observe(Values: Collections.Vector<i32>, Expected: u64) -> i32 {
+    let Control: Copyˉmarker<Collections.Vector<i32> > =
+        Copyˉmarker<Collections.Vector<i32> > { Marker: 21u32 };
+    if Copyˉtwice(Control) != 42u32 { return 16; }`);
+    const Cases = [
+        ['option-present', Source, true], ['option-absent', Absent, true],
+        ['result-valid', Resultˉsource(false, false), true],
+        ['result-valid-absent', Resultˉsource(false, true), true],
+        ['result-failure', Resultˉsource(true, false), true],
+        ['result-failure-absent', Resultˉsource(true, true), true],
+        ['without-parameter-read', Noˉread, false],
+        ['repeated-helper-loop', Repeated, true, 16],
+        ['phantom-vector-copy', Phantom, true],
+    ];
+    let Candidate = null;
+    let Withoutˉread = null;
+    let Completed = 0;
+    for (const [Label, Text, Hasˉread, Trips = 128] of Cases) {
+        const Input = path.join(Work, 'Payload-' + Label + '.wv');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        let First = null;
+        let Instructions = 0;
+        for (const Generation of ['a', 'b']) {
+            const Output = path.join(Work, 'Payload-' + Label + '-' + Generation + '.wvb');
+            await Runˉnode('payload-' + Label + '-' + Generation, 'Run-Split-Compiler.mjs', Arguments(Input, Output, true));
+            const Bytes = readFileSync(Output);
+            if (Bytes.length > 16384 || Bytes.readUInt16LE(6) !== 40) Reject('Vector payload version or bound differs.');
+            const Sections = Parseˉsections(Bytes);
+            let Reads = 0;
+            let Projections = 0;
+            let Borrowedˉvectors = 0;
+            for (const Entry of Parseˉfunctionˉentries(Bytes, Sections[4])) {
+                const Function = Parseˉfunction(Bytes, Sections[4], Entry.name);
+                for (const Offset of Function.localShapeOffsets) {
+                    const Shape = Readˉshape(Bytes, Offset);
+                    if (Shape.shape === 37 && Shape.inner.shape === 23) Borrowedˉvectors += 1;
+                }
+                const Begin = Sections[5].payload + Entry.codeOffset;
+                const End = Begin + Entry.codeLength;
+                for (let Cursor = Begin; Cursor < End;) {
+                    const Width = Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+                    if (Cursor + Width > End) Reject('Vector payload instruction is truncated.');
+                    if (Bytes[Cursor] === 226) Reads += 1;
+                    if (Bytes[Cursor] === 225) Projections += 1;
+                    Cursor += Width;
+                }
+            }
+            if ((Reads !== 0) !== Hasˉread || Projections === 0 || Borrowedˉvectors === 0) {
+                Reject('Vector payload projection, borrowed local, or parameter-read evidence differs.');
+            }
+            if (First !== null && !First.equals(Bytes)) Reject('Vector payload publication is not deterministic.');
+            First = Bytes;
+            if (Generation === 'a') {
+                if (Normalize(await Run('payload-' + Label + '-verify', Verifier, [Output])) !==
+                    'wvb status=Valid profile=compiler-aligned\n') {
+                    Reject('Vector payload verification differs: ' + Label);
+                }
+                const Execution = Normalize(await Run('payload-' + Label + '-execute', Runner,
+                    [Output, '--report-steps']));
+                const Report = /^Result: 42\nInstructions: ([1-9][0-9]*)\n$/u.exec(Execution);
+                if (Report === null || Number(Report[1]) > 80000) {
+                    Reject('Vector payload execution or instruction bound differs: ' + Label);
+                }
+                Instructions = Number(Report[1]);
+            }
+        }
+        if (Label === 'option-present') Candidate = First;
+        if (!Hasˉread) Withoutˉread = First;
+        Completed += 1;
+        process.stdout.write(`PASS Vector payload item=${Completed}/${Cases.length} case=${Label} child-budget-trips=${Trips} ` +
+            `instructions=${Instructions} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
+    }
+    const Sections = Parseˉsections(Candidate);
+    const Observe = Parseˉfunction(Candidate, Sections[4], 'Observe');
+    const Forward = Parseˉfunction(Candidate, Sections[4], 'Forward');
+    const Borrowed = Observe.localShapeOffsets.find(Offset =>
+        Candidate[Offset] === 37 && Candidate[Offset + 1] === 23);
+    if (Borrowed === undefined || Candidate[Forward.parameterShapeOffsets[0]] !== 26) {
+        Reject('Vector payload mutation targets differ.');
+    }
+    const Exactˉtype = Candidate.readUInt32LE(Borrowed + 2);
+    const Types = Parseˉtypes(Candidate, Sections[7]);
+    const Otherˉvector = Types.findIndex((Type, Index) => Type.kind === 5 && Index !== Exactˉtype);
+    const Otherˉkind = Types.findIndex(Type => Type.kind !== 5);
+    if (Otherˉvector < 0 || Otherˉkind < 0) Reject('Vector payload exact-type controls are missing.');
+    function Borrowedˉparameter(Bytes) {
+        const Offset = Forward.parameterShapeOffsets[0];
+        const Result = Buffer.concat([Bytes.subarray(0, Offset), Buffer.from([37]), Bytes.subarray(Offset)]);
+        Result[Offset + 1] = 23;
+        Result.writeUInt32LE(Sections[4].length + 1, Sections[4].header + 4);
+        return Result;
+    }
+    const Mutations = [
+        ['old-minor', Candidate, Bytes => Bytes.writeUInt16LE(39, 6)],
+        ['old-minor-without-read', Withoutˉread, Bytes => Bytes.writeUInt16LE(39, 6)],
+        ['wrong-exact-vector', Candidate, Bytes => Bytes.writeUInt32LE(Otherˉvector, Borrowed + 2)],
+        ['wrong-nominal-kind', Candidate, Bytes => Bytes.writeUInt32LE(Otherˉkind, Borrowed + 2)],
+        ['nominal-boundary', Candidate, Bytes => Bytes.writeUInt32LE(Types.length, Borrowed + 2)],
+        ['nominal-overflow', Candidate, Bytes => Bytes.writeUInt32LE(0xffffffff, Borrowed + 2)],
+        ['borrowed-vector-parameter', Candidate, Borrowedˉparameter],
+        ['consuming-call', Candidate, Bytes => { Bytes[Forward.parameterShapeOffsets[0]] = 23; }],
+        ['exclusive-call', Candidate, Bytes => { Bytes[Forward.parameterShapeOffsets[0]] = 27; }],
+    ];
+    for (const [Label, Original, Mutate] of Mutations) {
+        let Broken = Buffer.from(Original);
+        const Replacement = Mutate(Broken);
+        if (Buffer.isBuffer(Replacement)) Broken = Replacement;
+        if (Broken.equals(Original)) Reject('Vector payload mutation changed no bytes: ' + Label);
+        const Input = path.join(Work, 'Payload-malformed-' + Label + '.wvb');
+        writeFileSync(Input, Broken, { flag: 'wx' });
+        for (const [Tool, Pattern] of [
+            [Verifier, /^wvb status=Invalid phase=(?:semantic step=[a-z-]+|typed-execution|control-reachability)\n$/u],
+            [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u],
+        ]) {
+            const Result = await Runˉdevelopmentˉcommand(Tool, [Input],
+                Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
+                Reject(`Malformed Vector payload did not reject: ${Label}\n${Result.Output}${Result.Error}`);
+            }
+        }
+        process.stdout.write(`PASS Vector payload malformed case=${Label}\n`);
+    }
+    const Firstˉcall = 'if Forward(borrow Item, 7u32) != Expected { return 11; }';
+    function Invalidˉhelper(Declaration, Call) {
+        return Replace(Replace(Source, 'fn Observe(', Declaration + '\nfn Observe('), Firstˉcall, Call);
+    }
+    const Invalidˉsources = [
+        ['consume-projected-vector', Invalidˉhelper(
+            'fn Consume(Value: Collections.Vector<i32>) -> u64 { return 0u64; }',
+            'if Consume(Item) != Expected { return 11; }')],
+        ['exclusive-projected-vector', Invalidˉhelper(
+            'fn Mutate(Value: borrow mut Collections.Vector<i32>) -> u64 { return 0u64; }',
+            'if Mutate(borrow mut Item) != Expected { return 11; }'),
+            /^source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=Invalidˉborrow failure-module=0 related-module=0 function=[0-9]+ offset=[0-9]+ line=[0-9]+ column=[0-9]+\n$/u],
+        ['consume-frozen-owner', Invalidˉhelper(
+            'fn Consumeˉowner(Value: Option.Option<Collections.Vector<i32> >) -> u32 { return 7u32; }',
+            'if Forward(borrow Item, Consumeˉowner(Owner)) != Expected { return 11; }')],
+    ];
+    for (const [Label, Text, Diagnostic = /Invalidˉwir/u] of Invalidˉsources) {
+        const Input = path.join(Work, 'Payload-invalid-' + Label + '.wv');
+        const Output = path.join(Work, 'Payload-invalid-' + Label + '.wvb');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(process.execPath,
+            [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output, true)],
+            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
+            Reject(`Invalid Vector payload ownership did not reject: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS Vector payload source rejection case=${Label}\n`);
+    }
+    return { cases: Cases.length, malformed: Mutations.length, rejections: Invalidˉsources.length };
 }
 
 async function Verifyˉfoundationˉownedˉpayloads(Admitter, Authenticator, Analyzer, Emitter, Target, Verifier, Runner) {

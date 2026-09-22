@@ -29,6 +29,12 @@ export fn Payloadˉkind(Kind: u32) -> bool {
         Kind == 22u32 || Kind == 24u32 || Kind == 35u32;
 }
 
+// Only minor-40 non-parameter payload slots may retain a Vector projection.
+// Parameters keep their dedicated immutable Vector representation, tag 26.
+export fn Payloadˉlocalˉkind(Kind: u32, Minor: u32) -> bool {
+    return Payloadˉkind(Kind) || (Minor == 40u32 && Kind == 23u32);
+}
+
 // Match the verifier's 64 + underlying-kind directory encoding. 93 is a
 // leased Option view, not an aggregate handle, and must remain distinct.
 export fn Valueˉkind(Kind: u32) -> u32 {

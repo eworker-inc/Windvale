@@ -64,7 +64,13 @@ record Hˉfunctionˉentry {
 fn Hˉborrowˉpayloadˉkind(Kind: u32) -> bool {
     return (Kind >= 1u32 && Kind <= 11u32) ||
         (Kind >= 14u32 && Kind <= 20u32) || Kind == 22u32 ||
-        Kind == 24u32 || Kind == 35u32;
+        Kind == 23u32 || Kind == 24u32 || Kind == 35u32;
+}
+
+fn Hˉborrowˉpayloadˉsupported(Input: bytes, Kind: u32) -> bool {
+    return Hˉborrowˉpayloadˉkind(Kind) &&
+        (Kind != 23u32 || (Bytesˉlength(Input) >= 8u32 &&
+            Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32));
 }
 
 fn Hˉborrowedˉvalue(Kind: u32) -> bool {
@@ -89,11 +95,9 @@ fn Hˉshapeˉwidth(Input: bytes, Cursor: u32) -> u32 {
     if Kind == 37u32 {
         if Cursor + 1u32 >= Bytesˉlength(Input) { return 0u32; }
         let Inner: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
-        if !((Inner >= 1u32 && Inner <= 11u32) ||
-            (Inner >= 14u32 && Inner <= 20u32) || Inner == 22u32 ||
-            Inner == 24u32 || Inner == 35u32) { return 0u32; }
+        if !Hˉborrowˉpayloadˉsupported(Input, Inner) { return 0u32; }
         if Inner == 7u32 || Inner == 8u32 || Inner == 11u32 ||
-            Inner == 22u32 || Inner == 24u32 || Inner == 35u32 {
+            Inner == 22u32 || Inner == 23u32 || Inner == 24u32 || Inner == 35u32 {
             if Bytesˉlength(Input) - Cursor < 6u32 { return 0u32; }
             return 6u32;
         }
@@ -2077,7 +2081,7 @@ export fn Hˉvariant(
     }
     var Payloadˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Variantˉcase, 4u32));
     if Borrowed {
-        if !Hˉborrowˉpayloadˉkind(Payloadˉkind) {
+        if !Hˉborrowˉpayloadˉsupported(Input, Payloadˉkind) {
             return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
         }
         return Hˉoperationˉstate(true, Resultˉstack, Resultˉdepth, true,
@@ -2161,7 +2165,7 @@ fn Hˉvariantˉfield(
         Variantˉcase, Fieldˉshape + 1u32
     );
     if Borrowed {
-        if !Hˉborrowˉpayloadˉkind(Producedˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
+        if !Hˉborrowˉpayloadˉsupported(Input, Producedˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
         return Hˉoperationˉstate(true, Bytesˉslice(Stack, 0u32, Variantˉoffset),
             Depth - 1u32, true, Producedˉkind + 64u32, Producedˉnominal);
     }
@@ -2372,7 +2376,7 @@ export fn Hˉrecord(
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Sourceˉtype + 1u32);
     }
     if Borrowed {
-        if !Hˉborrowˉpayloadˉkind(Pushˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
+        if !Hˉborrowˉpayloadˉsupported(Input, Pushˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
         return Hˉoperationˉstate(true, Sourceˉstack, Sourceˉdepth, true,
             Pushˉkind + 64u32, Pushˉnominal);
     }
@@ -2699,7 +2703,7 @@ fn Hˉcollectionˉorˉarray(
         Bytesˉreadˉu8(Selectedˉdescriptor, 0u32)
     );
     if Borrowed {
-        if !Hˉborrowˉpayloadˉkind(Selectedˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
+        if !Hˉborrowˉpayloadˉsupported(Input, Selectedˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
         Selectedˉkind = Selectedˉkind + 64u32;
     } else if Selectedˉkind == 23u32 && Hˉownedˉaggregate(
         Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
@@ -2924,8 +2928,22 @@ export fn Hˉcall(
         }
         let Actual: u32 = (Depth - Argument - 1u32) * 5u32;
         let Actualˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Actual));
+        // This direct-call bridge observes a Foundation Vector payload without
+        // erasing its caller-side loan or granting value/exclusive transfer.
+        var Borrowedˉvectorˉargument: bool =
+            Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 &&
+            Declaredˉkind == 26u32 && Actualˉkind == 87u32;
+        if Borrowedˉvectorˉargument {
+            let Borrowedˉvectorˉtypes: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+            if Borrowedˉvectorˉtypes > 4096u32 || Expectedˉnominal >= Borrowedˉvectorˉtypes {
+                return Hˉoperationˉfailure(Stack, Depth);
+            }
+            Borrowedˉvectorˉargument = Bytesˉreadˉu8(
+                Input, Hˉtypeˉat(Input, Types, Expectedˉnominal)) == 5u8;
+        }
         if Bytesˉreadˉu32ˉlittle(Stack, Actual + 1u32) != Expectedˉnominal ||
-            !Hˉvalueˉmatches(Input, Types, Expectedˉkind, Actualˉkind, Expectedˉnominal) {
+            (!Borrowedˉvectorˉargument &&
+                !Hˉvalueˉmatches(Input, Types, Expectedˉkind, Actualˉkind, Expectedˉnominal)) {
             return Hˉoperationˉfailure(Stack, Depth);
         }
         Argument = Argument + 1u32;

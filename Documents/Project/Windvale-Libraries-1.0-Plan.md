@@ -2,7 +2,7 @@
 
 > Status: Proposed suite catalog with an active Option/Result implementation goal
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-15
+> Last reviewed: 2026-09-22
 
 ## Status
 
@@ -39,17 +39,30 @@ execution. Its [completed delivery gates](Compiler-Tools-And-Libraries-Completio
 cover the selected source closure, publication, and consumer behavior. Installed
 promotion and complete repository qualification remain separate.
 
-Wider owned payloads are the next active milestone; exclusive borrowing, take,
-and mapping follow separately. The selected executable owned-aggregate and
-reclamation prerequisite now passes on Windows and Debian: nine source scenarios,
-including repeated successful allocation and refusal/release, retain exact
-ownership rejections. The [runtime evidence](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
-records its bounded shapes and unchanged target limits. Selecting and migrating
-a maintained owned-resource consumer is next; arbitrary payload composition,
-direct Vector extraction, borrowed Vector helpers, and native/installed promotion
-are not established by this checkpoint. The broader library catalog remains a
-draft; this delivery split does not accept unreviewed API signatures or weaken
-the complete Libraries 1.0 gate.
+The selected owned-aggregate and reclamation prerequisite passes on Windows and
+Debian: nine source scenarios, including repeated successful allocation and
+refusal/release, retain exact ownership rejections. The
+[runtime evidence](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+preserves that checkpoint's bounded shapes and target limits.
+
+A focused candidate WVB 1.40 bridge now lets ordinary immutable helpers observe
+a raw Vector projected from an Option or either Result side without consuming
+it. Nine positive programs and nine malformed-bytecode cases pass on Windows and
+Debian with identical bytecode. Coverage includes `Option.Present` and `Option.Absent`, both
+Result sides and their unselected opposite projections, nonempty and empty
+Vectors, 128 allocation/borrow/release cycles, and repeated helper loops. A
+phantom-type Copy control checks that ownership follows stored fields, not an
+unused Vector type argument. The
+[projected-payload evidence](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
+owns exact host results and limits.
+
+Selecting and migrating a maintained owned-resource consumer remains a separate
+wider milestone, not a new requirement for the delivered package-parser gate.
+Consuming Vector extraction, arbitrary payload composition, native minor-40
+lowering, and installed promotion remain open; exclusive borrowing, take, and
+mapping follow separately. The broader library catalog remains a draft. This
+delivery split does not accept unreviewed API signatures or weaken the complete
+Libraries 1.0 gate.
 
 During implementation, use small diagnostic checks where needed. Once the
 chunk is coherent, inspect one combined verification plan, share construction

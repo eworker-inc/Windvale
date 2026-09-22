@@ -11,7 +11,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Search status | Decisions |
 | --- | ---: |
 | Accepted | 353 |
-| Implemented | 499 |
+| Implemented | 500 |
 | Proposed | 4 |
 | Qualified | 95 |
 | Recorded | 8 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0964: forward borrowed Vector payloads to immutable helpers](0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md) | Implemented |
 | [Decision 0963: read Vector parameters without transferring ownership](0963-Read-Vector-Parameters-Without-Transferring-Ownership.md) | Recorded |
 | [Construct current-source WVB publishers](0962-Construct-Current-Source-Wvb-Publishers.md) | Accepted |
 | [Require an explicit target in Project 4](0961-Require-An-Explicit-Target-In-Project-4.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0942: advance the frozen source identity for Foreign and payload borrowing](0942-Advance-The-Frozen-Source-Identity-For-Foreign-And-Payload-Borrowing.md) | Accepted |
 | [Decision 0941: raise the native type-directory capacity for self-host convergence](0941-Raise-The-Native-Type-Directory-Capacity-For-Self-Host-Convergence.md) | Accepted |
 | [Decision 0940: separate the Profile 8 compiler-scale instruction ceiling](0940-Separate-The-Profile-8-Compiler-Scale-Instruction-Ceiling.md) | Accepted |
-| [Decision 0939: raise native x64 static-data capacity for compiler convergence](0939-Raise-Native-X64-Static-Data-Capacity-For-Compiler-Convergence.md) | Accepted |
 
 ## Superseded or historical records
 

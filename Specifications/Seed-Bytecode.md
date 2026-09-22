@@ -23,8 +23,9 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    extension, the verified WVB 1.36 write-region extension, and the
    compiler-verified and contained-execution candidate WVB 1.37 write-pointer
    extension, the source-publication candidate WVB 1.38 registered Foreign-call
-   extension, and the source-publication candidate WVB 1.39 immutable
-   Foundation value-payload-borrow extension.
+   extension, the verified host-scalar candidate WVB 1.39 immutable
+   Foundation value-payload-borrow extension, and candidate WVB 1.40 read-only
+   Vector parameter access and projected-Vector helper calls.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -151,8 +152,9 @@ borrowed `Memoryˉbudget` parameter. WVB 1.35 is selected when
 `unsafe.write-region.borrow` is present. Candidate WVB 1.37 is selected when
 `unsafe.write-pointer.borrow` is present. Candidate WVB 1.38 is selected when
 `foreign.call` is present. Candidate WVB 1.39 is selected when
-`foundation.value.borrow` is present, unless a parameter length read requires
-candidate WVB 1.40. The source-built compiler-aligned verifier accepts versions
+`foundation.value.borrow` is present, unless a parameter length read or an
+admitted borrowed Vector local requires candidate WVB 1.40. The source-built
+compiler-aligned verifier accepts versions
 through candidate minor 40 and never admits an
 extension under an earlier header. The source-built native scalar runner
 accepts WVB 1.33 through candidate WVB 1.37 only through the bounded provider
@@ -165,7 +167,12 @@ explicit narrower version boundaries until their own slices land.
 Candidate WVB 1.39 has complete verification and selected Windows/Debian scalar
 execution evidence under the [host scalar borrow decision](../Documents/Decisions/0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md).
 The [owned-payload reclamation checkpoint](../Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
-adds exact record-owned Vector scenarios, not arbitrary payload or target support.
+adds exact record-owned Vector scenarios, and the
+[package integration checkpoint](../Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json)
+delivers the maintained `Option<u64>` parser/lock consumer. These are exact
+shape and host claims, not arbitrary payload or target support. The projected
+Vector extension to minor 40 has focused
+[Windows/Debian evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json).
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -485,7 +492,8 @@ temporaries to 4,096 each. Borrow-free functions skip the planner and retain
 their ordinary limits and temporary allocation.
 
 The writer selects minor 39 only when reachable WVIR operation `191` is
-present. The focused independent reader accepts at most 16 MiB, validates the
+present and no minor-40 feature is required. The focused independent reader
+accepts at most 16 MiB, validates the
 exact header and seven sections, three projection forms, exact Option/Result
 relationships, shape-`29` views, recursive shape-`37` payload locals and direct
 call parameters/arguments, code ranges, and deterministic duplicate output.
@@ -495,7 +503,8 @@ boundaries. This is bounded source-publication evidence, not complete
 verification or execution evidence.
 
 The current-source metadata normalizer and semantic stages B-G recognize this
-candidate without granting complete admission. Shape `37` is confined to
+candidate; complete admission additionally requires the typed and lifetime
+passes below. In minor 39, shape `37` is confined to
 parameters and locals and wraps one ordinary shape from `1` through `11`, `14`
 through `20`, `22`, `24`, or `35`; nesting, function results, stored fields,
 variant payload declarations, and collection element declarations reject.
@@ -518,8 +527,9 @@ hosted/system scope and enforces the authority/capability-derived minimum.
 Inherited source-file/task instructions require hosted or system scope;
 scratch, region, pointer, and Foreign instructions require system scope.
 These metadata checks do not prove stack provenance, non-escape, or call-scoped
-loan lifetimes. The complete verifier explicitly rejects minor 39 before its
-unfinished executable stages. See the
+loan lifetimes. The early metadata-only checkpoint therefore kept complete
+admission closed; the current verifier also requires the completed executable
+passes described below. See the historical
 [component evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
 
 The typed-stack component preserves shape-`37` identity internally as `64`
@@ -601,16 +611,22 @@ The complete verifier and selected source-built host scalar runner now admit
 minor 39 under the linked host execution decision. The isolated component probes
 remain narrower evidence and do not qualify arbitrary payload classes, wider
 captures, independent Linux reconstruction, or installed-toolchain promotion.
-Direct owned Vector payload extraction and general authority-operation
-composition remain separate gates.
+Consuming owned Vector payload extraction and general authority-operation
+composition remain separate gates. The minor-40 candidate below adds only
+non-owning Vector payload forwarding to immutable direct-call helpers.
 
 ## Candidate WVB 1.40 read-only Vector parameter access
 
-Status: candidate implementation with focused Windows and Debian execution
-[evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json);
+Status: direct parameter reads have focused Windows and Debian execution
+[evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json), as does
+[ordinary borrowed forwarding](../Documents/Evidence/2026-09-22-Vector-Borrow-Forwarding.json).
+The projected-Vector bridge below also has focused
+[paired-host evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json);
 full qualification and installed promotion remain pending.
 This version inherits minor 39's metadata, type, authority, and ownership rules,
-except that its required distinguishing feature is `E2`, not `E1`.
+with the exact local-shape and direct-call exception below. Its required
+distinguishing feature is `E2` or an admitted shape-`37(23)` non-parameter local,
+not merely `E1` or a changed version header.
 
 ```text
 E2 vector.parameter_length u32 parameter index, u32 exact Vector type index
@@ -621,8 +637,9 @@ The instruction is exactly nine bytes. Both operands are unsigned little-endian
 parameter index must be below the current function's parameter count (at most
 64), never a local slot. Its declared shape must be `23`, `26`, or `27`, and its
 nominal index must equal the second operand, which names a kind-5 Vector type.
-The module contains 1 through 4,096 such instructions. Existing type, code,
-stack, control-flow, and resource limits remain unchanged.
+The module contains at most 4,096 such instructions; zero requires the borrowed
+Vector-local feature. Existing type, code, stack, control-flow, and resource
+limits remain unchanged.
 
 A by-value parameter must remain live on every incoming path. Immutable and
 exclusive parameters retain their declared call modes and caller lifetime;
@@ -632,6 +649,25 @@ The existing `CA vector.length` still requires and preserves a unique Vector.
 `E2` is invalid in earlier versions. Wrong type, non-parameter index, truncated
 operands, consumed owner, inconsistent call mode, and missing required feature
 reject before execution.
+
+Candidate minor 40 additionally permits the six-byte local encoding
+`37, 23, u32 Vector-type index`: one non-owning wrapper, one Vector kind, and its exact
+little-endian kind-5 Types index. It is valid only in compiler-generated
+non-parameter local/temporary metadata. Minor 39 still rejects this wrapper,
+and neither version permits a wrapped Vector parameter. The typed checker
+retains internal kind `87` (`64 + 23`) and the original owner's loan through
+projection, loads, stores, and synchronous direct calls. At a direct call only,
+kind `87` may satisfy immutable parameter shape `26` with the identical nominal
+index. The ordinary parameter encoding and `E2` rules are unchanged.
+
+This exception does not admit value/exclusive arguments, borrowed returns or
+captures, take, mutation, indirect-call compatibility, or general value
+conversion. The same complete typed and lifetime passes reject forged,
+uninitialized, stale, and escaping loans. The runtime retains the descriptor
+and the frame's original-owner lease until their existing cleanup points; it
+does not create another mutable owner. No new opcode or wire layout is added.
+The exact candidate boundary is owned by the
+[borrowed Vector helper decision](../Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md).
 
 The candidate scalar host envelope requires the complete verifier and request
 major 1, a capability-free synchronous module, and valid live collection backing.
@@ -970,7 +1006,7 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.39 under the exact entry rules)
 35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.39)
 36 immutable-borrowed Memoryˉbudget view (WVB 1.34 through WVB 1.39 parameter or compiler-generated local only)
-37 recursively encoded immutable borrowed payload shape (WVB 1.39 ordinary immutable-borrow parameter or compiler-generated local only)
+37 recursively encoded immutable borrowed payload shape (WVB 1.39/1.40 ordinary immutable-borrow parameter or compiler-generated local only; Vector wrapper is minor-40 non-parameter local only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -1027,8 +1063,11 @@ ordinary owned source locals, fields, variant payload declarations, collection
 elements, callable descriptors, and Types entries. Existing special-purpose
 borrow shapes keep their own contracts. The focused fixture covers `u32` and
 nominal-record payloads, plain-owner arguments, and direct borrowed forwarding;
-wider payload classes require their own evidence. The complete verifier does
-not yet admit this shape.
+wider payload classes require their own evidence. The complete verifier admits
+the exact minor-39 vocabulary only after metadata, typed-stack, and lifetime
+checks. Candidate minor 40 adds only the local Vector wrapper and exact
+immutable direct-call bridge described above; wrapped Vector parameters remain
+invalid.
 
 Shape `25` is not a general value shape. In WVB 1.21 or 1.22 it occurs at most
 once: as parameter zero of the one-parameter function named `Main`. WVB 1.21
@@ -1092,7 +1131,10 @@ shape byte `25` under the System-profile rules are valid in WVB 1.33 through
 WVB 1.39. Shape byte `36` is valid in WVB 1.34 through WVB 1.39. Opcode `DD`
 is valid in WVB 1.35 through WVB 1.39, opcode `DE` in WVB 1.36 through
 WVB 1.39, opcode `DF` in WVB 1.37 through 1.39, opcode `E0` in WVB 1.38 and
-1.39, and shape byte `37` plus opcode `E1` only in WVB 1.39.
+1.39. Candidate WVB 1.40 inherits these prior vocabulary ranges subject to their
+unchanged ownership and authority rules. Shape byte `37` and opcode `E1` are
+valid in WVB 1.39 and 1.40 under their exact payload rules; `E2` and the borrowed
+Vector-local wrapper are valid only in WVB 1.40.
 Type kind `7` is valid in
 WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never
@@ -1113,6 +1155,8 @@ parameter, every WVB 1.35 module contains at least one `DD`, every WVB 1.36
 module contains at least one `DE`, and every candidate WVB 1.37 module contains
 at least one `DF`. Every candidate WVB 1.38 module contains at least one `E0`.
 Every candidate WVB 1.39 module contains at least one `E1`.
+Every candidate WVB 1.40 module contains at least one `E2` or an admitted
+shape-`37(23)` non-parameter local.
 Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.

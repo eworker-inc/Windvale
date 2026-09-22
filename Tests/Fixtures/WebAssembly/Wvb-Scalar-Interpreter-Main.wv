@@ -284,6 +284,7 @@ fn Readˉfunctionˉdirectory(
     var Parameterˉmodes: bytes = Empty;
     var Totalˉparameterˉcount: u32 = 0u32;
     var Vectorˉparameterˉcount: u32 = 0u32;
+    var Hasˉprojectedˉvector: bool = false;
     var Borrowedˉbudgetˉparameterˉcount: u32 = 0u32;
     var Mainˉhasˉmemoryˉbudget: bool = false;
     var Mainˉhasˉsourceˉfile: bool = false;
@@ -479,7 +480,10 @@ fn Readˉfunctionˉdirectory(
                 }
                 Functionˉcursor = Functionˉcursor + 1u32;
                 Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
-                if !Borrowˉframes.Payloadˉkind(Shapeˉkind) { return Invalidˉfunctionˉdirectory(Module); }
+                if !Borrowˉframes.Payloadˉlocalˉkind(Shapeˉkind, Moduleˉminor) {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
+                if Shapeˉkind == 23u32 { Hasˉprojectedˉvector = true; }
                 Borrowedˉlocal = true;
             }
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
@@ -619,8 +623,10 @@ fn Readˉfunctionˉdirectory(
             Borrowedˉbudgetˉparameterˉcount == 0u32) ||
         ((Moduleˉminor == 33u32 || Moduleˉminor == 35u32 ||
             Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 || (Moduleˉminor == 39u32 || Moduleˉminor == 40u32)) &&
-            Versionˉfeatureˉinstructions == 0u32) {
+            Moduleˉminor == 38u32 || Moduleˉminor == 39u32) &&
+            Versionˉfeatureˉinstructions == 0u32) ||
+        (Moduleˉminor == 40u32 && Versionˉfeatureˉinstructions == 0u32 &&
+            !Hasˉprojectedˉvector) {
         return Invalidˉfunctionˉdirectory(Module);
     }
     return Functionˉdirectory(

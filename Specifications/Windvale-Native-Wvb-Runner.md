@@ -8,16 +8,23 @@ qualification-pending native candidate. It preserves the fixed portable
 owns the internal bounded scripting mode defined by
 [Decision 0735](../Documents/Decisions/0735-Implement-The-First-Windvale-Scripting-Slice.md).
 The outer runner binds five capabilities to nine ordered services. The exact
-candidate reconstructs from the complete Project 2 source closure through the
+candidate reconstructs from its complete declared source closure through the
 current split compiler, segmented native staging/link/transport path,
 hosted-verifier profile, and paired Windows/Linux container materializers.
 The same source-built scalar core also owns the focused capability-free System
 oracle for WVB 1.33 unsafe scratch, WVB 1.34 immutable borrowed-memory-budget
 calls, WVB 1.35 immutable borrowed-scratch length observation, WVB 1.36
 write-region validation, WVB 1.37 logical write-pointer derivation, and the
-registered WVB 1.38 scalar provider. The current profile-5 paired artifact now
-contains that source state; its promotion is deterministic reconstruction
+registered WVB 1.38 scalar provider. The pinned profile-5 paired artifact below
+contains that source state; its promotion was deterministic reconstruction
 evidence, not final paired-host execution qualification.
+
+Later source-built products admit the selected synchronous, capability-free
+WVB 1.39 immutable-borrow profile and candidate WVB 1.40 Vector parameter reads.
+Their exact execution evidence is linked below; the pinned reconstruction
+products in the following table do not identify those later builds. The
+minor-40 projected-Vector extension has focused
+[paired-host execution evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json).
 
 The project names its root tool plus the SHA-256, scalar-interpreter, envelope,
 and formatting dependencies in canonical module order. Project paths are
@@ -26,11 +33,13 @@ live at the repository root. Component-local manifests remain appropriate, and
 a future workspace/index contract may improve discovery without changing
 Project 1 semantics.
 
-## Current exact products
+## Pinned WVB 1.38 reconstruction products
 
-The following table is the current promoted profile-5 paired-host runner
-candidate. One canonical staged image produces both host wrappers, and the
-official constructor reproduces all three identities.
+The following table identifies the earlier pinned profile-5 WVB 1.38-capable
+paired-host runner candidate. One canonical staged image produces both host
+wrappers, and its constructor reproduces all three identities. Later focused
+source-built products retain their own evidence identities; no installed
+promotion is inferred from those runs.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -46,10 +55,35 @@ chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
 
+## Selected WVB 1.39 immutable payload borrowing
+
+The source-built host scalar envelope invokes the complete metadata, typed-stack,
+and lifetime verifier before admitting `Option.Borrow`, `Result.Borrowˉvalid`,
+or `Result.Borrowˉfailure`. It admits only synchronous, capability-free
+request-major-1 execution for this profile. Frame-owned view leases preserve
+the original Option/Result owner, borrowed values cannot escape their verified
+lifetime, and descriptor retention and aggregate collection use the existing
+bounded runtime path.
+
+The [initial paired-host runtime evidence](../Documents/Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json)
+covers all three projections and malformed-input rejection. The
+[owned-record evidence](../Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+adds exact records containing an `i32` Vector, repeated marker observation and
+reclamation, allocation refusal, and copied-payload rejection. It does not
+observe Vector contents through the borrowed record. The maintained
+`Option<u64>` parser/lock consumer also passes its normal build and publication
+path on Windows and Debian in the
+[package integration record](../Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json).
+These are selected source-built execution claims, not arbitrary payload support,
+browser admission, installed promotion, or full qualification.
+
 ## Candidate WVB 1.40 Vector parameter reads
 
-Status: focused Windows and Debian execution verified; not qualified. The candidate
-source runner admits minor 40 only through the complete verifier and the same
+Status: direct reads, ordinary borrowed forwarding, and
+[projected-Vector forwarding](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
+have focused Windows and Debian evidence. These checks do not establish
+installed promotion or full qualification. The
+candidate source runner admits minor 40 only through the complete verifier and the same
 capability-free synchronous request-major-1 boundary as minor 39. Instruction
 `E2` reads the length of the exact live Vector parameter without taking it,
 retaining it, or allocating collection storage. Value, immutable, and exclusive
@@ -60,7 +94,25 @@ collections; mutation through borrowed parameters is not newly enabled.
 All existing resource limits and explicit failure behavior remain. The new
 focused selection in the memory-budget split-execution owner passes for direct
 parameter reads; see the [paired-host evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json).
-Borrowed forwarding and loop-lifetime gaps remain outside that passing claim.
+The later [forwarding evidence](../Documents/Evidence/2026-09-22-Vector-Borrow-Forwarding.json)
+also covers ordinary borrowed parameters forwarded through helpers and repeated
+loop borrows without a false owner temporary.
+
+The [projected-Vector candidate](../Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md)
+additionally admits shape `37` wrapping exact Vector shape `23` only in
+minor-40 non-parameter local/temporary metadata. Wrapped Vector parameters remain
+invalid, and minor 39 retains its earlier payload boundary. A synchronous direct
+call may pass internal borrowed kind `87` only to immutable parameter shape `26`
+with the same Vector type. The runtime normalizes its descriptor kind for
+retention and release while retaining the frame's original-owner lease across
+the call. It does not transfer ownership, permit mutation, or extend the loan
+past return. Existing `E2`, descriptor, allocation, call-depth, and loan limits
+remain unchanged. Either `E2` or an admitted borrowed Vector local is required;
+minor 40 without either feature rejects. Nine deterministic payload scenarios
+execute on both hosts, including absence, empty/nonempty Vectors, repeated
+budget reuse, and nested helper calls. Nine malformed modules and three
+invalid ownership sources reject.
+
 The candidate does not change installed identities, native lowering, browser
 execution, or full qualification.
 
@@ -124,8 +176,10 @@ remains `Result: <i32>`. Reporting adds one
 exactly `203` instructions.
 
 The current source-built runner accepts the ordinary portable WVB 1.11-through-
-1.32 command profile plus the exact focused System subsets through WVB 1.38
-described above. Its shared scalar interpreter implements the WVB 1.12 `i8`,
+1.32 command profile, the exact focused System subsets through WVB 1.38, and
+the separately bounded WVB 1.39/1.40 host profiles described above. Candidate
+extensions do not imply a complete version-wide or installed execution claim.
+Its shared scalar interpreter implements the WVB 1.12 `i8`,
 `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules

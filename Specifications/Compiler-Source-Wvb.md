@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.39 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, and candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.40 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing, and candidate WVB 1.40 adds read-only Vector parameter access and the projected-Vector bridge specified below; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -62,8 +62,14 @@ identity, and complete-verifier checks on both hosts. The source-built host
 scalar runner executes the published three-projection fixture on Windows and
 Debian under
 [Decision 0960](../Documents/Decisions/0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md).
-Fresh cross-host source publication, wider payload execution, consumer migration,
-and installed-tool promotion remain pending.
+The selected package parser and lock consumer now have normal-build,
+publication, and Windows/Debian execution
+[evidence](../Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json).
+The [owned-record checkpoint](../Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+also covers immutable observation and reclamation of exact record-owned Vector
+payloads. Arbitrary payload composition and installed-tool promotion remain
+separate. The minor-40 projected-Vector extension below has focused
+[Windows/Debian execution evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json).
 
 ## Direct compilation result
 
@@ -1196,8 +1202,8 @@ Zero and every projection above three are rejected.
 The emitter independently reconstructs the exact Option/Result relationship
 from typed WVIR and the canonical generic materialization plan. It marks the
 module with the Foundation-value-borrow feature and selects minor 39 only when
-operation `191` is emitted. Shape `29` carries the ephemeral borrowed Option
-view. Recursive shape `37` carries the exact non-owning payload shape in
+operation `191` is emitted and no minor-40 feature is needed. Shape `29` carries
+the ephemeral borrowed Option view. Recursive shape `37` carries the exact non-owning payload shape in
 compiler-generated temporary/local entries and corresponding ordinary immutable
 borrow parameters. Parameter identity comes from the declared parameter mode
 and exact bound type, not inference from callers. Existing budget, source-file,
@@ -1210,7 +1216,9 @@ variant case/payload operations, and stores, and avoids `local.take` for those
 non-owning values. Direct-call argument temporaries receive the exact same
 shape-`37` identity as their callee's immutable parameter, including a plain
 owner passed to that parameter and forwarding through another borrowed helper.
-Owned parameters and function results do not acquire borrow metadata.
+The minor-40 projected-Vector exception below bridges its exact shape-`37(23)`
+local to the existing immutable parameter shape `26`, never a wrapped Vector
+parameter. Owned parameters and function results do not acquire borrow metadata.
 
 The source type classifier also determines whether each projection produces an
 ordinary Copy/shared value or a non-owning owned payload. The planner consumes
@@ -1349,7 +1357,8 @@ ordinary Sequence projections retain their backing allocation and produce the
 Sequence stack classification. This preserves extracted values across owner
 collection while releasing dead aggregate descriptors exactly once. Three
 Windows runner regressions exercise record, variant, and fixed-array Sequence
-extraction over repeated allocation cycles; this does not open minor 39.
+extraction over repeated allocation cycles. That component checkpoint did not
+itself open minor 39; complete host admission is described below.
 
 The source call checker also has a bounded read-through classification for
 records, variants, and fixed arrays. It consumes freshly constructed generic
@@ -1373,7 +1382,8 @@ limits. Completed Copy/Shared subtrees are reused within that walk; active
 recursive ancestors are never reusable evidence. Only a borrowed actual
 argument passed to a by-value formal requires this proof; matching argument
 modes do not traverse layouts.
-This source checkpoint does not open WVB 1.39 admission or execute its borrows.
+This source-classification checkpoint did not itself open WVB 1.39 admission or
+execute its borrows.
 The existing symbol validator still rejects a concrete generic type spelled in
 an ordinary record field; this classifier does not broaden that source boundary.
 The focused classifier owner passes 56 groups on Windows. The original
@@ -1381,8 +1391,9 @@ aggregate checkpoint is recorded in the
 [aggregate evidence](../Documents/Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json),
 and the callable extension is recorded in the
 [callable evidence](../Documents/Evidence/2026-09-07-Foundation-Source-Callable-Classification.json).
-Compiler front-door integration and paired-host checks remain pending; this
-component result is not qualification evidence.
+That component result is not qualification evidence. The later package
+integration record covers its selected current-source front-door and paired-host
+consumer paths, not arbitrary aggregate combinations.
 
 The complete compiler-aligned verifier now routes minor 39 through the same
 semantic, typed-stack, and control/lifetime passes as earlier supported minors.
@@ -1397,12 +1408,17 @@ is admitted; the existing portable/capability-free profile and synchronous
 scanner restrictions remain in force. Direct interpreter callers use the same
 envelope and cannot bypass verification. Failure returns an empty envelope,
 which the runner reports as unsupported at the envelope phase. The browser
-envelope, native lowerer, installed tools, packages, and Windvale OS retain their
-prior version limits. The
+envelope, installed identities, and Windvale OS retain their separately owned
+version limits; the selected package consumer's later native-lowering integration
+does not promote every target. The
 [runtime checkpoint](../Documents/Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json)
 executes the published record/u32 fixture and rejects nine invalid variants on
-Windows and Debian. Wider payload execution, source value-classification
-reconciliation, and compiler-to-runtime consumer evidence remain required.
+Windows and Debian. The later
+[owned-record runtime evidence](../Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
+adds exact owned Option/Result payload and reclamation cases, and the
+[package integration evidence](../Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json)
+closes the selected compiler-to-runtime consumer path. These records retain
+their declared shape, host, and qualification limits.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
@@ -1561,8 +1577,10 @@ For Decision 0058, Stage 0 compiled the then-canonical 12-module source inventor
 
 ## Candidate Vector parameter length lowering
 
-Status: candidate implementation verified by focused Windows and Debian tests;
-not installed or qualified.
+Status: direct parameter reads, ordinary borrowed forwarding, and the
+[projected-Vector bridge](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
+have focused Windows/Debian evidence. These checks do not promote installed
+tools or establish full qualification.
 WVIR operation `169` retains its existing exact Vector slot/type and `u64`
 result contract. For a parameter target, candidate emission now uses WVB 1.40
 `E2 vector.parameter_length` followed by the ordinary result-temporary store.
@@ -1572,9 +1590,10 @@ a borrowed parameter. Other collection operations do not gain parameter support.
 
 The instruction contributes nine bytes and one stack value, rather than the
 owned local's fifteen-byte take/length/restore sequence and two stack values.
-Local targets keep their existing emitted bytes and version. Only a reachable
-parameter length read selects minor 40; its metadata and borrow representation
-otherwise inherit minor 39. The existing memory-budget split-execution owner
+Ordinary local targets keep their existing emitted bytes and version. A reachable
+parameter length read or an admitted shape-`37(23)` local selects minor 40;
+other metadata and borrow representation inherit minor 39. The existing
+memory-budget split-execution owner
 provides `--vector-parameter-reads` with explicit analyzer, emitter, verifier,
 and runner products, with deterministic publication and negative ownership and
 bytecode cases. The [paired-host evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json)
@@ -1598,16 +1617,38 @@ evaluation and consumption. It rejects replacement, moves, conflicting exclusive
 access, and reading after a pending value move; duplicate immutable access is
 allowed. Named arguments retain written evaluation order even when the call's
 parameter order differs. Foundation-projected payload views have separate
-provenance and remain unsupported by this direct-slot optimization; they reject
-before publication instead of becoming ordinary Vector owners.
+provenance and are excluded from this direct-slot optimization before code-size
+analysis. Their loads, stores, and original-owner loan remain intact; they must
+never become ordinary Vector owners through temporary elision.
+
+The [projected-Vector candidate](../Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md)
+admits shape `37` wrapping shape `23` and its exact kind-5 Vector Types index only
+in compiler-generated non-parameter locals/temporaries under minor 40. The typed
+checker represents that cell as kind `87` and permits it to satisfy only shape
+`26` with the identical nominal index at a synchronous direct call. The callee
+keeps its ordinary immutable Vector parameter and existing `E2` observation.
+Minor 39, wrapped Vector parameters, by-value and exclusive arguments, borrowed
+returns, capture, take, mutation, and indirect-call compatibility do not gain
+admission. A minor-40 module must contain `E2` or an admitted borrowed Vector
+local; changing the version alone does not establish the feature. Nine
+deterministic payload scenarios execute on both hosts, with nine malformed
+modules and three invalid ownership sources rejected by the focused owner.
 
 The plan stays within existing owned-function bounds: 4,096 operations, 4,096
 temporaries, and 64 named slots. Four fixed-width temporary tables and three slot
 tables retain at most 66,304 logical bytes, independent of runtime loop trips.
 Immutable table updates copy bounded buffers; this is not a peak-allocation
 measurement. Functions without Vector loads allocate none of these tables.
-Direct Option/Result Vector extraction, arbitrary projected forwarding, native
-minor-40 lowering, and installed promotion remain separate work.
+Generic record/variant ownership uses validated materialized field evidence,
+including inactive variant arms, rather than only constructor operands. An
+unused generic Vector argument alone does not make a record owned. Traversal
+has a depth bound of 64 and an allocated child budget of 8,192; unresolved or
+over-budget proofs reject instead of selecting a copying load. Non-generic
+aggregates and generic arrays retain their existing constructor-evidence path;
+this correction does not establish arbitrary nominal ownership support.
+Consuming Option/Result Vector extraction, arbitrary projected forwarding, native
+minor-40 lowering, browser execution, and installed promotion remain separate
+work. The raw immutable bridge above does not grant ownership of the payload.
 
 ## Expansion path
 

@@ -189,5 +189,29 @@ export fn Check(Candidate: bytes) -> i32 {
         if !Actual.Valid || Actual.Depth != 0u32 || !Actual.Hasˉpush { return 17; }
         Target = Target + 1u32;
     }
+    let Vectorˉtypes: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉconcat(Bytesˉfromˉu8(5u8), Bytesˉconcat(Name("Vector"), U32)));
+    let Vectorˉborrow: Callˉfixture = Withˉtypes(
+        Fixture(Cell(26u8, 0u32), 1u32, U32, 40u32), Vectorˉtypes);
+    if !Accepts(Vectorˉborrow, Cell(87u8, 0u32), 1u32) { return 18; }
+    if Accepts(Vectorˉborrow, Cell(87u8, 1u32), 1u32) ||
+        Accepts(Vectorˉborrow, Cell(88u8, 0u32), 1u32) { return 19; }
+    if Accepts(Withˉtypes(Fixture(Cell(23u8, 0u32), 1u32, U32, 40u32), Vectorˉtypes),
+            Cell(87u8, 0u32), 1u32) ||
+        Accepts(Withˉtypes(Fixture(Cell(27u8, 0u32), 1u32, U32, 40u32), Vectorˉtypes),
+            Cell(87u8, 0u32), 1u32) { return 20; }
+    if Accepts(Withˉtypes(Fixture(Cell(26u8, 0u32), 1u32, U32, 39u32), Vectorˉtypes),
+        Cell(87u8, 0u32), 1u32) { return 21; }
+    if Accepts(Withˉtypes(Fixture(Bytesˉconcat(Bytesˉfromˉu8(37u8), Cell(23u8, 0u32)),
+        1u32, U32, 40u32), Vectorˉtypes), Cell(87u8, 0u32), 1u32) { return 22; }
+    if Accepts(Fixture(Cell(26u8, 0u32), 1u32, U32, 40u32), Cell(87u8, 0u32), 1u32) {
+        return 23;
+    }
+    let Vectorˉkept: Executable.Hˉoperationˉstate = Checkˉcall(Vectorˉborrow,
+        Bytesˉconcat(Prefix, Cell(87u8, 0u32)), 2u32);
+    if !Vectorˉkept.Valid || Vectorˉkept.Depth != 1u32 ||
+        Bytesˉlength(Vectorˉkept.Stack) != 5u32 ||
+        Bytesˉreadˉu8(Vectorˉkept.Stack, 0u32) != 2u8 ||
+        !Vectorˉkept.Hasˉpush || Vectorˉkept.Pushˉkind != 5u32 { return 24; }
     return 0;
 }

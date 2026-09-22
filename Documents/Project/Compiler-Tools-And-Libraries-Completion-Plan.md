@@ -6,8 +6,10 @@
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
-Windows/Debian package execution. The next milestones are wider owned payloads,
-exclusive borrowing, take, mapping, and the wider Libraries 1.0 suite. The
+Windows/Debian package execution. A focused candidate WVB 1.40 bridge now lets
+immutable helpers observe a raw Vector payload without consuming it. The next
+milestones are a separate owned-resource consumer, wider composition, exclusive
+borrowing, take, mapping, and the wider Libraries 1.0 suite. The
 maintainer approved this delivery split on
 15 September 2026; it changes progress reporting, not language or release scope.
 
@@ -24,7 +26,7 @@ Windvale OS and optional profiles retain their own gates.
 | Area | What already works | Remaining work |
 | --- | --- | --- |
 | Frozen Language 1.0 compiler | The [Slice 8 decision](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) closes its exact paired-host compiler and reconstruction gate. | Preserve that baseline. Complete versioned library-driven compiler/runtime additions and integrate the selected generation into the delivered toolchain. Cold construction remains performance work. |
-| Option/Result | Canonical variants and bounded immutable borrowing work in the maintained package parser/lock consumer through the normal build/publication path on Windows and Debian. See the [integration evidence](../Evidence/2026-09-15-Source-Edition-Package-Integration.json). | Wider owned payloads, exclusive borrow, take, mapping, and installed promotion remain separate gaps. |
+| Option/Result | Canonical variants and bounded immutable borrowing work in the maintained package parser/lock consumer through the normal build/publication path on Windows and Debian. The focused raw-Vector projection-to-helper bridge is implemented; see the [integration evidence](../Evidence/2026-09-15-Source-Edition-Package-Integration.json) and [projected-payload checkpoint](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json). | A separate owned-resource consumer, arbitrary composition, exclusive borrow, take, mapping, and installed promotion remain separate gaps. |
 | Foundation and Data | Memory/collection contracts, bounded components, byte algorithms, SHA-256, and database JSON implementations provide starting points. | Close public operations and ownership behavior; extract shared data APIs and migrate consumers. General CBOR is still unimplemented according to the library owner plan. |
 | Hosted libraries | Filesystem/storage facades, operation state machines, network values, and bounded hosted network/TLS/HTTP implementations exist. | Deliver the selected Language 1.0 APIs, instance binding, provider lifecycle, and shared consumers. Existing isolated evidence does not qualify the complete Backend profile. |
 | Developer and delivery tools | Native build, verification, execution, assembly, linking, packaging, recovery, editor grammar, and a bounded browser playground exist. | Reconcile delivered compiler/package identities, finish installed workflows and service operations, and document exact supported targets. Editor highlighting and browser subsets do not establish full compiler support. |
@@ -151,10 +153,25 @@ loop without creating a false owner temporary. Windows and Debian emit identical
 bytes and execute the broader fixture, including named argument order and
 conflicting-access rejection; see the
 [forwarding checkpoint](../Evidence/2026-09-22-Vector-Borrow-Forwarding.json).
-The next gate remains a maintained owned Option/Result resource consumer.
-Foundation-projected Vector forwarding and direct payload extraction are still
-unsupported, and exclusive Option/Result borrowing, Take, mapping, installed
-promotion, and full qualification remain separate work.
+That checkpoint did not enable Foundation-projected Vector forwarding or
+consuming payload extraction.
+
+The next focused bridge now lets an immutable helper observe a raw Vector
+projected from an Option or either Result side, without consuming the payload or
+releasing its original owner. Nine positive programs and nine malformed-bytecode
+cases pass on Windows and Debian with identical bytecode. Coverage includes `Option.Present` and
+`Option.Absent`, both Result sides and their unselected opposite projections,
+nonempty and empty Vectors, 128 allocation/borrow/release cycles, and repeated
+helper calls in loops. A phantom-type control checks that an unused Vector type
+argument does not turn a Copy value into an owned value. The
+[projected-payload evidence](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
+owns the exact host results and limits.
+
+This is an immutable projection-to-helper bridge, not consuming extraction or
+arbitrary payload composition. Native lowering for minor 40, installed promotion,
+exclusive Option/Result borrowing, Take, mapping, and full qualification remain
+separate. A maintained owned-resource consumer is the next wider milestone; it
+does not reopen the already delivered package-parser consumer gate.
 
 Before starting each, enumerate its finite accepted public operations, existing
 implementation, missing implementation, consumer, targets, and focused verifier.

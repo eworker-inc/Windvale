@@ -1,0 +1,545 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-22-borrowed-vector-payloads",
+  "date": "2026-09-22",
+  "subject": "Immutable Vector payload forwarding from Option and Result",
+  "claim": "Source-built candidate WVB 1.40 preserves an Option/Result Vector payload's original-owner loan while forwarding its non-owning local view to an exact immutable Vector parameter. Nine deterministic payload scenarios produce identical bytecode and instruction counts on Windows and Debian, with nine malformed modules and three source ownership violations rejected. Declared-field ownership fixes absent owned variants while retaining phantom-generic Copy behavior. Existing component, runtime, owned-record and real-consumer regressions pass within the exact limits below.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on d8ccb97a7e4aedb9b01d1fb3aaea7ca5f763f875. Exact implementation, fixtures, explicit predecessor products and source-built outputs are identified below; generated source readers match canonical code."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Final source emitter construction with declared-field ownership and projected Vector borrow plans; 786 functions, maximum 1489 slots, largest observed function code 24202 bytes, largest observed stack 15",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj <P>/Emitter-Payload-Final.wvb <P>/Analyzer-Current.exe <P>/Analyzer-Current.identity <P>/Emitter-Baseline.exe <P>/Emitter-Baseline.identity --authenticated-project4 <P>/Admitter-Baseline.exe <P>/Authenticator-Baseline.exe <P>/Reader-Baseline.exe <P>/Binder-Baseline.exe; P=Artifacts/Work/Borrow-Vector-2026-09-22; construction deadline 2026-09-22T07:24:30Z. Split cache key 7cbd5d582ea404ceb86a42fca81a496867eea32b26da6577258f8dda2b0dab1b.",
+      "result": "Passed",
+      "elapsedMilliseconds": 172530,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 244930,
+          "sha256": "10e7280e27e924ee831fd37cfafa154bd583465f40cabcd25b054402b49d8620"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 326583,
+          "sha256": "3dac405f144c4589c487bc976e80b0c0a2b3dd5ca410726d90bc67aa86eb9f95"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7426,
+          "sha256": "72c30af1c0506f27d334ae736a14037dbb1a33f8ded69ba43dd6a7cb3ce0577a"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 11961,
+          "sha256": "08cf24fa034e8eb9c4a012949b7a1e842b8f7f1db21095bdfe794b361e94bf94"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 34845,
+          "sha256": "80ed20e5bdf0bd19d579accee1311c400a8b3c8fe6ac3091f60aac72db9bb6f2"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 10062,
+          "sha256": "87d006b12dc929106f4e09ee3378eae77954bb2070b59c07c180bb99fdee23ec"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "size": 12085,
+          "sha256": "2ac07e0c7a49fa905eac1110e617a86d163d645fee6648995403f6af4dcc95e5"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 374835,
+          "sha256": "fcea581502fbe2add3058888629a55903b5806f3e8100e399e4c80fe665886e0"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 31072,
+          "sha256": "c78e3f651857b4e314322ad8aa1ddad70308489a9be3201b8e39dac7752df3df"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 188258,
+          "sha256": "114db3ab361d3e896424b0e2516a319215af8dde83676941e9a9d467eb33e50f"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 246476,
+          "sha256": "9e484f3c644040121825ed7e6777d0965b5b45fc3f2e8d9d3b50b75d35400cba"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180291,
+          "sha256": "ce6356f2430ee9cadc14a544b8f9c3b2bc3293dcd441000e1cf4b414dabb0762"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10761,
+          "sha256": "47c1923dc673ea99c97285d4927906e5830ac82a4327bd28f4175c2b55359dfb"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv",
+          "size": 3886,
+          "sha256": "fb0bbb49a346ef1364da72897a2ffd6cb35d4fd6b329d0a28d0abd5456f03294"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.wvb",
+          "size": 572966,
+          "sha256": "e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.wvb",
+          "size": 93436,
+          "sha256": "6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.wvb",
+          "size": 1684068,
+          "sha256": "5795cdc7207de465867fa226a0576e360f073c21ee9c40b2bb1240a41c1b87d8"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe",
+          "size": 54543872,
+          "sha256": "ec5b14b00836939e995dddb757b9d5e2a71597160f99a6b022df09a05dba473c"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.elf",
+          "size": 54542336,
+          "sha256": "a01887cb55bfe9ee5f1e57498726a283f8afd1358b735caa86fd5ea47ffd2648"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity",
+          "size": 177,
+          "sha256": "00f168b5afac1affd3276b14f2e40d949043cc0f346a08099720f6ebba7fffa2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.wvb",
+          "size": 1597854,
+          "sha256": "41303d518c3b13574f718565ca5b6d7a1668942c449fada1d6674f553f6c29e4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.exe",
+          "size": 32692736,
+          "sha256": "15cd7d3d7c8fb59d38c06621b020cc2f032d5a31567d76d3c4aeb75a0bff66b8"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.identity",
+          "size": 183,
+          "sha256": "8592fadce66cfa07ef4d554862ab984b6bd9ad239e220b750540d5087ab1e1aa"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Predecessor.exe",
+          "size": 32662528,
+          "sha256": "149cc58fe1d6e6537edc4689596dd2c810e3bff3e497bb60c9848e1cb1d22d30"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Predecessor.identity",
+          "size": 183,
+          "sha256": "3d5f135acf3a90185a280126be8bb76931a89db1261b6da65a0ef805d21ad9b1"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Reader-Baseline.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Binder-Baseline.exe",
+          "size": 18405376,
+          "sha256": "09584096ebbf6baa3e3405133a09381083d6ea8c9c2916b6ee932681574c3670"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.wvb",
+          "size": 1614797,
+          "sha256": "94edb3f4130bee5d40bf0f1c54897c39e5d76a242f38e6245a7f74c6b03a8982"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Complete verifier and scalar runner, authenticated source construction",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj <P>/Verifier-Payload.wvb <P>/Analyzer-Current.exe <P>/Analyzer-Current.identity <P>/Emitter-Predecessor.exe <P>/Emitter-Predecessor.identity --authenticated-project4 <P>/Admitter-Baseline.exe <P>/Authenticator-Baseline.exe <P>/Reader-Baseline.exe <P>/Binder-Baseline.exe; runner uses Projects/Tools/Windvale-Wvb-Runner.wvproj and Emitter-Baseline predecessor. P=Artifacts/Work/Borrow-Vector-2026-09-22. Commands bounded by approved 2026-09-22T07:24:30Z deadline.",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 packaging for Windows and Debian x64",
+      "target": "Complete verified native images and paired verifier/profile7 and runner/profile5 containers",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs; Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "Build-Cached-Segmented-Hosted-Wvb.mjs <profile> <P>/<tool>.wvb <P>/<tool>.exe; Package-Hosted-Wvb.cmd image <profile> <tool.wvb> <private validated image copy> <fragment count> <entry offset> <tool.elf> linux",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Payload.wvb",
+          "size": 574433,
+          "sha256": "b1717f905f380fab3482f57ab8e55bee57cca814b91b308d5e2cd471d9133171"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Payload.exe",
+          "size": 4907008,
+          "sha256": "20d765086242d6b11cb61f7de3d3ef76242dc9d3d80a54a1a894a91e8e0057a2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Payload.elf",
+          "size": 4907008,
+          "sha256": "69642a80bd6011386df528d5c159816063fdb45a5bf34a1a30869a7eeb98d4a2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Payload.wvb",
+          "size": 1163659,
+          "sha256": "786014e763c6cbcc58fa71d4feb578e5e2032767c5ccb0b878f8a8a19838439d"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Payload.exe",
+          "size": 12054528,
+          "sha256": "0bd38f1ea8618239382cf4d7f06ccaf661be02dcfbd121c0236422032b822714"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Payload.elf",
+          "size": 12054528,
+          "sha256": "de0ea1c14284982f6837e704cbafefcbe69740c5d675663d815073fa4751ffbe"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 and Debian x64 under WSL2",
+      "target": "366 component groups: plan20, directories27, owners319; includes calls25 and frames53; both exit 42; Windows execution 1824.623 ms and Debian execution 1707.038 ms (2096.499 ms including WSL launch).",
+      "tool": "Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj",
+      "command": "Authenticated Build-Cached-Split-Project-Wvb.mjs with Analyzer-Current and Emitter-Baseline; profile1 Windows packaging and paired private-image Linux packaging; execute Components-Payload-Final.exe and Components-Payload-Final.elf, both exit42.",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Components-Payload-Final.wvb",
+          "size": 887788,
+          "sha256": "1ad35a3639f0074a349b38ec4d9c49ff1ea35d77c3f6a1eb8f3ec438ef942cce"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Components-Payload-Final.exe",
+          "size": 8870400,
+          "sha256": "437600af7370df66ab804322e746d3aa94d2382c181f75394ce349a4e3afd689"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Components-Payload-Final.elf",
+          "size": 8871936,
+          "sha256": "b2222fecdebffe1f71687aeaef582a721898cbc6aa3f6b0e348b85bcb3de76c4"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Ten runtime admission cases, valid module and nine malformed or version-forged variants",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime <P>/Runner-Payload.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 703
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js 20.19.2",
+      "target": "Same ten runtime admission cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime <P>/Runner-Payload.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 1133
+    },
+    {
+      "host": "Windows x64 packaging for Windows and Debian x64",
+      "target": "Final emitter native containers; approved follow-up packaging/test batch ending 2026-09-22T07:40:00Z",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs; Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "Build-Cached-Segmented-Hosted-Wvb.mjs 8 <P>/Emitter-Payload-Final.wvb <P>/Emitter-Payload-Final.exe; Package-Hosted-Wvb.cmd image 8 <P>/Emitter-Payload-Final.wvb <private validated image copy> <fragment count> <entry offset> <P>/Emitter-Payload-Final.elf linux. Image key a38d885c3a23ecd2f0362ac8db2241c2d900866686fd1356a09c9fc41c6d6dd7; complete verification and native staging precede packaging; paired image inputs remain unchanged.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.wvb",
+          "size": 1614797,
+          "sha256": "94edb3f4130bee5d40bf0f1c54897c39e5d76a242f38e6245a7f74c6b03a8982"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.exe",
+          "size": 32956416,
+          "sha256": "3ec1fbe92badb780d1899f94e23bd189a59ff36a921a81680e5720b12e1523d1"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.elf",
+          "size": 32956416,
+          "sha256": "7e399e4ecc58b5edd8acd8f9512ad95d2847032f92eee0f22bdd82c275f19b2c"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Nine owned-record scenarios: Option, both Result sides, Copy control, repeated reclamation, allocation refusal/release and unaddressable capacity; eight copied-payload mutations and two invalid-budget sources reject",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <P>/Admitter-Baseline.exe <P>/Authenticator-Baseline.exe <P>/Analyzer-Current.exe <P>/Emitter-Payload-Final.exe Projects/Targets/Windows-X64-No-Foreign.wvtd <P>/Verifier-Payload.exe <P>/Runner-Payload.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 17500
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js 20.19.2",
+      "target": "Nine owned-record scenarios: Option, both Result sides, Copy control, repeated reclamation, allocation refusal/release and unaddressable capacity; eight copied-payload mutations and two invalid-budget sources reject",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads <P>/Admitter-Baseline.elf <P>/Authenticator-Baseline.elf <P>/Analyzer-Current.elf <P>/Emitter-Payload-Final.elf Projects/Targets/Windows-X64-No-Foreign.wvtd <P>/Verifier-Payload.elf <P>/Runner-Payload.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 52854
+    },
+    {
+      "host": "Windows x64 construction; complete verification on Windows and Debian x64",
+      "target": "Maintained canonical package text and package-lock consumer WVB identity regressions",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs; current source-built complete verifier",
+      "command": "Authenticated split build Projects/Tests/Windvale-Native-Test-Canonical-Package-Text.wvproj and Projects/Tests/Windvale-Native-Test-Package-Lock.wvproj with Analyzer-Current and Emitter-Payload-Final. Compare bytes/SHA-256 to September 15 records; invoke Verifier-Payload.exe and Verifier-Payload.elf on each fresh WVB (four Valid exit-0 checks). Exact WVB identity preserves prior paired native execution evidence; no fresh native packaging or execution is claimed.",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Consumer-Canonical-Final.wvb",
+          "size": 26908,
+          "sha256": "d5a0ea1fb69c69562923dfdeae21d423ea44ad4d344913c42c84cfcbc2c40813"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Consumer-Lock-Final.wvb",
+          "size": 57977,
+          "sha256": "682a2677419c12a37c47159345a4d5099c746e1ccd302a6686a9deeb265982ef"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Vector parameter owner: three direct reads, eleven malformed cases, ten source rejections, two legacy call regressions; plus nine payload scenarios, nine payload malformed cases and three payload source rejections. Payload cases compile twice; each result is 42 with at most 16384 module bytes and 80000 guest instructions. Observed instructions: option-present/result-valid/result-failure/without-parameter-read 62999; option-absent 18967; result-valid-absent/result-failure-absent 19351; repeated-helper-loop 23303; phantom-vector-copy 68759. All cases use 128 child-budget trips except repeated-helper-loop (16 trips, four inner iterations).",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads <P>/Admitter-Baseline.exe <P>/Authenticator-Baseline.exe <P>/Analyzer-Current.exe <P>/Emitter-Payload-Final.exe Projects/Targets/Windows-X64-No-Foreign.wvtd <P>/Verifier-Payload.exe <P>/Runner-Payload.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 47973,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe",
+          "size": 54543872,
+          "sha256": "ec5b14b00836939e995dddb757b9d5e2a71597160f99a6b022df09a05dba473c"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.exe",
+          "size": 32956416,
+          "sha256": "3ec1fbe92badb780d1899f94e23bd189a59ff36a921a81680e5720b12e1523d1"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Payload.exe",
+          "size": 4907008,
+          "sha256": "20d765086242d6b11cb61f7de3d3ef76242dc9d3d80a54a1a894a91e8e0057a2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Payload.exe",
+          "size": 12054528,
+          "sha256": "0bd38f1ea8618239382cf4d7f06ccaf661be02dcfbd121c0236422032b822714"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary direct Vector parameter fixture.wvb",
+          "size": 3851,
+          "sha256": "81b3c105b1bfdd44e95e40e30ae601a6544b6cdb6df5703579bcb336a4e5a949"
+        },
+        {
+          "path": "temporary payload fixture/option-present.wvb",
+          "size": 3820,
+          "sha256": "b2d0518ce60403998a62322efa6e20b7112fed60ce6cc9b9192935b86185a685"
+        },
+        {
+          "path": "temporary payload fixture/option-absent.wvb",
+          "size": 3800,
+          "sha256": "5bed0f4143da3247ebfe204be7bbb0b4da118abcc67b40e15a43a42ae3d05d21"
+        },
+        {
+          "path": "temporary payload fixture/result-valid.wvb",
+          "size": 3884,
+          "sha256": "edbb0572543ee386d9af7cbe3850f11716e19b53fdda68d0d6ed7ea31007f384"
+        },
+        {
+          "path": "temporary payload fixture/result-valid-absent.wvb",
+          "size": 3880,
+          "sha256": "19c4e8ced29934b625f20cb4980aa58f8481cd6d77d29465a74562e79eac6251"
+        },
+        {
+          "path": "temporary payload fixture/result-failure.wvb",
+          "size": 3884,
+          "sha256": "3ec0ba968d8e5c27d5c4af4e8048281e22877407b8c74bfb9d447b5ae6e524d8"
+        },
+        {
+          "path": "temporary payload fixture/result-failure-absent.wvb",
+          "size": 3880,
+          "sha256": "a874884032b7985eac16ee0a422ce92b06791eaf3143250bf3f4f15d55d8735f"
+        },
+        {
+          "path": "temporary payload fixture/without-parameter-read.wvb",
+          "size": 3820,
+          "sha256": "7e0e271c0150653dbef854511033d8d9b49bb15efa5d7467fd180efabfa95596"
+        },
+        {
+          "path": "temporary payload fixture/repeated-helper-loop.wvb",
+          "size": 3820,
+          "sha256": "fb95cb287bfdda8612bc2fcf507ec20da70b038f22bf438939528ee453dd937b"
+        },
+        {
+          "path": "temporary payload fixture/phantom-vector-copy.wvb",
+          "size": 4177,
+          "sha256": "390bd7f6da0b45bc36f20047c314d70f80ade83cd219f139f0bc22a8b0e5e750"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js 20.19.2",
+      "target": "Vector parameter owner: three direct reads, eleven malformed cases, ten source rejections, two legacy call regressions; plus nine payload scenarios, nine payload malformed cases and three payload source rejections. Payload cases compile twice; each result is 42 with at most 16384 module bytes and 80000 guest instructions. Observed instructions: option-present/result-valid/result-failure/without-parameter-read 62999; option-absent 18967; result-valid-absent/result-failure-absent 19351; repeated-helper-loop 23303; phantom-vector-copy 68759. All cases use 128 child-budget trips except repeated-helper-loop (16 trips, four inner iterations).",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads <P>/Admitter-Baseline.elf <P>/Authenticator-Baseline.elf <P>/Analyzer-Current.elf <P>/Emitter-Payload-Final.elf Projects/Targets/Windows-X64-No-Foreign.wvtd <P>/Verifier-Payload.elf <P>/Runner-Payload.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 104052,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.elf",
+          "size": 54542336,
+          "sha256": "a01887cb55bfe9ee5f1e57498726a283f8afd1358b735caa86fd5ea47ffd2648"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.elf",
+          "size": 32956416,
+          "sha256": "7e399e4ecc58b5edd8acd8f9512ad95d2847032f92eee0f22bdd82c275f19b2c"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Payload.elf",
+          "size": 4907008,
+          "sha256": "69642a80bd6011386df528d5c159816063fdb45a5bf34a1a30869a7eeb98d4a2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Payload.elf",
+          "size": 12054528,
+          "sha256": "de0ea1c14284982f6837e704cbafefcbe69740c5d675663d815073fa4751ffbe"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary direct Vector parameter fixture.wvb",
+          "size": 3851,
+          "sha256": "81b3c105b1bfdd44e95e40e30ae601a6544b6cdb6df5703579bcb336a4e5a949"
+        },
+        {
+          "path": "temporary payload fixture/option-present.wvb",
+          "size": 3820,
+          "sha256": "b2d0518ce60403998a62322efa6e20b7112fed60ce6cc9b9192935b86185a685"
+        },
+        {
+          "path": "temporary payload fixture/option-absent.wvb",
+          "size": 3800,
+          "sha256": "5bed0f4143da3247ebfe204be7bbb0b4da118abcc67b40e15a43a42ae3d05d21"
+        },
+        {
+          "path": "temporary payload fixture/result-valid.wvb",
+          "size": 3884,
+          "sha256": "edbb0572543ee386d9af7cbe3850f11716e19b53fdda68d0d6ed7ea31007f384"
+        },
+        {
+          "path": "temporary payload fixture/result-valid-absent.wvb",
+          "size": 3880,
+          "sha256": "19c4e8ced29934b625f20cb4980aa58f8481cd6d77d29465a74562e79eac6251"
+        },
+        {
+          "path": "temporary payload fixture/result-failure.wvb",
+          "size": 3884,
+          "sha256": "3ec0ba968d8e5c27d5c4af4e8048281e22877407b8c74bfb9d447b5ae6e524d8"
+        },
+        {
+          "path": "temporary payload fixture/result-failure-absent.wvb",
+          "size": 3880,
+          "sha256": "a874884032b7985eac16ee0a422ce92b06791eaf3143250bf3f4f15d55d8735f"
+        },
+        {
+          "path": "temporary payload fixture/without-parameter-read.wvb",
+          "size": 3820,
+          "sha256": "7e0e271c0150653dbef854511033d8d9b49bb15efa5d7467fd180efabfa95596"
+        },
+        {
+          "path": "temporary payload fixture/repeated-helper-loop.wvb",
+          "size": 3820,
+          "sha256": "fb95cb287bfdda8612bc2fcf507ec20da70b038f22bf438939528ee453dd937b"
+        },
+        {
+          "path": "temporary payload fixture/phantom-vector-copy.wvb",
+          "size": 4177,
+          "sha256": "390bd7f6da0b45bc36f20047c314d70f80ade83cd219f139f0bc22a8b0e5e750"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is exact candidate WVB 1.40 local-wrapper admission and synchronous immutable direct-call forwarding. Minor39 still rejects wrapped Vector payload metadata; wrapped Vector parameters, value/exclusive transfer, borrowed returns/captures/take, mutation and indirect compatibility remain closed.",
+    "Linux executable wrappers reuse Windows-generated WVB/native images. This is paired-host execution, not independent Linux reconstruction or full Qualification. No installed identity, native minor 40 lowering, browser, OS, bootstrap or release promotion is claimed.",
+    "The first 128-by-4 dense stress fixture exhausted the native host dynamic-value arena (exit 66). The final workloads separate 128 guest-budget reuse trips from 16-by-4 helper-loop work and cap each scenario at 80,000 guest instructions; no arena or semantic limit was raised. Guest budget reclamation does not establish bounded cumulative outer-host arena use.",
+    "Initial test corrections included duplicate source-local names, moving Vector allocation/append back to Main under its existing contract, a stray closing parenthesis, and metadata case 136 expecting normalization rejection instead of the semantic missing-feature rejection. Those failed attempts are not passing evidence.",
+    "An absent generic owned variant exposed operand-based ownership classification: its constructor temporary was copied. A diagnostic byte patch confirmed the defect; only the subsequent source-fixed compiler products establish final emission evidence.",
+    "Full automatic changed-file selection was not run: 14 owners, 3840 expected seconds and 15600 maximum seconds. The existing component, runtime, payload and routing owners were selected for causal coverage, with explicit cached products and no hidden full reconstruction.",
+    "Previous-commit GitHub Verify run 35694870693 reached both 15-minute development job limits; classification and documentation passed, but its aggregate gate failed. Budget refusals and interrupted owners are incomplete evidence, not assertion passes. This record does not claim a green remote gate.",
+    "No human inspection, independent reproduction, external audit, whole-workflow peak-memory measurement, or timing improvement is claimed.",
+    "The first final-emitter construction rejected a duplicate local identifier after 195879 ms. Renaming that local and regenerating artifact readers produced the successful final emitter. The initial projected-source rejection assertion expected Invalid_wir, but exclusive borrowing correctly rejected earlier with Invalid_borrow; the final assertion requires its exact analysis diagnostic and no output.",
+    "The consumer check rebuilt and complete-verified two selected package modules only. Their byte identities match prior paired native execution evidence. It did not run fresh native packaging/execution or the complete 82-group package-format wrapper."
+  ],
+  "related": [
+    "Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Windvale-Native-Wvb-Runner.md",
+    "Documents/Evidence/2026-09-15-Source-Edition-Package-Integration.json",
+    "Documents/Evidence/2026-09-22-Vector-Borrow-Forwarding.json",
+    "Documents/Evidence/2026-09-15-Current-Lowerer-Package-Execution.json",
+    "Documents/Evidence/2026-09-15-Package-Lock-Borrowed-Content.json",
+    "Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json"
+  ]
+}
