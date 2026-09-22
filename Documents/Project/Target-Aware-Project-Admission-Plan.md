@@ -2,7 +2,7 @@
 
 > Status: Current; Project 4 direction approved, integration in progress
 > Authority: Informative; existing specifications and accepted decisions remain authoritative
-> Last reviewed: 2026-09-15
+> Last reviewed: 2026-09-22
 
 Project 4 metadata and normal repository routing now exist. The remaining
 consumer work is source-closure migration, safe output replacement, and execution
@@ -27,8 +27,10 @@ toolchain promotion have separate gates.
 - The 15 September read-only preflight found no current Windows compiler-cache
   entry. The focused Project 4 helper plan estimates 1,200 seconds, maximum
   2,400 seconds; the package plan estimates 645 seconds. Neither was launched
-  under the ten-minute development budget. Cold acquisition requires explicit
-  advance approval for a named command and maximum duration.
+  under the then-applicable ten-minute development budget. Future cold
+  acquisition follows the [standing local-run approval](../../AGENTS.md#testing-and-verification):
+  announce the command, expected duration, and finite maximum without asking
+  for duration approval again.
 
 Once target and source closure are known, convert manifests mechanically and
 review their exact inputs. Do not count each converted manifest as a separate

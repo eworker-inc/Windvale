@@ -2,16 +2,17 @@
 
 > Status: Current completed source/package milestone; selected cross-host verification complete
 > Authority: Informative; accepted source, project, capability, and bootstrap contracts remain authoritative
-> Last reviewed: 2026-09-15
+> Last reviewed: 2026-09-22
 
 The maintainer approved expanding the package-parser migration to its shared
 compiler/tool dependencies, starting with this bounded implementation and
 qualification plan. The immediate delivery remains a coherent package migration
 that can be committed and pushed to both configured remotes. Repository-wide
 source conversion is enabling work, not a claim that Libraries 1.0 is complete.
-The maintainer subsequently approved the time needed for this chat. Individual
-runs remain bounded and reported; that session approval does not change the
-repository's default ten-minute budget for future work.
+The maintainer subsequently approved the time needed for that session. Future
+local work now follows the [standing local-run approval](../../AGENTS.md#testing-and-verification)
+granted on 22 September 2026. Individual runs remain bounded and reported; the
+ten-minute development default is not a reason to request approval again.
 
 ## What is established
 
@@ -181,14 +182,16 @@ The full source-admission scan took 567 seconds on Windows and 817 seconds on
 Debian under WSL2. These measure source admission, not complete compilation or
 execution of every project. Compiler preparation, native packaging, and fresh
 two-generation reconstruction are separate bounded operations. The maintainer's
-time approval covers this session; future longer runs still require the normal
-advance command/budget approval. Reuse exact completed caches and preserve
-phase artifacts when a later check fails.
+time approval covered that historical session. Future longer local runs use the
+standing approval: report the command, expected duration, and finite maximum
+before execution. Reuse exact completed caches and preserve phase artifacts
+when a later check fails.
 
 The generic owner-duration labels are planning hints, not permission to exceed
-the total ten-minute local budget. In particular, the pending package plan's
-660-second estimate already exceeded it. Keep construction evidence and caches
-on timeout and report incomplete results honestly.
+the selected run budget. The package plan's historical 660-second estimate
+exceeded the ten-minute default; a bounded longer run can now proceed under
+standing approval. Keep construction evidence and caches on timeout and report
+incomplete results honestly.
 
 ## Current checkpoint
 

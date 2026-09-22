@@ -2,7 +2,7 @@
 
 > Status: Current native verification procedure
 > Authority: Informative procedure; verification specifications own exact contracts
-> Last reviewed: 2026-09-02
+> Last reviewed: 2026-09-22
 
 This runbook owns the first .NET-free repository test slice accepted by
 [Decision 0218](../Decisions/0218-First-Native-Test-Orchestration.md). Its exact
@@ -30,8 +30,12 @@ pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1 -AllowLongR
 Use shard values `1` through `4`. The manifest fixes every assignment, and the
 final verification gate requires all four shards on both hosts. The ordinary
 no-argument command remains available as the sequential complete-plan oracle,
-but it requires `-AllowLongRun` after its expected duration has been reviewed
-and explicitly approved.
+but it requires `-AllowLongRun` after reviewing its causal scope and expected
+duration. Local execution time is covered by
+[standing maintainer approval](../../AGENTS.md#testing-and-verification):
+announce the command and finite maximum, retain hard deadlines, and do not
+request run-by-run duration approval. This does not authorize an unrelated
+qualification workflow dispatch or broaden its evidence claim.
 
 After a complete qualification stops at a known owner, inspect a canonical
 shard tail without running it:

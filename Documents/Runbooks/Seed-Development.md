@@ -2,7 +2,7 @@
 
 > Status: Current native-only Seed development runbook
 > Authority: Informative procedure; tools and specifications own exact contracts
-> Last reviewed: 2026-09-02
+> Last reviewed: 2026-09-22
 
 This runbook describes the current native-only development loop. Historical
 managed commands belong to the immutable Stage 0 recovery release, not this
@@ -27,20 +27,25 @@ After a coherent edit, run one change-aware verifier:
 pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 ```
 
-Use `-PlanOnly` when you only need to inspect the affected owners. The planner
+Inspect the affected owners with `-PlanOnly` before execution. The planner
 selects focused native suites in canonical order and refuses unmapped active
 boundaries. The owner runner also reports expected and maximum duration and
 refuses an execution expected to exceed ten minutes unless `-AllowLongRun` is
-explicit. After the named command and maximum duration have advance approval,
-pass that switch through the changed-file entry point:
+explicit. Longer local runs have
+[standing maintainer approval](../../AGENTS.md#testing-and-verification).
+Announce the exact command, expected cold duration, and finite maximum; no
+additional duration approval is needed. Pass the switch through the changed-file
+entry point:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -AllowLongRun
 ```
 
 The switch is forwarded only to owners run through the bounded coordinator;
-each owner still enforces its registered maximum. The command does not fall
-back to an unfiltered or managed gate.
+each owner still enforces its registered maximum. Bound the whole command by
+the announced deadline, preserve completed evidence on timeout, and diagnose
+before a separately bounded continuation. The command does not fall back to an
+unfiltered or managed gate.
 
 Verification levels are alternatives:
 

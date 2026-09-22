@@ -2,7 +2,7 @@
 
 > Status: Proposed; initial future-release planning, not an accepted release gate
 > Authority: Informative; existing decisions and specifications remain controlling
-> Last reviewed: 2026-09-08
+> Last reviewed: 2026-09-22
 
 ## Intended outcome
 
@@ -129,8 +129,9 @@ The proposed rules for selecting work are:
 6. Publish only after accepting a concrete release gate, compatibility matrix,
    support policy, recovery path, and signed distribution requirements.
 
-These steps are proposed planning checkpoints, not approval for long verifier
-runs or permission to interrupt 1.0 delivery.
+These steps are proposed planning checkpoints, not permission to implement an
+unaccepted 2.0 scope or interrupt 1.0 delivery. Local verification duration is
+covered separately by [standing approval](../../AGENTS.md#testing-and-verification).
 
 ## Evidence needed before scope selection
 

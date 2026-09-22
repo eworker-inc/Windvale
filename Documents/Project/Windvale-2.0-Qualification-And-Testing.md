@@ -2,7 +2,7 @@
 
 > Status: Proposed; code-backed findings and improvement candidates
 > Authority: Informative; not an accepted qualification-model change
-> Last reviewed: 2026-09-08
+> Last reviewed: 2026-09-22
 
 ## Intended outcome and review boundary
 
@@ -237,7 +237,9 @@ first remove redundant work and measure the remaining bottleneck.
 ## Recommended order and what not to cut
 
 1. Extend phase/cold-cost visibility and refresh the highest-cost named workload
-   evidence with explicitly approved budgets. Keep historical results intact.
+   evidence with explicit finite budgets under the
+   [standing local-run approval](../../AGENTS.md#testing-and-verification).
+   Keep historical results intact.
 2. Finish shared-product and focused-selection work in existing owners. Pilot
    one costly path such as foreign binding or foundation borrowing, compare
    like-for-like cache states, and retain every selected behavior.

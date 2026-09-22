@@ -74,8 +74,11 @@ chunk is coherent, inspect one combined verification plan, share construction
 products, and execute the affected behaviors on their required hosts. Preserve
 unaffected evidence after failures and rerun only dependencies invalidated by
 the fix. Do not restart broad verification for documentation, commits, or
-pushes. A run beyond the ordinary ten-minute local budget needs a concrete
-command and an approved maximum duration before execution.
+pushes. A run beyond the ordinary ten-minute local default has
+[standing maintainer approval](../../AGENTS.md#testing-and-verification).
+Announce its concrete command, expected cold duration, and finite maximum before
+execution, retain hard deadlines, and continue without another duration-approval
+request. This does not accept draft APIs or waive any evidence gate.
 
 The [verification throughput redesign](Verification-Throughput-Plan.md) remains
 supporting work with open performance targets; it does not block implementation

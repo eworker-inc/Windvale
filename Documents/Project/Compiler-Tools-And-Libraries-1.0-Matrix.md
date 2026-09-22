@@ -229,5 +229,7 @@ database-side owner.
 
 This is a source/document audit and delivery inventory, not a fresh conformance
 run of every listed family. No overall percentage or completion date is inferred
-from row counts. Normal local verification keeps its ten-minute wall-clock
-budget; longer commands need advance approval of command and maximum duration.
+from row counts. Normal local verification keeps its ten-minute default;
+longer local commands have [standing maintainer approval](../../AGENTS.md#testing-and-verification).
+Announce the command, expected duration, and finite maximum; retain deadlines
+and evidence requirements without asking for duration approval again.

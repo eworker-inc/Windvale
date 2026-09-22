@@ -41,11 +41,15 @@ pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly
 Local development verification has a default ten-minute total wall-clock
 budget, including cache preparation, compilation, packaging, reconstruction,
 test execution, and cleanup. Execute the proposed plan only when every owner is
-causal and its complete cold duration fits that budget. A longer local run needs
-explicit advance approval naming the command and maximum duration, or a named
-release, security, bootstrap, ABI, or cross-host qualification need after the
-expected duration is disclosed. Stop when the budget is reached or an estimate
-proves materially wrong; do not treat partial execution as a passing result.
+causal and its complete cold duration fits the selected budget. Longer local
+build and verification runs have standing maintainer approval under
+[the handbook](AGENTS.md#testing-and-verification); do not ask again merely
+because of their duration. Before launch, state the command, expected cold
+duration, and finite maximum, and use the explicit long-run switch when needed.
+Stop at that deadline or when an estimate proves materially wrong; preserve
+valid evidence and diagnose before a separately bounded continuation. Partial
+execution is not a pass. This time approval does not authorize release,
+privileged, destructive, or otherwise out-of-scope actions.
 
 For a coherent cross-area batch whose reviewed plan fits the budget, run the
 same changed-file verifier once after the edit settles. Its native planner may

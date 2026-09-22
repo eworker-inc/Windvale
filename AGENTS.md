@@ -144,14 +144,26 @@ capability boundaries must remain explicit.
   test execution, and cleanup. Before executing changed-file verification,
   inspect its proposed plan with `Verify-Changed.ps1 -PlanOnly` and do not start
   an owner whose known or reasonably expected cold duration exceeds the
-  remaining budget.
-- A longer local run requires explicit advance human approval naming the command
-  and maximum duration, or an explicit release, security, bootstrap, ABI, or
-  cross-host qualification request after its expected duration is disclosed.
-  Requests to finish, keep going, or verify a change do not by themselves waive
-  the development budget. Stop a run when the budget is reached or when new
-  evidence shows the estimate was materially wrong; preserve completed evidence
-  and caches, and report that the full verifier did not pass.
+  remaining selected budget.
+- Standing maintainer approval, granted on 22 September 2026, covers longer
+  local builds, compilation, packaging, reconstruction, tests, benchmarks, and
+  Windows/Debian verification needed for the requested Windvale work. Do not
+  ask for run-by-run approval solely because a run exceeds ten minutes. This
+  approval persists across tasks and sessions until the maintainer revokes it.
+- Before a longer run, state its purpose, exact command, expected cold duration,
+  and finite maximum duration. Select the narrowest causal plan and use the
+  existing explicit long-run switches where required. The ten-minute default
+  remains a feedback-time target, not an approval blocker for a justified run.
+  Stop at the selected deadline or when the estimate proves materially wrong;
+  preserve completed evidence and caches and report the incomplete result.
+  After diagnosis or a coherent fix, a newly reported bounded continuation is
+  covered by the same standing approval. Do not silently reset an active
+  deadline, retry unchanged failures, or disguise cumulative time as a new run.
+- This standing approval concerns local execution time only. It does not grant
+  new product scope, accept draft contracts, waive qualification evidence, or
+  authorize release signing/publication, privileged installation, destructive
+  operations, or external spending. Those actions retain their own authority
+  requirements. A long run alone must not block the task awaiting permission.
 - A verifier is justified only when its failure could reveal a defect introduced
   by the change. Before starting it, name the changed contract and the failure
   signal the check can detect. File-based routing is a conservative hint, not a
@@ -194,9 +206,10 @@ pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly
 ```
 
 Execute the proposed plan only after confirming that every selected owner is
-causal and the complete cold plan fits the local development budget. If it does
-not, select the exact focused owner, correct the routing, or request approval for
-a named longer run instead of launching the plan mechanically.
+causal and the complete cold plan fits the selected budget. If it does not fit
+the ten-minute default, select the exact focused owner, correct the routing, or
+declare a bounded longer run under the standing approval above instead of
+launching the plan mechanically or requesting redundant approval.
 
 Detailed verifier routing, native-owner selection, editor synchronization, broad
 gates, recovery-only managed checks, and cross-host qualification rules live in

@@ -307,11 +307,13 @@ than treating every commit as a new full-qualification event.
   Select one combined causal plan; count cold compilation, packaging, and
   reconstruction in its duration. A significant chunk is defined by its usable
   exit result, not its commit count or number of changed files.
-- Ordinary local verification retains the ten-minute total budget. A longer
-  command requires advance approval of that command and maximum duration.
-  Finishing a chunk does not itself waive this rule. If the plan cannot fit,
-  preserve the checkpoint and select a focused check or a separately approved
-  qualification run; report the remaining gate as unverified.
+- Ordinary local verification retains the ten-minute default. Longer local
+  commands have [standing maintainer approval](../../AGENTS.md#testing-and-verification);
+  state the command, expected cold duration, and finite maximum without asking
+  again. If a run cannot fit its selected deadline, preserve the checkpoint,
+  diagnose the cause, and select a focused check or a separately bounded
+  continuation. Report every remaining gate as unverified; duration approval
+  does not turn a development checkpoint into qualification.
 - Share immutable construction products and valid development evidence using
   complete declared inputs. Execute required changed behaviors; give mutable
   recovery tests fresh state. After failure, rerun invalidated dependencies and

@@ -187,7 +187,11 @@ It still needs the
 current split compiler and may require cold compiler-scale packaging. It is
 not a seconds-scale check on a cold host. The Node entry point accepts
 `--maximum-seconds <seconds>` in the range 1 through 3600 for this selection;
-using more than the ordinary budget requires advance human approval.
+using more than the ordinary default is covered by the
+[standing local-run approval](../AGENTS.md#testing-and-verification). State the
+command, expected duration, and finite maximum before launch; do not request
+run-specific duration approval. The allowed range, hard deadlines, and result
+classifications remain unchanged.
 Neither selection proves complete WVB 1.39 verification or execution.
 
 Both the front-end runner and this owner use
