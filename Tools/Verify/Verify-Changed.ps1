@@ -391,6 +391,15 @@ if ($Plan.Scope -eq 'website') {
                     $OwnerArguments = @('--development-target', $NativePlan.Language1FrontDoorDevelopmentTarget)
                 }
             } elseif ($Suite -eq 'language-1-memory-budget-split-execution' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UseVectorBorrowIntegrationDevelopment) {
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.$OwnerExtension")
+                $OwnerArguments = @('--vector-borrow-integration', '--maximum-seconds', '3600')
+                $OwnerMessage = ('Native owner language-1-memory-budget-split-execution ' +
+                    'mode=vector-borrow-integration cases=497 expected-seconds=900 maximum-seconds=3600 ' +
+                    'cold-duration-measured=false')
+            } elseif ($Suite -eq 'language-1-memory-budget-split-execution' -and
                 $Plan.Scope -eq 'development' -and
                 ($NativePlan.UseFoundationBorrowPlanDevelopment -or
                     $NativePlan.UseFoundationBorrowDirectoryDevelopment -or
@@ -719,15 +728,31 @@ if ($Plan.Scope -eq 'website') {
                 Write-Warning $BudgetMessage
                 throw $BudgetMessage
             }
-            if ($OwnerCommand -ceq $Coordinator) {
-                & pwsh -NoProfile -File $OwnerCommand @OwnerArguments
+            $VectorBorrowBudgetRefused = $Suite -eq 'language-1-memory-budget-split-execution' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UseVectorBorrowIntegrationDevelopment -and
+                $NativePlan.VectorBorrowIntegrationDevelopmentExpectedSeconds -gt
+                    $LOCAL_DEVELOPMENT_BUDGET_SECONDS -and !$AllowLongRun
+            if ($VectorBorrowBudgetRefused) {
+                Write-Warning (
+                    'Vector borrow integration was not executed: its 900-second planning cost class ' +
+                    'exceeds the selected 600-second default; cold construction is not measured ' +
+                    'and can exceed the automatic 15-minute CI budget. Inspect -PlanOnly and ' +
+                    'select -AllowLongRun for the bounded 3600-second command under standing approval. ' +
+                    'No cold product acquisition was started and no passing evidence was recorded.')
+                $OwnerExitCode = 64
             } else {
-                & $OwnerCommand @OwnerArguments
+                if ($OwnerCommand -ceq $Coordinator) {
+                    & pwsh -NoProfile -File $OwnerCommand @OwnerArguments
+                } else {
+                    & $OwnerCommand @OwnerArguments
+                }
+                $OwnerExitCode = $LASTEXITCODE
             }
-            $OwnerExitCode = $LASTEXITCODE
             $OwnerSucceeded = $OwnerExitCode -eq 0
             if (!$OwnerSucceeded -and
-                ($OwnerCommand -ceq $Coordinator -or $Suite -eq 'language-1-front-door') -and
+                ($OwnerCommand -ceq $Coordinator -or $Suite -eq 'language-1-front-door' -or
+                    ($Suite -eq 'language-1-memory-budget-split-execution' -and
+                        $NativePlan.UseVectorBorrowIntegrationDevelopment)) -and
                 $OwnerExitCode -ne 1) {
                 $TimingOutcome = if ($OwnerExitCode -eq 124) {
                     'timed-out'

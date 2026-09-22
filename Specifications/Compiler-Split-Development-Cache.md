@@ -181,7 +181,7 @@ the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
-complete counterpart, and executes a thirty-nine-case cache sentinel. The sentinel
+complete counterpart, and executes the existing cache sentinel. The sentinel
 proves module ordering, identity publication, failure cleanup, replacement and
 quarantine race safety, primary-plus-cleanup diagnostics, the root-first raw
 Project 2 argument and WVSS/WVCA/WVLB/WVIR output order, resumable WVSY reuse
@@ -190,7 +190,10 @@ product reuse after intermediate eviction, final product and analysis-key
 corruption rejection before construction, producer-change invalidation, two-branch construction ordering, peer completion
 after either branch fails, aggregate errors, admission-product corruption,
 Project 2 and explicit-predecessor Project 4 construction graphs, and rejection
-before publication. The native `--project4` selector adds thirteen cases for
+before publication. It also covers exact current-product acquisition for the
+Foundation borrow owner, joined packaging failures, changed input/product
+rejection, and deadline admission and exit-status propagation. The native
+`--project4` selector adds thirteen cases for
 authenticated construction, independent-cache determinism, hits, lock/profile/
 target invalidation, explicit producers, and preservation of existing output
 on rejection, including preservation of hosted versioned metadata. It
@@ -220,8 +223,29 @@ memory, instruction, file-count, and output limits remain unchanged. Both branch
 settle before final-product copying or temporary cleanup; failures prevent pair
 publication and retain each branch error. The coordinator uses the existing
 bounded process-tree command runner, with a ten-minute per-command timeout and
-a 1 MiB combined diagnostic bound. Owner-level total budgets remain separate.
+a 1 MiB combined diagnostic bound. The optional `--deadline-ms` argument supplies
+an absolute Unix-millisecond deadline across the whole construction request;
+individual commands use the earlier of that deadline and their existing ceiling.
+The builder reserves thirty seconds for its cleanup, and predecessor construction
+reserves a further thirty seconds for exact-path Git worktree removal. Invalid
+or expired deadlines reject before work-directory creation. Without this option,
+the existing per-command limits remain unchanged. Timeout status `124` is retained
+through command, construction, and caller failures rather than becoming an
+assertion failure. Owner-level total budgets remain separate when no deadline is
+supplied.
 Each progress line retains its assigned step number during overlapping work.
+
+On Linux, cancellation freezes each still-owned ancestor before enumerating its
+threads' children, so detached descendant process groups are included. Inspection
+is bounded to 256 processes, 4,096 enumerated thread entries, 4 KiB stat records,
+64 KiB child lists, and three seconds. Exact PID/start-time identities are
+rechecked before termination; collected processes are killed leaves first and
+must be gone or zombies before cleanup is considered confirmed. Pipe settlement
+has a separate five-second bound. Unconfirmed termination reports framework
+failure `2` and preserves affected work for diagnosis; it never establishes
+passing evidence. This is lifecycle control for trusted build wrappers that keep
+their child ancestry alive, not containment of arbitrary programs that orphan
+themselves before observation. Windows retains its process-tree termination path.
 
 The `current-split-compiler-v2` family is separated by `win32-x64` or
 `linux-x64`. Its key binds the workspace marker, both compiler and all four
@@ -268,7 +292,9 @@ through that tree's existing qualified WVB pins. It verifies the recorded tree,
 rejects links or unsupported inventory entries, and bounds the checkout to
 8,192 files and 768 MiB of tracked payload. Git must already contain that commit;
 missing history fails explicitly without network fetching or a cache-only
-fallback. The checkout is removed after construction; ordinary intermediate
+fallback. The checkout is removed after construction. A bounded removal failure
+reports and preserves the exact checkout and containing work directory for
+recovery; cleanup diagnostics do not replace the primary failure. Ordinary intermediate
 native caches remain reusable. No managed Stage 0 or second maintained source
 implementation is introduced, and bootstrap executable pins do not change.
 

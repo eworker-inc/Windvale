@@ -96,6 +96,35 @@ aggregate gate requires classification and every selected development job.
 `-PlanVerificationInClassification` and `-GitHubVerificationOnLinux` are
 reserved for that workflow and reject in an ordinary local command.
 
+### Focused Vector borrow integration
+
+The existing memory-budget owner can acquire current compiler, verifier, runner,
+and Foundation component products and then execute its Vector and owned-payload
+checks together:
+
+```powershell
+node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-borrow-integration --maximum-seconds 3600
+```
+
+The direct command defaults to 600 seconds; an explicit maximum may select up to
+3,600 seconds under standing approval. Construction, packaging, tests, and cleanup
+share that deadline. Packaging reserves time to stop its own process groups
+before the enclosing command can terminate it; the owner also reserves the final
+7.5 seconds for process settlement and cleanup. Timeout exits remain `124`,
+framework failures remain distinct from assertions, and neither is a pass.
+If process termination cannot be confirmed, the runner reports and retains its
+private work directory instead of deleting files a survivor might still use.
+
+Only the three Vector fixtures and their product-acquisition helper select this
+focused route automatically; helper changes also retain the split-cache owner
+for acquisition and failure-lifecycle regressions. Mixed compiler/runtime changes retain their broader
+owners. The planner's 900-second estimate is a cost class, not a measured cold
+duration: cold construction can exceed automatic CI's 15-minute limit. Without
+an exact reusable result or `-AllowLongRun`, the changed-file front door reports
+this selection as incomplete before construction. This mode does not repair the
+legacy full-owner construction path or establish independent reconstruction,
+installed promotion, or qualification.
+
 ## Timing calibration
 
 Automatic development jobs carry a bounded per-host history in the existing

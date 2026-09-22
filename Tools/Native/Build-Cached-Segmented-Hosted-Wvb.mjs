@@ -42,6 +42,8 @@ const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS = 4_096;
 const VERIFICATION_DEADLINE_MILLISECONDS = 120_000;
 const COLD_DEADLINE_MILLISECONDS = 15 * 60_000;
+// Includes the 10-second Windows tree stop, pipe settlement, and scoped cleanup.
+const DEADLINE_CLEANUP_RESERVE_MILLISECONDS = 30_000;
 const HEARTBEAT_MILLISECONDS = 30_000;
 const TERMINATION_GRACE_MILLISECONDS = 500;
 const POST_TERMINATION_CLOSE_GRACE_MILLISECONDS = 1_000;
@@ -62,6 +64,51 @@ function Reject(message, exitCode = 1) {
     const error = new Error(message);
     error.exitCode = exitCode;
     throw error;
+}
+
+export function Parseˉsegmentedˉhostedˉarguments(Arguments) {
+    const Values = [...Arguments];
+    let Deadline = null;
+    if (Values[0] === '--deadline-ms') {
+        const Text = Values[1];
+        if (typeof Text !== 'string' || !/^[1-9][0-9]*$/u.test(Text) ||
+            !Number.isSafeInteger(Number(Text))) {
+            Reject('The segmented hosted absolute deadline is invalid.', 64);
+        }
+        Deadline = Number(Text);
+        Values.splice(0, 2);
+    }
+    if (Values.length !== 3 || !/^[1-8]$/u.test(Values[0]) ||
+        Values.some(Value => Value === '--deadline-ms')) {
+        Reject(
+            'Usage: node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs ' +
+            '[--deadline-ms <absolute-unix-milliseconds>] ' +
+            `<profile-1-through-8> <input.wvb> <output${OUTPUT_EXTENSION}>`,
+            64,
+        );
+    }
+    // Reject before reading inputs or creating any cache/work directory.
+    Segmentedˉhostedˉcommandˉdeadline(Deadline);
+    return { Deadline, Profile: Values[0], Input: Values[1], Output: Values[2] };
+}
+
+export function Segmentedˉhostedˉcommandˉdeadline(
+    Deadline, Maximumˉmilliseconds = COLD_DEADLINE_MILLISECONDS,
+) {
+    if ((Deadline !== null && (!Number.isSafeInteger(Deadline) || Deadline <= 0)) ||
+        !Number.isSafeInteger(Maximumˉmilliseconds) || Maximumˉmilliseconds < 1 ||
+        Maximumˉmilliseconds > COLD_DEADLINE_MILLISECONDS) {
+        Reject('The segmented hosted command deadline bounds are invalid.', 2);
+    }
+    const Current = Date.now();
+    const Commandˉdeadline = Deadline === null
+        ? Current + Maximumˉmilliseconds
+        : Math.min(Current + Maximumˉmilliseconds,
+            Deadline - DEADLINE_CLEANUP_RESERVE_MILLISECONDS);
+    if (Commandˉdeadline <= Current) {
+        Reject('The segmented hosted absolute deadline has no time remaining before cleanup.', 124);
+    }
+    return Commandˉdeadline;
 }
 
 function Delay(milliseconds) {
@@ -313,7 +360,9 @@ async function Removeˉmaterializationˉtemporary(outputParent, temporary) {
 export async function Materializeˉsegmentedˉhostedˉcheckpoint(
     checkpoint,
     outputPath,
+    Deadline = null,
 ) {
+    Segmentedˉhostedˉcommandˉdeadline(Deadline);
     const outputParent = path.dirname(outputPath);
     const temporary = path.join(
         outputParent,
@@ -336,6 +385,7 @@ export async function Materializeˉsegmentedˉhostedˉcheckpoint(
             copied.sha256 !== checkpoint.product.sha256) {
             Reject('The segmented hosted materialization candidate differs.');
         }
+        Segmentedˉhostedˉcommandˉdeadline(Deadline);
         await rename(temporary, outputPath);
         const materialized = await Measureˉproduct(
             outputPath,
@@ -437,12 +487,13 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
         POST_TERMINATION_CLOSE_GRACE_MILLISECONDS;
     if (typeof terminateProcessTree !== 'function' ||
         !Number.isSafeInteger(closeGraceMilliseconds) ||
-        closeGraceMilliseconds < 1 || closeGraceMilliseconds > 10_000) {
-        Reject('The segmented hosted producer termination policy is invalid.');
+        closeGraceMilliseconds < 1 || closeGraceMilliseconds > 10_000 ||
+        !Number.isSafeInteger(deadline) || deadline <= 0) {
+        Reject('The segmented hosted producer termination policy or deadline is invalid.', 2);
     }
     const remaining = deadline - Date.now();
     if (remaining <= 0) {
-        Reject(`The segmented hosted producer deadline expired before ${label}.`);
+        Reject(`The segmented hosted producer deadline expired before ${label}.`, 124);
     }
     const started = Date.now();
     process.stdout.write(
@@ -457,6 +508,7 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
         shell: WINDOWS ? (process.env.ComSpec ?? 'cmd.exe') : false,
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
+        env: options.environment ?? process.env,
     });
     const closeOutcome = new Promise(resolve => {
         child.once('error', error => resolve({ error }));
@@ -471,14 +523,17 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
     let stdoutBytes = 0;
     let stderrBytes = 0;
     let forcedFailure = null;
+    let Forcedˉexitˉcode = 2;
     let termination = null;
-    const Failˉandˉterminate = message => {
+    const Failˉandˉterminate = (message, Exitˉcode = 2) => {
         if (forcedFailure !== null) {
             return;
         }
         forcedFailure = message;
+        Forcedˉexitˉcode = Exitˉcode;
         termination = Promise.resolve().then(() =>
             terminateProcessTree(child)).catch(error => {
+                Forcedˉexitˉcode = 2;
                 forcedFailure +=
                     `; process-tree termination failed: ${error.message}`;
             });
@@ -494,6 +549,7 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
             child.stdout.destroy();
             child.stderr.destroy();
             child.unref();
+            Forcedˉexitˉcode = 2;
             return {
                 status: null,
                 signal: 'termination-unsettled',
@@ -518,7 +574,7 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
         stderrChunks.push(chunk);
     });
     const timeout = setTimeout(() => {
-        Failˉandˉterminate(`${label} exceeded its deadline`);
+        Failˉandˉterminate(`${label} exceeded its deadline`, 124);
     }, remaining);
     const heartbeat = setInterval(() => {
         const elapsedSeconds = Math.floor((Date.now() - started) / 1_000);
@@ -536,7 +592,7 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
     const stdout = Buffer.concat(stdoutChunks);
     const stderr = Buffer.concat(stderrChunks);
     if (outcome.error !== undefined) {
-        Reject(`${label} could not start: ${outcome.error.message}`);
+        Reject(`${label} could not start: ${outcome.error.message}`, 2);
     }
     if (forcedFailure !== null || outcome.status !== 0) {
         const status = outcome.status === null ? 'null' : String(outcome.status);
@@ -545,6 +601,8 @@ export async function Runˉboundedˉsegmentedˉhostedˉproducer(
             `${forcedFailure ?? `${label} failed`} status=${status} signal=${signal} ` +
             `stdout=${JSON.stringify(Diagnosticˉtext(stdout))} ` +
             `stderr=${JSON.stringify(Diagnosticˉtext(stderr))}`,
+            forcedFailure !== null ? Forcedˉexitˉcode :
+                outcome.status === 124 ? 124 : outcome.status === 2 ? 2 : 1,
         );
     }
     process.stdout.write(
@@ -562,7 +620,10 @@ function Normalizeˉlines(bytes) {
     return bytes.toString('utf8').replaceAll('\r\n', '\n');
 }
 
-async function Completeˉverifyˉinput(snapshot) {
+async function Completeˉverifyˉinput(snapshot, Deadline) {
+    const Commandˉdeadline = Segmentedˉhostedˉcommandˉdeadline(
+        Deadline, VERIFICATION_DEADLINE_MILLISECONDS,
+    );
     const temporaryRoot = await realpath(os.tmpdir());
     const allocated = await mkdtemp(
         path.join(temporaryRoot, VERIFICATION_TEMPORARY_PREFIX),
@@ -575,7 +636,7 @@ async function Completeˉverifyˉinput(snapshot) {
             Nativeˉwrapper('Verify-Wvb'),
             [verificationInput],
             'complete-verification',
-            Date.now() + VERIFICATION_DEADLINE_MILLISECONDS,
+            Commandˉdeadline,
         );
         if (result.stderr.length !== 0 ||
             Normalizeˉlines(result.stdout) !==
@@ -729,11 +790,14 @@ async function Buildˉimage(temporary, input, deadline) {
     }
 }
 
-async function Buildˉcandidate(temporary, profile, input, deadline, imageKey) {
+async function Buildˉcandidate(temporary, profile, input, deadline, imageKey, Deadline) {
     const image = await Acquireˉsegmentedˉimageˉcheckpoint(
         await Getˉcheckpointˉfamily(IMAGE_CACHE_NAMESPACE), imageKey, input,
         candidate => Buildˉimage(candidate, input, deadline),
-        () => Requireˉproducersˉunchanged('image', input, imageKey),
+        async () => {
+            await Requireˉproducersˉunchanged('image', input, imageKey);
+            Segmentedˉhostedˉcommandˉdeadline(Deadline);
+        },
     );
     process.stdout.write('segmented hosted image cache status=' + image.status + '\n');
     const temporaryRoot = await realpath(os.tmpdir());
@@ -757,6 +821,9 @@ async function Buildˉcandidate(temporary, profile, input, deadline, imageKey) {
             ['image', profile, stagedInput, path.join(work, 'Image'),
                 String(image.fragments.length), String(image.entryOffset), productPath, TARGET],
             'container-build', deadline,
+            // A killed shell cannot run its own trap/label cleanup. Keep its
+            // private temporary files beneath this validated work directory.
+            { environment: { ...process.env, TMPDIR: work, TEMP: work, TMP: work } },
         );
         const stagedBytes = await Readˉboundedˉhostedˉfile(
             stagedInput, 'segmented hosted cold-build input copy', MAXIMUM_HOSTED_INPUT_BYTES,
@@ -971,18 +1038,14 @@ async function Getˉcheckpointˉfamily(namespace = CACHE_NAMESPACE) {
 }
 
 async function Main() {
-    if (process.argv.length !== 5 || !/^[1-8]$/u.test(process.argv[2])) {
-        Reject(
-            'Usage: node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs ' +
-            `<profile-1-through-8> <input.wvb> <output${OUTPUT_EXTENSION}>`,
-            64,
-        );
-    }
-    const profile = process.argv[2];
-    const input = await Requireˉinputˉsnapshot(process.argv[3]);
-    const outputPath = await Requireˉoutputˉpath(process.argv[4]);
+    const Request = Parseˉsegmentedˉhostedˉarguments(process.argv.slice(2));
+    const { Deadline } = Request;
+    const profile = Request.Profile;
+    const input = await Requireˉinputˉsnapshot(Request.Input);
+    const outputPath = await Requireˉoutputˉpath(Request.Output);
     const { key, imageKey } = await Getˉcurrentˉcacheˉkey(profile, input, true);
     await Requireˉinputˉunchanged(input);
+    Segmentedˉhostedˉcommandˉdeadline(Deadline);
     const checkpointFamily = await Getˉcheckpointˉfamily();
     const checkpointDirectory = path.join(checkpointFamily, key);
     let checkpointInformation = await lstat(checkpointDirectory).catch(error => {
@@ -993,7 +1056,7 @@ async function Main() {
     });
     let status = 'Hit';
     if (checkpointInformation === null) {
-        await Completeˉverifyˉinput(input);
+        await Completeˉverifyˉinput(input, Deadline);
         status = await Createˉsegmentedˉhostedˉcheckpoint(
             checkpointFamily,
             checkpointDirectory,
@@ -1004,10 +1067,14 @@ async function Main() {
                 temporary,
                 profile,
                 input,
-                Date.now() + COLD_DEADLINE_MILLISECONDS,
+                Segmentedˉhostedˉcommandˉdeadline(Deadline),
                 imageKey,
+                Deadline,
             ),
-            () => Requireˉproducersˉunchanged(profile, input, key),
+            async () => {
+                await Requireˉproducersˉunchanged(profile, input, key);
+                Segmentedˉhostedˉcommandˉdeadline(Deadline);
+            },
         );
         checkpointInformation = await lstat(checkpointDirectory).catch(() => null);
         if (checkpointInformation === null) {
@@ -1023,7 +1090,9 @@ async function Main() {
     await Materializeˉsegmentedˉhostedˉcheckpoint(
         checkpoint,
         outputPath,
+        Deadline,
     );
+    Segmentedˉhostedˉcommandˉdeadline(Deadline);
     process.stdout.write(
         `segmented hosted WVB cache status=${status} key=${key} ` +
         `host=${HOST_FAMILY} target=${TARGET} profile=${profile}\n`,

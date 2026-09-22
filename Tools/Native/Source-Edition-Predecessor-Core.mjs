@@ -11,30 +11,93 @@ export const SOURCE_EDITION_PREDECESSOR = '992ba7bbebbbf3356966bdcc0ea1d2b0e5923
 const PREDECESSOR_TREE = 'c6231310843c24a03b0253f6f5a062d77db9f73f';
 const MAXIMUM_SOURCE_BYTES = 805_306_368;
 const MAXIMUM_SOURCE_FILES = 8_192;
+const CLEANUP_RESERVE_MILLISECONDS = 30_000;
+// Development commands may need two seconds to stop a Windows process tree
+// and another five seconds to settle its streams after their deadline.
+const COMMAND_SETTLEMENT_MILLISECONDS = 7_500;
 const WINDOWS = process.platform === 'win32';
 const SUFFIX = WINDOWS ? '.exe' : '.elf';
 
-export async function Constructˉsourceˉeditionˉpredecessor(Work) {
+// Keep a child timeout or framework failure distinguishable from a failed build.
+export async function Runˉcompilerˉconstructionˉcommand(
+    Label, Command, Arguments, Deadline, Stream = true, Execute = Runˉdevelopmentˉcommand,
+    Allowˉstderr = false,
+) {
+    let Result;
+    try {
+        Result = await Execute(Command, Arguments, Deadline, Stream, 1_048_576);
+    } catch (Failure) {
+        const Wrapped = Failure instanceof Error ? Failure : new Error(String(Failure));
+        if (!Number.isInteger(Wrapped.exitCode) || Wrapped.exitCode < 1 || Wrapped.exitCode > 255) {
+            Wrapped.exitCode = 2;
+        }
+        if (Wrapped.exitCode === 2) Wrapped.cleanupUncertain = true;
+        throw Wrapped;
+    }
+    if (Result === null || typeof Result !== 'object' ||
+        !Number.isInteger(Result.Code) || Result.Code < 0 || Result.Code > 255 ||
+        typeof Result.Output !== 'string' || typeof Result.Error !== 'string') {
+        throw Object.assign(new Error(`${Label} returned an invalid construction process result.`),
+            { exitCode: 2, cleanupUncertain: true });
+    }
+    if (Result.Code !== 0 || (!Allowˉstderr && Result.Error !== '')) {
+        const Code = Result.Code === 0 ? 2 : Result.Code;
+        throw Object.assign(new Error(`${Label} failed: status=${Result.Code}.\n${Result.Error || Result.Output}`),
+            { exitCode: Code, ...(Code === 2 ? { cleanupUncertain: true } : {}) });
+    }
+    return Result.Output;
+}
+
+export function Hasˉuncertainˉconstructionˉcleanup(Failure) {
+    const Pending = [Failure];
+    const Seen = new Set();
+    while (Pending.length !== 0 && Seen.size < 32) {
+        const Value = Pending.shift();
+        if (Seen.has(Value)) continue;
+        Seen.add(Value);
+        if (Value === null || typeof Value !== 'object') continue;
+        if (Value.cleanupUncertain === true) return true;
+        if (Value instanceof AggregateError) {
+            if (Value.errors.length > 8) return true;
+            Pending.push(...Value.errors);
+        }
+        if (Value.cleanupFailure !== undefined) Pending.push(Value.cleanupFailure);
+        if (Value.cause !== undefined) Pending.push(Value.cause);
+    }
+    return Pending.length !== 0;
+}
+
+export async function Constructˉsourceˉeditionˉpredecessor(Work, Deadline = null) {
+    if (Deadline !== null && (!Number.isSafeInteger(Deadline) || Deadline <= 0)) {
+        throw new Error('Invalid source-edition predecessor deadline.');
+    }
+    const Workˉdeadline = Deadline === null ? null : Deadline - CLEANUP_RESERVE_MILLISECONDS;
+    Requireˉtime(Workˉdeadline, 'construction');
     Work = path.resolve(Work);
     if (!Sameˉpath(await realpath(Work), Work) || !(await lstat(Work)).isDirectory()) {
         throw new Error('The predecessor work directory must be canonical.');
     }
     const Source = path.join(Work, 'Predecessor-' + randomBytes(12).toString('hex'));
     const Products = path.join(Work, 'Predecessor-Products');
+    Requireˉtime(Workˉdeadline, 'product-directory creation');
     await mkdir(Products);
     let Registered = false;
-    async function Run(Label, Command, Arguments, Maximum = 600_000, Stream = true) {
+    let Primaryˉfailure = null;
+    async function Run(Label, Command, Arguments, Maximum = 600_000, Stream = true, Cleanup = false) {
+        const Boundary = Deadline === null ? null : Cleanup
+            ? Deadline - COMMAND_SETTLEMENT_MILLISECONDS : Workˉdeadline;
+        Requireˉtime(Boundary, Label);
         console.log(`source-edition predecessor step=${Label} status=Started`);
-        const Result = await Runˉdevelopmentˉcommand(Command, Arguments,
-            Date.now() + Maximum, Stream, 1_048_576);
-        if (Result.Code !== 0) {
-            throw new Error(`Predecessor ${Label} failed: ${Result.Error || Result.Output}`);
-        }
+        // Git writes successful worktree progress to stderr; other producers do not.
+        const Output = await Runˉcompilerˉconstructionˉcommand('Predecessor ' + Label, Command, Arguments,
+            Boundary === null ? Date.now() + Maximum : Math.min(Date.now() + Maximum, Boundary),
+            Stream, Runˉdevelopmentˉcommand, Command === 'git');
+        Requireˉtime(Cleanup ? Deadline : Boundary, Label);
         console.log(`source-edition predecessor step=${Label} status=Complete`);
-        return Result.Output;
+        return Output;
     }
-    const Git = (Label, Arguments) => Run(Label, 'git', ['-C', REPOSITORY_ROOT, ...Arguments],
-        120_000, Label !== 'source-inventory');
+    const Git = (Label, Arguments, Cleanup = false) => Run(Label, 'git', ['-C', REPOSITORY_ROOT, ...Arguments],
+        120_000, Label !== 'source-inventory', Cleanup);
     try {
         const Tree = await Git('source-identity', ['rev-parse', `${SOURCE_EDITION_PREDECESSOR}^{tree}`]);
         if (Tree.trim() !== PREDECESSOR_TREE) throw new Error('The predecessor Git source tree differs.');
@@ -72,11 +135,14 @@ export async function Constructˉsourceˉeditionˉpredecessor(Work) {
             await Core.Getˉcurrentˉsplitˉcompilerˉfamily(), Key,
             Candidate => Core.Constructˉcurrentˉsplitˉcompiler(Products, Candidate, Runˉnative, Runˉnode),
             async () => {
+                Requireˉtime(Workˉdeadline, 'compiler identity check');
                 if (await Core.Getˉcurrentˉsplitˉcompilerˉkey() !== Key) {
                     throw new Error('Predecessor compiler inputs changed.');
                 }
+                Requireˉtime(Workˉdeadline, 'compiler identity check');
             },
         );
+        Requireˉtime(Workˉdeadline, 'compiler construction');
         console.log(`source-edition predecessor compiler-cache=${Pair.status} key=${Key}`);
         const Result = { Analyzer: path.join(Pair.directory, 'Analyzer' + SUFFIX),
             Analyzerˉidentity: path.join(Pair.directory, 'Analyzer.identity'),
@@ -103,21 +169,48 @@ export async function Constructˉsourceˉeditionˉpredecessor(Work) {
                 sha256: createHash('sha256').update(Payload).digest('hex') });
         }
         await Run('source-unchanged', 'git', ['-C', Source, 'diff', '--exit-code', 'HEAD'], 120_000);
+        Requireˉtime(Workˉdeadline, 'publication');
         console.log('source-edition predecessor status=Constructed source=' + SOURCE_EDITION_PREDECESSOR +
             ' products=' + JSON.stringify(Evidence));
         return Result;
+    } catch (Failure) {
+        Primaryˉfailure = Failure instanceof Error ? Failure : new Error(String(Failure));
+        throw Primaryˉfailure;
     } finally {
-        if (Registered) {
-            if (path.dirname(Source) !== Work || !path.basename(Source).startsWith('Predecessor-')) {
-                throw new Error('Refusing to remove an unexpected predecessor checkout.');
+        if (Registered && Hasˉuncertainˉconstructionˉcleanup(Primaryˉfailure)) {
+            // A possibly live historical producer may still use this checkout.
+            // Preserve both its files and Git registration for explicit recovery.
+            Primaryˉfailure.predecessorCheckout = Source;
+            Primaryˉfailure.cleanupUncertain = true;
+            Primaryˉfailure.cleanupFailure = Object.assign(new Error(
+                `Predecessor checkout preserved at ${Source}: process termination is unproven.`),
+            { exitCode: 2, cleanupUncertain: true });
+        } else if (Registered) {
+            try {
+                if (path.dirname(Source) !== Work || !path.basename(Source).startsWith('Predecessor-')) {
+                    throw new Error('Refusing to remove an unexpected predecessor checkout.');
+                }
+                const Information = await lstat(Source).catch(() => null);
+                if (Information !== null && (Information.isSymbolicLink() ||
+                    !Sameˉpath(await realpath(Source), Source))) {
+                    throw new Error('Refusing to remove a replaced predecessor checkout.');
+                }
+                await Git('source-release', ['worktree', 'remove', '--force', Source], true);
+            } catch (Failure) {
+                const Cleanupˉfailure = Failure instanceof Error ? Failure : new Error(String(Failure));
+                Cleanupˉfailure.predecessorCheckout = Source;
+                Cleanupˉfailure.message = `Predecessor checkout preserved at ${Source}: ${Cleanupˉfailure.message}`;
+                if (Primaryˉfailure === null) throw Cleanupˉfailure;
+                Primaryˉfailure.predecessorCheckout = Source;
+                Primaryˉfailure.cleanupFailure = Cleanupˉfailure;
             }
-            const Information = await lstat(Source).catch(() => null);
-            if (Information !== null && (Information.isSymbolicLink() ||
-                !Sameˉpath(await realpath(Source), Source))) {
-                throw new Error('Refusing to remove a replaced predecessor checkout.');
-            }
-            await Git('source-release', ['worktree', 'remove', '--force', Source]);
         }
+    }
+}
+
+function Requireˉtime(Boundary, Phase) {
+    if (Boundary !== null && Date.now() >= Boundary) {
+        throw Object.assign(new Error(`Source-edition predecessor deadline expired before ${Phase}.`), { exitCode: 124 });
     }
 }
 

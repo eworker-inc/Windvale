@@ -2359,6 +2359,9 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.sh'
     )) {
         Add-Suite 'language-1-parallel-task-scheduler'
+    } elseif ($Path -eq 'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs') {
+        Add-Suite 'language-1-memory-budget-split-execution'
+        Add-Suite 'compiler-split-development'
     } elseif ($Path -eq 'Tools/Native/Development-Command-Core.mjs') {
         Add-Suite 'compiler-split-development'
         Add-Suite 'language-1-authenticated-foreign-binding'
@@ -2382,6 +2385,8 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
+        'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv',
         'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
@@ -4928,6 +4933,29 @@ if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelop
     $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $FoundationBorrowOwner.ExpectedSeconds + $FoundationBorrowExpectedSeconds)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $FoundationBorrowOwner.MaximumSeconds + 600)
 }
+$VectorBorrowIntegrationInputs = @(
+    'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
+    'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs'
+)
+$UseVectorBorrowIntegrationDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $VectorBorrowIntegrationInputs }).Count -eq 0
+# This is a planning cost class, not a measured cold-construction promise.
+# Current-product acquisition can exceed the automatic 15-minute CI job budget.
+$VectorBorrowIntegrationDevelopmentExpectedSeconds = [long]900
+$VectorBorrowIntegrationDevelopmentMaximumSeconds = [long]3600
+$VectorBorrowIntegrationDevelopmentCaseCount = 497
+if ($UseVectorBorrowIntegrationDevelopment) {
+    $VectorBorrowOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'language-1-memory-budget-split-execution'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $VectorBorrowOwner.ExpectedSeconds +
+        $VectorBorrowIntegrationDevelopmentExpectedSeconds)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $VectorBorrowOwner.MaximumSeconds +
+        $VectorBorrowIntegrationDevelopmentMaximumSeconds)
+}
 $Language1FrontDoorDevelopmentExpectedSeconds = [long]330
 $Language1FrontDoorDevelopmentCaseCount = 329
 $Language1FrontDoorDevelopmentTarget = 'all'
@@ -5295,6 +5323,14 @@ if (!$Quiet) {
         $UseFoundationBorrowOwnerDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-components development: ' +
         $UseFoundationBorrowComponentsDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Vector borrow-integration development: ' +
+        $UseVectorBorrowIntegrationDevelopment.ToString().ToLowerInvariant())
+    if ($UseVectorBorrowIntegrationDevelopment) {
+        Write-Host ('Vector borrow-integration cases: ' + $VectorBorrowIntegrationDevelopmentCaseCount)
+        Write-Host ('Vector borrow-integration cost class: expected-seconds=' +
+            $VectorBorrowIntegrationDevelopmentExpectedSeconds + ' maximum-seconds=' +
+            $VectorBorrowIntegrationDevelopmentMaximumSeconds + ' cold-duration-measured=false')
+    }
     Write-Host ('Streaming SHA-256 development: ' +
         $UseStreamingSha256Development.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-source development: ' +
@@ -5382,6 +5418,10 @@ if ($PassThru) {
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
         UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
         UseFoundationBorrowComponentsDevelopment = $UseFoundationBorrowComponentsDevelopment
+        UseVectorBorrowIntegrationDevelopment = $UseVectorBorrowIntegrationDevelopment
+        VectorBorrowIntegrationDevelopmentExpectedSeconds = $VectorBorrowIntegrationDevelopmentExpectedSeconds
+        VectorBorrowIntegrationDevelopmentMaximumSeconds = $VectorBorrowIntegrationDevelopmentMaximumSeconds
+        VectorBorrowIntegrationDevelopmentCaseCount = $VectorBorrowIntegrationDevelopmentCaseCount
         UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment

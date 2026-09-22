@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
+import { Runˉdevelopmentˉcommand as Executeˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
+import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
     copyFileSync,
@@ -74,6 +75,8 @@ const Foundationˉownedˉonly = process.argv.length === 10 &&
     process.argv[2] === '--foundation-owned-payloads';
 const Vectorˉparameterˉonly = process.argv.length === 10 &&
     process.argv[2] === '--vector-parameter-reads';
+const Vectorˉintegrationˉonly = (process.argv.length === 3 || process.argv.length === 5) &&
+    process.argv[2] === '--vector-borrow-integration';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-borrow-runtime';
 const Foundationˉenumˉonly = process.argv.length === 4 &&
@@ -93,10 +96,10 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-owners';
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
-const Developmentˉonly = Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
+const Developmentˉonly = Vectorˉintegrationˉonly || Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
-if (Foundationˉonly && process.argv.length >= 5) {
+if ((Foundationˉonly || Vectorˉintegrationˉonly) && process.argv.length >= 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
         Number(process.argv[4]) > 3600) {
         process.stderr.write('The explicit development maximum must be 1 through 3600 seconds.\n');
@@ -113,6 +116,9 @@ if (Foundationˉonly && process.argv.length === 7 && Foundationˉsourceˉrunner 
     process.exit(64);
 }
 const Started = Date.now();
+// Keep process settlement and scoped cleanup inside the selected integration total.
+const Developmentˉdeadline = Started + Maximumˉrunˉmilliseconds -
+    (Vectorˉintegrationˉonly ? 7_500 : 0);
 const Inspectionˉonly =
     Inspectionˉmode === '--inspect-structured-task' ||
     Inspectionˉmode === '--inspect-function-limits';
@@ -126,6 +132,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-source-ownership <admitter> <validator> <analyzer> <emitter> <target.wvtd>|' +
         '--foundation-owned-payloads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--vector-parameter-reads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
+        '--vector-borrow-integration [--maximum-seconds <seconds>]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -199,70 +206,138 @@ let Borrowˉdirectoryˉbytes = null;
 let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
-try {
-    if (Vectorˉparameterˉonly) {
-        await Verifyˉvectorˉparameterˉreads(...process.argv.slice(3).map(Value => path.resolve(Value)));
-    } else if (Foundationˉownedˉonly) {
-        Validator = path.resolve(process.argv[4]);
-        Targetˉdescriptor = path.resolve(process.argv[7]);
-        await Verifyˉfoundationˉownedˉpayloads(...process.argv.slice(3).map(Value => path.resolve(Value)));
-    } else if (Foundationˉsourceˉonly) {
-        Validator = path.resolve(process.argv[4]);
-        Targetˉdescriptor = path.resolve(process.argv[7]);
-        await Verifyˉfoundationˉsourceˉownership(path.resolve(process.argv[3]),
-            path.resolve(process.argv[5]), path.resolve(process.argv[6]));
-    } else if (Foundationˉstagingˉonly) {
-        await Verifyˉfoundationˉstaging(path.resolve(process.argv[3]), path.resolve(process.argv[4]),
-            process.argv.length === 7 ? path.resolve(process.argv[6]) : null);
-    } else if (Foundationˉnativeˉonly) {
-        const Lowerer = path.resolve(process.argv[3]);
-        const Record = path.join(Work, 'Foundation-Record.wvb');
-        writeFileSync(Record, Requireˉfoundationˉcandidate(), { flag: 'wx' });
-        await Verifyˉfoundationˉnative(Lowerer, Record, 'record-u32');
-        await Verifyˉfoundationˉnative(Lowerer, path.resolve(process.argv[4]), 'text');
-        await Verifyˉfoundationˉnativeˉrejections(Lowerer);
-        process.stdout.write('native Foundation execution status=Passed cases=27 qualification=false\n');
-    } else if (Foundationˉenumˉonly) {
-        await Verifyˉfoundationˉenumˉmetadata(path.resolve(process.argv[3]));
-    } else if (Foundationˉruntimeˉonly) {
-        await Runˉfoundationˉruntime(path.resolve(process.argv[3]));
-    } else if (Foundationˉcomponentsˉonly) {
-        await Runˉfoundationˉcomponents();
-    } else {
-        if (!Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉplan();
-        if (!Foundationˉplanˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉdirectories();
-        if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly) await Runˉfoundationˉowners();
-        if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) {
-            await Runˉpublicationˉandˉexecution();
+await Main().catch(Error => {
+    const Causes = Error instanceof AggregateError ? Error.errors.slice(0, 8) : [];
+    const Diagnostic = [Error.message ?? String(Error),
+        ...Causes.map(Cause => `Cause: ${Cause.message ?? String(Cause)}`)].join('\n');
+    process.stderr.write(Buffer.from(Diagnostic + '\n', 'utf8').subarray(0, MAXIMUM_DIAGNOSTIC_BYTES));
+    process.exitCode = [1, 2, 64, 124].includes(Error.exitCode) ? Error.exitCode :
+        typeof Error.code === 'string' ? 2 : 1;
+});
+
+async function Runˉdevelopmentˉcommand(...Arguments) {
+    const Result = await Executeˉdevelopmentˉcommand(...Arguments);
+    if (Result.Code === 124) Reject(`Development child timed out.\n${Result.Error}`, 124);
+    return Result;
+}
+
+async function Main() {
+    let Primaryˉfailure = null;
+    try {
+        if (Vectorˉintegrationˉonly) {
+            await Runˉvectorˉborrowˉintegration();
+        } else if (Vectorˉparameterˉonly) {
+            await Verifyˉvectorˉparameterˉreads(...process.argv.slice(3).map(Value => path.resolve(Value)));
+        } else if (Foundationˉownedˉonly) {
+            Validator = path.resolve(process.argv[4]);
+            Targetˉdescriptor = path.resolve(process.argv[7]);
+            await Verifyˉfoundationˉownedˉpayloads(...process.argv.slice(3).map(Value => path.resolve(Value)));
+        } else if (Foundationˉsourceˉonly) {
+            Validator = path.resolve(process.argv[4]);
+            Targetˉdescriptor = path.resolve(process.argv[7]);
+            await Verifyˉfoundationˉsourceˉownership(path.resolve(process.argv[3]),
+                path.resolve(process.argv[5]), path.resolve(process.argv[6]));
+        } else if (Foundationˉstagingˉonly) {
+            await Verifyˉfoundationˉstaging(path.resolve(process.argv[3]), path.resolve(process.argv[4]),
+                process.argv.length === 7 ? path.resolve(process.argv[6]) : null);
+        } else if (Foundationˉnativeˉonly) {
+            const Lowerer = path.resolve(process.argv[3]);
+            const Record = path.join(Work, 'Foundation-Record.wvb');
+            writeFileSync(Record, Requireˉfoundationˉcandidate(), { flag: 'wx' });
+            await Verifyˉfoundationˉnative(Lowerer, Record, 'record-u32');
+            await Verifyˉfoundationˉnative(Lowerer, path.resolve(process.argv[4]), 'text');
+            await Verifyˉfoundationˉnativeˉrejections(Lowerer);
+            process.stdout.write('native Foundation execution status=Passed cases=27 qualification=false\n');
+        } else if (Foundationˉenumˉonly) {
+            await Verifyˉfoundationˉenumˉmetadata(path.resolve(process.argv[3]));
+        } else if (Foundationˉruntimeˉonly) {
+            await Runˉfoundationˉruntime(path.resolve(process.argv[3]));
+        } else if (Foundationˉcomponentsˉonly) {
+            await Runˉfoundationˉcomponents();
+        } else {
+            if (!Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉplan();
+            if (!Foundationˉplanˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉdirectories();
+            if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly) await Runˉfoundationˉowners();
+            if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) {
+                await Runˉpublicationˉandˉexecution();
+            }
+        }
+    } catch (Error) {
+        Primaryˉfailure = Error;
+        throw Error;
+    } finally {
+        try {
+            // A subprocess boundary cannot carry the typed uncertainty marker.
+            // Retain diagnostic work on framework failure rather than race a
+            // producer whose termination could not be confirmed.
+            if (Primaryˉfailure?.cleanupUncertain || Primaryˉfailure?.exitCode === 2) {
+                process.stderr.write(`Preserved test work after uncertain infrastructure cleanup: ${Work}\n`);
+            } else {
+                const Resolved = path.resolve(Work);
+                if (path.dirname(Resolved) !== Temporaryˉroot ||
+                    !path.basename(Resolved).startsWith('windvale-memory-budget-split-execution-') ||
+                    lstatSync(Resolved).isSymbolicLink() || realpathSync.native(Resolved) !== Work) {
+                    Reject(`Refusing to remove unexpected test directory: ${Resolved}.`);
+                }
+                rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
+            }
+        } catch (Cleanupˉerror) {
+            if (Primaryˉfailure !== null) {
+                Primaryˉfailure.message += `\nTest cleanup also failed: ${Cleanupˉerror.message}`;
+                throw Primaryˉfailure;
+            }
+            throw Object.assign(Cleanupˉerror, { exitCode: 2 });
         }
     }
-} finally {
-    const Resolved = path.resolve(Work);
-    if (path.dirname(Resolved) !== Temporaryˉroot ||
-        !path.basename(Resolved).startsWith('windvale-memory-budget-split-execution-')) {
-        Reject(`Refusing to remove unexpected test directory: ${Resolved}.`);
+    if (Vectorˉintegrationˉonly) {
+        const Elapsed = Date.now() - Started;
+        if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Vector borrow integration exceeded its total budget during cleanup.', 124);
+        process.stdout.write('native Vector borrow integration status=Passed cases=497 ' +
+            'components=388 vector-groups=80 owned-payload-groups=19 runtime-groups=10 ' +
+            `qualification=false elapsed-ms=${Elapsed}\n`);
     }
-    rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
+    if (Developmentˉonly && !Vectorˉintegrationˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
+        const Elapsed = Date.now() - Started;
+        if (Elapsed > Maximumˉrunˉmilliseconds) {
+            Reject('The focused Foundation borrow development budget expired during cleanup.', 124);
+        }
+        process.stdout.write(
+            `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 388 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 441 : Foundationˉsourceˉrunner === null ? 414 : 417) : Foundationˉplanˉonly ? 27 : Foundationˉdirectoriesˉonly ? 27 : 334} ` +
+            `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
+            (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
+            (Borrowˉcomponentˉbytes === null ? '' :
+                `component-wvb-bytes=${Borrowˉcomponentˉbytes.length} component-wvb-sha256=${Digest(Borrowˉcomponentˉbytes)} `) +
+            (Borrowˉplanˉbytes === null ? '' :
+                `plan-wvb-bytes=${Borrowˉplanˉbytes.length} plan-wvb-sha256=${Digest(Borrowˉplanˉbytes)} `) +
+            (Borrowˉdirectoryˉbytes === null ? '' :
+                `directory-wvb-bytes=${Borrowˉdirectoryˉbytes.length} directory-wvb-sha256=${Digest(Borrowˉdirectoryˉbytes)} `) +
+            (Borrowˉownerˉbytes === null ? '' :
+                `owner-wvb-bytes=${Borrowˉownerˉbytes.length} owner-wvb-sha256=${Digest(Borrowˉownerˉbytes)} `) +
+            `elapsed-ms=${Elapsed}\n`,
+        );
+    }
 }
-if (Developmentˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
-    const Elapsed = Date.now() - Started;
-    if (Elapsed > Maximumˉrunˉmilliseconds) {
-        Reject('The focused Foundation borrow development budget expired during cleanup.');
-    }
-    process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 388 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 441 : Foundationˉsourceˉrunner === null ? 414 : 417) : Foundationˉplanˉonly ? 27 : Foundationˉdirectoriesˉonly ? 27 : 334} ` +
-        `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
-        (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
-        (Borrowˉcomponentˉbytes === null ? '' :
-            `component-wvb-bytes=${Borrowˉcomponentˉbytes.length} component-wvb-sha256=${Digest(Borrowˉcomponentˉbytes)} `) +
-        (Borrowˉplanˉbytes === null ? '' :
-            `plan-wvb-bytes=${Borrowˉplanˉbytes.length} plan-wvb-sha256=${Digest(Borrowˉplanˉbytes)} `) +
-        (Borrowˉdirectoryˉbytes === null ? '' :
-            `directory-wvb-bytes=${Borrowˉdirectoryˉbytes.length} directory-wvb-sha256=${Digest(Borrowˉdirectoryˉbytes)} `) +
-        (Borrowˉownerˉbytes === null ? '' :
-            `owner-wvb-bytes=${Borrowˉownerˉbytes.length} owner-wvb-sha256=${Digest(Borrowˉownerˉbytes)} `) +
-        `elapsed-ms=${Elapsed}\n`,
-    );
+
+async function Runˉvectorˉborrowˉintegration() {
+    const Deadline = Developmentˉdeadline;
+    process.stdout.write('native Vector borrow integration phase=construction status=Started ' +
+        `maximum-seconds=${Maximumˉrunˉmilliseconds / 1000}\n`);
+    const Products = await Acquireˉfoundationˉborrowˉtestˉproducts({
+        Work, Deadline,
+        Run: (Label, Command, Arguments, Childˉdeadline) =>
+            Run(Label, Command, Arguments, 0, Childˉdeadline),
+    });
+    const Target = path.join(Repositoryˉroot, 'Projects/Targets/Windows-X64-No-Foreign.wvtd');
+    process.stdout.write('native Vector borrow integration phase=verification status=Started\n');
+    const Components = await Run('foundation-borrow-components-execute', Products.Components, [], 42);
+    if (Components !== '') Reject('The combined Foundation component test emitted unexpected output.');
+    await Verifyˉvectorˉparameterˉreads(Products.Admitter, Products.Authenticator,
+        Products.Analyzer, Products.Emitter, Target, Products.Verifier, Products.Runner);
+    Validator = Products.Authenticator;
+    Targetˉdescriptor = Target;
+    await Verifyˉfoundationˉownedˉpayloads(Products.Admitter, Products.Authenticator,
+        Products.Analyzer, Products.Emitter, Target, Products.Verifier, Products.Runner);
+    await Runˉfoundationˉruntime(Products.Runner);
 }
 
 async function Runˉfoundationˉplan() {
@@ -339,7 +414,7 @@ async function Runˉfoundationˉruntime(Runner) {
         writeFileSync(File, Bytes, { flag: 'wx' });
         process.stdout.write(`START Foundation runtime case=${Label}\n`);
         const Result = await Runˉdevelopmentˉcommand(Runner, [File],
-            Developmentˉonly ? Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 60_000) :
+            Developmentˉonly ? Math.min(Developmentˉdeadline, Date.now() + 60_000) :
                 Date.now() + 60_000, true,
             MAXIMUM_DIAGNOSTIC_BYTES);
         const Accepted = Valid ? Result.Code === 0 && Normalize(Result.Output) === 'Result: 42\n' &&
@@ -1691,7 +1766,7 @@ async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyze
         const Replacement = Mutate(Broken);
         if (Buffer.isBuffer(Replacement)) Broken = Replacement;
         if (Broken.equals(Bytes)) Reject(`Vector mutation did not change bytes: ${Label}.`);
-        const Input = path.join(Work, 'Vector-' + Label + '.wvb');
+        const Input = path.join(Work, 'Vector-parameter-malformed-' + Label + '.wvb');
         writeFileSync(Input, Broken, { flag: 'wx' });
         // A damaged instruction must not pass merely because an unrelated
         // admission boundary or an internal verifier error rejected the file.
@@ -1703,7 +1778,7 @@ async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyze
         for (const [Tool, Pattern] of [[Verifier, Verifierˉpattern],
             [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u]]) {
             const Result = await Runˉdevelopmentˉcommand(Tool, [Input],
-                Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+                Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
             if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
                 Reject(`Malformed Vector parameter read did not reject: ${Label}\n${Result.Output}${Result.Error}`);
             }
@@ -1769,7 +1844,7 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
         const Result = await Runˉdevelopmentˉcommand(process.execPath,
             [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'),
                 ...Arguments(Input, Output)],
-            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
             Reject(`Invalid Vector ownership did not reject before publication: ${Label}\n${Result.Output}${Result.Error}`);
         }
@@ -2104,7 +2179,7 @@ fn Readˉscalar(Value: borrow Indexedˉenum) -> i32 {
             [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u],
         ]) {
             const Result = await Runˉdevelopmentˉcommand(Tool, [Input],
-                Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+                Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
             if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
                 Reject(`Malformed indexed Vector borrow did not reject: ${Label}\n${Result.Output}${Result.Error}`);
             }
@@ -2146,7 +2221,7 @@ fn Readˉscalar(`), /Unsupportedˉoperation/u],
         writeFileSync(Input, Text, { flag: 'wx' });
         const Result = await Runˉdevelopmentˉcommand(process.execPath,
             [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output, true)],
-            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
             Reject(`Invalid indexed Vector borrow did not reject before publication: ${Label}\n${Result.Output}${Result.Error}`);
         }
@@ -2164,7 +2239,7 @@ fn Readˉscalar(`), /Unsupportedˉoperation/u],
         if (Normalize(await Run('indexed-bounds-' + Label + '-verify', Verifier, [Output])) !==
             'wvb status=Valid profile=compiler-aligned\n') Reject('Indexed Vector bounds module is not structurally valid.');
         const Result = await Runˉdevelopmentˉcommand(Runner, [Output],
-            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Result.Code !== 1 || Result.Output !== '' ||
             !/^wvb run status=Failed code=3008 instructions=[1-9][0-9]*\n$/u.test(Normalize(Result.Error))) {
             Reject(`Indexed Vector bounds violation did not terminate: ${Label}\n${Result.Output}${Result.Error}`);
@@ -2332,7 +2407,7 @@ fn Read(`), 'fn Observe(Values: Collections.Vector<i32>, Expected: u64) -> i32 {
             [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u],
         ]) {
             const Result = await Runˉdevelopmentˉcommand(Tool, [Input],
-                Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+                Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
             if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
                 Reject(`Malformed Vector payload did not reject: ${Label}\n${Result.Output}${Result.Error}`);
             }
@@ -2361,7 +2436,7 @@ fn Read(`), 'fn Observe(Values: Collections.Vector<i32>, Expected: u64) -> i32 {
         writeFileSync(Input, Text, { flag: 'wx' });
         const Result = await Runˉdevelopmentˉcommand(process.execPath,
             [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output, true)],
-            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
             Reject(`Invalid Vector payload ownership did not reject: ${Label}\n${Result.Output}${Result.Error}`);
         }
@@ -2506,7 +2581,7 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
                         [Runner, 'wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n'],
                     ]) {
                         const Rejected = await Runˉdevelopmentˉcommand(Tool, [Broken],
-                            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+                            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
                         if (Rejected.Code !== 1 || Rejected.Output !== '' || Normalize(Rejected.Error) !== Diagnostic) {
                             Reject(`Owned payload copy did not reject before execution: ${Rejected.Output}${Rejected.Error}`);
                         }
@@ -2538,7 +2613,7 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
             Input, ...['Collections/Collections.wv', 'Memory/Memory.wv',
                 'Values/Option.wv', 'Values/Result.wv'].map(Name =>
                 path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output,
-        ], Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 30_000),
+        ], Math.min(Developmentˉdeadline, Date.now() + 30_000),
         false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Rejected.Code !== 1 || existsSync(Output) || Normalize(Rejected.Error) !==
             'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n') {
@@ -2583,7 +2658,7 @@ async function Verifyˉfoundationˉsourceˉownership(Admitter, Analyzer, Emitter
             path.join(Repositoryˉroot, 'Libraries/Foundation/Values/Option.wv'), Output];
         process.stdout.write(`START Foundation source ownership case=${Label}\n`);
         const Result = await Runˉdevelopmentˉcommand(process.execPath, Arguments,
-            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 60_000),
+            Math.min(Developmentˉdeadline, Date.now() + 60_000),
             false, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Valid) {
             if (Result.Code !== 0 || Result.Error !== '' || !existsSync(Output) ||
@@ -2719,7 +2794,7 @@ async function Verifyˉfoundationˉnativeˉrejections(Lowerer) {
         const Object = path.join(Work, `Borrow-Native-Rejection-${Label}.wvo`);
         writeFileSync(File, Bytes, { flag: 'wx' });
         const Result = await Runˉdevelopmentˉcommand(Lowerer, [File, Object],
-            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 60_000),
+            Math.min(Developmentˉdeadline, Date.now() + 60_000),
             true, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Result.Code !== 1 || Result.Output !== '' ||
             !Normalize(Result.Error).startsWith('native x64 status=Invalidˉwvb ') ||
@@ -2784,7 +2859,7 @@ async function Verifyˉfoundationˉstaging(Producer, Textˉcandidate, Admitter =
                 Admitter, Input, Prefix, Manifest, Chunks[0], Directory);
         } else {
             const Result = await Runˉdevelopmentˉcommand(Producer, [Input, Prefix, Manifest],
-                Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
+                Math.min(Developmentˉdeadline, Date.now() + 10_000),
                 true, MAXIMUM_DIAGNOSTIC_BYTES);
             if (Result.Code !== 1 || Result.Output !== '' ||
                 !Normalize(Result.Error).startsWith('native x64 staging status=Invalidˉwvb ') ||
@@ -2824,7 +2899,7 @@ async function Verifyˉfoundationˉstagingˉadmission(Admitter, Input, Prefix, M
         }
         const Result = await Runˉdevelopmentˉcommand(Admitter,
             [Input, Prefix, Manifest, Label === 'alias' ? Input : Destination],
-            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
+            Math.min(Developmentˉdeadline, Date.now() + 10_000),
             true, MAXIMUM_DIAGNOSTIC_BYTES);
         const Expected = {
             content: 'content=Content', 'chunk-length': 'content=Chunkˉlength',
@@ -2891,7 +2966,7 @@ async function Verifyˉfoundationˉenumˉmetadata(Candidate) {
         writeFileSync(File, Input, { flag: 'wx' });
         writeFileSync(Output, Sentinel, { flag: 'wx' });
         const Result = await Runˉdevelopmentˉcommand(Reader, [File, Output],
-            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
+            Math.min(Developmentˉdeadline, Date.now() + 10_000),
             true, MAXIMUM_DIAGNOSTIC_BYTES);
         if (Valid) {
             if (Result.Code !== 0 || Result.Error !== '' ||
@@ -2954,10 +3029,13 @@ async function Runˉnode(Label, Name, Arguments) {
     await Run(Label, process.execPath, [path.join(Scriptˉdirectory, Name), ...Arguments]);
 }
 
-async function Run(Label, Command, Arguments, Expected = 0) {
-    const Remaining = Developmentˉonly ? Maximumˉrunˉmilliseconds - (Date.now() - Started) :
-        TOOL_TIMEOUT_MILLISECONDS;
-    if (Remaining <= 0) Reject('The focused Foundation borrow development budget expired.');
+async function Run(Label, Command, Arguments, Expected = 0, Deadline = null) {
+    const Defaultˉdeadline = Developmentˉonly ? Developmentˉdeadline :
+        Date.now() + TOOL_TIMEOUT_MILLISECONDS;
+    if (Deadline !== null && !Number.isSafeInteger(Deadline)) Reject('The child deadline is invalid.');
+    const Selectedˉdeadline = Deadline === null ? Defaultˉdeadline : Math.min(Deadline, Defaultˉdeadline);
+    const Remaining = Selectedˉdeadline - Date.now();
+    if (Remaining <= 0) Reject('The focused Foundation borrow development budget expired.', 124);
     Step += 1;
     const Stepˉnumber = Step;
     const Start = Date.now();
@@ -2965,7 +3043,7 @@ async function Run(Label, Command, Arguments, Expected = 0) {
         `START language 1 memory budget split execution step=${Stepˉnumber} phase=${Label}\n`,
     );
     const Result = await Runˉdevelopmentˉcommand(
-        Command, Arguments, Start + Remaining, Developmentˉonly, MAXIMUM_DIAGNOSTIC_BYTES,
+        Command, Arguments, Selectedˉdeadline, Developmentˉonly, MAXIMUM_DIAGNOSTIC_BYTES,
     );
     if (Result.Code !== Expected || Result.Error.length !== 0) {
         const Component = Label === 'foundation-borrow-components-execute'
@@ -2975,6 +3053,8 @@ async function Run(Label, Command, Arguments, Expected = 0) {
             (Component === undefined ? '' :
                 `Failed component=${Component}; --foundation-borrow-${Component} retains its original group diagnostic.\n`) +
             `stdout=${Result.Output}\nstderr=${Result.Error}`,
+            Result.Code === 124 ? 124 : Result.Code === null ? 2 :
+                Label.startsWith('foundation-products-') && [2, 64].includes(Result.Code) ? Result.Code : 1,
         );
     }
     process.stdout.write(
@@ -4164,6 +4244,6 @@ function Normalize(Value) {
     return Value.replaceAll('\r\n', '\n');
 }
 
-function Reject(Message) {
-    throw new Error(Message);
+function Reject(Message, Exitˉcode = 1) {
+    throw Object.assign(new Error(Message), { exitCode: Exitˉcode });
 }

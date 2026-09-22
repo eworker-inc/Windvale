@@ -1,4 +1,14 @@
 import Assert from 'node:assert/strict';
+import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
+import {
+    Constructˉsourceˉeditionˉpredecessor,
+    Hasˉuncertainˉconstructionˉcleanup,
+    Runˉcompilerˉconstructionˉcommand,
+} from './Source-Edition-Predecessor-Core.mjs';
+import {
+    Requireˉwindowsˉterminationˉresult,
+    Runˉdevelopmentˉcommand,
+} from './Development-Command-Core.mjs';
 import { Acquireˉcurrentˉsplitˉcompiler, Constructˉcurrentˉsplitˉcompiler, CURRENT_ADMISSION_PROJECTS } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -527,8 +537,11 @@ try {
     await Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot);
     await Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot);
     await Verifyˉcompilerˉconstructionˉbranches(Testˉroot);
+    const Foundationˉcases = await Verifyˉfoundationˉtestˉproducts(Testˉroot);
+    const Deadlineˉcases = await Verifyˉconstructionˉdeadlineˉadmission();
+    const Processˉcases = await Verifyˉconstructionˉprocessˉstatuses(Testˉroot);
     console.log(
-        'split project cache test cases=39 status=Passed current-compiler-pair=Verified ' +
+        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Processˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -536,7 +549,7 @@ try {
         'raw-project2-route=Passed symbol-resume=Passed ' +
         'symbol-corruption=Rejected final-product-reuse=Passed ' +
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
-        'producer-change=Rejected',
+        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} construction-statuses=${Processˉcases}`,
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -881,6 +894,404 @@ function Sameˉpath(Left, Right) {
 
 function Reject(Message) {
     throw new Error(Message);
+}
+
+async function Verifyˉconstructionˉdeadlineˉadmission() {
+    const Builder = path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs');
+    // Expiry must precede reading these deliberately nonexistent target paths.
+    const Pair = ['missing-deadline-project.wvproj', 'missing-deadline-output.wvb'];
+    const Future = String(Date.now() + 120_000);
+    const Cases = [
+        [['--deadline-ms', '0', ...Pair], 1, /Invalid current split-project deadline/u],
+        [['--deadline-ms', '9007199254740992', ...Pair], 1, /Invalid current split-project deadline/u],
+        [['--deadline-ms', Future, '--deadline-ms', Future, ...Pair], 64, /Usage:/u],
+        [[...Pair, '--deadline-ms'], 64, /Usage:/u],
+        [['--deadline-ms', '1', ...Pair], 124, /deadline expired before construction/u],
+        [['--deadline-ms', String(Date.now() + 1_000), ...Pair], 124, /deadline expired before construction/u],
+    ];
+    for (const [Arguments, Status, Diagnostic] of Cases) {
+        const Result = spawnSync(process.execPath, [Builder, ...Arguments], {
+            cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true,
+            timeout: 3_000, maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        });
+        Assert.equal(Result.error, undefined);
+        Assert.equal(Result.status, Status);
+        Assert.equal(Result.stdout, '');
+        Assert.match(Result.stderr, Diagnostic);
+    }
+    for (const Deadline of [-1, Infinity]) {
+        await Assert.rejects(() => Constructˉsourceˉeditionˉpredecessor(undefined, Deadline),
+            /Invalid source-edition predecessor deadline/u);
+    }
+    await Assert.rejects(() => Constructˉsourceˉeditionˉpredecessor(undefined, 1), Error =>
+        Error.exitCode === 124 && /deadline expired before construction/u.test(Error.message));
+    return Cases.length + 3;
+}
+
+async function Verifyˉconstructionˉprocessˉstatuses(Testˉroot) {
+    const Builder = pathToFileURL(path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs')).href;
+    const Predecessor = pathToFileURL(path.join(SCRIPT_DIRECTORY, 'Source-Edition-Predecessor-Core.mjs')).href;
+    const Prelude = `import { Runˉcurrentˉsplitˉprojectˉcli as Cli } from ${JSON.stringify(Builder)};\n` +
+        `import { Runˉcompilerˉconstructionˉcommand as Run } from ${JSON.stringify(Predecessor)};\n`;
+    const Child = Text => `Run('probe', process.execPath, ['-e', ${JSON.stringify(Text)}], Date.now() + 3000, false)`;
+    const Cases = [
+        [Child("process.stderr.write('child-timeout-marker'); process.exit(124);"), 124, /child-timeout-marker/u],
+        [Child("process.stderr.write('child-framework-marker'); process.exit(2);"), 2, /child-framework-marker/u],
+        [Child("process.stderr.write('unexpected-stderr');"), 2, /unexpected-stderr/u],
+        ["Run('git-progress', process.execPath, ['-e', \"process.stderr.write('allowed-git-progress')\"], Date.now()+3000, false, undefined, true)", 0, /^$/u],
+        [Child("process.exit(7);"), 7, /status=7/u],
+        ["Run('probe', 'windvale-deliberately-missing-construction-tool', [], Date.now()+3000, false)", 2, /ENOENT/u],
+        ["Run('probe', process.execPath, ['-e', 'setInterval(()=>{},1000)'], Date.now()+100, false)", 124, /Development command timed out/u],
+        ["Promise.reject(new AggregateError([new Error('ordinary-marker'), Object.assign(new Error('timeout-marker'), {exitCode:124})], 'joined-marker'))", 124, /joined-marker[\s\S]*ordinary-marker[\s\S]*timeout-marker/u],
+        ["Promise.reject(Object.assign(new Error('primary-marker'), {exitCode:1, cleanupFailure:Object.assign(new Error('cleanup-marker'), {exitCode:124})}))", 1, /primary-marker[\s\S]*Cleanup: cleanup-marker/u],
+        ["Promise.reject(Object.assign(new Error('primary-timeout'), {exitCode:124, cleanupFailure:Object.assign(new Error('cleanup-framework'), {exitCode:2})}))", 124, /primary-timeout[\s\S]*Cleanup: cleanup-framework/u],
+        ["Promise.reject(new AggregateError([Object.assign(new Error('timeout-marker'), {exitCode:124}), Object.assign(new Error('uncertain-marker'), {exitCode:2,cleanupUncertain:true})], 'uncertain-join'))", 2, /uncertain-join[\s\S]*timeout-marker[\s\S]*uncertain-marker/u],
+        ["Promise.reject(Object.assign(new Error('primary-timeout'), {exitCode:124, cleanupFailure:Object.assign(new Error('cleanup-unproven'), {exitCode:2,cleanupUncertain:true})}))", 2, /primary-timeout[\s\S]*Cleanup: cleanup-unproven/u],
+        ["Run('probe', 'ignored', [], Date.now()+3000, false, async()=>({Code:null,Output:'',Error:''}))", 2, /invalid construction process result/u],
+    ];
+    for (const [Action, Status, Diagnostic] of Cases) {
+        const Result = spawnSync(process.execPath, ['--input-type=module', '-e',
+            Prelude + `await Cli(() => ${Action});`], {
+            cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true,
+            timeout: 10_000, maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        });
+        Assert.equal(Result.error, undefined);
+        Assert.equal(Result.status, Status);
+        Assert.equal(Result.stdout, '');
+        Assert.match(Result.stderr, Diagnostic);
+    }
+    const Owner = path.join(SCRIPT_DIRECTORY, 'Test-Language-1.0-Memory-Budget-Split-Execution.mjs');
+    for (const [Seconds, Status, Diagnostic] of [
+        ['1', 124, /deadline expired|timed out/u],
+        ['0', 64, /The explicit development maximum must be 1 through 3600 seconds/u],
+    ]) {
+        const Result = spawnSync(process.execPath, [Owner, '--vector-borrow-integration', '--maximum-seconds', Seconds], {
+            cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true,
+            timeout: 10_000, maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        });
+        Assert.equal(Result.error, undefined);
+        Assert.equal(Result.status, Status);
+        Assert.match(Result.stderr, Diagnostic);
+        Assert.doesNotMatch(Result.stdout, /stage1-analyzer-build|source-edition predecessor|target-project-build/u);
+    }
+    const Framework = await Runˉcompilerˉconstructionˉcommand('framework', 'ignored', [], Date.now() + 1_000,
+        false, async () => ({ Code: 2, Output: '', Error: 'framework marker' })).catch(Error => Error);
+    Assert.equal(Framework.exitCode, 2);
+    Assert.equal(Framework.cleanupUncertain, true);
+    Assert.equal(Hasˉuncertainˉconstructionˉcleanup(new AggregateError([new Error('ordinary'),
+        new AggregateError([Framework])])), true);
+    const Cycle = new Error('cycle');
+    Cycle.cause = Cycle;
+    Assert.equal(Hasˉuncertainˉconstructionˉcleanup(Cycle), false);
+    Assert.equal(Hasˉuncertainˉconstructionˉcleanup(new AggregateError(Array(9).fill(Cycle))), true);
+    Assert.doesNotThrow(() => Requireˉwindowsˉterminationˉresult({ status: 0, error: undefined, signal: null }));
+    const Windowsˉfailures = [null, { status: 1 }, { status: null, signal: 'SIGTERM' },
+        { status: 0, error: new Error('bounded\nerror\t'.repeat(100)) }];
+    for (const Result of Windowsˉfailures) {
+        Assert.throws(() => Requireˉwindowsˉterminationˉresult(Result), Error =>
+            Error.exitCode === 2 && Error.cleanupUncertain === true &&
+            Error.message.length <= 320 && !/[\r\n\t]/u.test(Error.message));
+    }
+    const Detachedˉcases = process.platform === 'linux'
+        ? await Verifyˉdetachedˉconstructionˉtimeout(Testˉroot) +
+            await Verifyˉdetachedˉconstructionˉtimeout(Testˉroot, true) : 0;
+    return Cases.length + 4 + Windowsˉfailures.length + Detachedˉcases;
+}
+
+async function Verifyˉdetachedˉconstructionˉtimeout(Testˉroot, Orphaned = false) {
+    const Root = path.join(Testˉroot, Orphaned ? 'orphaned-construction-timeout' : 'detached-construction-timeout');
+    await mkdir(Root);
+    const Leaves = Orphaned ? ['Parent', 'Child'] : ['Parent', 'Child', 'Grandchild'];
+    const Records = Leaves.map(Name => path.join(Root, Name + '.json'));
+    const Scripts = Leaves.map(Name => path.join(Root, Name + '.mjs'));
+    for (let Index = Leaves.length - 1; Index >= 0; Index -= 1) {
+        const Program = `import {writeFileSync,readFileSync,renameSync} from 'node:fs';\n` +
+            `import {spawn} from 'node:child_process';\n` +
+            `const stat=readFileSync('/proc/self/stat','utf8');\n` +
+            `const start=stat.slice(stat.lastIndexOf(') ')+2).split(' ')[19];\n` +
+            `writeFileSync(${JSON.stringify(Records[Index] + '.tmp')},JSON.stringify({Pid:process.pid,Start:start}),{flag:'wx'});\n` +
+            `renameSync(${JSON.stringify(Records[Index] + '.tmp')},${JSON.stringify(Records[Index])});\n` +
+            (Index + 1 < Leaves.length ? `spawn(process.execPath,[${JSON.stringify(Scripts[Index + 1])}],` +
+                `{detached:true,stdio:${Orphaned ? "['ignore','inherit','inherit']" : "'ignore'"}});\n` : '') +
+            (Orphaned && Index === 0 ? 'process.exit(0);\n' : 'setInterval(()=>{},1000);\n');
+        await writeFile(Scripts[Index], Program, { flag: 'wx' });
+    }
+    async function Current(Pid) {
+        const Stat = await readFile('/proc/' + Pid + '/stat', 'utf8').catch(Error => {
+            if (Error.code === 'ENOENT' || Error.code === 'ESRCH') return null;
+            throw Error;
+        });
+        if (Stat === null) return null;
+        const Fields = Stat.slice(Stat.lastIndexOf(') ') + 2).split(' ');
+        return { State: Fields[0], Start: Fields[19] };
+    }
+    async function Readˉrecords() {
+        const Found = [];
+        for (const Record of Records) {
+            const Bytes = await readFile(Record, 'utf8').catch(Error => {
+                if (Error.code === 'ENOENT') return null;
+                throw Error;
+            });
+            if (Bytes === null) continue;
+            const Value = JSON.parse(Bytes);
+            Assert.ok(Number.isSafeInteger(Value.Pid) && Value.Pid > 1);
+            Assert.match(Value.Start, /^[0-9]+$/u);
+            Found.push(Value);
+        }
+        return Found;
+    }
+    const Deadline = Date.now() + 3_000;
+    const Command = Runˉdevelopmentˉcommand(process.execPath, [Scripts[0]], Deadline, false,
+        MAXIMUM_DIAGNOSTIC_BYTES).then(Result => ({ Result }), Error => ({ Error }));
+    try {
+        let Identities = [];
+        while (Date.now() < Deadline - 500) {
+            Identities = await Readˉrecords();
+            if (Identities.length === Leaves.length) break;
+            await new Promise(Resolve => setTimeout(Resolve, 20));
+        }
+        Assert.equal(Identities.length, Leaves.length, 'The detached process chain did not announce readiness.');
+        const Outcome = await Command;
+        Assert.equal(Outcome.Error?.exitCode, Orphaned ? 2 : 124);
+        if (Orphaned) Assert.equal(Outcome.Error.cleanupUncertain, true);
+        for (const Identity of Orphaned ? Identities.slice(0, 1) : Identities) {
+            const State = await Current(Identity.Pid);
+            Assert.ok(State === null || State.Start !== Identity.Start || ['Z', 'X'].includes(State.State),
+                'A detached construction descendant still executes after timeout.');
+        }
+    } finally {
+        // Never signal a reused PID. These exact test-owned identities are the
+        // only cleanup targets, even when the process-tree assertion fails.
+        for (const Identity of (await Readˉrecords()).reverse()) {
+            const State = await Current(Identity.Pid);
+            if (State !== null && State.Start === Identity.Start && !['Z', 'X'].includes(State.State)) {
+                try { process.kill(Identity.Pid, 'SIGKILL'); }
+                catch (Error) { if (Error.code !== 'ESRCH') throw Error; }
+            }
+        }
+        await Command;
+    }
+    return 1;
+}
+
+async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
+    const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
+    const Key = '5'.repeat(64);
+    const Root = path.join(Testˉroot, 'foundation-test-products');
+    await mkdir(Root);
+    let Cases = 0;
+    const Never = async () => Assert.fail('Invalid acquisition invoked a callback.');
+    for (const Request of [
+        { Work: Root, Deadline: Date.now() - 1 },
+        { Work: 'relative-work', Deadline: Date.now() + 30_000 },
+        { Work: Root, Deadline: Number.MAX_SAFE_INTEGER + 1 },
+    ]) {
+        await Assert.rejects(() => Acquireˉfoundationˉborrowˉtestˉproducts({
+            ...Request, Run: Never, Getˉkey: Never, Getˉfamily: Never, Acquire: Never,
+            Snapshot: Never, Requireˉunchanged: Never,
+        }), /deadline expired|Invalid Foundation test product/);
+        Cases += 1;
+    }
+    for (const Mode of ['complete', 'build-failure', 'missing-cache', 'key-change',
+        'source-change', 'verifier-failure', 'runner-failure', 'both-failures', 'verifier-timeout', 'mixed-failures',
+        'components-failure', 'product-change', 'compiler-product-change',
+        'late-input-change', 'oversized-wvb', 'work-replacement']) {
+        const Work = path.join(Root, Mode);
+        const Family = path.join(Work, 'Cache');
+        await mkdir(Family, { recursive: true });
+        const Produce = async Place => {
+            for (const [Name, Role] of [['Analyzer', 'analyzer'], ['Emitter', 'emitter']]) {
+                const Bytes = Buffer.from(Name);
+                await writeFile(path.join(Place, Name + Suffix), Bytes, { mode: 0o755 });
+                await writeFile(path.join(Place, Name + '.identity'), Identity(
+                    Role, Bytes.length, createHash('sha256').update(Bytes).digest('hex')));
+            }
+            for (const [Name] of CURRENT_ADMISSION_PROJECTS) {
+                await writeFile(path.join(Place, Name + Suffix), Buffer.from(Name), { mode: 0o755 });
+            }
+        };
+        if (Mode !== 'missing-cache') {
+            await Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, async () => {});
+        }
+        const Calls = [];
+        let Keyˉreads = 0;
+        let Checks = 0;
+        let Acquisitions = 0;
+        let Active = 0;
+        let Maximumˉactive = 0;
+        let Arrivals = 0;
+        let Settled = false;
+        let Announce;
+        let Announceˉcomponent;
+        let Release;
+        const Ready = new Promise(Resolve => { Announce = Resolve; });
+        const Componentˉready = new Promise(Resolve => { Announceˉcomponent = Resolve; });
+        const Peer = new Promise(Resolve => { Release = Resolve; });
+        const Packagingˉfailure = ['verifier-failure', 'runner-failure', 'both-failures', 'verifier-timeout', 'mixed-failures',
+            'components-failure'].includes(Mode);
+        const Timer = setTimeout(() => { Announce(); Announceˉcomponent(); Release(); }, 2_000);
+        const Deadline = Date.now() + 30_000;
+        let Outputˉdirectory;
+        const Run = async (Label, Command, Arguments, Boundary) => {
+            Assert.equal(Command, process.execPath);
+            Assert.equal(Boundary, Deadline);
+            Assert.equal(Calls.some(Call => Call.Label === Label), false);
+            Calls.push({ Label, Arguments });
+            Active += 1;
+            Maximumˉactive = Math.max(Maximumˉactive, Active);
+            try {
+                if (Label === 'foundation-products-build') {
+                    Assert.equal(path.basename(Arguments[0]), 'Build-Current-Split-Project-Wvb.mjs');
+                    Assert.deepEqual(Arguments.slice(1, 3), ['--deadline-ms', String(Deadline)]);
+                    Assert.equal(Arguments.length, 9);
+                    if (Mode === 'build-failure') throw new Error(Mode);
+                    for (let Index = 3; Index < Arguments.length; Index += 2) {
+                        Assert.equal(path.extname(Arguments[Index]), '.wvproj');
+                        Outputˉdirectory = path.dirname(Arguments[Index + 1]);
+                        Assert.equal(path.dirname(Outputˉdirectory), Work);
+                        await writeFile(Arguments[Index + 1], Buffer.from('bounded WVB'), { flag: 'wx' });
+                    }
+                    if (Mode === 'oversized-wvb') {
+                        const Handle = await open(Arguments[4], 'r+');
+                        try { await Handle.truncate(16_777_217); }
+                        finally { await Handle.close(); }
+                    }
+                    if (Mode === 'work-replacement') {
+                        await rename(Outputˉdirectory, Outputˉdirectory + '-original');
+                        await mkdir(Outputˉdirectory);
+                        for (const Name of ['Verifier', 'Runner', 'Components']) {
+                            await writeFile(path.join(Outputˉdirectory, Name + '.wvb'), Buffer.from('replacement'));
+                        }
+                    }
+                    return;
+                }
+                Assert.equal(path.basename(Arguments[0]), 'Build-Cached-Segmented-Hosted-Wvb.mjs');
+                Assert.equal(Arguments.length, 6);
+                Assert.deepEqual(Arguments.slice(1, 3), ['--deadline-ms', String(Deadline)]);
+                const Name = path.basename(Arguments[4], '.wvb');
+                Assert.equal(Arguments[3], { Verifier: '7', Runner: '5', Components: '1' }[Name]);
+                Assert.equal(path.basename(Arguments[5]), Name + Suffix);
+                if (Name !== 'Components') {
+                    Arrivals += 1;
+                    if (Arrivals === 2) Announce();
+                } else { Announceˉcomponent(); }
+                if (Packagingˉfailure) {
+                    await Ready;
+                    if (Mode === 'verifier-timeout' && Name === 'Verifier') {
+                        throw Object.assign(new Error('Verifier-timeout'), { exitCode: 124 });
+                    }
+                    if (Mode === 'mixed-failures') {
+                        throw Object.assign(new Error(Name + '-mixed-failure'), Name === 'Verifier'
+                            ? { exitCode: 2, cleanupUncertain: true } : { exitCode: 124 });
+                    }
+                    if (Mode === Name.toLowerCase() + '-failure' || Mode === 'both-failures') {
+                        throw new Error(Name + '-failure');
+                    }
+                    if (Name !== 'Verifier' || Mode !== 'components-failure') await Peer;
+                } else {
+                    await new Promise(Resolve => setImmediate(Resolve));
+                }
+                await writeFile(Arguments[5], Buffer.from(Name), { flag: 'wx', mode: 0o755 });
+            } finally { Active -= 1; }
+        };
+        const Acquisition = Acquireˉfoundationˉborrowˉtestˉproducts({
+            Work, Deadline, Run,
+            Getˉkey: async () => {
+                Keyˉreads += 1;
+                return Mode === 'key-change' && Keyˉreads > 1 ? '6'.repeat(64) : Key;
+            },
+            Getˉfamily: async () => Family,
+            Acquire: async (...Arguments) => {
+                Acquisitions += 1;
+                return Acquireˉcurrentˉsplitˉcompiler(...Arguments);
+            },
+            Snapshot: async Projects => {
+                Assert.deepEqual(Projects.map(Project => path.basename(Project)), [
+                    'Windvale-Compiler-Wvb-Verifier.wvproj', 'Windvale-Wvb-Runner.wvproj',
+                    'Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+                ]);
+                return 'snapshot';
+            },
+            Requireˉunchanged: async Snapshot => {
+                Assert.equal(Snapshot, 'snapshot');
+                Checks += 1;
+                if (Mode === 'source-change' || (Mode === 'late-input-change' && Checks === 2)) {
+                    throw new Error('source changed');
+                }
+                if (Mode === 'product-change' && Checks === 2) {
+                    await writeFile(path.join(Outputˉdirectory, 'Verifier' + Suffix), Buffer.from('changed'));
+                }
+                if (Mode === 'compiler-product-change' && Checks === 2) {
+                    await writeFile(path.join(Family, Key, 'Admitter' + Suffix), Buffer.from('changed'));
+                }
+            },
+        }).then(Value => { Settled = true; return { Value }; }, Error => { Settled = true; return { Error }; });
+        try {
+            if (Packagingˉfailure) {
+                await Ready;
+                Assert.equal(Arrivals, 2, 'Foundation packaging branches were serialized.');
+                if (Mode === 'components-failure') {
+                    await Componentˉready;
+                    Assert.equal(Calls.length, 4, 'The third package did not reuse an available leaf.');
+                }
+                // Allow the failing branch to report without releasing its live peer.
+                for (let Iteration = 0; Iteration < 8; Iteration += 1) {
+                    await new Promise(Resolve => setImmediate(Resolve));
+                }
+                if (!['both-failures', 'mixed-failures'].includes(Mode)) {
+                    Assert.equal(Settled, false, 'Foundation acquisition abandoned a live peer.');
+                }
+                Release();
+            }
+            const Result = await Acquisition;
+            Assert.equal(Active, 0);
+            Assert.ok(Maximumˉactive <= 2);
+            if (Mode === 'complete') {
+                Assert.equal(Result.Error, undefined);
+                Assert.equal(Maximumˉactive, 2);
+                Assert.equal(Calls.length, 4);
+                Assert.equal(Acquisitions, 2);
+                Assert.equal(Checks, 2);
+                Assert.equal(Result.Value.Compilerˉkey, Key);
+                Assert.equal(Result.Value.Evidence.length, 14);
+                Assert.equal(Object.isFrozen(Result.Value), true);
+                for (const Name of ['Analyzer', 'Emitter', 'Admitter', 'Authenticator', 'Reader', 'Binder']) {
+                    Assert.equal(Result.Value[Name], path.join(Family, Key, Name + Suffix));
+                }
+                for (const Name of ['Verifier', 'Runner', 'Components']) {
+                    Assert.equal(Result.Value[Name], path.join(Outputˉdirectory, Name + Suffix));
+                }
+            } else {
+                Assert.ok(Result.Error instanceof Error, Mode + ' did not reject.');
+                if (Packagingˉfailure) {
+                    Assert.ok(Result.Error instanceof AggregateError);
+                    Assert.equal(Result.Error.errors.length, ['both-failures', 'mixed-failures'].includes(Mode) ? 2 : 1);
+                    if (Mode === 'verifier-timeout') Assert.equal(Result.Error.exitCode, 124);
+                    if (Mode === 'mixed-failures') {
+                        Assert.equal(Result.Error.exitCode, 2);
+                        Assert.equal(Result.Error.cleanupUncertain, true);
+                    }
+                    Assert.equal(Calls.length, Mode === 'components-failure' ? 4 : 3,
+                        'Foundation acquisition started queued commands after a branch failed.');
+                } else if (['product-change', 'compiler-product-change', 'late-input-change'].includes(Mode)) {
+                    Assert.equal(Calls.length, 4);
+                    Assert.match(Result.Error.message, /product changed|checkpoint record differs|source changed/);
+                } else {
+                    Assert.equal(Calls.length, 1);
+                    const Diagnostic = Result.Error instanceof AggregateError
+                        ? Result.Error.errors.map(Error => Error.message).join('\n') : Result.Error.message;
+                    Assert.match(Diagnostic, /build-failure|checkpoint missing|inputs changed|source changed|bounded ordinary file|directory changed/);
+                }
+            }
+            Assert.equal((await readdir(Family)).some(Name => Name.startsWith('.new-')), false);
+            Cases += 1;
+        } finally {
+            clearTimeout(Timer);
+            Release();
+            await Acquisition;
+        }
+    }
+    return Cases;
 }
 
 async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {

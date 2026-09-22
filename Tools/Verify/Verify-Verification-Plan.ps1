@@ -5311,7 +5311,7 @@ $QualificationPipelineExpected = @{
     'Build-Cached-Project-Object' = '1|2'
     'Build-Cached-Hosted-Application' = '12|44'
     'Build-Cached-Split-Project-Wvb' = '3|18'
-    'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
+    'Build-Cached-Segmented-Hosted-Wvb' = '8|13'
     'Stage-Compiler-Wvb' = '2|8'
     'Lower-Wvb-To-Wvo' = '16|45'
     'Check-Wvo' = '21|56'
@@ -5912,8 +5912,122 @@ if ($IndexedBorrowFixturePlan.Suites.Count -ne 1 -or
     $IndexedBorrowFixturePlan.UseFoundationBorrowPlanDevelopment -or
     $IndexedBorrowFixturePlan.UseFoundationBorrowDirectoryDevelopment -or
     $IndexedBorrowFixturePlan.UseFoundationBorrowOwnerDevelopment -or
-    $IndexedBorrowFixturePlan.UseFoundationBorrowComponentsDevelopment) {
+    $IndexedBorrowFixturePlan.UseFoundationBorrowComponentsDevelopment -or
+    !$IndexedBorrowFixturePlan.UseVectorBorrowIntegrationDevelopment) {
     throw 'The indexed Vector fixture must retain its execution owner, not a component-only selection.'
+}
+$VectorBorrowIntegrationPaths = @(
+    'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
+    'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs'
+)
+foreach ($Path in $VectorBorrowIntegrationPaths) {
+    $IntegrationPlan = & $NativePlanner -ChangedPath $Path -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    $IncludesCacheOwner = $Path -eq 'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs'
+    $ExpectedIntegrationSuites = if ($IncludesCacheOwner) {
+        @('language-1-memory-budget-split-execution', 'compiler-split-development')
+    } else { @('language-1-memory-budget-split-execution') }
+    $CacheOwnerPlan = if ($IncludesCacheOwner) {
+        & $NativePlanner -ChangedPath 'Tools/Native/Test-Cached-Split-Project-Wvb.mjs' -PassThru -Quiet `
+            -InitializationCache $NativePlannerInitializationCache
+    } else { [pscustomobject]@{ ExpectedSeconds = 0; MaximumSeconds = 0 } }
+    if (!$IntegrationPlan.UseVectorBorrowIntegrationDevelopment -or
+        ($IntegrationPlan.Suites -join ',') -cne ($ExpectedIntegrationSuites -join ',') -or
+        $IntegrationPlan.Gaps.Count -ne 0 -or
+        $IntegrationPlan.ExpectedSeconds -ne (900 + $CacheOwnerPlan.ExpectedSeconds) -or
+        $IntegrationPlan.MaximumSeconds -ne (3600 + $CacheOwnerPlan.MaximumSeconds) -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentExpectedSeconds -ne 900 -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentMaximumSeconds -ne 3600 -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 497 -or
+        $IntegrationPlan.UseFoundationBorrowPlanDevelopment -or
+        $IntegrationPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $IntegrationPlan.UseFoundationBorrowOwnerDevelopment -or
+        $IntegrationPlan.UseFoundationBorrowComponentsDevelopment) {
+        throw "The explicit Vector integration route or cold cost class differs for '$Path'."
+    }
+}
+$IntegrationPlan = & $NativePlanner -ChangedPath $VectorBorrowIntegrationPaths -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if (!$IntegrationPlan.UseVectorBorrowIntegrationDevelopment -or
+    ($IntegrationPlan.Suites -join ',') -cne 'language-1-memory-budget-split-execution,compiler-split-development' -or
+    $IntegrationPlan.ExpectedSeconds -ne (900 + $CacheOwnerPlan.ExpectedSeconds) -or
+    $IntegrationPlan.MaximumSeconds -ne (3600 + $CacheOwnerPlan.MaximumSeconds)) {
+    throw 'Combined Vector fixtures and product helper lost their integration or cache owner.'
+}
+foreach ($Boundary in @(
+    'Compiler/Windvale/Source-Wir-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
+    'Runtime/Windvale/Foundation-Borrow-Frames-Core.wv',
+    'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tools/Native/Development-Command-Core.mjs'
+)) {
+    $BoundaryPlan = & $NativePlanner -ChangedPath $Boundary -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    $MixedPlan = & $NativePlanner -ChangedPath @($IndexedBorrowFixturePath, $Boundary) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if ($BoundaryPlan.UseVectorBorrowIntegrationDevelopment -or $MixedPlan.UseVectorBorrowIntegrationDevelopment -or
+        @($BoundaryPlan.Suites | Where-Object { $_ -cnotin $MixedPlan.Suites }).Count -ne 0) {
+        throw "Narrow Vector integration hid the broader boundary '$Boundary'."
+    }
+}
+foreach ($Fragment in @(
+    '$NativePlan.UseVectorBorrowIntegrationDevelopment',
+    "@('--vector-borrow-integration', '--maximum-seconds', '3600')",
+    'mode=vector-borrow-integration cases=497 expected-seconds=900 maximum-seconds=3600',
+    'cold-duration-measured=false',
+    'No cold product acquisition was started and no passing evidence was recorded.'
+)) {
+    if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "Bounded Vector integration dispatch is missing '$Fragment'."
+    }
+}
+& {
+    # Exercise the production predicate without launching any compiler or owner.
+    $GuardTokens = $null
+    $GuardErrors = $null
+    $GuardAst = [Management.Automation.Language.Parser]::ParseInput(
+        $ChangedVerification, [ref]$GuardTokens, [ref]$GuardErrors)
+    if ($GuardErrors.Count -ne 0) { throw 'Vector integration dispatcher did not parse.' }
+    $Assignments = @($GuardAst.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -ceq '$VectorBorrowBudgetRefused'
+    }, $true))
+    if ($Assignments.Count -ne 1) { throw 'The Vector integration budget guard is missing or ambiguous.' }
+    $Guard = [scriptblock]::Create($Assignments[0].Right.Extent.Text)
+    foreach ($Case in @(
+        @{ Scope = 'development'; Owner = 'language-1-memory-budget-split-execution'; Selected = $true; Seconds = 900; Allow = $false; Refuse = $true },
+        @{ Scope = 'development'; Owner = 'language-1-memory-budget-split-execution'; Selected = $true; Seconds = 900; Allow = $true; Refuse = $false },
+        @{ Scope = 'development'; Owner = 'language-1-memory-budget-split-execution'; Selected = $true; Seconds = 600; Allow = $false; Refuse = $false },
+        @{ Scope = 'development'; Owner = 'language-1-memory-budget-split-execution'; Selected = $false; Seconds = 900; Allow = $false; Refuse = $false },
+        @{ Scope = 'qualification'; Owner = 'language-1-memory-budget-split-execution'; Selected = $true; Seconds = 900; Allow = $false; Refuse = $false },
+        @{ Scope = 'development'; Owner = 'language-1-front-door'; Selected = $true; Seconds = 900; Allow = $false; Refuse = $false }
+    )) {
+        $Suite = $Case.Owner
+        $Plan = [pscustomobject]@{ Scope = $Case.Scope }
+        $NativePlan = [pscustomobject]@{
+            UseVectorBorrowIntegrationDevelopment = $Case.Selected
+            VectorBorrowIntegrationDevelopmentExpectedSeconds = $Case.Seconds
+        }
+        $LOCAL_DEVELOPMENT_BUDGET_SECONDS = 600
+        $AllowLongRun = $Case.Allow
+        if ((& $Guard) -cne $Case.Refuse) { throw 'Vector integration budget-selection truth table differs.' }
+    }
+    $Refusals = @($GuardAst.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.IfStatementAst] -and
+        $Node.Clauses[0].Item1.Extent.Text -ceq '$VectorBorrowBudgetRefused'
+    }, $true))
+    if ($Refusals.Count -ne 1 -or
+        !$Refusals[0].Clauses[0].Item2.Extent.Text.Contains('$OwnerExitCode = 64', [StringComparison]::Ordinal) -or
+        $Refusals[0].Clauses[0].Item2.Extent.Text.Contains('& $OwnerCommand', [StringComparison]::Ordinal) -or
+        !$Refusals[0].ElseClause.Extent.Text.Contains('& $OwnerCommand @OwnerArguments', [StringComparison]::Ordinal) -or
+        $ChangedVerification.IndexOf('if ($ResultCacheReused)', [StringComparison]::Ordinal) -gt
+            $Assignments[0].Extent.StartOffset) {
+        throw 'Vector integration must reuse exact results before refusing unselected cold work.'
+    }
 }
 $OrdinaryBorrowFixturePlan = & $NativePlanner -ChangedPath (
     'Tests/Fixtures/Language-1.0/Borrow-Return.wv') -PassThru -Quiet `
@@ -6183,6 +6297,7 @@ if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [Strin
 # Documentation companions retain the exact selection. Exercise shared immutable
 # initialization too: a preceding broad plan must not contaminate the next one.
 $MixedOwnerSelections = @(
+    @{ Path = 'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv'; Field = 'UseVectorBorrowIntegrationDevelopment'; Value = $true },
     @{ Path = 'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj'; Field = 'UseFoundationBorrowComponentsDevelopment'; Value = $true },
     @{ Path = 'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv'; Field = 'UseFoundationBorrowPlanDevelopment'; Value = $true },
     @{ Path = 'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'; Field = 'UseFoundationBorrowDirectoryDevelopment'; Value = $true },

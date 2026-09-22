@@ -14,14 +14,16 @@ import {
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
     Acquireˉsegmentedˉimageˉcheckpoint,
     Validateˉsegmentedˉimageˉcheckpoint,
     Createˉsegmentedˉhostedˉcheckpoint,
     Materializeˉsegmentedˉhostedˉcheckpoint,
+    Parseˉsegmentedˉhostedˉarguments,
     Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged,
     Runˉboundedˉsegmentedˉhostedˉproducer,
+    Segmentedˉhostedˉcommandˉdeadline,
     Validateˉsegmentedˉhostedˉcheckpoint,
 } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
 
@@ -40,6 +42,9 @@ try {
     const outputRoot = path.join(testRoot, 'output');
     await mkdir(checkpointFamily);
     await mkdir(outputRoot);
+    await Checkˉdeadlineˉarguments(testRoot);
+    await Checkˉdeadlineˉstatus();
+    await Checkˉnestedˉproducerˉdeadline(testRoot);
     await Requireˉdevelopmentˉcacheˉrouting(testRoot, outputRoot);
     const session = await Runˉboundedˉsegmentedˉhostedˉproducer(
         process.execPath, [path.join(SCRIPT_DIRECTORY, 'Test-Hosted-Application-Session.mjs')],
@@ -92,6 +97,7 @@ try {
             Date.now() + 500,
         ),
         'exceeded its deadline',
+        124,
     );
     await Requireˉprocessˉstopped(await Readˉpid(timeoutPidPath));
 
@@ -117,6 +123,7 @@ try {
             },
         ),
         'process-tree termination failed: injected termination failure',
+        2,
     );
     if (Date.now() - stubbornStarted > 3_000) {
         Reject('The failed termination did not settle within its bound.');
@@ -138,6 +145,7 @@ try {
             Date.now() + 10_000,
         ),
         'stdout exceeded 64 KiB',
+        2,
     );
     await Requireˉprocessˉstopped(await Readˉpid(overflowPidPath));
 
@@ -304,9 +312,11 @@ try {
     }
 
     console.log(
-        'segmented hosted WVB cache test cases=12 status=Passed ' +
+        'segmented hosted WVB cache test cases=16 status=Passed ' +
         'deadline-tree-termination=Passed output-bound-termination=Passed ' +
         'termination-failure-settle=Passed ' +
+        'deadline-arguments=Passed deadline-reserve=Passed ' +
+        'deadline-status=Passed nested-detached-deadline=Passed ' +
         'forced-failure-cleanup=Passed publication-cleanup=Passed ' +
         'prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed ' +
         'race-cleanup=Passed executable-materialization=Passed image-reuse=Passed hosted-session=Passed',
@@ -484,16 +494,129 @@ async function Requireˉnoˉtemporaryˉcheckpoints(checkpointFamily) {
     }
 }
 
-async function Expectˉrejection(promise, text) {
+async function Expectˉrejection(promise, text, Exitˉcode = undefined) {
     try {
         await promise;
     } catch (error) {
-        if (String(error?.message).includes(text)) {
+        if (String(error?.message).includes(text) &&
+            (Exitˉcode === undefined || error.exitCode === Exitˉcode)) {
             return;
         }
         throw error;
     }
     Reject(`The expected rejection was not observed: ${text}`);
+}
+
+async function Checkˉdeadlineˉarguments(Directory) {
+    const Builder = path.join(SCRIPT_DIRECTORY, 'Build-Cached-Segmented-Hosted-Wvb.mjs');
+    const Input = path.join(Directory, 'Absent.wvb');
+    const Output = path.join(Directory, OUTPUT_LEAF);
+    const Cache = path.join(Directory, 'Uncreated-cache');
+    const Legacy = Parseˉsegmentedˉhostedˉarguments(['5', Input, Output]);
+    if (Legacy.Deadline !== null || Legacy.Profile !== '5' ||
+        Legacy.Input !== Input || Legacy.Output !== Output) {
+        Reject('The legacy segmented hosted CLI changed.');
+    }
+    const Deadline = Date.now() + 60_000;
+    const Current = Parseˉsegmentedˉhostedˉarguments([
+        '--deadline-ms', String(Deadline), '5', Input, Output,
+    ]);
+    if (Current.Deadline !== Deadline || Current.Profile !== Legacy.Profile ||
+        Current.Input !== Legacy.Input || Current.Output !== Legacy.Output) {
+        Reject('The absolute segmented hosted deadline was not preserved.');
+    }
+    for (const [Arguments, Status, Diagnostic] of [
+        [['--deadline-ms'], 64, 'absolute deadline is invalid'],
+        [['--deadline-ms', 'NaN', '5', Input, Output], 64, 'absolute deadline is invalid'],
+        [['--deadline-ms', '9007199254740992', '5', Input, Output], 64, 'absolute deadline is invalid'],
+        [['--deadline-ms', String(Deadline), '--deadline-ms', String(Deadline),
+            '5', Input, Output], 64, 'Usage:'],
+        [['--deadline-ms', '1', '5', Input, Output], 124, 'no time remaining before cleanup'],
+        [['--deadline-ms', String(Date.now() + 15_000), '5', Input, Output],
+            124, 'no time remaining before cleanup'],
+    ]) {
+        const Result = spawnSync(process.execPath, [Builder, ...Arguments], {
+            encoding: 'utf8', timeout: 10_000, maxBuffer: 65_536, windowsHide: true,
+            env: { ...process.env, WINDVALE_NATIVE_CACHE_ROOT: Cache },
+        });
+        if (Result.error || Result.status !== Status || Result.stdout !== '' ||
+            !Result.stderr.includes(Diagnostic) ||
+            await lstat(Cache).catch(() => null) !== null ||
+            await lstat(Output).catch(() => null) !== null) {
+            Reject(`The bounded CLI did not reject before mutation: ${JSON.stringify(Result)}`);
+        }
+    }
+    const Before = Date.now();
+    const Capped = Segmentedˉhostedˉcommandˉdeadline(Before + 60_000);
+    const Short = Segmentedˉhostedˉcommandˉdeadline(Before + 60_000, 500);
+    const Unbounded = Segmentedˉhostedˉcommandˉdeadline(null, 500);
+    if (Capped !== Before + 30_000 || Short < Before + 500 ||
+        Short > Date.now() + 500 || Unbounded < Before + 500 ||
+        Unbounded > Date.now() + 500) {
+        Reject('The segmented hosted command did not reserve cleanup or preserve the legacy cap.');
+    }
+    await Expectˉrejection(Promise.resolve().then(() =>
+        Segmentedˉhostedˉcommandˉdeadline(Number.NaN)), 'bounds are invalid', 2);
+}
+
+async function Checkˉdeadlineˉstatus() {
+    await Expectˉrejection(Runˉboundedˉsegmentedˉhostedˉproducer(
+        process.execPath, [], 'test-expired', Date.now() - 1,
+    ), 'deadline expired before', 124);
+    for (const Status of [1, 2, 124]) {
+        await Expectˉrejection(Runˉboundedˉsegmentedˉhostedˉproducer(
+            process.execPath, ['-e', `process.exit(${Status})`],
+            `test-child-status-${Status}`, Date.now() + 5_000,
+        ), `failed status=${Status}`, Status);
+    }
+    await Expectˉrejection(Runˉboundedˉsegmentedˉhostedˉproducer(
+        process.execPath, [], 'test-invalid-deadline', Number.NaN,
+    ), 'policy or deadline is invalid', 2);
+}
+
+async function Checkˉnestedˉproducerˉdeadline(Directory) {
+    const Pidˉpath = path.join(Directory, 'Nested.pid');
+    const Producer = await Writeˉboundedˉproducer(
+        Directory, 'Nested-Producer', Pidˉpath, false,
+    );
+    const Worker = path.join(Directory, 'Nested-Worker.mjs');
+    const Cleaned = path.join(Directory, 'Nested-cleaned.txt');
+    const Module = pathToFileURL(path.join(
+        SCRIPT_DIRECTORY, 'Build-Cached-Segmented-Hosted-Wvb.mjs',
+    )).href;
+    await writeFile(Worker,
+        `import { writeFile } from 'node:fs/promises';\n` +
+        `import { Runˉboundedˉsegmentedˉhostedˉproducer, ` +
+        `Segmentedˉhostedˉcommandˉdeadline } from ${JSON.stringify(Module)};\n` +
+        `try { await Runˉboundedˉsegmentedˉhostedˉproducer(` +
+        `process.argv[3], [process.argv[4]], 'nested-producer', ` +
+        `Segmentedˉhostedˉcommandˉdeadline(Number(process.argv[2]))); }\n` +
+        `catch (Error) { process.stderr.write(Error.message + '\\n'); ` +
+        `process.exitCode = Error.exitCode ?? 1; }\n` +
+        `finally { await writeFile(process.argv[5], 'cleaned\\n', { flag: 'wx' }); }\n`,
+        { encoding: 'utf8', flag: 'wx' },
+    );
+    const Deadline = Date.now() + 31_500;
+    const Started = Date.now();
+    try {
+        // The worker and its producer each create a detached process group on
+        // Linux. The inner deadline must settle before the outer watchdog.
+        await Expectˉrejection(Runˉboundedˉsegmentedˉhostedˉproducer(
+            process.execPath, [Worker, String(Deadline), Producer, Pidˉpath, Cleaned],
+            'test-nested-detached', Deadline,
+        ), 'failed status=124', 124);
+        if (Date.now() - Started >= 10_000 ||
+            await readFile(Cleaned, 'ascii') !== 'cleaned\n') {
+            Reject('The nested producer did not finish before its outer deadline reserve.');
+        }
+        await Requireˉprocessˉstopped(await Readˉpid(Pidˉpath));
+    } finally {
+        if (await lstat(Pidˉpath).catch(() => null) !== null) {
+            const Pid = await Readˉpid(Pidˉpath);
+            try { await Requireˉprocessˉstopped(Pid); }
+            catch { await Forceˉstopˉtestˉprocess(Pid); }
+        }
+    }
 }
 
 function Delay(milliseconds) {
