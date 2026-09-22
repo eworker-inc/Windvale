@@ -1,0 +1,121 @@
+#!wv/1 en@1
+module Recordˉvectorˉtraceˉprobe;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore as Collections;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore as Values;
+
+export fn Main() -> i32 {
+    let Zero: bytes = Bytesˉfromˉu64ˉlittle(0u64);
+    var Module: bytes = Bytesˉfromˉu8(1u8);
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(0u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(1u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(0u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu8(1u8));
+    let Vectorˉoffset: u32 = Bytesˉlength(Module);
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu8(5u8));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(0u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu8(7u8));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(0u32));
+    let Parentˉoffset: u32 = Bytesˉlength(Module);
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu8(1u8));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(0u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(1u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(0u32));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu8(23u8));
+    Module = Bytesˉconcat(Module, Bytesˉfromˉu32ˉlittle(1u32));
+    let Typeˉoffsets: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(0u32),
+            Bytesˉfromˉu32ˉlittle(Vectorˉoffset)
+        ),
+        Bytesˉfromˉu32ˉlittle(Parentˉoffset)
+    );
+    var Zeroˉblock: bytes = Zero;
+    while Bytesˉlength(Zeroˉblock) < 6144u32 {
+        Zeroˉblock = Bytesˉconcat(Zeroˉblock, Zeroˉblock);
+    }
+    let Metadata: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(1u32),
+                Bytesˉfromˉu32ˉlittle(1u32)
+            ),
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(3u32),
+                Bytesˉfromˉu32ˉlittle(1u32)
+            )
+        ),
+        Bytesˉslice(Zeroˉblock, 0u32, 6128u32)
+    );
+    let Marks: bytes = Bytesˉslice(Zeroˉblock, 0u32, 768u32);
+    let Backing: bytes = Collections.Collectionˉemptyˉbacking(
+        2u32, 1u32, Zero
+    );
+    let Value: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Backing))
+    );
+    let Allocation: bytes = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(1u32)
+    );
+    let Handle: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉfromˉu32ˉlittle(1u32)
+    );
+    let Heap: bytes = Collections.Collectionˉappend(
+        Backing, Value, Handle
+    );
+    let Traced: Collections.Collectionˉrecordˉroots =
+        Collections.Collectionˉrecordˉelementˉroots(
+            Module, Typeˉoffsets, 3u32, Heap, Allocation, 1u32,
+            Metadata, Value
+        );
+    if !Traced.Valid || Traced.Allocationˉindex != 0u32 ||
+        Bytesˉlength(Traced.Roots) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Traced.Roots, 0u32) !=
+            Bytesˉreadˉu32ˉlittle(Handle, 0u32) ||
+        Bytesˉreadˉu32ˉlittle(Traced.Roots, 4u32) !=
+            Bytesˉreadˉu32ˉlittle(Handle, 4u32) {
+        return 1;
+    }
+    let Empty: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    let Records: bytes = Bytesˉconcat(
+        Bytesˉfromˉu64ˉlittle(42u64), Value
+    );
+    let Parent: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉfromˉu32ˉlittle(3u32)
+    );
+    let Marked: bytes = Values.Markˉaggregateˉroots(
+        Module, Typeˉoffsets, 3u32, Records,
+        Metadata, Heap, Allocation, 1u32, 768u32,
+        Marks, Parent, Empty
+    );
+    if Bytesˉlength(Marked) != 768u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(Marked, 0u32)) != 1u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(Marked, 1u32)) != 1u32 {
+        return 2;
+    }
+    let Staleˉmetadata: bytes = Bytesˉconcat(
+        Zero, Bytesˉslice(Metadata, 8u32, 6136u32)
+    );
+    let Stale: Collections.Collectionˉrecordˉroots =
+        Collections.Collectionˉrecordˉelementˉroots(
+            Module, Typeˉoffsets, 3u32, Heap, Allocation, 1u32,
+            Staleˉmetadata, Value
+        );
+    if Stale.Valid { return 3; }
+    let Wrongˉheap: bytes = Collections.Collectionˉappend(
+        Backing, Value, Parent
+    );
+    let Wrong: Collections.Collectionˉrecordˉroots =
+        Collections.Collectionˉrecordˉelementˉroots(
+            Module, Typeˉoffsets, 3u32, Wrongˉheap, Allocation, 1u32,
+            Metadata, Value
+        );
+    if Wrong.Valid { return 4; }
+    return 42;
+}

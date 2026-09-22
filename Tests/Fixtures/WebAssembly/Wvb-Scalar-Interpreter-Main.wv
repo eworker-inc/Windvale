@@ -647,7 +647,7 @@ fn Readˉfunctionˉdirectory(
     );
 }
 
-fn Stackˉaggregateˉroots(
+fn Stackˉflaggedˉroots(
     Stack: bytes,
     Lowˉflags: u32,
     Highˉflags: u32
@@ -700,19 +700,23 @@ fn Stackˉdescriptorˉrootsˉafter(
     return Roots;
 }
 
-fn Localˉaggregateˉroots(
+fn Localˉtypedˉroots(
     Values: bytes,
     Valueˉoffset: u32,
     Shapes: bytes,
     Shapeˉoffset: u32,
-    Length: u32
+    Length: u32,
+    Vectors: bool
 ) -> bytes {
     var Roots: bytes = Bytesˉslice(Values, 0u32, 0u32);
     var Offset: u32 = 0u32;
     while Offset < Length {
         let Kind: u32 = Borrowˉframes.Valueˉkind(Bytesˉreadˉu32ˉlittle(Shapes, Shapeˉoffset + Offset));
-        if Kind == 7u32 || Kind == 11u32 || Kind == 22u32 ||
-            Kind == 28u32 || Kind == 29u32 || Kind == 30u32 {
+        var Selected: bool = Kind == 7u32 || Kind == 11u32 ||
+            Kind == 22u32 || Kind == 28u32 || Kind == 29u32 ||
+            Kind == 30u32;
+        if Vectors { Selected = Kind == 23u32 || Kind == 24u32; }
+        if Selected {
             Roots = Bytesˉconcat(
                 Roots,
                 Bytesˉslice(Values, Valueˉoffset + Offset, 8u32)
@@ -723,12 +727,13 @@ fn Localˉaggregateˉroots(
     return Roots;
 }
 
-fn Frameˉaggregateˉroots(
+fn Frameˉtypedˉroots(
     Frames: bytes,
     Functionˉcount: u32,
     Functionˉframeˉmetadata: bytes,
     Functionˉshapeˉoffsets: bytes,
-    Localˉshapes: bytes
+    Localˉshapes: bytes,
+    Vectors: bool
 ) -> bytes {
     let Empty: bytes = Bytesˉslice(Frames, 0u32, 0u32);
     var Roots: bytes = Empty;
@@ -749,12 +754,13 @@ fn Frameˉaggregateˉroots(
         );
         Roots = Bytesˉconcat(
             Roots,
-            Localˉaggregateˉroots(
+            Localˉtypedˉroots(
                 Frames,
                 Start + 4u32,
                 Localˉshapes,
                 Shapeˉoffset,
-                Localˉlength
+                Localˉlength,
+                Vectors
             )
         );
         End = Start;
@@ -4964,9 +4970,6 @@ fn Executeˉaggregate(
     );
     let Recordˉcapacity: u32 = 768u32;
     let Recordˉmetadataˉlength: u32 = Recordˉcapacity * 8u32;
-    let Recordˉzeroˉslots: bytes = Bytesˉslice(
-        Initialˉrecordˉmetadata, 0u32, Recordˉcapacity
-    );
     let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Initialˉstack) / 8u32;
     var Stack: bytes = Initialˉstack;
     var Sectionˉkind: u32 = 0u32;
@@ -5075,15 +5078,22 @@ fn Executeˉaggregate(
 
                     if Recordˉslot == Recordˉcapacity {
                         if Recordˉallocationˉpass == 0u32 {
-                            var Recordˉmarks: bytes = Bytesˉslice(
-                                Recordˉzeroˉslots,
-                                0u32,
-                                Recordˉcapacity
+                            if Bytesˉlength(Zeroˉcell) != 8u32 {
+                                return Invalid;
+                            }
+                            var Recordˉmarks: bytes = Zeroˉcell;
+                            while Bytesˉlength(Recordˉmarks) < Recordˉcapacity {
+                                Recordˉmarks = Bytesˉconcat(
+                                    Recordˉmarks, Recordˉmarks
+                                );
+                            }
+                            Recordˉmarks = Bytesˉslice(
+                                Recordˉmarks, 0u32, Recordˉcapacity
                             );
                             // Dynamic stack flags and verified static shapes
                             // admit only actual record cells as roots.
                             var Recordˉreachableˉvalues: bytes =
-                                Stackˉaggregateˉroots(
+                                Stackˉflaggedˉroots(
                                     Stack,
                                     Stackˉrecordˉflagsˉlow,
                                     Stackˉrecordˉflagsˉhigh
@@ -5097,7 +5107,7 @@ fn Executeˉaggregate(
                                     Recordˉfieldˉcount,
                                     Recordˉfields,
                                     0u32,
-                                    false
+                                    0u32
                                 )
                             );
                             let Recordˉactiveˉshapeˉoffset: u32 =
@@ -5107,21 +5117,23 @@ fn Executeˉaggregate(
                                 );
                             Recordˉreachableˉvalues = Bytesˉconcat(
                                 Recordˉreachableˉvalues,
-                                Localˉaggregateˉroots(
+                                Localˉtypedˉroots(
                                     Locals,
                                     0u32,
                                     Localˉshapes,
                                     Recordˉactiveˉshapeˉoffset,
-                                    Functionˉcursor
+                                    Functionˉcursor,
+                                    false
                                 )
                             );
                             let Recordˉframeˉroots: bytes =
-                                Frameˉaggregateˉroots(
+                                Frameˉtypedˉroots(
                                     Frames,
                                     Functionˉcount,
                                     Functionˉframeˉmetadata,
                                     Functionˉshapeˉoffsets,
-                                    Localˉshapes
+                                    Localˉshapes,
+                                    false
                                 );
                             if Bytesˉlength(Recordˉframeˉroots) == 0u32 {
                                 return Invalid;
@@ -5138,15 +5150,58 @@ fn Executeˉaggregate(
                                 Recordˉreachableˉvalues,
                                 Bytesˉconcat(Tasks.Retainedˉroots(Taskˉstate), Borrowˉroots)
                             );
+                            var Recordˉreachableˉvectors: bytes =
+                                Stackˉflaggedˉroots(
+                                    Stack, Stackˉcollectionˉflagsˉlow,
+                                    Stackˉcollectionˉflagsˉhigh
+                                );
+                            Recordˉreachableˉvectors = Bytesˉconcat(
+                                Recordˉreachableˉvectors,
+                                Valueˉcore.Aggregateˉselectedˉownerˉvalues(
+                                    Module, Typeˉoffsets, Recordˉowner,
+                                    Recordˉfieldˉcount, Recordˉfields,
+                                    0u32, 2u32
+                                )
+                            );
+                            Recordˉreachableˉvectors = Bytesˉconcat(
+                                Recordˉreachableˉvectors,
+                                Localˉtypedˉroots(
+                                    Locals, 0u32, Localˉshapes,
+                                    Recordˉactiveˉshapeˉoffset,
+                                    Functionˉcursor, true
+                                )
+                            );
+                            let Recordˉframeˉvectors: bytes =
+                                Frameˉtypedˉroots(
+                                    Frames, Functionˉcount,
+                                    Functionˉframeˉmetadata,
+                                    Functionˉshapeˉoffsets,
+                                    Localˉshapes, true
+                                );
+                            if Bytesˉlength(Recordˉframeˉvectors) == 0u32 {
+                                return Invalid;
+                            }
+                            Recordˉreachableˉvectors = Bytesˉconcat(
+                                Recordˉreachableˉvectors,
+                                Bytesˉslice(
+                                    Recordˉframeˉvectors, 1u32,
+                                    Bytesˉlength(Recordˉframeˉvectors) - 1u32
+                                )
+                            );
                             let Recordˉmarkˉscan: bytes =
                                 Valueˉcore.Markˉaggregateˉroots(
                                     Module,
                                     Typeˉoffsets,
+                                    Typeˉcount,
                                     Records,
                                     Recordˉmetadata,
+                                    Heap,
+                                    Heapˉallocations,
+                                    Heapˉallocationˉcount,
                                     Recordˉcapacity,
                                     Recordˉmarks,
-                                    Recordˉreachableˉvalues
+                                    Recordˉreachableˉvalues,
+                                    Recordˉreachableˉvectors
                                 );
                             if Bytesˉlength(Recordˉmarkˉscan)
                                 != Recordˉcapacity {
@@ -6497,12 +6552,19 @@ fn Returningˉlocalˉdescriptors(
 fn Returningˉaggregateˉcollection(
     Module: bytes,
     Typeˉoffsets: bytes,
+    Typeˉcount: u32,
     Records: bytes,
     Recordˉmetadata: bytes,
+    Heap: bytes,
+    Heapˉallocations: bytes,
+    Heapˉallocationˉcount: u32,
     Stack: bytes,
     Stackˉrecordˉflagsˉlow: u32,
     Stackˉrecordˉflagsˉhigh: u32,
+    Stackˉcollectionˉflagsˉlow: u32,
+    Stackˉcollectionˉflagsˉhigh: u32,
     Returnˉisˉrecord: bool,
+    Returnˉisˉcollection: bool,
     Returnˉresult: bytes,
     Frames: bytes,
     Functionˉcount: u32,
@@ -6513,13 +6575,13 @@ fn Returningˉaggregateˉcollection(
     Zeroˉcell: bytes,
     Borrowˉroots: bytes
 ) -> Valueˉcore.Aggregateˉcollection {
-    var Roots: bytes = Stackˉaggregateˉroots(
+    var Roots: bytes = Stackˉflaggedˉroots(
         Stack, Stackˉrecordˉflagsˉlow, Stackˉrecordˉflagsˉhigh
     );
     if Returnˉisˉrecord { Roots = Bytesˉconcat(Roots, Returnˉresult); }
-    let Frameˉroots: bytes = Frameˉaggregateˉroots(
+    let Frameˉroots: bytes = Frameˉtypedˉroots(
         Frames, Functionˉcount, Functionˉframeˉmetadata,
-        Functionˉshapeˉoffsets, Localˉshapes
+        Functionˉshapeˉoffsets, Localˉshapes, false
     );
     if Bytesˉlength(Frameˉroots) == 0u32 {
         return Valueˉcore.Aggregateˉcollection(
@@ -6531,8 +6593,30 @@ fn Returningˉaggregateˉcollection(
         Bytesˉslice(Frameˉroots, 1u32, Bytesˉlength(Frameˉroots) - 1u32)
     );
     Roots = Bytesˉconcat(Roots, Bytesˉconcat(Tasks.Retainedˉroots(Taskˉstate), Borrowˉroots));
+    var Vectors: bytes = Stackˉflaggedˉroots(
+        Stack, Stackˉcollectionˉflagsˉlow,
+        Stackˉcollectionˉflagsˉhigh
+    );
+    if Returnˉisˉcollection {
+        Vectors = Bytesˉconcat(Vectors, Returnˉresult);
+    }
+    let Frameˉvectors: bytes = Frameˉtypedˉroots(
+        Frames, Functionˉcount, Functionˉframeˉmetadata,
+        Functionˉshapeˉoffsets, Localˉshapes, true
+    );
+    if Bytesˉlength(Frameˉvectors) == 0u32 {
+        return Valueˉcore.Aggregateˉcollection(
+            false, Recordˉmetadata, Bytesˉslice(Module, 0u32, 0u32)
+        );
+    }
+    Vectors = Bytesˉconcat(
+        Vectors,
+        Bytesˉslice(Frameˉvectors, 1u32, Bytesˉlength(Frameˉvectors) - 1u32)
+    );
     return Valueˉcore.Collectˉunreachableˉaggregates(
-        Module, Typeˉoffsets, Records, Recordˉmetadata, Roots, Zeroˉcell
+        Module, Typeˉoffsets, Typeˉcount, Records, Recordˉmetadata,
+        Roots, Vectors, Heap, Heapˉallocations,
+        Heapˉallocationˉcount, Zeroˉcell
     );
 }
 
@@ -9376,9 +9460,14 @@ export fn Main(Request: bytes) -> bytes {
             if Moduleˉminor >= 28u32 {
                 let Returnˉcollection: Valueˉcore.Aggregateˉcollection =
                     Returningˉaggregateˉcollection(
-                        Module, Typeˉoffsets, Records, Recordˉmetadata,
+                        Module, Typeˉoffsets, Typeˉcount,
+                        Records, Recordˉmetadata,
+                        Heap, Heapˉallocations, Heapˉallocationˉcount,
                         Stack, Stackˉrecordˉflagsˉlow,
-                        Stackˉrecordˉflagsˉhigh, Returnˉisˉrecord,
+                        Stackˉrecordˉflagsˉhigh,
+                        Stackˉcollectionˉflagsˉlow,
+                        Stackˉcollectionˉflagsˉhigh,
+                        Returnˉisˉrecord, Returnˉisˉcollection,
                         Returnˉresult, Frames, Functionˉcount,
                         Functionˉframeˉmetadata, Functionˉshapeˉoffsets,
                         Localˉshapes,

@@ -209,3 +209,88 @@ export fn Collectionˉelement(
     if Index >= Count { return Empty; }
     return Bytesˉslice(Heap, Offset + 8u32 + Index * 8u32, 8u32);
 }
+
+export record Collectionˉrecordˉroots {
+    Valid: bool;
+    Allocationˉindex: u32;
+    Roots: bytes;
+}
+
+export fn Collectionˉrecordˉelementˉroots(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Heap: bytes,
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Recordˉmetadata: bytes,
+    Value: bytes
+) -> Collectionˉrecordˉroots {
+    let Empty: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    let Invalid: Collectionˉrecordˉroots = Collectionˉrecordˉroots(
+        false, 4294967295u32, Empty
+    );
+    if Allocationˉcount > 4096u32 ||
+        Bytesˉlength(Allocations) != Allocationˉcount * 12u32 ||
+        Bytesˉlength(Heap) > 65536u32 ||
+        Bytesˉlength(Recordˉmetadata) != 6144u32 ||
+        !Collectionˉbackingˉvalid(
+            Heap, Allocations, Allocationˉcount, Value
+        ) {
+        return Invalid;
+    }
+    let Type: u32 = Collectionˉtype(Heap, Value);
+    if Type >= Typeˉcount { return Invalid; }
+    var Shape: u32 = Collectionˉelementˉshape(
+        Module, Typeˉoffsets, Typeˉcount, Type, 5u32
+    );
+    if Shape == 4294967295u32 {
+        Shape = Collectionˉelementˉshape(
+            Module, Typeˉoffsets, Typeˉcount, Type, 6u32
+        );
+    }
+    if Shape == 4294967295u32 { return Invalid; }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    var Allocationˉindex: u32 = 4294967295u32;
+    var Index: u32 = 0u32;
+    while Index < Allocationˉcount {
+        let Entry: u32 = Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Allocations, Entry) == Offset &&
+            Bytesˉreadˉu32ˉlittle(Allocations, Entry + 4u32) == Length &&
+            Bytesˉreadˉu32ˉlittle(Allocations, Entry + 8u32) > 0u32 {
+            Allocationˉindex = Index;
+        }
+        Index = Index + 1u32;
+    }
+    if Allocationˉindex == 4294967295u32 { return Invalid; }
+    if Collectionˉscalarˉelement(Module, Shape) {
+        return Collectionˉrecordˉroots(true, Allocationˉindex, Empty);
+    }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape)) != 7u32 {
+        return Invalid;
+    }
+    let Recordˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+    if Recordˉtype >= Typeˉcount { return Invalid; }
+    let Expectedˉowner: u32 = Recordˉtype + 1u32;
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
+    var Roots: bytes = Empty;
+    var Cell: u32 = 0u32;
+    while Cell < Count {
+        let Handle: bytes = Bytesˉslice(
+            Heap, Offset + 8u32 + Cell * 8u32, 8u32
+        );
+        let Slot: u32 = Bytesˉreadˉu32ˉlittle(Handle, 0u32);
+        if Slot >= 768u32 ||
+            Bytesˉreadˉu32ˉlittle(Handle, 4u32) != Expectedˉowner ||
+            Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32) !=
+                Expectedˉowner ||
+            Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32 + 4u32) ==
+                0u32 {
+            return Invalid;
+        }
+        Roots = Bytesˉconcat(Roots, Handle);
+        Cell = Cell + 1u32;
+    }
+    return Collectionˉrecordˉroots(true, Allocationˉindex, Roots);
+}

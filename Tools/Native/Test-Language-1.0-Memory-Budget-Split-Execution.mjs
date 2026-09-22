@@ -2621,7 +2621,35 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
         }
         process.stdout.write(`PASS owned budget rejection case=${Label}\n`);
     }
-    process.stdout.write(`native Foundation owned payloads publication=Passed cases=${Completed} budget-rejections=${Invalidˉbudgets.length} owned-execution=Passed qualification=false elapsed-ms=${Date.now() - Started}\n`);
+    const Traceˉfixture = path.join(Repositoryˉroot,
+        'Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Probe.wv');
+    Requireˉordinaryˉfile(Traceˉfixture, 8192, 'record Vector trace fixture');
+    const Traceˉoutput = path.join(Work, 'record-vector-trace.wvb');
+    await Runˉnode('record-vector-trace-compile', 'Run-Split-Compiler.mjs', [
+        Admitter, Authenticator, Analyzer, Emitter,
+        '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+        '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
+        Traceˉfixture,
+        ...[
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv',
+            'Runtime/Windvale/Foundation-Borrow-Frames-Core.wv',
+            'Runtime/Windvale/Foundation-Borrow-View-Core.wv',
+        ].map(Name => path.join(Repositoryˉroot, Name)),
+        Traceˉoutput,
+    ]);
+    const Traceˉverified = await Run('record-vector-trace-verify',
+        Verifier, [Traceˉoutput]);
+    if (Normalize(Traceˉverified) !== 'wvb status=Valid profile=compiler-aligned\n') {
+        Reject('Record Vector trace verifier output differs.');
+    }
+    const Traceˉexecuted = await Run('record-vector-trace-execute',
+        Runner, [Traceˉoutput]);
+    if (Normalize(Traceˉexecuted) !== 'Result: 42\n') {
+        Reject('Record Vector trace result differs.');
+    }
+    process.stdout.write('PASS record Vector trace graph=record-vector-record stale=rejected wrong-type=rejected\n');
+    process.stdout.write(`native Foundation owned payloads publication=Passed cases=${Completed} trace-cases=1 budget-rejections=${Invalidˉbudgets.length} owned-execution=Passed qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 
 async function Verifyˉfoundationˉsourceˉownership(Admitter, Analyzer, Emitter) {

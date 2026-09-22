@@ -192,15 +192,17 @@ now retains its nominal Vector or Sequence type through construction, append,
 and growth. That type identifies the element shape without changing the WVB
 format or public collection API. This is an internal prerequisite: collection
 admission, the compiler, and the verifier still accept only scalar elements.
-Aggregate collection traces handles through record fields and live call roots;
-it does not yet trace handles retained inside a live Vector. Admitting records
-by widening the scalar type checks alone would permit premature reclamation.
-The next implementation slice must use the retained type to mark contained
-record handles at both allocation-pressure and function-return collection
-points, with bounded work and failure behavior. Then extend source/WIR
+The current-source interpreter now follows record handles held by live Vector
+and Sequence backings at allocation-pressure and function-return collection
+points, including collections reached through a marked record. The scan is
+bounded by the heap and allocation limits and rejects stale or wrong-type
+record handles. The focused
+[trace probe](../../Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Probe.wv)
+checks the nested record-to-Vector-to-record path; it is not record-element
+source admission or paired-host qualification. Next extend source/WIR
 admission, complete WVB verification, and interpreter execution together under
-a versioned candidate; reject wrong element types, stale or copied borrows,
-malformed backing, and budget exhaustion before the Package-Lock migration.
+a versioned candidate; reject copied borrows, malformed backing, and budget
+exhaustion before the Package-Lock migration.
 Use the existing memory-budget execution owner and package-format consumer
 oracle for the paired-host gate.
 
