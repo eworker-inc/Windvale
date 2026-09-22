@@ -38,10 +38,12 @@ export fn Collectionˉscalarˉelement(Module: bytes, Shape: u32) -> bool {
 
 export fn Collectionˉemptyˉbacking(
     Maximum: u32,
+    Type: u32,
     Zeroˉcell: bytes
 ) -> bytes {
     let Empty: bytes = Bytesˉslice(Zeroˉcell, 0u32, 0u32);
     if Maximum == 0u32 || Maximum > 2047u32 ||
+        Type >= 2097151u32 ||
         Bytesˉlength(Zeroˉcell) != 8u32 {
         return Empty;
     }
@@ -58,10 +60,20 @@ export fn Collectionˉemptyˉbacking(
     return Bytesˉconcat(
         Bytesˉconcat(
             Bytesˉfromˉu32ˉlittle(0u32),
-            Bytesˉfromˉu32ˉlittle(Maximum)
+            Bytesˉfromˉu32ˉlittle(((Type + 1u32) << 11u32) | Maximum)
         ),
         Cells
     );
+}
+
+export fn Collectionˉtype(Heap: bytes, Value: bytes) -> u32 {
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    return (Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32) >> 11u32) - 1u32;
+}
+
+export fn Collectionˉmaximum(Heap: bytes, Value: bytes) -> u32 {
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    return Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32) & 2047u32;
 }
 
 export fn Collectionˉbackingˉvalid(
@@ -77,9 +89,10 @@ export fn Collectionˉbackingˉvalid(
         Offset > Bytesˉlength(Heap) || Length > Bytesˉlength(Heap) - Offset {
         return false;
     }
-    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Header: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Maximum: u32 = Header & 2047u32;
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
-    if Maximum == 0u32 || Maximum > 2047u32 ||
+    if (Header >> 11u32) == 0u32 || Maximum == 0u32 ||
         Length != (Maximum + 1u32) * 8u32 || Count > Maximum {
         return false;
     }
@@ -113,14 +126,15 @@ export fn Collectionˉappend(
     if Bytesˉlength(Element) != 8u32 { return Empty; }
     let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
-    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Header: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Maximum: u32 = Header & 2047u32;
     if Count >= Maximum { return Empty; }
     let Elementˉoffset: u32 = Offset + 8u32 + Count * 8u32;
     var Result: bytes = Bytesˉconcat(
         Bytesˉslice(Heap, 0u32, Offset),
         Bytesˉconcat(
             Bytesˉfromˉu32ˉlittle(Count + 1u32),
-            Bytesˉfromˉu32ˉlittle(Maximum)
+            Bytesˉfromˉu32ˉlittle(Header)
         )
     );
     Result = Bytesˉconcat(
@@ -156,7 +170,8 @@ export fn Collectionˉgrownˉbacking(
         return Empty;
     }
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
-    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Header: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Maximum: u32 = Header & 2047u32;
     if Maximum == 0u32 || Maximum > 2047u32 || Count > Maximum ||
         Newˉmaximum <= Maximum || Length != (Maximum + 1u32) * 8u32 {
         return Empty;
@@ -177,7 +192,7 @@ export fn Collectionˉgrownˉbacking(
     return Bytesˉconcat(
         Bytesˉconcat(
             Bytesˉfromˉu32ˉlittle(Count),
-            Bytesˉfromˉu32ˉlittle(Newˉmaximum)
+            Bytesˉfromˉu32ˉlittle(Header - Maximum + Newˉmaximum)
         ),
         Cells
     );

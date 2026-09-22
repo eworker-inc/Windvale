@@ -1010,6 +1010,26 @@ fn Executeˉvectorˉconstructˉreserved(
         Resultˉtype >= Typeˉcount {
         return Invalid;
     }
+    let Resultˉvalidˉcase: bytes = Valueˉcore.Variantˉcaseˉfields(
+        Module, Typeˉoffsets, Resultˉtype, 0u32
+    );
+    if Bytesˉlength(Resultˉvalidˉcase) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Resultˉvalidˉcase, 0u32) != 1u32 {
+        return Invalid;
+    }
+    let Vectorˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
+        Module, Bytesˉreadˉu32ˉlittle(Resultˉvalidˉcase, 4u32), 0u32
+    );
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Vectorˉshape)) != 23u32 {
+        return Invalid;
+    }
+    let Vectorˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Vectorˉshape + 1u32);
+    if Vectorˉtype >= Typeˉcount || Vectorˉtype >= 2097151u32 ||
+        Collections.Collectionˉelementˉshape(
+            Module, Typeˉoffsets, Typeˉcount, Vectorˉtype, 5u32
+        ) == 4294967295u32 {
+        return Invalid;
+    }
     let Maximumˉitems: u64 = Bytesˉreadˉu64ˉlittle(
         Initialˉstack, Stackˉlength - 8u32
     );
@@ -1076,7 +1096,7 @@ fn Executeˉvectorˉconstructˉreserved(
                 Initialˉstack, Stackˉlength - 8u32
             );
             let Backing: bytes = Collections.Collectionˉemptyˉbacking(
-                Maximumˉlow, Zeroˉcell
+                Maximumˉlow, Vectorˉtype, Zeroˉcell
             );
             if Bytesˉlength(Backing) == 0u32 { return Invalid; }
             let Allocation: Heapˉallocationˉresult = Allocateˉheapˉvalue(
@@ -2318,9 +2338,11 @@ fn Executeˉvectorˉgrowˉreserved(
         ) != 1u32 {
         return Invalid;
     }
-    let Vectorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Vector, 0u32);
-    let Oldˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
-        Initialˉheap, Vectorˉoffset + 4u32
+    if Collections.Collectionˉtype(Initialˉheap, Vector) >= Typeˉcount {
+        return Invalid;
+    }
+    let Oldˉmaximum: u32 = Collections.Collectionˉmaximum(
+        Initialˉheap, Vector
     );
     let Newˉmaximum: u64 = Bytesˉreadˉu64ˉlittle(
         Initialˉstack, Stackˉlength - 8u32
@@ -2512,8 +2534,8 @@ fn Executeˉvectorˉappend(
     let Vectorˉcount: u32 = Bytesˉreadˉu32ˉlittle(
         Initialˉheap, Vectorˉoffset
     );
-    let Vectorˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
-        Initialˉheap, Vectorˉoffset + 4u32
+    let Vectorˉmaximum: u32 = Collections.Collectionˉmaximum(
+        Initialˉheap, Vector
     );
     var Metadata: bytes = Initialˉmetadata;
     var Records: bytes = Initialˉrecords;
@@ -4526,7 +4548,7 @@ fn Executeˉcollection(
             } else {
                 Heapˉallocationˉvalue =
                     Collections.Collectionˉemptyˉbacking(
-                        Collectionˉmaximum, Zeroˉcell
+                        Collectionˉmaximum, Collectionˉtype, Zeroˉcell
                     );
                 if Bytesˉlength(Heapˉallocationˉvalue) == 0u32 {
                     return Invalid;
@@ -4574,7 +4596,9 @@ fn Executeˉcollection(
                 Heapˉallocations,
                 Heapˉallocationˉcount,
                 Collectionˉappendˉvector
-            ) {
+            ) || Collections.Collectionˉtype(
+                Heap, Collectionˉappendˉvector
+            ) != Collectionˉtype {
                 return Invalid;
             }
             let Collectionˉnextˉheap: bytes =
@@ -5650,7 +5674,10 @@ fn Executeˉextended(
         }
         let Value: bytes = Bytesˉslice(Locals, Parameter * 8u32, 8u32);
         if !Collections.Collectionˉbackingˉvalid(
-            Heap, Heapˉallocations, Heapˉallocationˉcount, Value) { return Invalid; }
+            Heap, Heapˉallocations, Heapˉallocationˉcount, Value) ||
+            Collections.Collectionˉtype(Heap, Value) != Vectorˉtype {
+            return Invalid;
+        }
         Stack = Bytesˉconcat(Stack, Bytesˉconcat(
             Bytesˉfromˉu32ˉlittle(Collections.Collectionˉlength(Heap, Value)),
             Bytesˉfromˉu32ˉlittle(0u32)));
@@ -5679,7 +5706,10 @@ fn Executeˉextended(
         if !Collections.Collectionˉscalarˉelement(Module, Indexedˉelementˉshape) { return Invalid; }
         let Indexedˉvalue: bytes = Bytesˉslice(Locals, Indexedˉslot * 8u32, 8u32);
         if !Collections.Collectionˉbackingˉvalid(
-            Heap, Heapˉallocations, Heapˉallocationˉcount, Indexedˉvalue) { return Invalid; }
+            Heap, Heapˉallocations, Heapˉallocationˉcount, Indexedˉvalue) ||
+            Collections.Collectionˉtype(Heap, Indexedˉvalue) != Indexedˉvectorˉtype {
+            return Invalid;
+        }
         let Indexedˉstackˉlength: u32 = Bytesˉlength(Stack);
         let Indexedˉlow: u32 = Bytesˉreadˉu32ˉlittle(Stack, Indexedˉstackˉlength - 8u32);
         let Indexedˉhigh: u32 = Bytesˉreadˉu32ˉlittle(Stack, Indexedˉstackˉlength - 4u32);

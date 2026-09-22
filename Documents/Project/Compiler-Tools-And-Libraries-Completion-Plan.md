@@ -187,19 +187,22 @@ and full generic collection access are not established by this checkpoint.
 
 The record-element gate has a distinct runtime dependency. The intended
 Package-Lock entries contain scalar offsets and lengths, but a record value is
-held by an aggregate handle. The current collection backing stores eight-byte
-cells, while its admission, compiler, and verifier accept only scalar elements.
+held by an aggregate handle. The interpreter's eight-byte collection backing
+now retains its nominal Vector or Sequence type through construction, append,
+and growth. That type identifies the element shape without changing the WVB
+format or public collection API. This is an internal prerequisite: collection
+admission, the compiler, and the verifier still accept only scalar elements.
 Aggregate collection traces handles through record fields and live call roots;
 it does not yet trace handles retained inside a live Vector. Admitting records
 by widening the scalar type checks alone would permit premature reclamation.
-The first implementation slice must carry exact element-type evidence to each
-live Vector and mark its contained record handles at both allocation-pressure
-and function-return collection points, with bounded work and failure behavior.
-Then extend source/WIR admission, complete WVB verification, and interpreter
-execution together under a versioned candidate; reject wrong element types,
-stale or copied borrows, malformed backing, and budget exhaustion before the
-Package-Lock migration. Use the existing memory-budget execution owner and
-package-format consumer oracle for the paired-host gate.
+The next implementation slice must use the retained type to mark contained
+record handles at both allocation-pressure and function-return collection
+points, with bounded work and failure behavior. Then extend source/WIR
+admission, complete WVB verification, and interpreter execution together under
+a versioned candidate; reject wrong element types, stale or copied borrows,
+malformed backing, and budget exhaustion before the Package-Lock migration.
+Use the existing memory-budget execution owner and package-format consumer
+oracle for the paired-host gate.
 
 These immutable bridges do not enable consuming extraction or arbitrary payload
 composition. Native lowering for minors 40 and 41, installed promotion,
