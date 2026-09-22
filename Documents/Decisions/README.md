@@ -14,7 +14,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Implemented | 500 |
 | Proposed | 4 |
 | Qualified | 95 |
-| Recorded | 8 |
+| Recorded | 9 |
 | Superseded | 14 |
 
 ## Open or unclassified records
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0965: borrow scalar Vector elements without transferring ownership](0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md) | Recorded |
 | [Decision 0964: forward borrowed Vector payloads to immutable helpers](0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md) | Implemented |
 | [Decision 0963: read Vector parameters without transferring ownership](0963-Read-Vector-Parameters-Without-Transferring-Ownership.md) | Recorded |
 | [Construct current-source WVB publishers](0962-Construct-Current-Source-Wvb-Publishers.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0943: complete Windvale Language 1.0 Slice 8 qualification](0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) | Accepted |
 | [Decision 0942: advance the frozen source identity for Foreign and payload borrowing](0942-Advance-The-Frozen-Source-Identity-For-Foreign-And-Payload-Borrowing.md) | Accepted |
 | [Decision 0941: raise the native type-directory capacity for self-host convergence](0941-Raise-The-Native-Type-Directory-Capacity-For-Self-Host-Convergence.md) | Accepted |
-| [Decision 0940: separate the Profile 8 compiler-scale instruction ceiling](0940-Separate-The-Profile-8-Compiler-Scale-Instruction-Ceiling.md) | Accepted |
 
 ## Superseded or historical records
 

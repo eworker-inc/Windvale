@@ -2382,6 +2382,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
+        'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',

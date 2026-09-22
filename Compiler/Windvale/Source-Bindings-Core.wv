@@ -1561,7 +1561,7 @@ fn Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(
     }
     if Query.Nameˉlength == 16u32 { return First == 83u32; }
     if Query.Nameˉlength == 17u32 { return First == 86u32; }
-    if Query.Nameˉlength == 18u32 { return First == 79u32; }
+    if Query.Nameˉlength == 18u32 { return First == 79u32 || First == 86u32; }
     if Query.Nameˉlength == 22u32 || Query.Nameˉlength == 27u32 {
         return First == 86u32;
     }
@@ -1917,6 +1917,17 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             Vectorˉfreezeˉmodule.Index, 1u32, 170u32
         );
     }
+    let Vectorˉborrowˉatˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 13u32
+        );
+    if Vectorˉborrowˉatˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Vectorˉborrowˉatˉmodule.Index, 2u32, 192u32
+        );
+    }
     let Memoryˉsplitˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
             Input, Scan, Symbols.Lookup, Owner,
@@ -2090,6 +2101,16 @@ export fn Compilerˉsourceˉbindingsˉcallableˉparameter(
     Labelˉoffset: u32,
     Labelˉlength: u32
 ) -> Compilerˉsourceˉparameterˉmatch {
+    if Callable.Kind == Compilerˉsourceˉcallableˉkind.Intrinsic &&
+        Callable.Directoryˉentry == 192u32 {
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Labelˉsource, Labelˉoffset, Labelˉlength, "Vector"
+        ) { return Compilerˉsourceˉparameterˉmatch(true, true, 0u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Labelˉsource, Labelˉoffset, Labelˉlength, "Index"
+        ) { return Compilerˉsourceˉparameterˉmatch(true, true, 1u32); }
+        return Compilerˉsourceˉparameterˉmatch(false, true, Callable.Items);
+    }
     if Callable.Kind == Compilerˉsourceˉcallableˉkind.Foreign {
         if Callable.Items != 3u32 {
             return Compilerˉsourceˉparameterˉmatch(false, false, Callable.Items);

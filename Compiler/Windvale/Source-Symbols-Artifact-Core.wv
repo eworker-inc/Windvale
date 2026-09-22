@@ -1716,7 +1716,8 @@ if Intrinsic == 9u32 { Expectedˉname = "Split"; }
 if Intrinsic == 10u32 { Expectedˉname = "Vectorˉconstructˉreserved"; }
 if Intrinsic == 11u32 { Expectedˉname = "Vectorˉappend"; }
 if Intrinsic == 12u32 { Expectedˉname = "Vectorˉgrowˉreserved"; }
-if Intrinsic < 1u32 || Intrinsic > 12u32 ||
+if Intrinsic == 13u32 { Expectedˉname = "Vectorˉborrowˉat"; }
+if Intrinsic < 1u32 || Intrinsic > 13u32 ||
 !Compilerˉsourceˉsymbolsˉnameˉequals(
 Source, Query.Nameˉoffset, Query.Nameˉlength, Expectedˉname
 ) {

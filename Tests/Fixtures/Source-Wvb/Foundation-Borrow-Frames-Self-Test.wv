@@ -69,9 +69,34 @@ fn Vectorˉstep(Current: Frames.State, Minor: u32, Instruction: bytes,
         Stack, Allocations, Bytesˉlength(Allocations) / 12u32, Flags, Consumed);
 }
 
+fn Checkˉindexedˉscanner() -> i32 {
+    let Indexed: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(0u32, 1u32));
+    if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 1u32) != 524289u32 { return 54; }
+    if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 40u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 42u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 2u32) != 0u32 { return 55; }
+    var Length: u32 = 0u32;
+    while Length < 9u32 {
+        if Scanner.Scanˉfunction(Bytesˉslice(Indexed, 0u32, Length),
+            0u32, Length, 41u32, 1u32) != 0u32 { return 56; }
+        Length = Length + 1u32;
+    }
+    let Slotˉoverflow: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(4096u32, 1u32));
+    let Typeˉoverflow: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(0u32, 4096u32));
+    if Scanner.Scanˉfunction(Slotˉoverflow, 0u32, 9u32, 41u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Typeˉoverflow, 0u32, 9u32, 41u32, 1u32) != 0u32 { return 57; }
+    let Parameterˉread: bytes = Bytesˉconcat(Bytesˉfromˉu8(226u8), Cell(0u32, 1u32));
+    if Scanner.Scanˉfunction(Parameterˉread, 0u32, 9u32, 41u32, 1u32) != 1u32 ||
+        Scanner.Scanˉfunction(Bytesˉconcat(Indexed, Parameterˉread), 0u32, 18u32, 41u32, 1u32) != 524290u32 {
+        return 58;
+    }
+    return 0;
+}
+
 fn Checkˉprojectedˉvector() -> i32 {
     if Frames.Payloadˉkind(23u32) || Frames.Payloadˉlocalˉkind(23u32, 39u32) ||
-        Frames.Payloadˉlocalˉkind(23u32, 41u32) || !Frames.Payloadˉlocalˉkind(23u32, 40u32) ||
+        Frames.Payloadˉlocalˉkind(23u32, 42u32) || !Frames.Payloadˉlocalˉkind(23u32, 40u32) ||
+        !Frames.Payloadˉlocalˉkind(23u32, 41u32) ||
         Frames.Payloadˉlocalˉkind(26u32, 40u32) || Frames.Payloadˉlocalˉkind(27u32, 40u32) ||
         Frames.Valueˉkind(87u32) != 23u32 { return 47; }
     let Module: bytes = Vectorˉmodule(40u32);
@@ -79,7 +104,8 @@ fn Checkˉprojectedˉvector() -> i32 {
         Bytesˉconcat(Bytesˉfromˉu8(23u8), Bytesˉfromˉu32ˉlittle(1u32)));
     if Values.Shapeˉwidthˉat(Bytesˉconcat(Module, Wrapped), Bytesˉlength(Module)) != 6u32 ||
         Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(39u32), Wrapped), Bytesˉlength(Module)) != 0u32 ||
-        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(41u32), Wrapped), Bytesˉlength(Module)) != 0u32 {
+        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(41u32), Wrapped), Bytesˉlength(Module)) != 6u32 ||
+        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(42u32), Wrapped), Bytesˉlength(Module)) != 0u32 {
         return 48;
     }
     let Zero: bytes = Cell(0u32, 0u32);
@@ -146,7 +172,7 @@ fn Checkˉprojectedˉvector() -> i32 {
         Owner, Shapes, Metadata, Descriptor, Borrowed.Stack, Flag, 1u32, Finalˉrelease);
     if Stale.Valid || Deadˉread.Valid || Bytesˉreadˉu32ˉlittle(Finalˉrelease, 8u32) != 0u32 ||
         Bytesˉlength(Values.Releaseˉdescriptor(Finalˉrelease, 1u32, Descriptor)) != 0u32 { return 53; }
-    return 0;
+    return Checkˉindexedˉscanner();
 }
 
 fn Checkˉsequenceˉcollection() -> i32 {

@@ -16,7 +16,8 @@ export record Flowˉresult {
 
 // Immutable evidence from the typed-stack pass, not a serialized module format.
 // Events are sixteen-byte cells: code offset, operation, destination, source.
-// Operations: 1 new loan, 2 forward, 3 read, 4 owner store, 5 owner take.
+// Operations: 1 new loan, 2 forward, 3 read, 4 owner store, 5 owner take,
+// 6 potential mutation through a direct exclusive-Vector call.
 export record Loanˉtrace {
     Valid: bool;
     Map: bytes;
@@ -131,7 +132,7 @@ export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
     let Takesˉowner: bool = Opcode == 205u32 || Opcode == 207u32 ||
         Opcode == 214u32 || Opcode == 217u32 || Opcode == 219u32 ||
         Opcode == 220u32 || Opcode == 222u32;
-    if Opcode == 5u32 || Takesˉowner {
+    if Opcode == 5u32 || Takesˉowner || Opcode == 208u32 || Opcode == 209u32 {
         let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
         if Local >= Bytesˉlength(Trace.Map) / 4u32 {
             return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
@@ -158,7 +159,18 @@ export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
     }
     if Hasˉpush && Pushˉkind >= 64u32 {
         let Pushedˉtarget: u32 = Trace.Locals + Remaining;
-        if Opcode == 225u32 {
+        if Opcode == 227u32 {
+            let Indexedˉowner: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
+            if Indexedˉowner >= Bytesˉlength(Trace.Map) / 4u32 || Count == 0u32 || Remaining != Count - 1u32 {
+                return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+            }
+            let Indexedˉloan: u32 = Bytesˉreadˉu32ˉlittle(Trace.Map, Indexedˉowner * 4u32);
+            if Indexedˉloan == 4294967295u32 {
+                Result = Loanˉevent(Result, Offset, 1u32, Pushedˉtarget, Indexedˉowner);
+            } else {
+                Result = Loanˉevent(Result, Offset, 2u32, Pushedˉtarget, Indexedˉloan);
+            }
+        } else if Opcode == 225u32 {
             Result = Loanˉevent(Result, Offset, 1u32, Pushedˉtarget,
                 Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32));
         } else if Opcode == 4u32 {
@@ -310,7 +322,7 @@ fn Loanˉtransfer(State: bytes, Operation: u32, Destination: u32,
         if Operation == 2u32 { return Loanˉstate(true, Setˉstate(State, Destination, Readˉvalue), 0u32, Cost); }
         return Loanˉstate(true, State, 0u32, Cost);
     }
-    if Destination != Root { return Loanˉstate(true, State, 0u32, Cost); }
+    if Operation != 6u32 && Destination != Root { return Loanˉstate(true, State, 0u32, Cost); }
     if Operation == 5u32 && Bytesˉreadˉu8(State, Slots) != 2u8 {
         return Loanˉstate(false, State, 9u32, Cost);
     }
@@ -321,6 +333,7 @@ fn Loanˉtransfer(State: bytes, Operation: u32, Destination: u32,
     while Index < Slots {
         var Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(State, Index));
         if (Value & 2u32) != 0u32 { Value = (Value & 13u32) | 8u32; }
+        if Operation == 6u32 && (Value & 4u32) != 0u32 { Value = (Value & 11u32) | 8u32; }
         let Step: u32 = Bytesˉlength(Chunk) + Bytesˉlength(Result) + 1u32;
         if Step > Limit - Work { return Loanˉstate(false, State, 5u32, Work); }
         Work = Work + Step;
@@ -329,6 +342,7 @@ fn Loanˉtransfer(State: bytes, Operation: u32, Destination: u32,
         Index = Index + 1u32;
     }
     var Available: u8 = 2u8;
+    if Operation == 6u32 { Available = Bytesˉreadˉu8(State, Slots); }
     if Operation == 5u32 { Available = 1u8; }
     return Loanˉstate(true, Bytesˉconcat(Result, Bytesˉconcat(Chunk, Bytesˉfromˉu8(Available))), 0u32, Work);
 }
@@ -367,7 +381,7 @@ export fn Loanˉcheck(Input: bytes, Code: u32, Length: u32,
         let Destination: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 8u32);
         let Source: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 12u32);
         if Offset < Earlier || Offset >= Length || Bytesˉreadˉu8(Control.Boundaries, Offset) == 0u8 ||
-            Operation < 1u32 || Operation > 5u32 { return Reject(10u32, Offset, Work); }
+            Operation < 1u32 || Operation > 6u32 { return Reject(10u32, Offset, Work); }
         if Operation <= 3u32 && Destination >= Slots { return Reject(10u32, Offset, Work); }
         if Operation == 2u32 && Source >= Slots { return Reject(10u32, Offset, Work); }
         if Operation == 1u32 {
@@ -378,7 +392,8 @@ export fn Loanˉcheck(Input: bytes, Code: u32, Length: u32,
             Work = Work + Rootˉcost;
             if !Hasˉowner(Roots, Source) { Roots = Bytesˉconcat(Roots, Bytesˉfromˉu32ˉlittle(Source)); }
         }
-        if Operation >= 4u32 && Destination >= Bytesˉlength(Trace.Map) / 4u32 { return Reject(10u32, Offset, Work); }
+        if (Operation == 4u32 || Operation == 5u32) && Destination >= Bytesˉlength(Trace.Map) / 4u32 { return Reject(10u32, Offset, Work); }
+        if Operation == 6u32 && (Destination != 0u32 || Source != 0u32) { return Reject(10u32, Offset, Work); }
         Earlier = Offset;
         Event = Event + 16u32;
     }

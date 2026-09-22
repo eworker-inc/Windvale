@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.40 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing, and candidate WVB 1.40 adds read-only Vector parameter access and the projected-Vector bridge specified below; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.41 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing, candidate WVB 1.40 adds read-only Vector parameter access and the projected-Vector bridge, and candidate WVB 1.41 adds immutable scalar Vector indexed borrowing as specified below; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -1649,6 +1649,53 @@ this correction does not establish arbitrary nominal ownership support.
 Consuming Option/Result Vector extraction, arbitrary projected forwarding, native
 minor-40 lowering, browser execution, and installed promotion remain separate
 work. The raw immutable bridge above does not grant ownership of the payload.
+
+## Candidate immutable scalar Vector indexing
+
+Status: candidate implementation with selected paired-host verification;
+the [exact checkpoint](../Documents/Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json)
+records eight positive cases, fourteen malformed modules, ten source rejections,
+and three bounds traps. Selected execution covers `i32`, full-width `u64`, and
+one `u8`-backed enum, not every scalar kind or enum backing family.
+WVIR operation `192` lowers to WVB 1.41 `E3 vector.borrow_at`, carrying the
+original owner slot and exact Vector Types index. Its single `u64` index is
+loaded in source evaluation order. The nine-byte instruction produces an
+immutable element view. Its normal five-byte result store either preserves
+shape `37` for an immutable helper argument or performs proven Copy-scalar
+read-through into an ordinary temporary. Sequence indexing is not substituted
+for the borrow-producing instruction.
+
+The bounded Foundation-borrow planner activates even without an Option/Result
+borrow, freezes the indexed owner, and preserves borrowed identity wherever an
+immutable helper needs it. Copy read-through occurs at the result store before
+later unrelated exclusive calls, so those calls cannot invalidate a copied
+scalar. Exact immutable helper calls preserve the borrowed mode.
+Projected Vector temporaries keep their original owner's provenance and remain
+excluded from direct-slot temporary elision. Reachability, code sizes, stack
+bounds, and version selection account for the new operation.
+
+Before publication, a bounded preflight checks the bytecode profile's
+conservative exclusive-call rule. In a function containing an exclusive Vector
+call, borrowed Foundation parameters/locals and retained loan temporaries used
+outside their defining block reject. A retained temporary used at or after a
+later same-block exclusive call also rejects. These restrictions prevent a
+textual-order check from overlooking a stale view on a loop backedge. Ordinary
+Copy temporaries are exempt. The check classifies each call once, retains at
+most 4,096 flag bytes, and scans operands and block terminators without
+per-call lifetime rescans. Some safe unrelated-owner combinations remain
+unsupported; rejection is explicit before WVB publication.
+
+Only existing resource-free scalar collection elements are supported. This
+does not complete generic `Vectorˉborrowˉat`, enable record backing-storage
+tracing, or deliver the planned typed package-lock directory. The
+[indexed-borrow decision](../Documents/Decisions/0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md)
+and [bytecode contract](Seed-Bytecode.md#candidate-wvb-141-immutable-scalar-vector-indexing)
+own exact lifetime, invalidation, bounds, and target restrictions. The existing
+supplied-product `--vector-parameter-reads` selection owns current focused
+source-to-execution evidence. Automatic CI execution of this selection remains
+open. Paired Linux containers use Windows-produced native images; neither
+independent reconstruction, native E3 lowering, installed promotion, nor broader
+qualification follows from this checkpoint.
 
 ## Expansion path
 

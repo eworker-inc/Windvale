@@ -78,6 +78,57 @@ fn Typedˉresult(Input: bytes) -> u32 {
     return 0u32;
 }
 
+fn Checkˉindexedˉloans() -> i32 {
+    let Start: bytes = Event(0u32, 1u32, 0u32, 0u32);
+    let Mutate: bytes = Event(2u32, 6u32, 0u32, 0u32);
+    let Read: bytes = Event(3u32, 3u32, 0u32, 0u32);
+    if Rule(Straight, Join(Start, Mutate, Read)) != 8u32 { return 231; }
+    let Parameter: Owners.Flowˉresult = Flow(Straight, Borrowedˉparameter, 1u32,
+        Bytesˉconcat(Mutate, Read), 16777216u32);
+    if Parameter.Rule != 8u32 { return 232; }
+    if Rule(Straight, Join(Start, Event(1u32, 3u32, 0u32, 0u32), Mutate)) != 0u32 { return 233; }
+    let Renew: bytes = Event(3u32, 1u32, 0u32, 0u32);
+    if Rule(Straight, Join(Start, Mutate,
+        Bytesˉconcat(Renew, Event(4u32, 3u32, 0u32, 0u32)))) != 0u32 { return 234; }
+    if Rule(Straight, Join(Start, Event(1u32, 2u32, 1u32, 0u32),
+        Join(Mutate, Renew, Event(4u32, 3u32, 1u32, 0u32)))) != 8u32 { return 235; }
+    let Vectorˉshapes: bytes = Join(Bytesˉfromˉu8(23u8), Bytesˉfromˉu32ˉlittle(0u32),
+        Join(Bytesˉfromˉu8(87u8), Bytesˉfromˉu32ˉlittle(0u32),
+            Bytesˉconcat(Bytesˉfromˉu8(74u8), Bytesˉfromˉu32ˉlittle(0u32))));
+    let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Vectorˉshapes, 1u32, 2u32, 16777216u32);
+    let Index: bytes = Bytesˉconcat(Bytesˉfromˉu8(10u8), Bytesˉfromˉu32ˉlittle(0u32));
+    let Code: bytes = Bytesˉconcat(Instruction(227u8, 0u32), Bytesˉfromˉu32ˉlittle(0u32));
+    let Direct: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Code,
+        0u32, 0u32, 0u32, Index, 0u32, true, 74u32);
+    if !Direct.Valid || Bytesˉlength(Direct.Chunk) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Direct.Chunk, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Direct.Chunk, 8u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Direct.Chunk, 12u32) != 0u32 { return 236; }
+    let Projected: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Word(Code, 1u32, 1u32),
+        0u32, 0u32, 0u32, Index, 0u32, true, 74u32);
+    if !Projected.Valid || Bytesˉlength(Projected.Chunk) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Projected.Chunk, 4u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Projected.Chunk, 8u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Projected.Chunk, 12u32) != 0u32 { return 237; }
+    let Missing: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Word(Code, 1u32, 3u32),
+        0u32, 0u32, 0u32, Index, 0u32, true, 74u32);
+    if Missing.Valid { return 238; }
+    let Empty: bytes = Bytesˉslice(Index, 0u32, 0u32);
+    var Opcode: u32 = 208u32;
+    while Opcode <= 209u32 {
+        let Written: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial,
+            Instruction(Bytesˉreadˉu8(Bytesˉfromˉu32ˉlittle(Opcode), 0u32), 0u32), 0u32, 0u32, 0u32,
+            Empty, 0u32, false, 0u32);
+        if !Written.Valid || Bytesˉlength(Written.Chunk) != 16u32 ||
+            Bytesˉreadˉu32ˉlittle(Written.Chunk, 4u32) != 4u32 ||
+            Bytesˉreadˉu32ˉlittle(Written.Chunk, 8u32) != 0u32 { return 239; }
+        Opcode = Opcode + 1u32;
+    }
+    if Rule(Straight, Event(0u32, 6u32, 1u32, 0u32)) != 10u32 ||
+        Rule(Straight, Event(0u32, 6u32, 0u32, 1u32)) != 10u32 { return 240; }
+    return 0;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Start: bytes = Event(0u32, 1u32, 0u32, 0u32);
     let Read: bytes = Event(1u32, 3u32, 0u32, 0u32);
@@ -110,7 +161,7 @@ export fn Check(Candidate: bytes) -> i32 {
         Rule(Straight, Event(0u32, 2u32, 99u32, 0u32)) != 10u32 { return 217; }
     if Rule(Diamond, Event(1u32, 3u32, 0u32, 0u32)) != 10u32 ||
         Rule(Straight, Bytesˉconcat(Read, Start)) != 10u32 { return 218; }
-    if Rule(Straight, Event(0u32, 6u32, 0u32, 0u32)) != 10u32 ||
+    if Rule(Straight, Event(0u32, 7u32, 0u32, 0u32)) != 10u32 ||
         Rule(Straight, Bytesˉslice(Start, 0u32, 15u32)) != 10u32 { return 219; }
     let Limited: Owners.Flowˉresult = Flow(Straight, Shapes, 2u32, Join(Start, Read, Write), 64u32);
     let Oversized: Owners.Flowˉresult = Flow(Straight, Shapes, 2u32, Start, 16777217u32);
@@ -158,5 +209,5 @@ export fn Check(Candidate: bytes) -> i32 {
         if Wrong.Valid || Missing.Valid { return 230; }
         Operation = Operation + 1u32;
     }
-    return 0;
+    return Checkˉindexedˉloans();
 }

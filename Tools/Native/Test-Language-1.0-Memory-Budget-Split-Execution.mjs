@@ -250,7 +250,7 @@ if (Developmentˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly &&
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 366 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 419 : Foundationˉsourceˉrunner === null ? 392 : 395) : Foundationˉplanˉonly ? 20 : Foundationˉdirectoriesˉonly ? 27 : 319} ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 388 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 441 : Foundationˉsourceˉrunner === null ? 414 : 417) : Foundationˉplanˉonly ? 27 : Foundationˉdirectoriesˉonly ? 27 : 334} ` +
         `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
         (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
         (Borrowˉcomponentˉbytes === null ? '' :
@@ -1472,7 +1472,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${555 + Growˉmalformedˉcases.length +
+        `cases=${577 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=26 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1485,7 +1485,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=20 foundation-borrow-directory-cases=27 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=53 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=27 foundation-borrow-directory-cases=27 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=40 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         'foundation-source-ownership-cases=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
@@ -1673,7 +1673,7 @@ async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyze
     const Immutable = Parseˉfunction(Bytes, Sections[4], 'Read');
     const Mutations = [
         ['old-minor', Broken => Broken.writeUInt16LE(39, 6)],
-        ['unknown-opcode', Broken => { Broken[First] = 227; }],
+        ['unknown-opcode', Broken => { Broken[First] = 228; }],
         ['parameter-boundary', Broken => Broken.writeUInt32LE(Reads[0].function.parameterCount, First + 1)],
         ['parameter-overflow', Broken => Broken.writeUInt32LE(0xffffffff, First + 1)],
         ['type-boundary', Broken => Broken.writeUInt32LE(Types.length, First + 5)],
@@ -1811,9 +1811,367 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
         process.stdout.write(`PASS Vector call regression fixture=${Name} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
     }
     const Payloads = await Verifyˉvectorˉpayloadˉborrows(Arguments, Verifier, Runner);
+    const Indexed = await Verifyˉvectorˉindexedˉborrows(Arguments, Verifier, Runner);
     process.stdout.write(`native Vector parameter reads status=Passed reads=${Reads.length} malformed=${Mutations.length} source-rejections=${Invalidˉsources.length} ` +
         `payload-cases=${Payloads.cases} payload-malformed=${Payloads.malformed} payload-source-rejections=${Payloads.rejections} ` +
+        `indexed-cases=${Indexed.cases} indexed-malformed=${Indexed.malformed} indexed-source-rejections=${Indexed.rejections} indexed-bounds=${Indexed.bounds} ` +
         `wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)} qualification=false elapsed-ms=${Date.now() - Started}\n`);
+}
+
+async function Verifyˉvectorˉindexedˉborrows(Arguments, Verifier, Runner) {
+    const Fixture = path.join(Repositoryˉroot,
+        'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv');
+    Requireˉordinaryˉfile(Fixture, 8192, 'indexed Vector borrow fixture');
+    const Source = readFileSync(Fixture, 'utf8');
+    function Replace(Text, Before, After) {
+        if (Text.split(Before).length !== 2) Reject('Indexed Vector mutation is ambiguous: ' + Before);
+        return Text.replace(Before, After);
+    }
+    function Resultˉsource(Failure) {
+        let Text = Replace(Source, 'let Owner: Option.Option<Collections.Vector<i32> >',
+            Failure ? 'let Owner: Result.Result<u32, Collections.Vector<i32> >' :
+                'let Owner: Result.Result<Collections.Vector<i32>, u32>');
+        Text = Replace(Text, 'Option.Option.Present<Collections.Vector<i32> > { Value: Values }',
+            Failure ? 'Result.Result.Failure<u32, Collections.Vector<i32> > { Error: Values }' :
+                'Result.Result.Valid<Collections.Vector<i32>, u32> { Value: Values }');
+        return Replace(Text, 'Option.Borrow(borrow Owner)',
+            Failure ? 'Result.Borrowˉfailure(borrow Owner)' : 'Result.Borrowˉvalid(borrow Owner)');
+    }
+    const Localˉread = 'let Localˉcopy: i32 = Collections.Vectorˉborrowˉat(borrow Values, 0u64);';
+    const Local = Replace(Source, 'Observe(Values)', `if Forward(borrow Values, 0u64) != 42 { return 16; }
+                    ${Localˉread}
+                    if Localˉcopy != 42 { return 15; }
+                    if Forward(borrow Values, 0u64) != 42 { return 18; }
+                    Readˉscalar(Collections.Vectorˉborrowˉat::<i32>(borrow Values, 0u64))`);
+    let Multiple = Replace(Source, 'Collections.Vectorˉappend::<i32>(borrow mut Values, 42)',
+        'Collections.Vectorˉappend::<i32>(borrow mut Values, 7)');
+    Multiple = Replace(Multiple, 'if Readˉexclusive(borrow mut Values) != 42 { return 3; }\n                    Observe(Values)',
+        `let Second: Result.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+                        Collections.Vectorˉappend::<i32>(borrow mut Values, 42);
+                    match Second {
+                        case Result.Result.Valid { Value: Secondˉaccepted } {
+                            if Readˉexclusive(borrow mut Values) != 42 { return 3; }
+                            Observe(Values)
+                        }
+                        case Result.Result.Failure { Error: Secondˉfailure } { 4 }
+                    }`);
+    Multiple = Replace(Multiple, 'Length(borrow Value) != 1u64', 'Length(borrow Value) != 2u64')
+        .replaceAll('0u64', '1u64');
+    // Keep Main and its failure codes i32; only the collection element and
+    // borrowed scalar helpers widen. Distinct cells expose wrong-index reads.
+    let Wide = Multiple.replaceAll('Vector<i32>', 'Vector<u64>')
+        .replaceAll('Vectorˉappendˉfailure<i32>', 'Vectorˉappendˉfailure<u64>')
+        .replaceAll('::<i32>', '::<u64>')
+        .replaceAll('!= 42', '!= 18446744073709551615u64');
+    for (const [Before, After] of [
+        ['fn Readˉscalar(Value: borrow i32) -> i32', 'fn Readˉscalar(Value: borrow u64) -> u64'],
+        ['fn Read(Value: borrow Collections.Vector<u64>, Index: u64) -> i32',
+            'fn Read(Value: borrow Collections.Vector<u64>, Index: u64) -> u64'],
+        ['fn Forward(Value: borrow Collections.Vector<u64>, Index: u64) -> i32',
+            'fn Forward(Value: borrow Collections.Vector<u64>, Index: u64) -> u64'],
+        ['fn Readˉexclusive(Value: borrow mut Collections.Vector<u64>) -> i32',
+            'fn Readˉexclusive(Value: borrow mut Collections.Vector<u64>) -> u64'],
+        ['export fn Copyˉbeforeˉexclusive(Left: borrow Collections.Vector<u64>, Right: borrow mut Collections.Vector<u64>) -> i32',
+            'export fn Copyˉbeforeˉexclusive(Left: borrow Collections.Vector<u64>, Right: borrow mut Collections.Vector<u64>) -> u64'],
+        ['export fn Copyˉloop(Left: borrow Collections.Vector<u64>, Right: borrow mut Collections.Vector<u64>) -> i32',
+            'export fn Copyˉloop(Left: borrow Collections.Vector<u64>, Right: borrow mut Collections.Vector<u64>) -> u64'],
+        ['var Sum: i32 = 0;', 'var Sum: u64 = 0u64;'],
+        ['let Observed: i32 =', 'let Observed: u64 ='],
+        ['let Copied: i32 =', 'let Copied: u64 ='],
+        ['return 17;', 'return 17u64;'],
+        ['Collections.Vectorˉappend::<u64>(borrow mut Values, 7)',
+            'Collections.Vectorˉappend::<u64>(borrow mut Values, 7u64)'],
+        ['Collections.Vectorˉappend::<u64>(borrow mut Values, 42)',
+            'Collections.Vectorˉappend::<u64>(borrow mut Values, 18446744073709551615u64)'],
+    ]) Wide = Replace(Wide, Before, After);
+    const Mixedˉsource = Replace(Source, 'fn Readˉscalar(', `fn Mixedˉread(Value: borrow i32, Right: borrow Collections.Vector<i32>) -> i32 {
+    return Value;
+}
+export fn Mixedˉreadˉcall(Left: borrow Collections.Vector<i32>, Right: borrow mut Collections.Vector<i32>) -> i32 {
+    return Mixedˉread(Collections.Vectorˉborrowˉat(borrow Left, 0u64), borrow Right);
+}
+fn Readˉscalar(`);
+    let Enumˉsource = Source.replaceAll('Vector<i32>', 'Vector<Indexedˉenum>')
+        .replaceAll('Vectorˉappendˉfailure<i32>', 'Vectorˉappendˉfailure<Indexedˉenum>')
+        .replaceAll('::<i32>', '::<Indexedˉenum>');
+    Enumˉsource = Replace(Enumˉsource,
+        'fn Readˉscalar(Value: borrow i32) -> i32 { return Value; }',
+        `enum Indexedˉenum: u8 { Selected = 2u8; }
+enum Otherˉenum: u8 { Different = 2u8; }
+export fn Otherˉenumˉtype(Value: Otherˉenum) -> i32 { return 0; }
+fn Readˉscalar(Value: borrow Indexedˉenum) -> i32 {
+    let Copied: Indexedˉenum = Value;
+    if Copied != Indexedˉenum.Selected { return 19; }
+    let Name: bytes = Textˉtoˉutf8(Enumˉname(Copied));
+    if Bytesˉlength(Name) != 8u32 { return 20; }
+    if Bytesˉreadˉu8(Name, 0u32) != 83u8 { return 21; }
+    return 42;
+}`);
+    Enumˉsource = Replace(Enumˉsource,
+        'return Collections.Vectorˉborrowˉat(borrow Left, 0u64) + Readˉexclusive(borrow mut Right);',
+        'return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Left, 0u64)) + Readˉexclusive(borrow mut Right);');
+    Enumˉsource = Replace(Enumˉsource, 'let Copied: i32 = Collections.Vectorˉborrowˉat(borrow Item, 0u64);',
+        'let Copied: Indexedˉenum = Collections.Vectorˉborrowˉat(borrow Item, 0u64);');
+    Enumˉsource = Replace(Enumˉsource, 'if Copied != 42 { return 11; }',
+        'if Copied != Indexedˉenum.Selected { return 11; }');
+    Enumˉsource = Replace(Enumˉsource, 'Collections.Vectorˉappend::<Indexedˉenum>(borrow mut Values, 42)',
+        'Collections.Vectorˉappend::<Indexedˉenum>(borrow mut Values, Indexedˉenum.Selected)');
+    const Cases = [
+        ['option-projected', Mixedˉsource],
+        ['result-valid-projected', Resultˉsource(false)],
+        ['result-failure-projected', Resultˉsource(true)],
+        ['owned-local', Local],
+        ['repeated-helper-loop', Replace(Source, 'while Iteration < 4u32', 'while Iteration < 64u32')],
+        ['nonzero-index-multiple-elements', Multiple],
+        ['full-width-u64-nonzero-index', Wide],
+        ['enum-nominal-element', Enumˉsource],
+    ];
+    function Inspect(Bytes, Requireˉprojection = true) {
+        if (Bytes.length > 16384 || Bytes.readUInt16LE(6) !== 41) {
+            Reject('Indexed Vector version or module bound differs.');
+        }
+        const Sections = Parseˉsections(Bytes);
+        const Reads = [];
+        for (const Entry of Parseˉfunctionˉentries(Bytes, Sections[4])) {
+            const Function = Parseˉfunction(Bytes, Sections[4], Entry.name);
+            const Begin = Sections[5].payload + Entry.codeOffset;
+            const End = Begin + Entry.codeLength;
+            for (let Cursor = Begin; Cursor < End;) {
+                const Width = Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+                if (Cursor + Width > End) Reject('Indexed Vector instruction is truncated.');
+                if (Bytes[Cursor] === 227) Reads.push({ offset: Cursor, function: Function, name: Entry.name });
+                Cursor += Width;
+            }
+        }
+        for (const [Name, Mode] of [['Read', 26], ['Readˉexclusive', 27]]) {
+            const Read = Reads.find(Value => Value.name === Name);
+            if (Read === undefined || Bytes[Read.function.parameterShapeOffsets[0]] !== Mode ||
+                Bytes.readUInt32LE(Read.offset + 1) !== 0) {
+                Reject('Indexed Vector parameter read mode differs: ' + Name);
+            }
+        }
+        const Projected = Reads.find(Value => Value.name === 'Observe');
+        if (Requireˉprojection && (Projected === undefined || !Projected.function.localShapeOffsets.some(Offset =>
+            Bytes[Offset] === 37 && Bytes[Offset + 1] === 23))) {
+            Reject('Indexed Vector projection did not retain a borrowed Vector owner.');
+        }
+        const Scalar = Parseˉfunction(Bytes, Sections[4], 'Readˉscalar');
+        const Borrow = Readˉshape(Bytes, Scalar.parameterShapeOffsets[0]);
+        const Types = Parseˉtypes(Bytes, Sections[7]);
+        const Primary = Reads.find(Value => Value.name === 'Read');
+        const Vector = Types[Bytes.readUInt32LE(Primary.offset + 5)];
+        const Element = Vector?.element;
+        if (Vector?.kind !== 5 || Element === null || Element === undefined ||
+            Borrow.shape !== 37 || Borrow.inner.shape !== Element.shape ||
+            Borrow.inner.typeIndex !== Element.typeIndex ||
+            (Element.shape === 8 ? Types[Element.typeIndex]?.kind !== 7 || Scalar.returnShape !== 1 :
+                Borrow.inner.shape !== Scalar.returnShape)) {
+            Reject('Indexed Vector helper does not consume the exact scalar borrow shape.');
+        }
+        for (const Read of Reads) {
+            const Vectorˉtype = Bytes.readUInt32LE(Read.offset + 5);
+            const Readˉelement = Types[Vectorˉtype]?.element;
+            const Slot = Bytes.readUInt32LE(Read.offset + 1);
+            const Shapeˉoffset = Slot < Read.function.parameterCount
+                ? Read.function.parameterShapeOffsets[Slot]
+                : Read.function.localShapeOffsets[Slot - Read.function.parameterCount];
+            if (Shapeˉoffset === undefined) Reject('Indexed Vector owner slot is absent.');
+            let Owner = Readˉshape(Bytes, Shapeˉoffset);
+            if (Owner.shape === 37) Owner = Owner.inner;
+            if (Types[Vectorˉtype]?.kind !== 5 || ![23, 26, 27].includes(Owner.shape) ||
+                Owner.typeIndex !== Vectorˉtype || Readˉelement?.shape !== Element.shape ||
+                Readˉelement?.typeIndex !== Element.typeIndex) {
+                Reject('Indexed Vector owner or element nominal identity differs.');
+            }
+        }
+        if (!Reads.some(Value => Value.name === 'Copyˉbeforeˉexclusive') ||
+            !Reads.some(Value => Value.name === 'Copyˉloop')) {
+            Reject('Indexed Vector Copy/exclusive complete-verifier guard was not retained.');
+        }
+        return { sections: Sections, reads: Reads, scalar: Scalar, types: Types, element: Element };
+    }
+    function Resultˉtemporaryˉshape(Bytes, Read) {
+        const Store = Read.offset + 9;
+        if (Store + 5 > Bytes.length || Bytes[Store] !== 5) {
+            Reject('Indexed Vector result is not stored in a temporary.');
+        }
+        const Slot = Bytes.readUInt32LE(Store + 1);
+        const Offset = Read.function.localShapeOffsets[Slot - Read.function.parameterCount];
+        if (Slot < Read.function.parameterCount || Offset === undefined || Bytes[Offset] !== 37) {
+            Reject('Indexed Vector immutable helper result lacks a borrowed temporary.');
+        }
+        return Offset;
+    }
+    let Candidate = null;
+    let Enumˉcandidate = null;
+    for (const [Index, [Label, Text]] of Cases.entries()) {
+        const Input = path.join(Work, 'Indexed-' + Label + '.wv');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        let First = null;
+        let Instructions = 0;
+        for (const Generation of ['a', 'b']) {
+            const Output = path.join(Work, 'Indexed-' + Label + '-' + Generation + '.wvb');
+            await Runˉnode('indexed-' + Label + '-' + Generation, 'Run-Split-Compiler.mjs', Arguments(Input, Output, true));
+            const Bytes = readFileSync(Output);
+            const Layout = Inspect(Bytes, Label !== 'owned-local');
+            if (Label === 'owned-local' && !Layout.reads.some(Read => Read.name === 'Main')) {
+                Reject('Indexed Vector owned-local read is absent.');
+            }
+            if (First !== null && !First.equals(Bytes)) Reject('Indexed Vector publication is not deterministic.');
+            First = Bytes;
+            if (Generation === 'a') {
+                if (Normalize(await Run('indexed-' + Label + '-verify', Verifier, [Output])) !==
+                    'wvb status=Valid profile=compiler-aligned\n') Reject('Indexed Vector verification differs: ' + Label);
+                const Execution = Normalize(await Run('indexed-' + Label + '-execute', Runner, [Output, '--report-steps']));
+                const Report = /^Result: 42\nInstructions: ([1-9][0-9]*)\n$/u.exec(Execution);
+                if (Report === null || Number(Report[1]) > 80000) {
+                    Reject('Indexed Vector execution or instruction bound differs: ' + Label);
+                }
+                Instructions = Number(Report[1]);
+            }
+        }
+        if (Label === 'option-projected') Candidate = First;
+        if (Label === 'enum-nominal-element') Enumˉcandidate = First;
+        process.stdout.write(`PASS Vector indexed borrow item=${Index + 1}/${Cases.length} case=${Label} ` +
+            `instructions=${Instructions} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
+    }
+    const Layout = Inspect(Candidate);
+    const Read = Layout.reads.find(Value => Value.name === 'Read');
+    const First = Read.offset;
+    const Types = Parseˉtypes(Candidate, Layout.sections[7]);
+    const Exactˉtype = Candidate.readUInt32LE(First + 5);
+    const Otherˉvector = Types.findIndex((Type, Index) => Type.kind === 5 && Index !== Exactˉtype);
+    const Otherˉkind = Types.findIndex(Type => Type.kind !== 5);
+    if (Otherˉvector < 0 || Otherˉkind < 0) Reject('Indexed Vector nominal mutation controls are absent.');
+    const Resultˉshape = Resultˉtemporaryˉshape(Candidate, Read);
+    if (Candidate[Resultˉshape + 1] !== Layout.element.shape) {
+        Reject('Indexed Vector scalar result mutation control differs.');
+    }
+    const Mixed = Parseˉfunction(Candidate, Layout.sections[4], 'Mixedˉread');
+    const Mixedˉcaller = Parseˉfunction(Candidate, Layout.sections[4], 'Mixedˉreadˉcall');
+    const Mixedˉread = Layout.reads.find(Value => Value.name === 'Mixedˉreadˉcall');
+    if (Mixed.parameterCount !== 2 || Mixedˉcaller.parameterCount !== 2 ||
+        Candidate[Mixed.parameterShapeOffsets[0]] !== 37 ||
+        Candidate[Mixed.parameterShapeOffsets[0] + 1] !== Layout.element.shape ||
+        Candidate[Mixed.parameterShapeOffsets[1]] !== 26 ||
+        Candidate[Mixedˉcaller.parameterShapeOffsets[1]] !== 27 ||
+        Mixed.parameterTypeIndices[1] !== Mixedˉcaller.parameterTypeIndices[1] ||
+        Mixedˉread === undefined ||
+        Candidate[Resultˉtemporaryˉshape(Candidate, Mixedˉread) + 1] !== Layout.element.shape) {
+        Reject('Indexed Vector mixed-call mutation controls differ.');
+    }
+    const Enumˉlayout = Inspect(Enumˉcandidate);
+    const Enumˉread = Enumˉlayout.reads.find(Value => Value.name === 'Read');
+    const Enumˉresultˉshape = Resultˉtemporaryˉshape(Enumˉcandidate, Enumˉread);
+    const Otherˉenum = Parseˉfunction(Enumˉcandidate, Enumˉlayout.sections[4], 'Otherˉenumˉtype');
+    const Otherˉenumˉtype = Otherˉenum.parameterTypeIndices[0];
+    if (Enumˉcandidate[Enumˉresultˉshape + 1] !== 8 ||
+        Enumˉcandidate.readUInt32LE(Enumˉresultˉshape + 2) !== Enumˉlayout.element.typeIndex ||
+        Enumˉcandidate[Otherˉenum.parameterShapeOffsets[0]] !== 8 ||
+        Otherˉenumˉtype === Enumˉlayout.element.typeIndex ||
+        Enumˉlayout.types[Otherˉenumˉtype]?.kind !== 7) {
+        Reject('Indexed Vector enum result mutation controls differ.');
+    }
+    const Mutations = [
+        ['old-minor', Bytes => Bytes.writeUInt16LE(40, 6)],
+        ['unknown-opcode', Bytes => { Bytes[First] = 228; }],
+        ['slot-boundary', Bytes => Bytes.writeUInt32LE(Read.function.parameterCount + Read.function.localShapes.length, First + 1)],
+        ['slot-overflow', Bytes => Bytes.writeUInt32LE(0xffffffff, First + 1)],
+        ['scalar-owner-slot', Bytes => Bytes.writeUInt32LE(1, First + 1)],
+        ['wrong-vector-type', Bytes => Bytes.writeUInt32LE(Otherˉvector, First + 5)],
+        ['wrong-nominal-kind', Bytes => Bytes.writeUInt32LE(Otherˉkind, First + 5)],
+        ['type-boundary', Bytes => Bytes.writeUInt32LE(Types.length, First + 5)],
+        ['type-overflow', Bytes => Bytes.writeUInt32LE(0xffffffff, First + 5)],
+        ['wrong-index-type', Bytes => { Bytes[Read.function.parameterShapeOffsets[1]] = Layout.scalar.returnShape; }],
+        ['wrong-borrow-result', Bytes => {
+            Bytes[Resultˉshape + 1] = Candidate[Read.function.parameterShapeOffsets[1]];
+        }],
+        ['mixed-exclusive-call-live-scalar', Bytes => { Bytes[Mixed.parameterShapeOffsets[1]] = 27; }],
+        ['wrong-enum-borrow-result', Bytes => Bytes.writeUInt32LE(Otherˉenumˉtype, Enumˉresultˉshape + 2), Enumˉcandidate],
+        ['truncated', Bytes => Bytes.subarray(0, First + 8)],
+    ];
+    for (const [Label, Mutate, Original = Candidate] of Mutations) {
+        let Broken = Buffer.from(Original);
+        const Replacement = Mutate(Broken);
+        if (Buffer.isBuffer(Replacement)) Broken = Replacement;
+        if (Broken.equals(Original)) Reject('Indexed Vector mutation changed no bytes: ' + Label);
+        const Input = path.join(Work, 'Indexed-malformed-' + Label + '.wvb');
+        writeFileSync(Input, Broken, { flag: 'wx' });
+        const Typedˉonly = ['wrong-borrow-result', 'mixed-exclusive-call-live-scalar', 'wrong-enum-borrow-result'].includes(Label);
+        for (const [Tool, Pattern] of [
+            [Verifier, Typedˉonly ? /^wvb status=Invalid phase=typed-execution\n$/u :
+                /^wvb status=Invalid phase=(?:semantic step=[a-z-]+|typed-execution|control-reachability)\n$/u],
+            [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u],
+        ]) {
+            const Result = await Runˉdevelopmentˉcommand(Tool, [Input],
+                Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
+                Reject(`Malformed indexed Vector borrow did not reject: ${Label}\n${Result.Output}${Result.Error}`);
+            }
+        }
+        process.stdout.write(`PASS Vector indexed borrow malformed case=${Label}\n`);
+    }
+    const Borrow = 'Collections.Vectorˉborrowˉat::<i32>(borrow Value, Index)';
+    const Invalidˉsources = [
+        ['missing-explicit-borrow', Replace(Source, Borrow, 'Collections.Vectorˉborrowˉat::<i32>(Value, Index)')],
+        ['exclusive-borrow-argument', Replace(Source, Borrow, 'Collections.Vectorˉborrowˉat::<i32>(borrow mut Value, Index)')],
+        ['wrong-index-type', Replace(Source, Borrow, 'Collections.Vectorˉborrowˉat::<i32>(borrow Value, 0u32)'), /Invalidˉindex|Typeˉmismatch/u],
+        ['wrong-element-type', Replace(Source, Borrow, 'Collections.Vectorˉborrowˉat::<u32>(borrow Value, Index)'), /Genericˉresolution/u],
+        ['live-loan-append', Replace(Local, Localˉread, `${Localˉread}
+                    let Rejected: Result.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+                        Collections.Vectorˉappend::<i32>(borrow mut Values, 7);`)],
+        ['live-loan-consume', Replace(Local, Localˉread, `${Localˉread}
+                    let Moved: Collections.Vector<i32> = Values;`)],
+        ['live-loan-freeze', Replace(Local, Localˉread, `${Localˉread}
+                    let Frozen: Collections.Sequence<i32> = Collections.Vectorˉfreeze(Values);`)],
+        ['live-loan-owned-length', Replace(Local, Localˉread, `${Localˉread}
+                    let Length: u64 = Collections.Vectorˉlength(borrow Values);`)],
+        ['borrow-return-escape', Replace(Source, 'fn Readˉscalar(',
+            `export fn Escape(Value: borrow Collections.Vector<i32>) -> borrow i32 {
+    return Collections.Vectorˉborrowˉat(borrow Value, 0u64);
+}
+fn Readˉscalar(`)],
+        ['retained-borrow-mixed-exclusive-call', Replace(Source, 'fn Readˉscalar(',
+            `fn Mixed(Value: borrow i32, Right: borrow mut Collections.Vector<i32>) -> i32 {
+    return Value;
+}
+export fn Mixedˉcall(Left: borrow Collections.Vector<i32>, Right: borrow mut Collections.Vector<i32>) -> i32 {
+    return Mixed(Collections.Vectorˉborrowˉat(borrow Left, 0u64), borrow mut Right);
+}
+fn Readˉscalar(`), /Unsupportedˉoperation/u],
+    ];
+    for (const [Label, Text, Diagnostic = /Invalidˉborrow|Invalidˉcollection|Invalidˉwir|Unsupportedˉoperation/u] of Invalidˉsources) {
+        const Input = path.join(Work, 'Indexed-invalid-' + Label + '.wv');
+        const Output = path.join(Work, 'Indexed-invalid-' + Label + '.wvb');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(process.execPath,
+            [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output, true)],
+            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
+            Reject(`Invalid indexed Vector borrow did not reject before publication: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS Vector indexed borrow source rejection case=${Label}\n`);
+    }
+    const Bounds = [['length', '1u64'], ['high-half-only', '4294967296u64'], ['maximum-index', '18446744073709551615u64']];
+    for (const [Label, Index] of Bounds) {
+        const Text = Replace(Source, 'return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, 0u64));',
+            `return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, ${Index}));`);
+        const Input = path.join(Work, 'Indexed-bounds-' + Label + '.wv');
+        const Output = path.join(Work, 'Indexed-bounds-' + Label + '.wvb');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        await Runˉnode('indexed-bounds-' + Label, 'Run-Split-Compiler.mjs', Arguments(Input, Output, true));
+        Inspect(readFileSync(Output));
+        if (Normalize(await Run('indexed-bounds-' + Label + '-verify', Verifier, [Output])) !==
+            'wvb status=Valid profile=compiler-aligned\n') Reject('Indexed Vector bounds module is not structurally valid.');
+        const Result = await Runˉdevelopmentˉcommand(Runner, [Output],
+            Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || Result.Output !== '' ||
+            !/^wvb run status=Failed code=3008 instructions=[1-9][0-9]*\n$/u.test(Normalize(Result.Error))) {
+            Reject(`Indexed Vector bounds violation did not terminate: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS Vector indexed borrow bounds rejection case=${Label}\n`);
+    }
+    return { cases: Cases.length, malformed: Mutations.length, rejections: Invalidˉsources.length, bounds: Bounds.length };
 }
 
 async function Verifyˉvectorˉpayloadˉborrows(Arguments, Verifier, Runner) {
@@ -3571,7 +3929,7 @@ function Requireˉnativeˉfunctionˉlimits(Bytes) {
 
 function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {
     const Opcode = Bytes[Cursor];
-    if (Opcode === 226) return 9;
+    if (Opcode === 226 || Opcode === 227) return 9;
     if (Opcode === 225) return 13;
     if (Opcode === 192) return Bytes[Cursor + 2] === 0 ? 5 : 3;
     if (Opcode === 193) return Bytes[Cursor + 1] === 0 ? 6 : 2;

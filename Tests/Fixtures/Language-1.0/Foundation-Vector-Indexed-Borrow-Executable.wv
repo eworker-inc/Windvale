@@ -1,0 +1,89 @@
+#!wv/1 en@1
+module Foundationˉvectorˉindexedˉborrowˉexecutable;
+profile core;
+platform linux, windows;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+
+fn Readˉscalar(Value: borrow i32) -> i32 { return Value; }
+
+fn Length(Value: borrow Collections.Vector<i32>) -> u64 {
+    return Collections.Vectorˉlength(borrow Value);
+}
+
+fn Read(Value: borrow Collections.Vector<i32>, Index: u64) -> i32 {
+    let Observed: i32 = Readˉscalar(Collections.Vectorˉborrowˉat::<i32>(borrow Value, Index));
+    if Length(borrow Value) != 1u64 { return 17; }
+    return Observed;
+}
+
+fn Forward(Value: borrow Collections.Vector<i32>, Index: u64) -> i32 {
+    return Read(borrow Value, Index);
+}
+
+fn Readˉexclusive(Value: borrow mut Collections.Vector<i32>) -> i32 {
+    return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, 0u64));
+}
+
+// Retained for complete-verifier coverage; Main does not execute this guard.
+export fn Copyˉbeforeˉexclusive(Left: borrow Collections.Vector<i32>, Right: borrow mut Collections.Vector<i32>) -> i32 {
+    return Collections.Vectorˉborrowˉat(borrow Left, 0u64) + Readˉexclusive(borrow mut Right);
+}
+
+// Each loop iteration consumes its loan before the unrelated exclusive call.
+// This exported guard is complete-verified, not called by Main.
+export fn Copyˉloop(Left: borrow Collections.Vector<i32>, Right: borrow mut Collections.Vector<i32>) -> i32 {
+    var Sum: i32 = 0;
+    var Iteration: u32 = 0u32;
+    while Iteration < 2u32 {
+        Sum = Sum + Readˉscalar(Collections.Vectorˉborrowˉat(borrow Left, 0u64)) + Readˉexclusive(borrow mut Right);
+        Iteration = Iteration + 1u32;
+    }
+    return Sum;
+}
+
+// Preserve a distinct Vector nominal for exact-type rejection mutations.
+export fn Otherˉtype(Value: borrow Collections.Vector<u32>) -> u32 { return 0u32; }
+
+fn Observe(Values: Collections.Vector<i32>) -> i32 {
+    let Owner: Option.Option<Collections.Vector<i32> > =
+        Option.Option.Present<Collections.Vector<i32> > { Value: Values };
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Item } {
+            var Iteration: u32 = 0u32;
+            while Iteration < 4u32 {
+                let Copied: i32 = Collections.Vectorˉborrowˉat(borrow Item, 0u64);
+                if Copied != 42 { return 11; }
+                if Forward(borrow Item, 0u64) != 42 { return 12; }
+                if Readˉscalar(Collections.Vectorˉborrowˉat(Index: 0u64, Vector: borrow Item)) != 42 { return 13; }
+                Iteration = Iteration + 1u32;
+            }
+            return 42;
+        }
+        case Option.Option.Absent { return 14; }
+    }
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Created: Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Created {
+        case Result.Result.Valid { Value: Initial } {
+            var Values: Collections.Vector<i32> = Initial;
+            let Appended: Result.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+                Collections.Vectorˉappend::<i32>(borrow mut Values, 42);
+            match Appended {
+                case Result.Result.Valid { Value: Accepted } {
+                    if Readˉexclusive(borrow mut Values) != 42 { return 3; }
+                    Observe(Values)
+                }
+                case Result.Result.Failure { Error: Appendˉfailure } { 2 }
+            }
+        }
+        case Result.Result.Failure { Error: Allocationˉfailure } { 1 }
+    };
+}

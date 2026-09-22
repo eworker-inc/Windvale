@@ -24,8 +24,9 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    compiler-verified and contained-execution candidate WVB 1.37 write-pointer
    extension, the source-publication candidate WVB 1.38 registered Foreign-call
    extension, the verified host-scalar candidate WVB 1.39 immutable
-   Foundation value-payload-borrow extension, and candidate WVB 1.40 read-only
-   Vector parameter access and projected-Vector helper calls.
+   Foundation value-payload-borrow extension, candidate WVB 1.40 read-only
+   Vector parameter access and projected-Vector helper calls, and candidate
+   WVB 1.41 immutable scalar Vector indexed borrowing.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -153,9 +154,10 @@ borrowed `Memoryˉbudget` parameter. WVB 1.35 is selected when
 `unsafe.write-pointer.borrow` is present. Candidate WVB 1.38 is selected when
 `foreign.call` is present. Candidate WVB 1.39 is selected when
 `foundation.value.borrow` is present, unless a parameter length read or an
-admitted borrowed Vector local requires candidate WVB 1.40. The source-built
+admitted borrowed Vector local requires candidate WVB 1.40, or indexed Vector
+borrowing requires candidate WVB 1.41. The source-built
 compiler-aligned verifier accepts versions
-through candidate minor 40 and never admits an
+through candidate minor 41 and never admits an
 extension under an earlier header. The source-built native scalar runner
 accepts WVB 1.33 through candidate WVB 1.37 only through the bounded provider
 below. The native x86-64 lowerer admits the same focused unsafe-scratch,
@@ -173,6 +175,53 @@ delivers the maintained `Option<u64>` parser/lock consumer. These are exact
 shape and host claims, not arbitrary payload or target support. The projected
 Vector extension to minor 40 has focused
 [Windows/Debian evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json).
+
+## Candidate WVB 1.41 immutable scalar Vector indexing
+
+Status: candidate implementation with selected paired-host verification. The
+[indexed-borrow decision](../Documents/Decisions/0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md)
+extends the earlier borrow candidates without changing their retained encodings.
+
+```text
+E3 vector.borrow_at u32 owner-slot index, u32 Vector-type index
+```
+
+The instruction is nine bytes, with little-endian immediates. It consumes one
+exact `u64` index and produces shape `37` wrapping the exact scalar element
+shape. The owner must be available and match the exact kind-5 Types identity:
+an owned shape-`23` slot, a shape-`26` or `27` parameter, or a non-parameter
+shape-`37(23)` view (internal kind `87`). The first candidate retains the
+existing resource-free scalar collection element gate. It does not admit
+record, nested collection, or owned elements.
+
+The complete verifier establishes the owner loan or forwards the original loan
+of a projected Vector. The result is a non-owning immutable view; ordinary
+Copy-scalar read-through and exact immutable direct-call forwarding retain
+their existing rules. The logical index must be below the live Vector length;
+an out-of-range index traps before backing-storage access or result publication.
+The read neither changes the descriptor nor allocates or transfers a lease.
+
+Stores, takes, append, and growth invalidate loans of their target owner.
+A direct call with any exclusive Vector parameter conservatively invalidates
+all live loans before reading its borrowed arguments, even those from unrelated
+owners; borrowed arguments to that call and later stale-view use reject.
+No new call alias inference or mutable borrow is implied. Existing lifetime
+and descriptor bounds remain unchanged.
+
+Minor 41 inherits the admitted minor-40 shapes, including the local Vector
+wrapper and its immutable call bridge. It requires at least one `E3`; `E3` is
+invalid under every earlier minor. Canonical emission selects 41 only when
+indexed borrowing is needed. Complete metadata, typed-stack, and lifetime
+validation still precede host scalar execution. Native lowering, browser/OS
+consumers, installed identities, and independent qualification remain closed
+until their own evidence is available.
+
+The [focused execution evidence](../Documents/Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json)
+records eight positive scenarios, fourteen malformed modules, ten source
+rejections, and three bounds traps on Windows and Debian. Selected values are
+`i32`, full-width `u64`, and one `u8`-backed enum; this is not coverage of every
+scalar kind or enum backing family. Linux containers reuse Windows-produced
+native images, not an independently reconstructed compiler or native E3 lowering.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -1006,7 +1055,7 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.39 under the exact entry rules)
 35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.39)
 36 immutable-borrowed Memoryˉbudget view (WVB 1.34 through WVB 1.39 parameter or compiler-generated local only)
-37 recursively encoded immutable borrowed payload shape (WVB 1.39/1.40 ordinary immutable-borrow parameter or compiler-generated local only; Vector wrapper is minor-40 non-parameter local only)
+37 recursively encoded immutable borrowed payload shape (WVB 1.39 through 1.41 ordinary immutable-borrow parameter or compiler-generated local only; Vector wrapper is minor-40/41 non-parameter local only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -1131,10 +1180,11 @@ shape byte `25` under the System-profile rules are valid in WVB 1.33 through
 WVB 1.39. Shape byte `36` is valid in WVB 1.34 through WVB 1.39. Opcode `DD`
 is valid in WVB 1.35 through WVB 1.39, opcode `DE` in WVB 1.36 through
 WVB 1.39, opcode `DF` in WVB 1.37 through 1.39, opcode `E0` in WVB 1.38 and
-1.39. Candidate WVB 1.40 inherits these prior vocabulary ranges subject to their
+1.39. Candidates WVB 1.40 and 1.41 inherit these prior vocabulary ranges subject to their
 unchanged ownership and authority rules. Shape byte `37` and opcode `E1` are
-valid in WVB 1.39 and 1.40 under their exact payload rules; `E2` and the borrowed
-Vector-local wrapper are valid only in WVB 1.40.
+valid in WVB 1.39 through 1.41 under their exact payload rules; `E2` and the borrowed
+Vector-local wrapper are valid in WVB 1.40 and 1.41. Opcode `E3` is valid only in
+candidate WVB 1.41 under the indexed-borrow rules above.
 Type kind `7` is valid in
 WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never
@@ -1157,6 +1207,7 @@ at least one `DF`. Every candidate WVB 1.38 module contains at least one `E0`.
 Every candidate WVB 1.39 module contains at least one `E1`.
 Every candidate WVB 1.40 module contains at least one `E2` or an admitted
 shape-`37(23)` non-parameter local.
+Every candidate WVB 1.41 module contains at least one `E3`.
 Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.

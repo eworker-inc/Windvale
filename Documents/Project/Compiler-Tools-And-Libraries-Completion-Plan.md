@@ -6,8 +6,9 @@
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
-Windows/Debian package execution. A focused candidate WVB 1.40 bridge now lets
-immutable helpers observe a raw Vector payload without consuming it. The next
+Windows/Debian package execution. Focused candidate WVB 1.40/1.41 bridges let
+immutable helpers observe raw Vector payloads and borrow scalar elements without
+consuming their owners. The next
 milestones are a separate owned-resource consumer, wider composition, exclusive
 borrowing, take, mapping, and the wider Libraries 1.0 suite. The
 maintainer approved this delivery split on
@@ -173,8 +174,19 @@ argument does not turn a Copy value into an owned value. The
 [projected-payload evidence](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
 owns the exact host results and limits.
 
-This is an immutable projection-to-helper bridge, not consuming extraction or
-arbitrary payload composition. Native lowering for minor 40, installed promotion,
+The [scalar indexed-borrow checkpoint](../Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json)
+now verifies eight positive cases, fourteen malformed modules, ten source
+rejections and three bounds traps for `i32`, `u64` and one `u8`-backed enum.
+The supplied-product selector is the current evidence; automatic CI execution
+of those cases remains open. Paired Linux execution uses Windows-produced
+native images, not independent reconstruction or native E3 lowering. The next
+consumer gate still needs record-element storage/tracing, allocation-budget
+threading outside Main, and scanner ownership before the typed package-lock
+directory can replace its existing byte representation. Installed promotion
+and full generic collection access are not established by this checkpoint.
+
+These immutable bridges do not enable consuming extraction or arbitrary payload
+composition. Native lowering for minors 40 and 41, installed promotion,
 exclusive Option/Result borrowing, Take, mapping, and full qualification remain
 separate. A maintained owned-resource consumer is the next wider milestone; it
 does not reopen the already delivered package-parser consumer gate.

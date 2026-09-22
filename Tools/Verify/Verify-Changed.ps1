@@ -400,18 +400,18 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerCommand = Join-Path $RepositoryRoot (
                     "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.$OwnerExtension")
                 $OwnerArguments = @('--foundation-borrow-plan')
-                $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-plan cases=20 expected-seconds=30'
+                $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-plan cases=27 expected-seconds=30'
                 if ($NativePlan.UseFoundationBorrowDirectoryDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-directories')
                     $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-directories cases=27 expected-seconds=30'
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-owners')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=319 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=334 expected-seconds=180'
                 }
                 if ($NativePlan.UseFoundationBorrowComponentsDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-components')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-components cases=366 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-components cases=388 expected-seconds=180'
                 }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',

@@ -1,0 +1,1833 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-22-scalar-vector-indexed-borrow",
+  "date": "2026-09-22",
+  "subject": "Immutable scalar Vector indexed borrowing, candidate WVB 1.41",
+  "claim": "Eight indexed scenarios compile deterministically and agree across Windows and Debian in WVB identities and guest instructions. Fourteen malformed cases, ten source rejections and three runtime bounds rejections pass. Execution includes i32 nonzero indexing, an exact full-width u64 oracle, and one u8-backed enum with nominal-name checking and wrong-enum borrow-result rejection. The corrected Analyzer passes fresh complete verification; four unchanged products and Components exit-42 evidence are explicitly reused from the failed preceding checkpoint. Owned-payload and ten-case runtime owners pass freshly on both hosts. Current products and declared inputs were rehashed before export.",
+  "source": {
+    "kind": "Manifest",
+    "value": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Results.json sha256=bcc61a959e9c70796eff5d927bcc158647cb50d2481dc17ec7278a874add4871"
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js v24.18.0 and Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "Passing analysis recovery: current declared inputs; fresh Analyzer; four exact products and ten prior passing checks reused from an overall failed checkpoint.",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-Analysis-Recovery.mjs",
+      "command": "node Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-Analysis-Recovery.mjs --maximum-minutes 30; started 2026-09-22T10:57:37.289Z; product deadline 2026-09-22T11:19:37.289Z; total deadline 2026-09-22T11:27:37.289Z",
+      "result": "Passed",
+      "elapsedMilliseconds": 1107676,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Results.json",
+          "size": 182533,
+          "sha256": "7ce78447103b68dc30c4434be681eb1677f182d8d1304f283014320df814373d"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T09-29-00-871Z/Results.json",
+          "size": 31621,
+          "sha256": "a3311edcec0e8619360dcc3870ef4ad4f1c526c6c6155165eef2e924f8adeea7"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-Remaining-Checkpoint.mjs",
+          "size": 21725,
+          "sha256": "01a7f282222c2235b9876436181ff9b917f42ec072f0a780471eff249756a848"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-Clock.json",
+          "size": 154,
+          "sha256": "5207387f7d4bbb618891d758c717beb387ff87913ed48060142d9f375d20cfe1"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 212418,
+          "sha256": "a1a3670ae6aeaf9eb5050016e259f38b3fd0982a2cc4238cb5b5b71b2714f440"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Package-Paired-Linux.mjs",
+          "size": 4395,
+          "sha256": "f12a437a425192dd109a90bdab767dfeecba3ebbd83313c217fe92e75977324e"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45089,
+          "sha256": "9d9888a3f6bb4887cd7c55d77c819127a785214c2da702845330afe230182501"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 39011,
+          "sha256": "48b51c16602173645193901dba4c863f789e5dab3f8c191053d3db48a1992786"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Write-Split-Compiler-Producer-Identity.mjs",
+          "size": 5851,
+          "sha256": "e14bc3db4e547fa03b21c9f04123e892abcc6ae0ede074db23bab8a30c1c9686"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv",
+          "size": 3696,
+          "sha256": "c659a0cbeb348e85c4a001777e2e3d61d720a32c80e8bd3ee04c22ae925d4c19"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv",
+          "size": 3886,
+          "sha256": "fb0bbb49a346ef1364da72897a2ffd6cb35d4fd6b329d0a28d0abd5456f03294"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv",
+          "size": 3430,
+          "sha256": "2819dc1d960c39c507933c1f3be0c6c3bab8540ed9caec6a6d683bea9b32085e"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Vector-Executable.wv",
+          "size": 1088,
+          "sha256": "e72d956dcc51fd6af60dbea01c7d5dba59fdde511148422b6d4d3d0f367c25ea"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Owned-Vector-Calls-And-Joins-Wir.wv",
+          "size": 1564,
+          "sha256": "a15db9b7a106535c537340cbe4b34998c51f9175172a498a63576c3d49b67761"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv",
+          "size": 857,
+          "sha256": "8496e16a4e0ff351bc1c3c93d7c5e17b141d12f2fa2cb103b2f39ad238ccbcbe"
+        },
+        {
+          "path": "Libraries/Foundation/Collections/Collections.wv",
+          "size": 1231,
+          "sha256": "5da1de5a3f487b4968292c84d0a980dc0c370eeae4006ced62ceb193e4247c8d"
+        },
+        {
+          "path": "Libraries/Foundation/Memory/Memory.wv",
+          "size": 1164,
+          "sha256": "cddcff6c91691dbf24f4863de353fb6c196354d0d708501af77c8ae0265611a2"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Option.wv",
+          "size": 172,
+          "sha256": "b6778dccb5b85a59e4209ffd15627218b704d672bdd667ed68da7ceef85aff3d"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Result.wv",
+          "size": 184,
+          "sha256": "032a2173c582139cbf9b95b8656705417afef11dc19ae2dc2315be5f1379713a"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13164,
+          "sha256": "a40e35702bd87a2a262aba1340cc264c3b6353ecd9f24108594ea4a91f3ef7d7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Analysis-Contract-Core.wv",
+          "size": 320,
+          "sha256": "07e9e4f01d1d678e2c6a09b96a4e1f2ce4bdf65a893904b482d34b483c8c684c"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Analysis-Validation-Core.wv",
+          "size": 9620,
+          "sha256": "505d28e08479ba51c97a6433086577b7e887067c55841f0e30f707cf0b019959"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Artifact-Core.wv",
+          "size": 29621,
+          "sha256": "6da51409e8229e8cce4dcf5ae15fa85e8ab29eb1d7ac49723a92e73fc44322ef"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Closures-Artifact-Core.wv",
+          "size": 19374,
+          "sha256": "ca3cbfa566ca2a193a9cac7b607a7e6772f26a5118522586593ddcba96a77f01"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Generic-Types-Artifact-Core.wv",
+          "size": 14206,
+          "sha256": "4103c51fcfe2111fa5476af4814af3d54b0cd295d7a4feed62a5c8f3e636bf0f"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Body-Parser-Artifact.wv",
+          "size": 154142,
+          "sha256": "6776a1e22ba2c0a386cb2b697c8f23de79404d280ab277c07da73cddde959503"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Closure-Captures-Artifact-Core.wv",
+          "size": 21684,
+          "sha256": "9bbac61238fe68d1408f90f2578bca4c84993c94aea4e33f4d727d97a87f4d86"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Closure-Lowering-Artifact-Core.wv",
+          "size": 9094,
+          "sha256": "395829e2b91e85f39fa7e3902a4b3bae1ccd9ade1193c56c4bb2be9952ea5974"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Declaration-Parser-Artifact.wv",
+          "size": 151196,
+          "sha256": "ed4de8faf6b0fbfff0c0ef9605e7ba222d3e5472ba3e495db8a38db88d935848"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Descriptor-Core.wv",
+          "size": 10649,
+          "sha256": "7bb6e26ed12a96d6a14fd14d23b3ff9b094b1eabc5d2f4f41eae081ae2af6f14"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Effects-Artifact-Core.wv",
+          "size": 14678,
+          "sha256": "5cebc14b5f27e3e3930280e12389168890e387b77884f3c38d206fe4af4cf3c7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Function-Type-Lowering-Artifact-Core.wv",
+          "size": 10030,
+          "sha256": "9d8c79a29810a47e5faf1713479911adca5da1b495851a0d48b3df20bedb1b9b"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 2705,
+          "sha256": "d8bf6d2f827f31c967d3b687acaa9bf35c4932832da8ef8d45abb6ae00a69438"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Lowering-Artifact-Core.wv",
+          "size": 19703,
+          "sha256": "c759cd3d08cd504ce4453e742e2f7db34692d2ff5b7d306fe161252dc6514fc7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Binding-Core.wv",
+          "size": 68789,
+          "sha256": "9026bcbb48c5db18a7cba0886b68740af3944af5deb4f82d1430fd918dffc8aa"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Layout-Core.wv",
+          "size": 59632,
+          "sha256": "b0c04357493abb454f23acc1a9f9c5b66cc795dedbae66a4da580dd50eeafdc9"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv",
+          "size": 30880,
+          "sha256": "4efada75df8063e970921bf7c90dec31de1a35ef4915a4dfdc9e40f7075d598b"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Materialization-Core.wv",
+          "size": 23507,
+          "sha256": "f65d0ff9f694d50657834d94ba9e3cbd4985489a280294c912c15a011268b89e"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Graph-Artifact-Core.wv",
+          "size": 21080,
+          "sha256": "df9396f81e2efdc30442adaa1b89165d600ed7a164d71c715486fe71ff6a60f7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Lexer-Core.wv",
+          "size": 91752,
+          "sha256": "b61cbf8cc3fd3ebe1ae0e94d2bdba89bc65460823c04cbf6d6ad28b8a58b4242"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Set-Core.wv",
+          "size": 25537,
+          "sha256": "0e039d8962545c5591af67a20b2dec3424596025ca75a08c8ce114d832c8a892"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Symbols-Artifact-Core.wv",
+          "size": 218095,
+          "sha256": "700ba25587c25b33e35ad776e200e706e68f9800c0ac296735bf5026f1db770f"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Consumer-Core.wv",
+          "size": 12200,
+          "sha256": "66f24a7d53bc85b0a5272c518a9af07182f025e68837ea34be7efc2f096b0f4d"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Validation-Core.wv",
+          "size": 363493,
+          "sha256": "f0b577f62904238f1427c5ba05478d9f3c489f5c6cdb4afe7ec0b5d9894d030a"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 254472,
+          "sha256": "7b2dddd59109afbbd64bc40b429704c0c43dded24c5e6956280a6241cc26eab5"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+          "size": 7764,
+          "sha256": "ccb2844285700b14816e62e164016f7cb2ae5d0fdbf0a4c28edb8bacee90d565"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv",
+          "size": 37370,
+          "sha256": "14a0c86fa8c60a7a3238691b142cd632a82de27a83f79ffc7adfc3606364a801"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Temporary-Slots-Artifact.wv",
+          "size": 6346,
+          "sha256": "bc8077881ee6c193655163abd3564839a122354cfc122a4d814325624cc4c9fb"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1952,
+          "sha256": "576789addb7ed310295aac4b82e34b442a435f52b1e2be19ca5cea5a5ad206b2"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "size": 1910,
+          "sha256": "cde07641d498121d91029a0539a25fd31edb678adc7692f98e0a552891acf788"
+        },
+        {
+          "path": "Tools/Windvale.Run/Wvb-Runner-Tool.wv",
+          "size": 25438,
+          "sha256": "642b7fa033035f3011e1041052997e31fa7aea163d86cdefcc18cf633d48d938"
+        },
+        {
+          "path": "Foundation/Sha256.wv",
+          "size": 16698,
+          "sha256": "629a94c51dfe1eb1056aef4f0745ff384433ddc415d85cf2b507ffebc733bd0c"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 377718,
+          "sha256": "af76ae333e9a9675d392fe9076f4ea59718eb9b752583a811ea474f1ad2e47fe"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv",
+          "size": 6540,
+          "sha256": "f539ee8c1d967a84fac06be0a1221218b8a79730dbce5e6cb97f3b50b80aba43"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+          "size": 40514,
+          "sha256": "9e3a0a9e6f5523b9fc31ffbc14a003327e815a4c64e108924c5253accbb1fd36"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv",
+          "size": 25541,
+          "sha256": "89259562955726f37557f561bb4cca9a5a00bf2642a05f1fc027c5c44be1feee"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv",
+          "size": 20523,
+          "sha256": "c9004633500233203d5798c925ed94cdc2795b250bf71519bd7f6ceaa3f58f57"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv",
+          "size": 2024,
+          "sha256": "73f5b4eabbbcb93a605fdeb6f31b38a8d4162186b25b7a1c68cbabed0a01a2df"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 25843,
+          "sha256": "4d64eecf9ad58cd1483da69fd0e81525c40270fb0596ff52bf4f3d85e4813c46"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv",
+          "size": 2105,
+          "sha256": "d3ad441f40b2484d1e10791d91eb5a7eb093bfbc0912fa2e347d008c9887cbe2"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Task-Core.wv",
+          "size": 38087,
+          "sha256": "335c91019064e4fe827a15c52e965ca319d09e04b9fba378f30287bca4dd3c51"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Unsafe-Scratch-Core.wv",
+          "size": 1497,
+          "sha256": "0e5c3393df7233596234d27ec0f02e01a5dc3ca668e03ed7bf1bbe53f88fa1cb"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 31072,
+          "sha256": "c78e3f651857b4e314322ad8aa1ddad70308489a9be3201b8e39dac7752df3df"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 252205,
+          "sha256": "ab2e41c127376d2cb5bfbfefbe4fe61c527897fd9488141c93ddc041540376db"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 32787,
+          "sha256": "647a2b8d08e722f84652f43a785f43875a62cef1ed64dc95e70ae9200d88f789"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 576,
+          "sha256": "192297b057afdaa453b23a4920d04d39ed63017d8f8ef1519727ebeffdaebd43"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 182499,
+          "sha256": "18244f98ebe39f5512f1459ace57449f809d45a3d0159a8acac00f94ca3f4c61"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10851,
+          "sha256": "e7763d43ec4bed2e7fd610e627dce35d5fa1623fa242fc02e1041e751844312b"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7449,
+          "sha256": "9dd9f0e2855b4596b0a8dafe5d648b846af49a51feed26d1ee21c6b25ae5a175"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-View-Core.wv",
+          "size": 11233,
+          "sha256": "4e78f18465885e889399a86fbb357be559c4b20b9ce28661d16c6f982c1040c9"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14982,
+          "sha256": "08625acc4b425394178e1bf8ae1150442c25e92bc7bfcde0640539a46bc3d26e"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj",
+          "size": 2103,
+          "sha256": "56166734a17362354ab39d2c6de158391857e480c2d21342a67ac27d561d7d2d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv",
+          "size": 480,
+          "sha256": "ccc989054c56a0a512f7f00f96879d2a2290b88b2c3f6a1d6df810d0a09997f1"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 11961,
+          "sha256": "08cf24fa034e8eb9c4a012949b7a1e842b8f7f1db21095bdfe794b361e94bf94"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 36401,
+          "sha256": "08b8ab317b99ca8a8d2877caf59767a90cc238f4ff1f3f231d7435df03dee09d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
+          "size": 13742,
+          "sha256": "a580865fbe5099d48d5349c7a3c9e94c68fbc9b5d7b053b2b5cb961d86649daa"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 10062,
+          "sha256": "87d006b12dc929106f4e09ee3378eae77954bb2070b59c07c180bb99fdee23ec"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 45320,
+          "sha256": "a2240192c2bd1d91513206e08ecb40c0777f35f3103d7d0912b2079e8bc3943b"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv",
+          "size": 13885,
+          "sha256": "9d6356cae25c37053cb2dbbb18c5df0c4477816b790eecf44a70e28f10da6b52"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 14048,
+          "sha256": "003dbdc3c57bfa6f1a51b0dc03d17894e5687865424385cd6e8fdabf5e30c11f"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv",
+          "size": 11100,
+          "sha256": "cde590f63fa8b41b09f052b81788c9bd1a6ab90583870661076521d02176ee16"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "size": 12085,
+          "sha256": "2ac07e0c7a49fa905eac1110e617a86d163d645fee6648995403f6af4dcc95e5"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj",
+          "size": 1729,
+          "sha256": "aa5e47303a2f4d752859581319a2969b4870a00ca9ce98d7befad5aff74ea31e"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Analysis-Driver.wv",
+          "size": 19048,
+          "sha256": "4efc4352e64cb4c5208efd2f16eb61fbd0bd000cb188940e2700b06ceb72180f"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Analysis-Core.wv",
+          "size": 15768,
+          "sha256": "234f122965b51d636adc898480983a705babb19a491ea515f17bb3abfec611b5"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Core.wv",
+          "size": 207012,
+          "sha256": "8f5cd35d391e8492de7c9ea5c7f2043cf0c3ece088206a099e638a14d8d0bbce"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Closures-Core.wv",
+          "size": 43180,
+          "sha256": "f24d73f74d4921e7899c6f1fcbb41dacb4142329c755c3860955bdc19d44ec28"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv",
+          "size": 29002,
+          "sha256": "b909dcc55b6e4dea298e0759e2731ae37c32d5590dd462f5da0a66c9de30718f"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Body-Parser.wv",
+          "size": 193126,
+          "sha256": "db3f3515daf17cec4375d1d01c74b1338d55e7c6cc68a49357dba4fe86cf83df"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Closure-Captures-Core.wv",
+          "size": 47060,
+          "sha256": "fff3e3692292ca28d169f889797e559e85cda04d9a5827442a2ddcc8e7a09d6a"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Closure-Lowering-Core.wv",
+          "size": 17288,
+          "sha256": "4eadb2e1d93f50a6fc2fbb529269f839fd55e10c7973e9a898ed4b713be5e7cf"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Declaration-Parser.wv",
+          "size": 196763,
+          "sha256": "aaed2d78d9001419f3f9ca6eccc5e88a4db67f281d01babd2c4dcc994352a2d5"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Effects-Core.wv",
+          "size": 52940,
+          "sha256": "63406bd5597d32c6f6ad26e5b1f19ceae0ce946009ac634824a7eb070c60e1d3"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Function-Type-Lowering-Core.wv",
+          "size": 25859,
+          "sha256": "b9838567dc8926ef847c5e7ed715199f0ecb0023cbc018e731040373c9e01067"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Lowering-Core.wv",
+          "size": 31069,
+          "sha256": "01ec30089f0700a4943e3824c30a8b744ed2517631efed0e0e42a3903c2b6164"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Graph-Core.wv",
+          "size": 35996,
+          "sha256": "d67f20f3402f501310c24b93e7bd85420f348ee8ba6b5d443158d212c7a02577"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Symbols-Core.wv",
+          "size": 297309,
+          "sha256": "9c9dac7b57ed167ef9e78cf747acb64ff389b51bea72545ac0191ffda630d1e7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Core.wv",
+          "size": 790348,
+          "sha256": "ee1638c12d00e6fec6f1350ae985846bd88dba672aa2c2456a9e6f2bdcce8a02"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj",
+          "size": 952,
+          "sha256": "aecc8f262eed411689dc1ef2ee888954322c9f205f68cbefb30bb4ed1c376e18"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv",
+          "size": 3458,
+          "sha256": "8596bb96f7a3b0f9eaa76f45632829ac66471f2d0f806ac53caf30b2e1255176"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe",
+          "size": 54543872,
+          "sha256": "ec5b14b00836939e995dddb757b9d5e2a71597160f99a6b022df09a05dba473c"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity",
+          "size": 177,
+          "sha256": "00f168b5afac1affd3276b14f2e40d949043cc0f346a08099720f6ebba7fffa2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.exe",
+          "size": 32956416,
+          "sha256": "3ec1fbe92badb780d1899f94e23bd189a59ff36a921a81680e5720b12e1523d1"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity",
+          "size": 183,
+          "sha256": "f69f5a9966f8b0b7136474c1b8ff68991a98e62726d2868ac7a15a85965e874d"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Reader-Baseline.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Binder-Baseline.exe",
+          "size": 18405376,
+          "sha256": "09584096ebbf6baa3e3405133a09381083d6ea8c9c2916b6ee932681574c3670"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Windvale.wvws",
+          "size": 21,
+          "sha256": "5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.wvb",
+          "size": 1632215,
+          "sha256": "e891b7254b0766649613663d733fc639a07412371564f35a54ca04e7f87b69e4"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe",
+          "size": 33134592,
+          "sha256": "edda3e8238b17fa1a04b69d258fc5e3d86a9dd3ea2558877a704ba411a5e44d4"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf",
+          "size": 33136640,
+          "sha256": "306558381e439004cf17dc68278390e1ca7e142be85b1a5d12de08f3ea180535"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.wvb",
+          "size": 1183912,
+          "sha256": "b49abb2ad860808983c90d5d43b34829414165ee137979e37ff230f906b060f6"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.exe",
+          "size": 12236800,
+          "sha256": "7cc282f622b0f517da8d11e263631bab48da6fd3e96ee988abb0270a6e00a2cc"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.elf",
+          "size": 12238848,
+          "sha256": "82e858f9a27c949aee71913ad337cc4c4e5f7844cd4fe09eb7c21efeea9bcc72"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.wvb",
+          "size": 918777,
+          "sha256": "432dbf7deaa61e0382b2765f1589e1260d6ab1c7b7271586b9deb4ae189bc83b"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.exe",
+          "size": 9184256,
+          "sha256": "30c695b78354ba373136a4b9618252906270d9ed32622adbebed0ef25bcdc439"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.elf",
+          "size": 9183232,
+          "sha256": "0498b436c2d89339ede675165c9ec82fd81ab5a25218808b1643d8619eb2aaf2"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.wvb",
+          "size": 589292,
+          "sha256": "fdd30698dc7d8a551541002e1d04f7b4c29ef6ff927477b73656070f99bbbd81"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+          "size": 5038592,
+          "sha256": "161c08a1a786acc669243beca96d4fcdc68a9f5a85a92c429aa398bfb0ab31f6"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf",
+          "size": 5038080,
+          "sha256": "7aedda472c8e93bfc6732c650320a39dc2ff209945618a5a2e994957dee9320d"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-Analysis-Recovery.mjs",
+          "size": 21331,
+          "sha256": "4b941a39a6f6b00b37fe00866ecfd8d474daa202e9210d721e9211e601299971"
+        },
+        {
+          "path": "Tools/Native/Native-Hosted-Application-Cache-Core.mjs",
+          "size": 12408,
+          "sha256": "023762dded3fe39f216512127a8241f91602422a0d12b787ba084f3035801fab"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Project.mjs",
+          "size": 22923,
+          "sha256": "77431c47c104d3ee6d514ffd27d05a06a54e8b82af62008db1a5c1af542d794c"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-Clock.json",
+          "size": 134,
+          "sha256": "a365df7e078a9ef28c908dfc90bf6edd233c7535b2ffe8983ca2fc522b9be07e"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb",
+          "size": 1694119,
+          "sha256": "7b98ac2463b5863c06e1e9ade06cf5384bdee02be512a627661a077669b6481a"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe",
+          "size": 54963712,
+          "sha256": "50c2d5d675eae7bac83ddd3418c367b06e189216068d9eb424fdf3fb734b0b78"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.elf",
+          "size": 54964224,
+          "sha256": "a0165ee22c30bc719eaf54947b0222d7da5a800f53e0ec5583cced691b93c949"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Results.json",
+          "size": 260353,
+          "sha256": "bcc61a959e9c70796eff5d927bcc158647cb50d2481dc17ec7278a874add4871"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.wvb",
+          "size": 1632215,
+          "sha256": "e891b7254b0766649613663d733fc639a07412371564f35a54ca04e7f87b69e4"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe",
+          "size": 33134592,
+          "sha256": "edda3e8238b17fa1a04b69d258fc5e3d86a9dd3ea2558877a704ba411a5e44d4"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf",
+          "size": 33136640,
+          "sha256": "306558381e439004cf17dc68278390e1ca7e142be85b1a5d12de08f3ea180535"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.wvb",
+          "size": 1183912,
+          "sha256": "b49abb2ad860808983c90d5d43b34829414165ee137979e37ff230f906b060f6"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.exe",
+          "size": 12236800,
+          "sha256": "7cc282f622b0f517da8d11e263631bab48da6fd3e96ee988abb0270a6e00a2cc"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.elf",
+          "size": 12238848,
+          "sha256": "82e858f9a27c949aee71913ad337cc4c4e5f7844cd4fe09eb7c21efeea9bcc72"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.wvb",
+          "size": 918777,
+          "sha256": "432dbf7deaa61e0382b2765f1589e1260d6ab1c7b7271586b9deb4ae189bc83b"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.exe",
+          "size": 9184256,
+          "sha256": "30c695b78354ba373136a4b9618252906270d9ed32622adbebed0ef25bcdc439"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.elf",
+          "size": 9183232,
+          "sha256": "0498b436c2d89339ede675165c9ec82fd81ab5a25218808b1643d8619eb2aaf2"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.wvb",
+          "size": 589292,
+          "sha256": "fdd30698dc7d8a551541002e1d04f7b4c29ef6ff927477b73656070f99bbbd81"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+          "size": 5038592,
+          "sha256": "161c08a1a786acc669243beca96d4fcdc68a9f5a85a92c429aa398bfb0ab31f6"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf",
+          "size": 5038080,
+          "sha256": "7aedda472c8e93bfc6732c650320a39dc2ff209945618a5a2e994957dee9320d"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb",
+          "size": 1694119,
+          "sha256": "7b98ac2463b5863c06e1e9ade06cf5384bdee02be512a627661a077669b6481a"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe",
+          "size": 54963712,
+          "sha256": "50c2d5d675eae7bac83ddd3418c367b06e189216068d9eb424fdf3fb734b0b78"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.elf",
+          "size": 54964224,
+          "sha256": "a0165ee22c30bc719eaf54947b0222d7da5a800f53e0ec5583cced691b93c949"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: build-Analyzer",
+      "tool": "node",
+      "command": "\"node\" \"Tools/Native/Build-Cached-Split-Project-Wvb.mjs\" \"Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity\" \"--authenticated-project4\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Reader-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Binder-Baseline.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 620
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: package-windows-Analyzer",
+      "tool": "node",
+      "command": "\"node\" \"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\" \"8\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 510594
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: package-linux-Analyzer",
+      "tool": "node",
+      "command": "\"node\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Package-Paired-Linux.mjs\" \"8\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.elf\" \"2026-09-22T11:19:37.289Z\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 230196
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: identity-Analyzer",
+      "tool": "node",
+      "command": "\"node\" \"Tools/Native/Write-Split-Compiler-Producer-Identity.mjs\" \"analyzer\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.identity\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 232
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-executable-bits",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"chmod\" \"+x\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 7321
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: windows-complete-Analyzer",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+      "command": "\"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 106445
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-host",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"uname\" \"-a\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 249
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-node",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"node\" \"--version\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 439
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-complete-Analyzer",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 109712
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: windows-vector-parameter-reads",
+      "tool": "node",
+      "command": "\"node\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--vector-parameter-reads\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe\" \"Projects/Targets/Windows-X64-No-Foreign.wvtd\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 84082
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-vector-parameter-reads",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"node\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--vector-parameter-reads\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf\" \"Projects/Targets/Windows-X64-No-Foreign.wvtd\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 191226
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: windows-foundation-owned-payloads",
+      "tool": "node",
+      "command": "\"node\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--foundation-owned-payloads\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe\" \"Projects/Targets/Windows-X64-No-Foreign.wvtd\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 23281
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "fresh recovery: windows-borrow-runtime",
+      "tool": "node",
+      "command": "\"node\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--foundation-borrow-runtime\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 734
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-foundation-owned-payloads",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"node\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--foundation-owned-payloads\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf\" \"Projects/Targets/Windows-X64-No-Foreign.wvtd\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 51391
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "fresh recovery: linux-borrow-runtime",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"node\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--foundation-borrow-runtime\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 1340
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "reused prior passing check: windows-complete-Emitter",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+      "command": "\"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 84124
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "reused prior passing check: linux-complete-Emitter",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 86193
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "reused prior passing check: windows-complete-Runner",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+      "command": "\"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 32620
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "reused prior passing check: linux-complete-Runner",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Runner.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 34431
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "reused prior passing check: windows-complete-Components",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+      "command": "\"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 49067
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "reused prior passing check: linux-complete-Components",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 50933
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "reused prior passing check: windows-complete-Verifier",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+      "command": "\"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 14932
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "reused prior passing check: linux-complete-Verifier",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 15406
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "reused prior passing check: windows-components",
+      "tool": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.exe",
+      "command": "\"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 1891
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "reused prior passing check: linux-components",
+      "tool": "wsl.exe",
+      "command": "\"wsl.exe\" \"--distribution\" \"Debian\" \"--cd\" \".\" \"--exec\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Components.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 2074
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0 and Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "Exact cross-host Vector identity and guest-instruction lines: PASS Vector call regression fixture=Owned-Vector-Calls-And-Joins-Wir wvb-bytes=1719 wvb-sha256=8a4a00c48fb2743ecb3d6d1c4ab532a6de0613b9374cfeae3dc031d159ffbde5 | PASS Vector call regression fixture=Using-Vector-Fallthrough-Wir wvb-bytes=1197 wvb-sha256=74bd91bf9764874562ebec6a61a2232e528ac7bfedc82107f05b59e7aff9e170 | PASS Vector payload item=1/9 case=option-present child-budget-trips=128 instructions=62999 wvb-bytes=3820 wvb-sha256=b2d0518ce60403998a62322efa6e20b7112fed60ce6cc9b9192935b86185a685 | PASS Vector payload item=2/9 case=option-absent child-budget-trips=128 instructions=18967 wvb-bytes=3800 wvb-sha256=5bed0f4143da3247ebfe204be7bbb0b4da118abcc67b40e15a43a42ae3d05d21 | PASS Vector payload item=3/9 case=result-valid child-budget-trips=128 instructions=62999 wvb-bytes=3884 wvb-sha256=edbb0572543ee386d9af7cbe3850f11716e19b53fdda68d0d6ed7ea31007f384 | PASS Vector payload item=4/9 case=result-valid-absent child-budget-trips=128 instructions=19351 wvb-bytes=3880 wvb-sha256=19c4e8ced29934b625f20cb4980aa58f8481cd6d77d29465a74562e79eac6251 | PASS Vector payload item=5/9 case=result-failure child-budget-trips=128 instructions=62999 wvb-bytes=3884 wvb-sha256=3ec0ba968d8e5c27d5c4af4e8048281e22877407b8c74bfb9d447b5ae6e524d8 | PASS Vector payload item=6/9 case=result-failure-absent child-budget-trips=128 instructions=19351 wvb-bytes=3880 wvb-sha256=a874884032b7985eac16ee0a422ce92b06791eaf3143250bf3f4f15d55d8735f | PASS Vector payload item=7/9 case=without-parameter-read child-budget-trips=128 instructions=62999 wvb-bytes=3820 wvb-sha256=7e0e271c0150653dbef854511033d8d9b49bb15efa5d7467fd180efabfa95596 | PASS Vector payload item=8/9 case=repeated-helper-loop child-budget-trips=16 instructions=23303 wvb-bytes=3820 wvb-sha256=fb95cb287bfdda8612bc2fcf507ec20da70b038f22bf438939528ee453dd937b | PASS Vector payload item=9/9 case=phantom-vector-copy child-budget-trips=128 instructions=68759 wvb-bytes=4177 wvb-sha256=390bd7f6da0b45bc36f20047c314d70f80ade83cd219f139f0bc22a8b0e5e750 | PASS Vector indexed borrow item=1/8 case=option-projected instructions=602 wvb-bytes=3632 wvb-sha256=58573f8bc583e353ae3bcafa207f8f6632104b745b55905e1c7ce85d77a7608b | PASS Vector indexed borrow item=2/8 case=result-valid-projected instructions=602 wvb-bytes=3493 wvb-sha256=282d95b64e1b93ca231c953c3023b3676d7ed1572daec2ad43f1c80d2c46c5ae | PASS Vector indexed borrow item=3/8 case=result-failure-projected instructions=602 wvb-bytes=3493 wvb-sha256=d609513422c539a5200499586f1eb4f879e06dda12d6fcb4045672c3b2bf002f | PASS Vector indexed borrow item=4/8 case=owned-local instructions=222 wvb-bytes=3056 wvb-sha256=b6a43c294c93ae2ada471d24807c0699fc458fef00de8e89a021f7524df618b5 | PASS Vector indexed borrow item=5/8 case=repeated-helper-loop instructions=7802 wvb-bytes=3429 wvb-sha256=a99d062186c4950cd5e56108d0962f62586759bc1246851e662f9bfab7716658 | PASS Vector indexed borrow item=6/8 case=nonzero-index-multiple-elements instructions=625 wvb-bytes=3646 wvb-sha256=79bd4c4a9dc52d2ae6f2bd7d030843d92cb56cd0bb8db28efefea563875f9d5c | PASS Vector indexed borrow item=7/8 case=full-width-u64-nonzero-index instructions=625 wvb-bytes=3678 wvb-sha256=8763d3ee9328aef2cdc46965261ca58199cdc0cd81fddf0ff02e6ef2b5625525 | PASS Vector indexed borrow item=8/8 case=enum-nominal-element instructions=1106 wvb-bytes=4027 wvb-sha256=90213f390cb24a2b48cd0bf19fb98db7275ae12cb8a4edfbf815daa2d5126e59 | native Vector parameter reads status=Passed reads=3 malformed=11 source-rejections=10 payload-cases=9 payload-malformed=9 payload-source-rejections=3 indexed-cases=8 indexed-malformed=14 indexed-source-rejections=10 indexed-bounds=3 wvb-bytes=3851 wvb-sha256=81b3c105b1bfdd44e95e40e30ae601a6544b6cdb6df5703579bcb336a4e5a949 qualification=false",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "Compare final --vector-parameter-reads stdout, excluding only trailing elapsed-ms.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Results.json",
+          "size": 260353,
+          "sha256": "bcc61a959e9c70796eff5d927bcc158647cb50d2481dc17ec7278a874add4871"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0 and Debian x64 under WSL2; Node.js v20.19.2",
+      "target": "Exact cross-host owned-payload identity lines: PASS owned payload item=1/9 case=option-record-vector wvb-bytes=1500 wvb-sha256=0231439b52541b2b1208197f476c3198f42f0b43559755feb70b72d4e522d4c3 | PASS owned payload item=2/9 case=result-valid-record-vector wvb-bytes=1564 wvb-sha256=177661c589f3355d2e105ffb91b937fbd1e562fd05174459459fa7d3e0425115 | PASS owned payload item=3/9 case=result-failure-record-vector wvb-bytes=1564 wvb-sha256=c7c72c0af452be021ad157d44cd09d91f64e5fcc0af7e14222fbd3513d20efff | PASS owned payload item=4/9 case=option-record-copy wvb-bytes=1168 wvb-sha256=e78861b0413f1879c50d03bb8239909de924c61b6b24b998c4b3c1c3097b83cb | PASS owned payload item=5/9 case=option-record-reclaim wvb-bytes=2056 wvb-sha256=6b12a0b3bc0a4c4c1cf9677594fa926469479d3ad0844c84417f9ee4698d329f | PASS owned payload item=6/9 case=result-valid-record-reclaim wvb-bytes=2120 wvb-sha256=ecbb8f6e0cd5d712d2d36d9ede3185742e5537fc663b08e09788a3917fda1d89 | PASS owned payload item=7/9 case=result-failure-record-reclaim wvb-bytes=2120 wvb-sha256=7c4a2dced1093280b97cc2288281078c1358f77bd8de09abfebc3ae2e8295fc7 | PASS owned payload item=8/9 case=option-record-refused-reclaim wvb-bytes=2446 wvb-sha256=960bb2f1f843fc5f7c5dca71a949406f7a6ad9566e1968a808ea5b0391f0d071 | PASS owned payload item=9/9 case=option-record-unaddressable wvb-bytes=1890 wvb-sha256=8ebcb62e651f0ee8cc8a5ac8d8d397e0af95f59ae1f71a72306849afe9b52cb4",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "Compare final --foundation-owned-payloads stdout, excluding only trailing elapsed-ms.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Results.json",
+          "size": 260353,
+          "sha256": "bcc61a959e9c70796eff5d927bcc158647cb50d2481dc17ec7278a874add4871"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "Retained authenticated construction identity: Emitter; cache key=8a939e13d1ede12c9e4cf54defff41b834f616f1f8b18a0131f230c6732837dc",
+      "tool": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+      "command": "Recovery recomputed authenticated cache identity and compared the original passing build key; no product rebuild was inferred.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13164,
+          "sha256": "a40e35702bd87a2a262aba1340cc264c3b6353ecd9f24108594ea4a91f3ef7d7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Analysis-Contract-Core.wv",
+          "size": 320,
+          "sha256": "07e9e4f01d1d678e2c6a09b96a4e1f2ce4bdf65a893904b482d34b483c8c684c"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Analysis-Validation-Core.wv",
+          "size": 9620,
+          "sha256": "505d28e08479ba51c97a6433086577b7e887067c55841f0e30f707cf0b019959"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Artifact-Core.wv",
+          "size": 29621,
+          "sha256": "6da51409e8229e8cce4dcf5ae15fa85e8ab29eb1d7ac49723a92e73fc44322ef"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Closures-Artifact-Core.wv",
+          "size": 19374,
+          "sha256": "ca3cbfa566ca2a193a9cac7b607a7e6772f26a5118522586593ddcba96a77f01"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Bindings-Generic-Types-Artifact-Core.wv",
+          "size": 14206,
+          "sha256": "4103c51fcfe2111fa5476af4814af3d54b0cd295d7a4feed62a5c8f3e636bf0f"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Body-Parser-Artifact.wv",
+          "size": 154142,
+          "sha256": "6776a1e22ba2c0a386cb2b697c8f23de79404d280ab277c07da73cddde959503"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Closure-Captures-Artifact-Core.wv",
+          "size": 21684,
+          "sha256": "9bbac61238fe68d1408f90f2578bca4c84993c94aea4e33f4d727d97a87f4d86"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Closure-Lowering-Artifact-Core.wv",
+          "size": 9094,
+          "sha256": "395829e2b91e85f39fa7e3902a4b3bae1ccd9ade1193c56c4bb2be9952ea5974"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Declaration-Parser-Artifact.wv",
+          "size": 151196,
+          "sha256": "ed4de8faf6b0fbfff0c0ef9605e7ba222d3e5472ba3e495db8a38db88d935848"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Descriptor-Core.wv",
+          "size": 10649,
+          "sha256": "7bb6e26ed12a96d6a14fd14d23b3ff9b094b1eabc5d2f4f41eae081ae2af6f14"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Effects-Artifact-Core.wv",
+          "size": 14678,
+          "sha256": "5cebc14b5f27e3e3930280e12389168890e387b77884f3c38d206fe4af4cf3c7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Function-Type-Lowering-Artifact-Core.wv",
+          "size": 10030,
+          "sha256": "9d8c79a29810a47e5faf1713479911adca5da1b495851a0d48b3df20bedb1b9b"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 2705,
+          "sha256": "d8bf6d2f827f31c967d3b687acaa9bf35c4932832da8ef8d45abb6ae00a69438"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Lowering-Artifact-Core.wv",
+          "size": 19703,
+          "sha256": "c759cd3d08cd504ce4453e742e2f7db34692d2ff5b7d306fe161252dc6514fc7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Binding-Core.wv",
+          "size": 68789,
+          "sha256": "9026bcbb48c5db18a7cba0886b68740af3944af5deb4f82d1430fd918dffc8aa"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Layout-Core.wv",
+          "size": 59632,
+          "sha256": "b0c04357493abb454f23acc1a9f9c5b66cc795dedbae66a4da580dd50eeafdc9"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv",
+          "size": 30880,
+          "sha256": "4efada75df8063e970921bf7c90dec31de1a35ef4915a4dfdc9e40f7075d598b"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Materialization-Core.wv",
+          "size": 23507,
+          "sha256": "f65d0ff9f694d50657834d94ba9e3cbd4985489a280294c912c15a011268b89e"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Graph-Artifact-Core.wv",
+          "size": 21080,
+          "sha256": "df9396f81e2efdc30442adaa1b89165d600ed7a164d71c715486fe71ff6a60f7"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Lexer-Core.wv",
+          "size": 91752,
+          "sha256": "b61cbf8cc3fd3ebe1ae0e94d2bdba89bc65460823c04cbf6d6ad28b8a58b4242"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Set-Core.wv",
+          "size": 25537,
+          "sha256": "0e039d8962545c5591af67a20b2dec3424596025ca75a08c8ce114d832c8a892"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Symbols-Artifact-Core.wv",
+          "size": 218095,
+          "sha256": "700ba25587c25b33e35ad776e200e706e68f9800c0ac296735bf5026f1db770f"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Consumer-Core.wv",
+          "size": 12200,
+          "sha256": "66f24a7d53bc85b0a5272c518a9af07182f025e68837ea34be7efc2f096b0f4d"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Validation-Core.wv",
+          "size": 363493,
+          "sha256": "f0b577f62904238f1427c5ba05478d9f3c489f5c6cdb4afe7ec0b5d9894d030a"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 254472,
+          "sha256": "7b2dddd59109afbbd64bc40b429704c0c43dded24c5e6956280a6241cc26eab5"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+          "size": 7764,
+          "sha256": "ccb2844285700b14816e62e164016f7cb2ae5d0fdbf0a4c28edb8bacee90d565"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv",
+          "size": 37370,
+          "sha256": "14a0c86fa8c60a7a3238691b142cd632a82de27a83f79ffc7adfc3606364a801"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Temporary-Slots-Artifact.wv",
+          "size": 6346,
+          "sha256": "bc8077881ee6c193655163abd3564839a122354cfc122a4d814325624cc4c9fb"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1952,
+          "sha256": "576789addb7ed310295aac4b82e34b442a435f52b1e2be19ca5cea5a5ad206b2"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity",
+          "size": 177,
+          "sha256": "00f168b5afac1affd3276b14f2e40d949043cc0f346a08099720f6ebba7fffa2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity",
+          "size": 183,
+          "sha256": "f69f5a9966f8b0b7136474c1b8ff68991a98e62726d2868ac7a15a85965e874d"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45089,
+          "sha256": "9d9888a3f6bb4887cd7c55d77c819127a785214c2da702845330afe230182501"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "Retained authenticated construction identity: Runner; cache key=5ded5e2fd666ff2ad830e27438150d0477c2194991aaf4ae10d84ec48783d0f7",
+      "tool": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+      "command": "Recovery recomputed authenticated cache identity and compared the original passing build key; no product rebuild was inferred.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "size": 1910,
+          "sha256": "cde07641d498121d91029a0539a25fd31edb678adc7692f98e0a552891acf788"
+        },
+        {
+          "path": "Tools/Windvale.Run/Wvb-Runner-Tool.wv",
+          "size": 25438,
+          "sha256": "642b7fa033035f3011e1041052997e31fa7aea163d86cdefcc18cf633d48d938"
+        },
+        {
+          "path": "Foundation/Sha256.wv",
+          "size": 16698,
+          "sha256": "629a94c51dfe1eb1056aef4f0745ff384433ddc415d85cf2b507ffebc733bd0c"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 377718,
+          "sha256": "af76ae333e9a9675d392fe9076f4ea59718eb9b752583a811ea474f1ad2e47fe"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv",
+          "size": 6540,
+          "sha256": "f539ee8c1d967a84fac06be0a1221218b8a79730dbce5e6cb97f3b50b80aba43"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+          "size": 40514,
+          "sha256": "9e3a0a9e6f5523b9fc31ffbc14a003327e815a4c64e108924c5253accbb1fd36"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv",
+          "size": 25541,
+          "sha256": "89259562955726f37557f561bb4cca9a5a00bf2642a05f1fc027c5c44be1feee"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv",
+          "size": 20523,
+          "sha256": "c9004633500233203d5798c925ed94cdc2795b250bf71519bd7f6ceaa3f58f57"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv",
+          "size": 2024,
+          "sha256": "73f5b4eabbbcb93a605fdeb6f31b38a8d4162186b25b7a1c68cbabed0a01a2df"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 25843,
+          "sha256": "4d64eecf9ad58cd1483da69fd0e81525c40270fb0596ff52bf4f3d85e4813c46"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv",
+          "size": 2105,
+          "sha256": "d3ad441f40b2484d1e10791d91eb5a7eb093bfbc0912fa2e347d008c9887cbe2"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Task-Core.wv",
+          "size": 38087,
+          "sha256": "335c91019064e4fe827a15c52e965ca319d09e04b9fba378f30287bca4dd3c51"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Unsafe-Scratch-Core.wv",
+          "size": 1497,
+          "sha256": "0e5c3393df7233596234d27ec0f02e01a5dc3ca668e03ed7bf1bbe53f88fa1cb"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 31072,
+          "sha256": "c78e3f651857b4e314322ad8aa1ddad70308489a9be3201b8e39dac7752df3df"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 252205,
+          "sha256": "ab2e41c127376d2cb5bfbfefbe4fe61c527897fd9488141c93ddc041540376db"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 32787,
+          "sha256": "647a2b8d08e722f84652f43a785f43875a62cef1ed64dc95e70ae9200d88f789"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 576,
+          "sha256": "192297b057afdaa453b23a4920d04d39ed63017d8f8ef1519727ebeffdaebd43"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 182499,
+          "sha256": "18244f98ebe39f5512f1459ace57449f809d45a3d0159a8acac00f94ca3f4c61"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10851,
+          "sha256": "e7763d43ec4bed2e7fd610e627dce35d5fa1623fa242fc02e1041e751844312b"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7449,
+          "sha256": "9dd9f0e2855b4596b0a8dafe5d648b846af49a51feed26d1ee21c6b25ae5a175"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-View-Core.wv",
+          "size": 11233,
+          "sha256": "4e78f18465885e889399a86fbb357be559c4b20b9ce28661d16c6f982c1040c9"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14982,
+          "sha256": "08625acc4b425394178e1bf8ae1150442c25e92bc7bfcde0640539a46bc3d26e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity",
+          "size": 177,
+          "sha256": "00f168b5afac1affd3276b14f2e40d949043cc0f346a08099720f6ebba7fffa2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity",
+          "size": 183,
+          "sha256": "f69f5a9966f8b0b7136474c1b8ff68991a98e62726d2868ac7a15a85965e874d"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45089,
+          "sha256": "9d9888a3f6bb4887cd7c55d77c819127a785214c2da702845330afe230182501"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "Retained authenticated construction identity: Components; cache key=b8855ad82ee6669c696ec1f0de214590a5fcde76db32de7badc4e6e59fd635fc",
+      "tool": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+      "command": "Recovery recomputed authenticated cache identity and compared the original passing build key; no product rebuild was inferred.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj",
+          "size": 2103,
+          "sha256": "56166734a17362354ab39d2c6de158391857e480c2d21342a67ac27d561d7d2d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv",
+          "size": 480,
+          "sha256": "ccc989054c56a0a512f7f00f96879d2a2290b88b2c3f6a1d6df810d0a09997f1"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+          "size": 7764,
+          "sha256": "ccb2844285700b14816e62e164016f7cb2ae5d0fdbf0a4c28edb8bacee90d565"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 11961,
+          "sha256": "08cf24fa034e8eb9c4a012949b7a1e842b8f7f1db21095bdfe794b361e94bf94"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 36401,
+          "sha256": "08b8ab317b99ca8a8d2877caf59767a90cc238f4ff1f3f231d7435df03dee09d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
+          "size": 13742,
+          "sha256": "a580865fbe5099d48d5349c7a3c9e94c68fbc9b5d7b053b2b5cb961d86649daa"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 10062,
+          "sha256": "87d006b12dc929106f4e09ee3378eae77954bb2070b59c07c180bb99fdee23ec"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 45320,
+          "sha256": "a2240192c2bd1d91513206e08ecb40c0777f35f3103d7d0912b2079e8bc3943b"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv",
+          "size": 13885,
+          "sha256": "9d6356cae25c37053cb2dbbb18c5df0c4477816b790eecf44a70e28f10da6b52"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 14048,
+          "sha256": "003dbdc3c57bfa6f1a51b0dc03d17894e5687865424385cd6e8fdabf5e30c11f"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv",
+          "size": 11100,
+          "sha256": "cde590f63fa8b41b09f052b81788c9bd1a6ab90583870661076521d02176ee16"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv",
+          "size": 25541,
+          "sha256": "89259562955726f37557f561bb4cca9a5a00bf2642a05f1fc027c5c44be1feee"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv",
+          "size": 20523,
+          "sha256": "c9004633500233203d5798c925ed94cdc2795b250bf71519bd7f6ceaa3f58f57"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv",
+          "size": 2105,
+          "sha256": "d3ad441f40b2484d1e10791d91eb5a7eb093bfbc0912fa2e347d008c9887cbe2"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 31072,
+          "sha256": "c78e3f651857b4e314322ad8aa1ddad70308489a9be3201b8e39dac7752df3df"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 252205,
+          "sha256": "ab2e41c127376d2cb5bfbfefbe4fe61c527897fd9488141c93ddc041540376db"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 32787,
+          "sha256": "647a2b8d08e722f84652f43a785f43875a62cef1ed64dc95e70ae9200d88f789"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 576,
+          "sha256": "192297b057afdaa453b23a4920d04d39ed63017d8f8ef1519727ebeffdaebd43"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 182499,
+          "sha256": "18244f98ebe39f5512f1459ace57449f809d45a3d0159a8acac00f94ca3f4c61"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10851,
+          "sha256": "e7763d43ec4bed2e7fd610e627dce35d5fa1623fa242fc02e1041e751844312b"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7449,
+          "sha256": "9dd9f0e2855b4596b0a8dafe5d648b846af49a51feed26d1ee21c6b25ae5a175"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-View-Core.wv",
+          "size": 11233,
+          "sha256": "4e78f18465885e889399a86fbb357be559c4b20b9ce28661d16c6f982c1040c9"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14982,
+          "sha256": "08625acc4b425394178e1bf8ae1150442c25e92bc7bfcde0640539a46bc3d26e"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "size": 12085,
+          "sha256": "2ac07e0c7a49fa905eac1110e617a86d163d645fee6648995403f6af4dcc95e5"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity",
+          "size": 177,
+          "sha256": "00f168b5afac1affd3276b14f2e40d949043cc0f346a08099720f6ebba7fffa2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity",
+          "size": 183,
+          "sha256": "f69f5a9966f8b0b7136474c1b8ff68991a98e62726d2868ac7a15a85965e874d"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45089,
+          "sha256": "9d9888a3f6bb4887cd7c55d77c819127a785214c2da702845330afe230182501"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "Retained authenticated construction identity: Verifier; cache key=0dffe862d2c93e167e1eb0ddb84c69433c570a98833b76873c5bb30aaaaca12b",
+      "tool": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+      "command": "Recovery recomputed authenticated cache identity and compared the original passing build key; no product rebuild was inferred.",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj",
+          "size": 952,
+          "sha256": "aecc8f262eed411689dc1ef2ee888954322c9f205f68cbefb30bb4ed1c376e18"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv",
+          "size": 3458,
+          "sha256": "8596bb96f7a3b0f9eaa76f45632829ac66471f2d0f806ac53caf30b2e1255176"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 252205,
+          "sha256": "ab2e41c127376d2cb5bfbfefbe4fe61c527897fd9488141c93ddc041540376db"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 32787,
+          "sha256": "647a2b8d08e722f84652f43a785f43875a62cef1ed64dc95e70ae9200d88f789"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 576,
+          "sha256": "192297b057afdaa453b23a4920d04d39ed63017d8f8ef1519727ebeffdaebd43"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 182499,
+          "sha256": "18244f98ebe39f5512f1459ace57449f809d45a3d0159a8acac00f94ca3f4c61"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10851,
+          "sha256": "e7763d43ec4bed2e7fd610e627dce35d5fa1623fa242fc02e1041e751844312b"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14982,
+          "sha256": "08625acc4b425394178e1bf8ae1150442c25e92bc7bfcde0640539a46bc3d26e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity",
+          "size": 177,
+          "sha256": "00f168b5afac1affd3276b14f2e40d949043cc0f346a08099720f6ebba7fffa2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity",
+          "size": 183,
+          "sha256": "f69f5a9966f8b0b7136474c1b8ff68991a98e62726d2868ac7a15a85965e874d"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45089,
+          "sha256": "9d9888a3f6bb4887cd7c55d77c819127a785214c2da702845330afe230182501"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js v24.18.0",
+      "target": "Analyzer WVB cache preparation only; this pass is not feature verification or native packaging.",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "\"node\" \"Tools/Native/Build-Cached-Split-Project-Wvb.mjs\" \"Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj\" \"Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analyzer-Wvb-Recovery-2026-09-22T10-51-31-699Z/Analyzer.wvb\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Payload-Final.identity\" \"--authenticated-project4\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Reader-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Binder-Baseline.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 330552,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analyzer-Wvb-Recovery-2026-09-22T10-51-31-699Z/Results.json",
+          "size": 3664,
+          "sha256": "3cc1db49c43f721c23fb63ce64cbe551be1a1811433fabac7ade4d61176a3113"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analyzer-Wvb-Recovery-2026-09-22T10-51-31-699Z/Analyzer.wvb",
+          "size": 1694119,
+          "sha256": "7b98ac2463b5863c06e1e9ade06cf5384bdee02be512a627661a077669b6481a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Interrupted; not a passing full checkpoint",
+      "tool": "Run-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T08-49-08-183Z/Results.json",
+      "result": "Incomplete",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T08-49-08-183Z/Results.json",
+          "size": 29845,
+          "sha256": "11de5a22f10e00e2ccb59de1390dd3824107a35b226a19a3ec7b39941437ac7c"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Failed; not a passing full checkpoint",
+      "tool": "Run-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T08-56-19-481Z/Results.json",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T08-56-19-481Z/Results.json",
+          "size": 53208,
+          "sha256": "fc6922025269a5b2e2aa691856d4871fb82f7b58ee7d046f24a748bd5859fdf0"
+        }
+      ],
+      "elapsedMilliseconds": 1242214
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Failed; not a passing full checkpoint",
+      "tool": "Run-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T09-22-50-224Z/Results.json",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T09-22-50-224Z/Results.json",
+          "size": 30318,
+          "sha256": "377252d226f12189e3acfcf4502c09d29c86c7f66bd9bd5d3488203523814bd8"
+        }
+      ],
+      "elapsedMilliseconds": 2084880
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Incomplete; not a passing full checkpoint; its narrower selected phase passed",
+      "tool": "Run-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T09-29-00-871Z/Results.json",
+      "result": "Incomplete",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Run-2026-09-22T09-29-00-871Z/Results.json",
+          "size": 31621,
+          "sha256": "a3311edcec0e8619360dcc3870ef4ad4f1c526c6c6155165eef2e924f8adeea7"
+        }
+      ],
+      "elapsedMilliseconds": 2529249
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Failed; not a passing full checkpoint",
+      "tool": "Run-Remaining-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Remaining-2026-09-22T10-08-09-271Z/Results.json",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Remaining-2026-09-22T10-08-09-271Z/Results.json",
+          "size": 42757,
+          "sha256": "af3592d83485b859d6472789128996b6f9e9642f1395138fb443f30c2eee4b98"
+        }
+      ],
+      "elapsedMilliseconds": 248993
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Failed; not a passing full checkpoint",
+      "tool": "Run-Remaining-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Remaining-2026-09-22T10-17-03-573Z/Results.json",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Remaining-2026-09-22T10-17-03-573Z/Results.json",
+          "size": 39647,
+          "sha256": "bea4665de536d33056e4a9c5109affbf23ac7cbc234c975c965d12567f344630"
+        }
+      ],
+      "elapsedMilliseconds": 709386
+    },
+    {
+      "host": "Windows x64 checkpoint orchestration; exact selected host scope retained in original manifest",
+      "target": "Historical attempt, status=Failed; not a passing full checkpoint",
+      "tool": "Run-Remaining-Checkpoint.mjs",
+      "command": "Historical invocation recorded by Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Results.json",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Results.json",
+          "size": 182533,
+          "sha256": "7ce78447103b68dc30c4434be681eb1677f182d8d1304f283014320df814373d"
+        }
+      ],
+      "elapsedMilliseconds": 1108492
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is focused candidate verification, not Qualification, release or installed-toolchain promotion. No browser or OS claim is made.",
+    "Linux wrappers use paired Windows-produced native images; no independent Linux reconstruction or direct native lowering of WVB 1.41 opcode E3 is claimed.",
+    "Indexed execution covers i32, u64 and one u8-backed enum, not every scalar kind or every enum backing family. Record/owned Vector elements and mutable indexing remain outside this claim.",
+    "No maintained application or package consumer was rebuilt or executed in this indexed-borrow checkpoint.",
+    "Copy_before_exclusive and Copy_loop exports are retained and complete-verified but are not invoked by the runtime fixture.",
+    "Existing owned-payload and runtime owners are fresh regression evidence, not claims that all their scenarios exercise the new indexed operation.",
+    "The preceding full checkpoint failed at the first indexed source analysis. Its valid product checks and component execution are reused only with exact unchanged product, project-closure and construction-identity evidence; its overall status remains Failed.",
+    "The separate 330552-ms Analyzer WVB preparation establishes a cache product only. It does not independently establish source behavior, native packaging or feature verification.",
+    "Identity checks cover checkpoint-declared inputs and the explicitly recorded authenticated construction cache inputs, not a universal dependency closure. No unattested pre-run identity is inferred.",
+    "Earlier failed, interrupted and incomplete attempts retain their actual statuses. The final passing record does not turn those attempts into passes.",
+    "Temporary generated fixture modules were removed by their owners; byte identities and guest-instruction counts are retained as exact stdout summaries, not executable artifacts.",
+    "No human inspection, independent reproduction, external audit or whole-workflow peak-memory measurement is claimed."
+  ],
+  "related": [
+    "Documents/Decisions/0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Windvale-Native-Wvb-Runner.md"
+  ]
+}

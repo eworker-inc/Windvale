@@ -5323,7 +5323,7 @@ $QualificationPipelineExpected = @{
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|91'
+    'Run-Split-Compiler' = '3|94'
     'Run-Authenticated-Source-Admission' = '2|32'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
@@ -5902,6 +5902,28 @@ foreach ($Contract in @(
 }
 
 $NativePlannerInitializationCache = @{}
+$IndexedBorrowFixturePath =
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv'
+$IndexedBorrowFixturePlan = & $NativePlanner -ChangedPath $IndexedBorrowFixturePath -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if ($IndexedBorrowFixturePlan.Suites.Count -ne 1 -or
+    $IndexedBorrowFixturePlan.Suites[0] -ne 'language-1-memory-budget-split-execution' -or
+    $IndexedBorrowFixturePlan.Gaps.Count -ne 0 -or
+    $IndexedBorrowFixturePlan.UseFoundationBorrowPlanDevelopment -or
+    $IndexedBorrowFixturePlan.UseFoundationBorrowDirectoryDevelopment -or
+    $IndexedBorrowFixturePlan.UseFoundationBorrowOwnerDevelopment -or
+    $IndexedBorrowFixturePlan.UseFoundationBorrowComponentsDevelopment) {
+    throw 'The indexed Vector fixture must retain its execution owner, not a component-only selection.'
+}
+$OrdinaryBorrowFixturePlan = & $NativePlanner -ChangedPath (
+    'Tests/Fixtures/Language-1.0/Borrow-Return.wv') -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if ($OrdinaryBorrowFixturePlan.Suites.Count -ne 1 -or
+    $OrdinaryBorrowFixturePlan.Suites[0] -ne 'language-1-front-door' -or
+    $OrdinaryBorrowFixturePlan.Gaps.Count -ne 0) {
+    throw 'Indexed Vector routing changed the owner of an ordinary source-borrow fixture.'
+}
+
 $Language1FrontDoorDevelopmentPlan = & $NativePlanner -ChangedPath (
     'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet `
         -InitializationCache $NativePlannerInitializationCache
@@ -5933,6 +5955,7 @@ foreach ($BorrowPath in @(
 foreach ($OtherBorrowPath in @(
     'Compiler/Windvale/Source-Wvb-Core.wv',
     'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
     'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
     'Tools/Native/Development-Command-Core.mjs'
 )) {
@@ -6143,7 +6166,8 @@ foreach ($IntegrationPath in @(
     'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
     'Tools/Native/Development-Command-Core.mjs',
     'Specifications/Seed-Bytecode.md',
-    'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv'
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv'
 )) {
     $ComponentPlan = & $NativePlanner -ChangedPath (@($ComponentPaths) + $IntegrationPath) -PassThru -Quiet `
         -InitializationCache $NativePlannerInitializationCache
@@ -6152,7 +6176,7 @@ foreach ($IntegrationPath in @(
     }
 }
 if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
-    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=366 expected-seconds=180', [StringComparison]::Ordinal)) {
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=388 expected-seconds=180', [StringComparison]::Ordinal)) {
     throw 'The combined Foundation component dispatch differs.'
 }
 

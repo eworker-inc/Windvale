@@ -216,6 +216,7 @@ const WIR_OPERATION_FOUNDATION_UNSAFE_BORROW_WRITE_REGION: u32 = 188u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER: u32 = 189u32;
 const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
 const WIR_OPERATION_FOUNDATION_VALUE_BORROW: u32 = 191u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT: u32 = 192u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WIR_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
@@ -2185,6 +2186,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 167u32 { return Shape == 8u32; }
     if Operation == 168u32 { return Shape != 0u32; }
     if Operation == 169u32 { return Shape == 8u32; }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT { return Shape != 0u32; }
     if Operation == 170u32 { return Shape != 0u32; }
     if Operation == 171u32 { return Shape != 0u32; }
     if Operation == 172u32 { return Shape != 0u32; }
@@ -2334,6 +2336,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 167u32 { return Count == 1u32; }
     if Operation == 168u32 { return Count == 2u32; }
     if Operation == 169u32 || Operation == 170u32 { return Count == 0u32; }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT { return Count == 1u32; }
     if Operation == 171u32 { return Count == 2u32; }
     if Operation == 172u32 { return Count == 1u32; }
     if Operation == 173u32 { return Count == 1u32; }
@@ -2537,6 +2540,9 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
         return Shape == 3u32;
     }
     if Operation == 172u32 { return Index == 0u32 && Shape == 8u32; }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+        return Index == 0u32 && Shape == 8u32;
+    }
     if Operation == 173u32 { return Index == 0u32 && Shape != 0u32; }
     if Operation == 175u32 { return Index == 0u32 && Shape == 8u32; }
     if Operation == WIR_OPERATION_CALL_INDIRECT {
@@ -4647,8 +4653,13 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
                 Appendˉresultˉlayout.Shape
             ) == Appendˉvectorˉelement;
     }
-    if Operation == 169u32 || Operation == 170u32 {
-        if Operandˉcount != 0u32 ||
+    if Operation == 169u32 || Operation == 170u32 ||
+        Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+        var Expectedˉoperands: u32 = 0u32;
+        if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+            Expectedˉoperands = 1u32;
+        }
+        if Operandˉcount != Expectedˉoperands ||
             !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
                 Typeˉcatalog, Auxiliary, 11u32
             ) {
@@ -4668,6 +4679,9 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             return false;
         }
         if Operation == 169u32 { return Shape == 8u32; }
+        if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+            return Shape == Vectorˉelement;
+        }
         return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
                 Typeˉcatalog, Shape, 12u32
             ) &&
@@ -6009,7 +6023,8 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
             Scanˉkind != WIR_OPERATION_FOUNDATION_VALUE_BORROW {
             return Invalid;
         }
-        if Scanˉkind == WIR_OPERATION_FOUNDATION_VALUE_BORROW {
+        if Scanˉkind == WIR_OPERATION_FOUNDATION_VALUE_BORROW ||
+            Scanˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
             Hasˉborrow = true;
         }
         Operation = Operation + 1u32;
@@ -6082,6 +6097,14 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
         let Target: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32);
         if Compilerˉsourceˉwirˉshapeˉisˉborrowedˉoption(Shape) &&
             Kind != WIR_OPERATION_FOUNDATION_VALUE_BORROW {
+            return Invalid;
+        }
+        // Local length still lowers through an ownership-taking round trip.
+        // Borrowed parameters use the non-consuming parameter opcode instead.
+        if Kind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH &&
+            Target >= Range.Parameters && Target < Slotˉcount &&
+            (Bytesˉreadˉu8(Frozenˉslots, Target) == 1u8 ||
+                Bytesˉreadˉu8(Slotˉstate, Target) == 1u8) {
             return Invalid;
         }
         if Target < Slotˉcount && Bytesˉreadˉu8(
@@ -6178,6 +6201,34 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
             Frozenˉslots = Compilerˉsourceˉwirˉownershipˉstateˉset(
                 Frozenˉslots, Target, 1u8
             );
+        } else if Kind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+            if Target >= Slotˉcount || Resultˉtemporary >= Range.Temporaryˉcount {
+                return Invalid;
+            }
+            // The operation borrows its exact owner slot. Existing unused
+            // loads of that owner may no longer become consuming operands.
+            Temporary = 0u32;
+            while Temporary < Range.Temporaryˉcount {
+                if Bytesˉreadˉu32ˉlittle(
+                        Temporaryˉsourceˉslot, Temporary * 4u32
+                    ) == Target && Bytesˉreadˉu8(Temporaryˉused, Temporary) == 0u8 {
+                    Temporaryˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                        Temporaryˉstate, Temporary, 2u8
+                    );
+                }
+                Temporary = Temporary + 1u32;
+            }
+            Frozenˉslots = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                Frozenˉslots, Target, 1u8
+            );
+            // The first profile is resource-free scalar T only. Read-through
+            // is justified by the same exact classifier as projected fields;
+            // widening Vector elements must not turn an owned borrow into T.
+            if Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+                    Input, Scan, Symbols, Readˉtypeˉcatalog, Readˉfunctions, Shape
+                ) != WIR_VALUE_CLASS_COPY {
+                return Invalid;
+            }
         } else if Kind == WIR_OPERATION_LOAD_LOCAL &&
             Target < Slotˉcount && Resultˉtemporary < Range.Temporaryˉcount &&
             (Bytesˉreadˉu8(Slotˉstate, Target) == 1u8 ||
@@ -6671,6 +6722,7 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                 return false;
             }
             if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+                Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
                 Operationˉkind ==
                     WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
@@ -6680,9 +6732,16 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                 let Collectionˉstate: u8 = Bytesˉreadˉu8(
                     Slotˉstate, Operationˉtarget
                 );
+                let Readˉonly: bool =
+                    Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+                    Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT;
+                let Projectedˉowner: bool = Readˉonly &&
+                    Borrowˉprovenance.Hasˉborrow && Bytesˉreadˉu8(
+                        Borrowˉprovenance.Slotˉstate, Operationˉtarget
+                    ) == 1u8;
                 if Collectionˉstate != 1u8 &&
-                    !(Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH &&
-                        Operationˉtarget < Range.Parameters && Collectionˉstate == 2u8) {
+                    !(Readˉonly && Operationˉtarget < Range.Parameters &&
+                        Collectionˉstate == 2u8) && !Projectedˉowner {
                     return false;
                 }
                 if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE {
@@ -7186,7 +7245,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > WIR_OPERATION_FOUNDATION_VALUE_BORROW {
+        if Operationˉkind > WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
             return false;
         }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
@@ -7328,8 +7387,10 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             if Operationˉauxiliary != 0u32 { return false; }
         }
         if Operationˉkind == 169u32 || Operationˉkind == 170u32 ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
-            if (Operationˉtarget < Range.Parameters && Operationˉkind != 169u32) ||
+            if (Operationˉtarget < Range.Parameters && Operationˉkind != 169u32 &&
+                    Operationˉkind != WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT) ||
                 Operationˉtarget >= Range.Parameters + Range.Locals {
                 return false;
             }
@@ -7423,6 +7484,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         }
         if Operationˉkind == 7u32 ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
             if Operationˉtarget == Consumedˉvectorˉslot { return false; }
@@ -7742,18 +7804,18 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 34u32 { return false; }
+    if Minor < 9u32 || Minor > 36u32 { return false; }
     if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32 ||
             Minor == 16u32 || Minor == 17u32 || Minor == 19u32 ||
             Minor == 21u32 || Minor == 23u32 || Minor == 25u32 ||
             Minor == 27u32 || Minor == 29u32 || Minor == 31u32 ||
-            Minor == 33u32) &&
+            Minor == 33u32 || Minor == 35u32) &&
         Directoryˉlength < 56u32 {
         return false;
     }
     if (Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
             Minor == 24u32 || Minor == 26u32 || Minor == 28u32 ||
-            Minor == 30u32 || Minor == 32u32 || Minor == 34u32) &&
+            Minor == 30u32 || Minor == 32u32 || Minor == 34u32 || Minor == 36u32) &&
         Directoryˉlength < 64u32 { return false; }
     let Functionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
     if Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 48u32 { return false; }
@@ -7796,13 +7858,13 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Minor == 14u32 || Minor == 16u32 || Minor == 18u32 ||
         Minor == 20u32 || Minor == 22u32 || Minor == 24u32 ||
         Minor == 26u32 || Minor == 28u32 || Minor == 30u32 ||
-        Minor == 32u32 || Minor == 34u32;
+        Minor == 32u32 || Minor == 34u32 || Minor == 36u32;
     var Hasˉfunctionˉtypes: bool = false;
     if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 ||
             Minor == 15u32 || Minor == 17u32 || Minor == 19u32 ||
             Minor == 21u32 || Minor == 23u32 || Minor == 25u32 ||
             Minor == 27u32 || Minor == 29u32 || Minor == 31u32 ||
-            Minor == 33u32 {
+            Minor == 33u32 || Minor == 35u32 {
         var Expectedˉfunctions: u32 = Symbolˉentries;
         if Hasˉsyntheticˉclosures {
             if Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉbaseˉfunctions(
@@ -7916,6 +7978,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Hasˉunsafeˉwriteˉpointer: bool = false;
     var Hasˉforeignˉcall: bool = false;
     var Hasˉfoundationˉvalueˉborrow: bool = false;
+    var Hasˉvectorˉborrowˉat: bool = false;
     var Closureˉtargets: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Nextˉfunctionˉtype: u32 = 0u32;
     var Operationˉscan: u32 = 0u32;
@@ -8027,6 +8090,9 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         if Scannedˉoperation == WIR_OPERATION_FOUNDATION_VALUE_BORROW {
             Hasˉfoundationˉvalueˉborrow = true;
         }
+        if Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+            Hasˉvectorˉborrowˉat = true;
+        }
         Operationˉscan = Operationˉscan + 1u32;
     }
     if Hasˉsyntheticˉclosures &&
@@ -8065,6 +8131,10 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         return false;
     }
     if Minor <= 32u32 && Hasˉfoundationˉvalueˉborrow { return false; }
+    if Minor <= 34u32 && Hasˉvectorˉborrowˉat { return false; }
+    if (Minor == 35u32 || Minor == 36u32) && !Hasˉvectorˉborrowˉat {
+        return false;
+    }
     if (Minor == 33u32 || Minor == 34u32) &&
         !Hasˉfoundationˉvalueˉborrow {
         return false;

@@ -52,7 +52,7 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.9` through `1.34`
+The catalog selects the even WVIR minor in the current `1.9` through `1.36`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
@@ -79,7 +79,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through `34` selected by the features below |
+| 6 | 2 | Minor version `9` through `36` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -91,9 +91,9 @@ All integers are unsigned little-endian and the directory contains no padding.
 | 40 | 4 | Operand count |
 | 44 | 4 | Operand-entry size `4` |
 
-WVIR 1.17, WVIR 1.19, WVIR 1.21, WVIR 1.23, WVIR 1.25, WVIR 1.27, WVIR 1.29, WVIR 1.31, and WVIR 1.33 append function-type-catalog byte length and
+WVIR 1.17, WVIR 1.19, WVIR 1.21, WVIR 1.23, WVIR 1.25, WVIR 1.27, WVIR 1.29, WVIR 1.31, WVIR 1.33, and WVIR 1.35 append function-type-catalog byte length and
 catalog-layout version `1` at offsets 48 and 52, so function entries begin at
-offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, WVIR 1.24, WVIR 1.26, WVIR 1.28, WVIR 1.30, WVIR 1.32, and WVIR 1.34
+offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, WVIR 1.24, WVIR 1.26, WVIR 1.28, WVIR 1.30, WVIR 1.32, WVIR 1.34, and WVIR 1.36
 first retain specialization count/version at offsets 48 and 52, then append
 function-type-catalog byte length/version at offsets 56 and 60, so function
 entries begin at offset 64. Sections follow in their exact order, and the WVIC
@@ -152,6 +152,10 @@ must contain operation `189` and may also contain operations `186` through
 `188`. A 1.31/1.32 directory must contain operation `190` and may also contain
 earlier operations. A 1.33/1.34 directory must contain operation `191` and may
 also contain earlier operations; a lower minor must reject operation `191`.
+WVIR 1.35/1.36 selects indexed Vector borrowing, requires operation `192`, and
+may contain earlier operations. Lower minors reject operation `192`. These
+versions inherit the 56-byte non-specialized or 64-byte specialized header and
+the function-type catalog; no section entry changes size.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -197,6 +201,7 @@ scope-exit family. Value `186` is
 `189` are mutable write-region borrowing and contained write-pointer
 derivation. Value `190` is the typed Foreign call defined below.
 Value `191` is the Foundation payload-borrow operation defined below.
+Value `192` is the immutable indexed Vector-borrow operation defined below.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -364,11 +369,40 @@ WVIR 1.33/1.34 remain compiler checkpoints. The
 owns subsequent representation and lowering; it does not establish complete
 WVB 1.39 admission or general owned-payload execution.
 
+### Immutable indexed Vector borrowing
+
+Operation `192` resolves only the canonical `Foundationˉcollections` member
+`Vectorˉborrowˉat`. Its `Target` identifies an available exact Vector slot and
+`Auxiliary` is that Vector's shape; its one operand is an exact `u64` index.
+The result has the exact element shape and immutable-borrow provenance. This
+candidate admits only the existing resource-free scalar collection elements.
+Record/owned elements are not opened by this operation.
+
+An owned local, by-value parameter, immutable/exclusive borrowed parameter, or
+Foundation-projected Vector local may supply the immutable owner borrow.
+The original owner's freeze is preserved for a projected Vector. The result
+may be forwarded to an exact immutable helper; Copy-scalar read-through uses
+the existing bounded value-class proof. No borrowed result becomes an owning
+value merely because its temporary carries the element shape. Owner mutation,
+consumption, replacement, and escalation to an exclusive borrow remain invalid.
+The existing 64-block/64-slot and 4,096-operation/temporary provenance bounds
+apply, with the conservative source owner freeze lasting to function exit.
+Both inferred element types and an explicit exactly matching type argument are
+accepted. The two arguments may be positional or use the exact labels `Vector`
+and `Index` in either order. Index evaluation may not load the same owner by
+value or mutate it. Direct local length reads of a frozen/projected Vector
+reject because their retained bytecode sequence takes the owner; an immutable
+helper can still observe length through the parameter instruction.
+
+WVIR 1.35/1.36 is a compiler checkpoint, not full generic Vector support. The
+[indexed-borrow decision](../Documents/Decisions/0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md)
+defines its WVB candidate and the remaining storage and consumer gates.
+
 ## Independent validation
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.9 through 1.34 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.9 through 1.36 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership and kind, result shape, temporary sequencing, and operand sequencing;

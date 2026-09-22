@@ -20,7 +20,8 @@ contains that source state; its promotion was deterministic reconstruction
 evidence, not final paired-host execution qualification.
 
 Later source-built products admit the selected synchronous, capability-free
-WVB 1.39 immutable-borrow profile and candidate WVB 1.40 Vector parameter reads.
+WVB 1.39 immutable-borrow profile, candidate WVB 1.40 Vector parameter reads,
+and candidate WVB 1.41 immutable scalar Vector indexed borrowing.
 Their exact execution evidence is linked below; the pinned reconstruction
 products in the following table do not identify those later builds. The
 minor-40 projected-Vector extension has focused
@@ -100,7 +101,7 @@ loop borrows without a false owner temporary.
 
 The [projected-Vector candidate](../Documents/Decisions/0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md)
 additionally admits shape `37` wrapping exact Vector shape `23` only in
-minor-40 non-parameter local/temporary metadata. Wrapped Vector parameters remain
+minor-40/41 non-parameter local/temporary metadata. Wrapped Vector parameters remain
 invalid, and minor 39 retains its earlier payload boundary. A synchronous direct
 call may pass internal borrowed kind `87` only to immutable parameter shape `26`
 with the same Vector type. The runtime normalizes its descriptor kind for
@@ -115,6 +116,31 @@ invalid ownership sources reject.
 
 The candidate does not change installed identities, native lowering, browser
 execution, or full qualification.
+
+## Candidate WVB 1.41 immutable scalar Vector indexing
+
+Status: candidate implementation with selected paired-host verification. The source
+runner admits this candidate only after complete verification, through the
+same capability-free synchronous request-major-1 boundary as the earlier
+Foundation borrow profiles. `E3 vector.borrow_at` checks the exact live Vector
+descriptor and the full `u64` index before reading one scalar backing cell.
+It creates no collection allocation, budget lease, or independent owner.
+
+The element view retains its original owner's lifetime, including a Vector
+projected from an Option/Result. Existing borrowed-frame cleanup and immutable
+helper forwarding remain in force. Out-of-range access traps without mutation.
+The [bytecode contract](Seed-Bytecode.md#candidate-wvb-141-immutable-scalar-vector-indexing)
+owns exact shape, version, and conservative exclusive-call invalidation rules.
+Record elements, native lowering, browser admission, installed promotion, and
+complete qualification are not established by this candidate.
+
+The [supplied-product execution checkpoint](../Documents/Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json)
+passes eight indexed scenarios, fourteen malformed modules, ten source
+rejections, and three bounds traps on Windows and Debian. Exact bytecode and
+guest instruction counts agree for `i32`, full-width `u64`, and one `u8`-backed
+enum. Other scalar kinds and enum backing families are not claimed as tested.
+Linux wrappers use Windows-produced native images; this is paired interpreter
+execution, not independent compiler reconstruction or native E3 lowering.
 
 ## WVB 1.33 through WVB 1.38 focused System execution
 
@@ -177,7 +203,7 @@ exactly `203` instructions.
 
 The current source-built runner accepts the ordinary portable WVB 1.11-through-
 1.32 command profile, the exact focused System subsets through WVB 1.38, and
-the separately bounded WVB 1.39/1.40 host profiles described above. Candidate
+the separately bounded WVB 1.39/1.40/1.41 host profiles described above. Candidate
 extensions do not imply a complete version-wide or installed execution claim.
 Its shared scalar interpreter implements the WVB 1.12 `i8`,
 `i16`, and `u16` family with the exact

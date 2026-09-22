@@ -141,6 +141,7 @@ const WVB_FOREIGN_CALL_FEATURE: u32 = 134217728u32;
 const WVB_FOUNDATION_VALUE_BORROW_FEATURE: u32 = 268435456u32;
 const WVB_VECTOR_PARAMETER_READ_FEATURE: u32 = 536870912u32;
 const WVB_VECTOR_PAYLOAD_BORROW_FEATURE: u32 = 1073741824u32;
+const WVB_VECTOR_INDEXED_BORROW_FEATURE: u32 = 2147483648u32;
 
 export record Compilerˉsourceˉwvbˉsummary {
     Status: Compilerˉsourceˉwvbˉstatus;
@@ -761,11 +762,12 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> bytes {
     if Operation == 189u32 { return Compilerˉsourceˉwvbˉlowˉbyte(223u32); }
     if Operation == 190u32 { return Compilerˉsourceˉwvbˉlowˉbyte(224u32); }
     if Operation == 191u32 { return Compilerˉsourceˉwvbˉlowˉbyte(225u32); }
+    if Operation == 192u32 { return Compilerˉsourceˉwvbˉlowˉbyte(227u32); }
     return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 191u32 { return true; }
+        if Operation <= 192u32 { return true; }
     }
     return false;
 }
@@ -834,6 +836,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     if Operation == 189u32 { Opcodeˉbytes = 13u32; }
     if Operation == 190u32 { Opcodeˉbytes = 13u32; }
     if Operation == 191u32 { Opcodeˉbytes = 13u32; }
+    if Operation == 192u32 { Opcodeˉbytes = 9u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -4106,7 +4109,7 @@ fn Compilerˉsourceˉwvbˉbuildˉvectorˉborrowˉplan(
                 Slotˉrevisions = Compilerˉsourceˉwvbˉvectorˉborrowˉset(Slotˉrevisions, Target, Index + 1u32);
                 Slotˉaccesses = Compilerˉsourceˉwvbˉvectorˉborrowˉset(Slotˉaccesses, Target, Index + 1u32);
             }
-            if Kind == 169u32 && Target < Slotˉcount {
+            if (Kind == 169u32 || Kind == 192u32) && Target < Slotˉcount {
                 Slotˉaccesses = Compilerˉsourceˉwvbˉvectorˉborrowˉset(Slotˉaccesses, Target, Index + 1u32);
             }
         }
@@ -4242,15 +4245,16 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 }
             }
-            if Operation == 169u32 || Operation == 170u32 {
+            if Operation == 169u32 || Operation == 170u32 || Operation == 192u32 {
                 let Plannedˉvector: u32 =
                     Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
                         Auxiliary, Symbols, Orders
                     );
-                if (Target < Parameters && Operation != 169u32) ||
+                if (Target < Parameters && Operation == 170u32) ||
                     Target >= Parameters + Locals ||
                     Plannedˉvector < 327680u32 ||
-                    Plannedˉvector >= 393216u32 {
+                    Plannedˉvector >= 393216u32 ||
+                    (Operation == 192u32 && Operands != 1u32) {
                     return Compilerˉsourceˉwvbˉanalysisˉfailure(
                         Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                         Globalˉoperation
@@ -4970,7 +4974,7 @@ fn Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
     while Index < Operationˉcount {
         let Entry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
         let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
-        if Kind == 191u32 { Hasˉborrow = true; }
+        if Kind == 191u32 || Kind == 192u32 { Hasˉborrow = true; }
         if Kind == 62u32 {
             let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
             let First: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
@@ -5016,7 +5020,7 @@ fn Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
         let Readˉentry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
         let Readˉkind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Readˉentry + 4u32);
         if Readˉkind == 18u32 || Readˉkind == 67u32 || Readˉkind == 164u32 ||
-            Readˉkind == 166u32 || Readˉkind == 168u32 {
+            Readˉkind == 166u32 || Readˉkind == 168u32 || Readˉkind == 192u32 {
             let Readˉclass: u32 = Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
                 Input, Scan, Symbols, Readˉtypes, Readˉfunctions,
                 Bytesˉreadˉu32ˉlittle(Wir, Readˉentry + 8u32)
@@ -5033,6 +5037,218 @@ fn Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
         Wir, Operations, Operands, Firstˉoperation, Operationˉcount,
         Temporaryˉcount, Slotˉcount, Parameterˉborrows, Callˉborrows, Projectionˉreads
     );
+}
+
+// WVB41 conservatively invalidates every Foundation loan at an exclusive
+// Vector call. Copy read-through results are already ordinary temporaries.
+// Retained loans must stay in their defining block and precede no such call
+// before their use. Rejecting cross-block loans avoids a linear-order proof
+// incorrectly admitting a stale read on a loop backedge.
+fn Compilerˉsourceˉwvbˉguardˉexclusiveˉfoundationˉcalls(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
+    Wir: bytes,
+    Function: u32,
+    Foundation: Foundationˉborrows.Borrowˉplan,
+    Plan: Compilerˉsourceˉwvbˉvectorˉborrowˉplan
+) -> Compilerˉsourceˉwvbˉvectorˉborrowˉplan {
+    if !Plan.Valid { return Plan; }
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Wir, 6u32);
+    if (Minor != 35u32 && Minor != 36u32) || !Foundation.Hasˉborrow {
+        return Plan;
+    }
+    let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
+    let Functionˉentry: u32 = Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
+        Function * 48u32;
+    let Firstˉblock: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 4u32);
+    let Blockˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 8u32);
+    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 12u32);
+    let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 16u32);
+    let Firstˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 20u32);
+    let Temporaryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 24u32);
+    let Slotˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32) +
+        Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
+    let Invalid: Compilerˉsourceˉwvbˉvectorˉborrowˉplan =
+        Compilerˉsourceˉwvbˉvectorˉborrowˉplan(false, Empty, Firstˉoperation);
+    if !Foundation.Valid || Operationˉcount > 4096u32 ||
+        Temporaryˉcount > 4096u32 || Slotˉcount > 4096u32 ||
+        Blockˉcount == 0u32 || Blockˉcount > 4096u32 ||
+        Bytesˉlength(Foundation.Temporaryˉstate) != Temporaryˉcount ||
+        Bytesˉlength(Foundation.Slotˉstate) != Slotˉcount {
+        return Invalid;
+    }
+    var Hasˉretainedˉloan: bool = false;
+    var Hasˉborrowedˉslot: bool = false;
+    var Stateˉindex: u32 = 0u32;
+    while Stateˉindex < Temporaryˉcount {
+        let State: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Foundation.Temporaryˉstate, Stateˉindex));
+        if State > 3u32 { return Invalid; }
+        if State != 0u32 { Hasˉretainedˉloan = true; }
+        Stateˉindex = Stateˉindex + 1u32;
+    }
+    Stateˉindex = 0u32;
+    while Stateˉindex < Slotˉcount {
+        let Slotˉstate: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Foundation.Slotˉstate, Stateˉindex));
+        if Slotˉstate > 1u32 { return Invalid; }
+        if Slotˉstate != 0u32 { Hasˉborrowedˉslot = true; }
+        Stateˉindex = Stateˉindex + 1u32;
+    }
+    if !Hasˉretainedˉloan && !Hasˉborrowedˉslot { return Plan; }
+
+    // Complete WVIR validation has already bounded every directory/range.
+    // Classify each direct call once. At most 4096 one-byte flags are retained;
+    // 128-byte chunks bound append copying without per-call lifetime rescans.
+    let Blocks: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
+    let Operations: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    let Temporaries: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
+    let Operands: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+    var Exclusiveˉcalls: bytes = Empty;
+    var Exclusiveˉchunk: bytes = Empty;
+    var Firstˉexclusive: u32 = 4294967295u32;
+    var Scanˉoperation: u32 = 0u32;
+    while Scanˉoperation < Operationˉcount {
+        let Scanˉentry: u32 = Operations + (Firstˉoperation + Scanˉoperation) * 28u32;
+        var Exclusive: bool = false;
+        if Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 4u32) == 62u32 {
+            let Callˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Wir, Scanˉentry + 20u32);
+            let Callˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Wir, Scanˉentry + 16u32);
+            let Callˉcount: u32 = Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 6u32);
+            var Callˉoperand: u32 = 0u32;
+            while Callˉoperand < Callˉcount && !Exclusive {
+                if Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                        Input, Scan, Symbols, Bindings, Callˉtarget, Callˉoperand
+                    ) == Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE {
+                    let Callˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+                        Wir, Operands + (Callˉfirst + Callˉoperand) * 4u32
+                    );
+                    if Callˉtemporary >= Temporaryˉcount { return Invalid; }
+                    let Callˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                        Wir, Temporaries + (Firstˉtemporary + Callˉtemporary) * 4u32
+                    );
+                    Exclusive = Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(Callˉshape, Orders);
+                }
+                Callˉoperand = Callˉoperand + 1u32;
+            }
+        }
+        var Exclusiveˉflag: u8 = 0u8;
+        if Exclusive {
+            Exclusiveˉflag = 1u8;
+            if Firstˉexclusive == 4294967295u32 {
+                Firstˉexclusive = Firstˉoperation + Scanˉoperation;
+            }
+        }
+        Exclusiveˉchunk = Bytesˉconcat(Exclusiveˉchunk, Bytesˉfromˉu8(Exclusiveˉflag));
+        if Bytesˉlength(Exclusiveˉchunk) == 128u32 {
+            Exclusiveˉcalls = Bytesˉconcat(Exclusiveˉcalls, Exclusiveˉchunk);
+            Exclusiveˉchunk = Empty;
+        }
+        Scanˉoperation = Scanˉoperation + 1u32;
+    }
+    if Firstˉexclusive == 4294967295u32 { return Plan; }
+    let Unsupported: Compilerˉsourceˉwvbˉvectorˉborrowˉplan =
+        Compilerˉsourceˉwvbˉvectorˉborrowˉplan(false, Empty, Firstˉexclusive);
+    if Hasˉborrowedˉslot { return Unsupported; }
+    Exclusiveˉcalls = Bytesˉconcat(Exclusiveˉcalls, Exclusiveˉchunk);
+    if Bytesˉlength(Exclusiveˉcalls) != Operationˉcount { return Unsupported; }
+
+    // Global operation order, not block-directory order, follows SSA result
+    // IDs: loop exits may be declared before their bodies. Each nonempty block
+    // still owns one contiguous operation/definition interval.
+    // A call invalidates every earlier retained loan, including its arguments.
+    // Testing operands once replaces a roots-by-calls or last-use-table scan.
+    var Nextˉtemporary: u32 = 0u32;
+    var Checkedˉoperations: u32 = 0u32;
+    while Checkedˉoperations < Operationˉcount {
+        let Block: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Operations + (Firstˉoperation + Checkedˉoperations) * 28u32
+        );
+        if Block >= Blockˉcount { return Unsupported; }
+        let Blockˉentry: u32 = Blocks + (Firstˉblock + Block) * 28u32;
+        let Blockˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 4u32);
+        let Blockˉoperations: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 8u32);
+        if Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry) != Block ||
+            Blockˉfirst != Firstˉoperation + Checkedˉoperations ||
+            Blockˉoperations == 0u32 ||
+            Blockˉoperations > Operationˉcount - Checkedˉoperations {
+            return Unsupported;
+        }
+        let Blockˉtemporaryˉfirst: u32 = Nextˉtemporary;
+        var Exclusiveˉthreshold: u32 = 0u32;
+        var Latestˉexclusive: u32 = Firstˉexclusive;
+        var Inˉblock: u32 = 0u32;
+        while Inˉblock < Blockˉoperations {
+            let Globalˉoperation: u32 = Blockˉfirst + Inˉblock;
+            let Entry: u32 = Operations + Globalˉoperation * 28u32;
+            if Bytesˉreadˉu32ˉlittle(Wir, Entry) != Block { return Unsupported; }
+            if Bytesˉreadˉu8(Exclusiveˉcalls, Checkedˉoperations) == 1u8 {
+                Exclusiveˉthreshold = Nextˉtemporary;
+                Latestˉexclusive = Globalˉoperation;
+            }
+            let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
+            let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 6u32);
+            var Operand: u32 = 0u32;
+            while Operand < Operandˉcount {
+                let Used: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Operands + (Firstˉoperand + Operand) * 4u32
+                );
+                if Used >= Nextˉtemporary { return Unsupported; }
+                if Bytesˉreadˉu8(Foundation.Temporaryˉstate, Used) != 0u8 {
+                    if Used < Blockˉtemporaryˉfirst { return Unsupported; }
+                    if Used < Exclusiveˉthreshold {
+                        return Compilerˉsourceˉwvbˉvectorˉborrowˉplan(false, Empty, Latestˉexclusive);
+                    }
+                }
+                Operand = Operand + 1u32;
+            }
+            if Bytesˉreadˉu32ˉlittle(Wir, Entry + 8u32) != 0u32 {
+                if Nextˉtemporary >= Temporaryˉcount ||
+                    Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32) != Nextˉtemporary {
+                    return Unsupported;
+                }
+                Nextˉtemporary = Nextˉtemporary + 1u32;
+            }
+            Checkedˉoperations = Checkedˉoperations + 1u32;
+            Inˉblock = Inˉblock + 1u32;
+        }
+        // Check branch/return read-through at this block's actual end, not
+        // after all function operations where later calls would look earlier.
+        let Terminator: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 12u32);
+        let Terminatorˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 16u32);
+        if (Terminator == 2u32 || Terminator == 3u32) && Terminatorˉvalue != 4294967295u32 {
+            if Terminatorˉvalue >= Nextˉtemporary { return Unsupported; }
+            if Bytesˉreadˉu8(Foundation.Temporaryˉstate, Terminatorˉvalue) != 0u8 {
+                if Terminatorˉvalue < Blockˉtemporaryˉfirst { return Unsupported; }
+                if Terminatorˉvalue < Exclusiveˉthreshold {
+                    return Compilerˉsourceˉwvbˉvectorˉborrowˉplan(false, Empty, Latestˉexclusive);
+                }
+            }
+        }
+    }
+    if Checkedˉoperations != Operationˉcount || Nextˉtemporary != Temporaryˉcount {
+        return Unsupported;
+    }
+    // A block without operations has no local loan definition. Any retained
+    // loan read by its terminator therefore crosses a block boundary.
+    var Emptyˉblock: u32 = 0u32;
+    while Emptyˉblock < Blockˉcount {
+        let Emptyˉentry: u32 = Blocks + (Firstˉblock + Emptyˉblock) * 28u32;
+        if Bytesˉreadˉu32ˉlittle(Wir, Emptyˉentry + 8u32) == 0u32 {
+            let Emptyˉterminator: u32 = Bytesˉreadˉu32ˉlittle(Wir, Emptyˉentry + 12u32);
+            let Emptyˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Wir, Emptyˉentry + 16u32);
+            if (Emptyˉterminator == 2u32 || Emptyˉterminator == 3u32) &&
+                Emptyˉvalue != 4294967295u32 {
+                if Emptyˉvalue >= Temporaryˉcount { return Unsupported; }
+                if Bytesˉreadˉu8(Foundation.Temporaryˉstate, Emptyˉvalue) != 0u8 {
+                    return Unsupported;
+                }
+            }
+        }
+        Emptyˉblock = Emptyˉblock + 1u32;
+    }
+    return Plan;
 }
 
 fn Compilerˉsourceˉwvbˉbuildˉfunctionˉborrowˉplans(
@@ -5071,7 +5287,11 @@ fn Compilerˉsourceˉwvbˉbuildˉfunctionˉborrowˉplans(
                 Input, Scan, Symbols, Bindings, Orders, Wir, Function
             ), Foundation
         );
-    return Compilerˉsourceˉwvbˉfunctionˉborrowˉplans(Foundation, Parameterˉborrows, Vectors);
+    let Guardedˉvectors: Compilerˉsourceˉwvbˉvectorˉborrowˉplan =
+        Compilerˉsourceˉwvbˉguardˉexclusiveˉfoundationˉcalls(
+            Input, Scan, Symbols, Bindings, Orders, Wir, Function, Foundation, Vectors
+        );
+    return Compilerˉsourceˉwvbˉfunctionˉborrowˉplans(Foundation, Parameterˉborrows, Guardedˉvectors);
 }
 
 fn Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
@@ -5086,9 +5306,10 @@ fn Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
         var Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32);
         let End: u32 = Operation + Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
         while Operation < End {
-            if Bytesˉreadˉu16ˉlittle(Wir,
+            let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir,
                     Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) + Operation * 28u32 + 4u32
-                ) == 191u32 { return true; }
+                );
+            if Kind == 191u32 || Kind == 192u32 { return true; }
             Operation = Operation + 1u32;
         }
         Index = Index + 1u32;
@@ -5619,6 +5840,12 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
                 )
             );
         }
+    }
+    if Operation == 192u32 {
+        Result = Bytesˉconcat(Result, Compilerˉsourceˉwvbˉinstructionˉu32(227u8, Target));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(Auxiliary, Symbols, Orders) - 327680u32
+        ));
     }
     if Operation == 171u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu8(206u8));
@@ -6243,7 +6470,7 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
                 ) {
                 return true;
             }
-            if (Operation == 169u32 || Operation == 170u32) &&
+            if (Operation == 169u32 || Operation == 170u32 || Operation == 192u32) &&
                 Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
                     Bytesˉreadˉu32ˉlittle(
                         Wir, Operationˉentry + 24u32
@@ -6868,6 +7095,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 }
                 if Operationˉkind == 191u32 {
                     Features = Features | WVB_FOUNDATION_VALUE_BORROW_FEATURE;
+                }
+                if Operationˉkind == 192u32 {
+                    Features = Features | WVB_VECTOR_INDEXED_BORROW_FEATURE;
                 }
                 if Operationˉkind == 8u32 {
                     let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
@@ -7744,6 +7974,9 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     }
     if (Features & (WVB_VECTOR_PARAMETER_READ_FEATURE | WVB_VECTOR_PAYLOAD_BORROW_FEATURE)) != 0u32 {
         Wvbˉminor = 40u32;
+    }
+    if (Features & WVB_VECTOR_INDEXED_BORROW_FEATURE) != 0u32 {
+        Wvbˉminor = 41u32;
     }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));

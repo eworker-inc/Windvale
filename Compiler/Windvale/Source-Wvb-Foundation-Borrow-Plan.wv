@@ -92,17 +92,22 @@ export fn Build(
     Index = 0u32;
     while Index < Operationˉcount {
         let Freezeˉentry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
-        if Bytesˉreadˉu16ˉlittle(Wir, Freezeˉentry + 4u32) == 191u32 {
+        let Freezeˉkind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Freezeˉentry + 4u32);
+        if Freezeˉkind == 191u32 {
             let Owner: u32 = Bytesˉreadˉu32ˉlittle(Wir, Freezeˉentry + 20u32);
             if Owner >= Slotˉcount { return Invalid(Wir); }
             Frozenˉslots = Setˉstate(Frozenˉslots, Owner, 1u8);
             Hasˉborrow = true;
         }
+        if Freezeˉkind == 192u32 { Hasˉborrow = true; }
         Index = Index + 1u32;
     }
     if !Hasˉborrow {
         return Borrowˉplan(true, false, Temporaryˉstate, Slotˉstate, Frozenˉslots);
     }
+    // A direct indexed Vector owner remains an ordinary Vector call source.
+    // Only Foundation payload owners require wrapped load temporaries.
+    let Payloadˉfrozenˉslots: bytes = Frozenˉslots;
     let Availableˉoperands: u32 = (Length - Operands) / 4u32;
     Index = 0u32;
     while Index < Operationˉcount {
@@ -117,12 +122,26 @@ export fn Build(
                 return Invalid(Wir);
             }
             Temporaryˉstate = Setˉstate(Temporaryˉstate, Resultˉtemporary, 1u8);
+        } else if Kind == 192u32 {
+            if Target >= Slotˉcount || Resultˉtemporary >= Temporaryˉcount || Operandˉcount != 1u32 ||
+                Firstˉoperand >= Availableˉoperands ||
+                Bytesˉreadˉu32ˉlittle(Wir, Operands + Firstˉoperand * 4u32) >= Temporaryˉcount {
+                return Invalid(Wir);
+            }
+            // E3 produces a loan. Its existing result store may read through
+            // Copy scalars immediately unless an immutable call needs the loan.
+            if Bytesˉreadˉu8(Projectionˉreads, Resultˉtemporary) == 0u8 ||
+                Bytesˉreadˉu8(Callˉborrows, Resultˉtemporary) == 2u8 {
+                Temporaryˉstate = Setˉstate(Temporaryˉstate, Resultˉtemporary, 2u8);
+            }
+            // Earlier completed Vector calls keep their existing ownership.
+            Frozenˉslots = Setˉstate(Frozenˉslots, Target, 1u8);
         } else if Kind == 7u32 {
             if Target >= Slotˉcount || Resultˉtemporary >= Temporaryˉcount {
                 return Invalid(Wir);
             }
             if Bytesˉreadˉu8(Slotˉstate, Target) == 1u8 ||
-                Bytesˉreadˉu8(Frozenˉslots, Target) == 1u8 {
+                Bytesˉreadˉu8(Payloadˉfrozenˉslots, Target) == 1u8 {
                 Temporaryˉstate = Setˉstate(Temporaryˉstate, Resultˉtemporary, 2u8);
             }
         } else if Kind == 8u32 || Kind == 18u32 || Kind == 67u32 ||
@@ -135,7 +154,8 @@ export fn Build(
             if Source >= Temporaryˉcount { return Invalid(Wir); }
             if Kind == 8u32 {
                 if Target >= Slotˉcount { return Invalid(Wir); }
-                if Bytesˉreadˉu8(Temporaryˉstate, Source) == 2u8 {
+                if Bytesˉreadˉu8(Temporaryˉstate, Source) == 2u8 &&
+                    Bytesˉreadˉu8(Projectionˉreads, Source) == 0u8 {
                     Slotˉstate = Setˉstate(Slotˉstate, Target, 1u8);
                     Temporaryˉstate = Setˉstate(Temporaryˉstate, Source, 3u8);
                 }

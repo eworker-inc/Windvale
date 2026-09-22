@@ -21,7 +21,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 40u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 41u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -77,7 +77,7 @@ export fn Scanˉfunction(
     Minor: u32,
     Requestˉmajor: u32
 ) -> u32 {
-    if Minor < 11u32 || Minor > 40u32 || Offset > Bytesˉlength(Module) ||
+    if Minor < 11u32 || Minor > 41u32 || Offset > Bytesˉlength(Module) ||
         Length > Bytesˉlength(Module) - Offset { return 0u32; }
     var Cursor: u32 = 0u32;
     var Instructions: u32 = 0u32;
@@ -88,6 +88,7 @@ export fn Scanˉfunction(
     var Foreignˉcallˉinstructions: u32 = 0u32;
     var Foundationˉborrowˉinstructions: u32 = 0u32;
     var Vectorˉparameterˉreads: u32 = 0u32;
+    var Vectorˉindexedˉborrows: u32 = 0u32;
     while Cursor < Length {
         let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
             Module, Offset + Cursor
@@ -306,7 +307,7 @@ export fn Scanˉfunction(
             if Foreignˉcallˉinstructions > 4096u32 { return 0u32; }
         }
         if Opcode == 225u32 {
-            if (Minor != 39u32 && Minor != 40u32) || Requestˉmajor != 1u32 || Length - Cursor < 13u32 { return 0u32; }
+            if (Minor != 39u32 && Minor != 40u32 && Minor != 41u32) || Requestˉmajor != 1u32 || Length - Cursor < 13u32 { return 0u32; }
             if Bytesˉreadˉu32ˉlittle(Module, Offset + Cursor + 1u32) >= 4096u32 ||
                 Bytesˉreadˉu32ˉlittle(Module, Offset + Cursor + 5u32) >= 4096u32 ||
                 Bytesˉreadˉu32ˉlittle(Module, Offset + Cursor + 9u32) < 1u32 ||
@@ -317,7 +318,7 @@ export fn Scanˉfunction(
             if Foundationˉborrowˉinstructions > 4096u32 { return 0u32; }
         }
         if Opcode == 226u32 {
-            if Minor != 40u32 || Requestˉmajor != 1u32 || Length - Cursor < 9u32 {
+            if (Minor != 40u32 && Minor != 41u32) || Requestˉmajor != 1u32 || Length - Cursor < 9u32 {
                 return 0u32;
             }
             if Bytesˉreadˉu32ˉlittle(Module, Offset + Cursor + 1u32) >= 64u32 ||
@@ -329,7 +330,16 @@ export fn Scanˉfunction(
             Vectorˉparameterˉreads = Vectorˉparameterˉreads + 1u32;
             if Vectorˉparameterˉreads > 4096u32 { return 0u32; }
         }
-        if (Minor == 39u32 || Minor == 40u32) && (Requestˉmajor != 1u32 || Opcode == 65u32 ||
+        if Opcode == 227u32 {
+            if Minor != 41u32 || Requestˉmajor != 1u32 || Length - Cursor < 9u32 { return 0u32; }
+            if Bytesˉreadˉu32ˉlittle(Module, Offset + Cursor + 1u32) >= 4096u32 ||
+                Bytesˉreadˉu32ˉlittle(Module, Offset + Cursor + 5u32) >= 4096u32 { return 0u32; }
+            Width = 9u32;
+            Supported = true;
+            Vectorˉindexedˉborrows = Vectorˉindexedˉborrows + 1u32;
+            if Vectorˉindexedˉborrows > 4096u32 { return 0u32; }
+        }
+        if (Minor == 39u32 || Minor == 40u32 || Minor == 41u32) && (Requestˉmajor != 1u32 || Opcode == 65u32 ||
             (Opcode >= 214u32 && Opcode <= 224u32)) { return 0u32; }
         if !Supported || Width > Length - Cursor { return 0u32; }
         Cursor = Cursor + Width;
@@ -352,6 +362,7 @@ export fn Scanˉfunction(
     }
     if Minor == 39u32 { Versionˉfeatureˉinstructions = Foundationˉborrowˉinstructions; }
     if Minor == 40u32 { Versionˉfeatureˉinstructions = Vectorˉparameterˉreads; }
+    if Minor == 41u32 { Versionˉfeatureˉinstructions = Vectorˉindexedˉborrows; }
     return Instructions | (Versionˉfeatureˉinstructions << 19u32);
 }
 
