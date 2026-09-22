@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-22-vector-borrow-forwarding",
+  "date": "2026-09-22",
+  "subject": "Direct Vector borrowed-call forwarding and repeated loop borrows",
+  "claim": "The candidate emitter preserves original Vector slot identity at direct borrowed calls. The 3,851-byte regression module is deterministic and identical on Windows and Debian, verifies completely, and returns 42. It covers parameter forwarding, exclusive-to-immutable forwarding, duplicate immutable arguments, nested and named argument evaluation, and 128 loop borrows. Eleven bytecode mutations reject at verifier and runner boundaries; eleven invalid sources reject before publication. Existing owned-call and scope-release fixtures remain valid, with each module 14 bytes smaller. Nine owned Option/Result scenarios, eight copied-payload mutations, and two invalid-budget sources also pass per host.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 1bae387efd17800d8dfdd60506413d54a8fa65d5; exact changed implementation/test and executable identities below. Only source WVB emission and tests change; source analysis, verifier, runner, admission, and authentication products match the earlier September 15 identities. The generated emitter reader is synchronized with the canonical source."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Initial cold current compiler reconstruction, stopped at approved 60-minute cap; completed products preserved",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "Build-Current-Split-Project-Wvb.mjs construction workflow under Runˉdevelopmentˉcommand, deadline 2026-09-22T05:58:42Z; stopped during currentReader-package",
+      "result": "Incomplete"
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Changed emitter WVB built with authenticated Project 4 and explicit completed predecessor products",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.wvb Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.identity Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.identity --authenticated-project4 Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Reader-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Binder-Baseline.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 179155,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 320601,
+          "sha256": "ddf75f16a2a33166c8ffbea9637b3f24be4a82f54da323989b5791eb32f304db"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 239865,
+          "sha256": "af8adbedfa9dbcbe7436827aa017666bfa180962452b6358da9db22ff6f39ab3"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv",
+          "size": 3430,
+          "sha256": "2819dc1d960c39c507933c1f3be0c6c3bab8540ed9caec6a6d683bea9b32085e"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 176630,
+          "sha256": "e43f24417a077a99ccfb3411364f989fa10641d36eabc0c3145f0ee443d8544f"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24093,
+          "sha256": "cc4600479de08959a6ca2d004c2e2cd152b5dd7d04c8bac28ae245ae35f11181"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 353662,
+          "sha256": "411a2743aef4b7daa379e33a9727ba51c3031ba738a8fa7f4a1d9237371aa9a4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.wvb",
+          "size": 1608790,
+          "sha256": "6316aa92a04b6f661a83b6f22b1d243e1044f3308c80b09a39e582333b0d3a69"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 packaging for Windows and Debian x64",
+      "target": "Completely verified WVB/native image, Windows profile 8 emitter and paired Linux image-mode packages; exact selected product identities",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs; Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs 8 Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.wvb Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.exe; Tools/Native/Package-Hosted-Wvb.cmd image <profile> <tool.wvb> <private-copy-of-validated-image-prefix> <fragment-count> <entry-offset> <tool.elf> linux (Analyzer/Emitter=8, Verifier=7, Runner=5)",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.wvb",
+          "size": 1684068,
+          "sha256": "5795cdc7207de465867fa226a0576e360f073c21ee9c40b2bb1240a41c1b87d8"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe",
+          "size": 54543872,
+          "sha256": "ec5b14b00836939e995dddb757b9d5e2a71597160f99a6b022df09a05dba473c"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.elf",
+          "size": 54542336,
+          "sha256": "a01887cb55bfe9ee5f1e57498726a283f8afd1358b735caa86fd5ea47ffd2648"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.exe",
+          "size": 32692736,
+          "sha256": "15cd7d3d7c8fb59d38c06621b020cc2f032d5a31567d76d3c4aeb75a0bff66b8"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.wvb",
+          "size": 1608790,
+          "sha256": "6316aa92a04b6f661a83b6f22b1d243e1044f3308c80b09a39e582333b0d3a69"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.exe",
+          "size": 32827392,
+          "sha256": "80421997e1f8d7a984fbc4918412cb994a000ed0348a7e010f7915ecaa0bdb2c"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.elf",
+          "size": 32829440,
+          "sha256": "c0c553f8d87ec8c8ebc1cc1d5e8abf5d24fed5ef62c42db84f762777da9e78cf"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.wvb",
+          "size": 572187,
+          "sha256": "2339ada975546eb85bd7e0fa47e6480e6bd1a75bf072b21401fd4bcbc61885e3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.exe",
+          "size": 4890112,
+          "sha256": "0aae1764cc98438180f7f4d8f43649d0aafb1c1695ebdb35fc04ba2c311e4ed6"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.elf",
+          "size": 4890624,
+          "sha256": "ad96681e45d0079d4d6fbe3095051fc548cb55aef45572579f344cb723067152"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.wvb",
+          "size": 1160456,
+          "sha256": "477a76ce63897fa29cf8359af64be49b9cf3f3d8f68406a726619a67bb7be6ef"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.exe",
+          "size": 12029952,
+          "sha256": "315cb6337f452b73c954f1cd3c9ee8a473c49c42ff034b5c2c611c4e3d3dba73"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.elf",
+          "size": 12029952,
+          "sha256": "2e3b321d6ba60f09cc0a3090f67a8dc1c219ce2174b91786a7a666bf46d28d30"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Before-change negative control: the expanded forwarding fixture emits 4,103 bytes but fails typed-execution verification with the original emitter",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Baseline.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.exe Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.exe",
+      "result": "Failed"
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Final selected Vector owner: deterministic publication/execution, structural original-slot checks, 11 malformed cases at both boundaries, 11 source rejections, and two legacy deterministic/structural regressions",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.exe Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 15607,
+      "outputs": [
+        {
+          "path": "Vector-Parameters-a.wvb",
+          "size": 3851,
+          "sha256": "81b3c105b1bfdd44e95e40e30ae601a6544b6cdb6df5703579bcb336a4e5a949"
+        },
+        {
+          "path": "Owned-Vector-Calls-And-Joins-Wir-a.wvb",
+          "size": 1719,
+          "sha256": "8a4a00c48fb2743ecb3d6d1c4ab532a6de0613b9374cfeae3dc031d159ffbde5"
+        },
+        {
+          "path": "Using-Vector-Fallthrough-Wir-a.wvb",
+          "size": 1197,
+          "sha256": "74bd91bf9764874562ebec6a61a2232e528ac7bfedc82107f05b59e7aff9e170"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js 20.19.2",
+      "target": "Final selected Vector owner: deterministic publication/execution, structural original-slot checks, 11 malformed cases at both boundaries, 11 source rejections, and two legacy deterministic/structural regressions",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.elf Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.elf Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.elf Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 40375,
+      "outputs": [
+        {
+          "path": "Vector-Parameters-a.wvb",
+          "size": 3851,
+          "sha256": "81b3c105b1bfdd44e95e40e30ae601a6544b6cdb6df5703579bcb336a4e5a949"
+        },
+        {
+          "path": "Owned-Vector-Calls-And-Joins-Wir-a.wvb",
+          "size": 1719,
+          "sha256": "8a4a00c48fb2743ecb3d6d1c4ab532a6de0613b9374cfeae3dc031d159ffbde5"
+        },
+        {
+          "path": "Using-Vector-Fallthrough-Wir-a.wvb",
+          "size": 1197,
+          "sha256": "74bd91bf9764874562ebec6a61a2232e528ac7bfedc82107f05b59e7aff9e170"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Final selected owned Option/Result publication, execution, reclamation and rejection regression cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.exe Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.exe Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 18374
+    },
+    {
+      "host": "Debian x64 under WSL2; Node.js 20.19.2",
+      "target": "Final selected owned Option/Result publication, execution, reclamation and rejection regression cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Analyzer-Current.elf Artifacts/Work/Borrow-Vector-2026-09-22/Emitter-Borrow.elf Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Borrow-Vector-2026-09-22/Verifier-Focused.elf Artifacts/Work/Borrow-Vector-2026-09-22/Runner-Focused.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 46477
+    },
+    {
+      "host": "Windows x64",
+      "target": "Canonical/generated emitter synchronization, JavaScript syntax, whitespace",
+      "tool": "Tools/Native/Generate-Compiler-Artifact-Readers.mjs; node; git",
+      "command": "node Tools/Native/Generate-Compiler-Artifact-Readers.mjs --check; node --check Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs; git diff --check",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64; PowerShell",
+      "target": "Document links, statuses, catalogs and retrieval; 1,604 Markdown files, 5,978 links and 483 anchors",
+      "tool": "Tools/Verify/Verify-Documentation.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64; PowerShell",
+      "target": "Verification inventory and routing, including refreshed 89 Run-Split-Compiler call sites; 31 general and 303 native cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This closes the direct borrowed Vector call prerequisite, not the maintained owned-resource consumer or wider Option/Result milestone. Foundation-projected Vector payload forwarding is explicitly rejected; direct payload extraction, exclusive Option/Result borrowing, Take, and mapping remain open.",
+    "Existing candidate WVB 1.40 parameter-length reads and WVB 1.26 borrowed-call semantics are unchanged. No bytecode version, verifier rule, or runtime contract was relaxed.",
+    "Linux packages reuse Windows-generated WVB/native images. This is paired-host execution, not independent Linux compiler reconstruction or full cross-host Qualification.",
+    "No installed identity, bootstrap promotion, native minor-40 lowering, browser, OS, or release artifact is claimed. The full automatic plan (10 native owners, 3,450 expected seconds and 13,800 maximum seconds) was not run; existing explicit focused selectors were chosen for causal coverage and to avoid redundant cold construction.",
+    "Initial full current-compiler construction reached its 60-minute cap and did not pass. Completed products and authenticated caches were retained. Explicit focused construction/packaging and final checks then ran within a second approved 45-minute batch; no full compiler-cache publication is claimed.",
+    "An initial changed-emitter source build rejected duplicate local names; these were corrected before the recorded passing construction. The new projected-payload negative test initially rejected a missing and then misordered dependency; its corrected final case reaches Unsupported_operation before publication.",
+    "An initial task-local Linux packaging helper appended extra service fragments to two image-cache directories. Its postcheck failed; only the new sidecars were moved aside, original checkpoint hashes were revalidated, and resulting packages matched the prior recorded identities. Subsequent packages used private image copies and passed postchecks.",
+    "Per-function planning uses existing bounds of 4,096 operations, 4,096 temporaries and 64 slots, with at most 66,304 logical retained table bytes. Immutable updates copy bounded buffers. No whole-workflow peak memory measurement or timing improvement claim is made; emitted regression modules remain below 8,192 bytes.",
+    "Pure runtime-only Foundation borrow cases were not repeated because the runtime products are byte-identical to the earlier paired-host record. Their evidence is reused only for those unchanged inputs, not as verification of the new compiler.",
+    "AI review found and helped close the projected-payload provenance boundary and golden-identity updates. No human inspection, external audit, or independent reproduction is claimed.",
+    "The plan checker initially rejected the additional compiler call site introduced by the legacy regressions. Its exact inventory expectation was updated from 88 to the measured 89; the final plan check passed."
+  ],
+  "related": [
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Windvale-Native-Wvb-Runner.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Decisions/0963-Read-Vector-Parameters-Without-Transferring-Ownership.md",
+    "Documents/Evidence/2026-09-15-Vector-Parameter-Length.json",
+    "Documents/Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json"
+  ]
+}

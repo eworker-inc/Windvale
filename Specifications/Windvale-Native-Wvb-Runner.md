@@ -321,9 +321,10 @@ teardown. Text, bytes, aggregates,
 collections, callables, resource owners, and borrows cannot enter it, so this
 checkpoint adds no hidden tracing, reference counting, or lifetime behavior.
 
-The owned-call fixture is a deterministic 1,733-byte WVB 1.26 module at
-SHA-256
-`ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
+The owned-call fixture is a deterministic 1,719-byte WVB 1.26 module after the
+compiler's direct borrowed-call correction; the runner contract is unchanged.
+Its exact identity and paired-host execution are recorded in the
+[Vector forwarding evidence](../Documents/Evidence/2026-09-22-Vector-Borrow-Forwarding.json).
 The compiler-aligned verifier rejects six version, mode, return, and local
 corruptions before execution. The source-built runner executes borrow followed
 by value transfer, owned results/returns, and equal forward-path consumption,

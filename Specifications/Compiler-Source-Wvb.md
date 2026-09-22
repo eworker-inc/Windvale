@@ -776,9 +776,9 @@ transferred value owner or the borrow's temporary retain. The caller's owner is
 therefore preserved by a borrow and invalidated by a value transfer exactly as
 the WVIR proof requires.
 
-`Owned-Vector-Calls-And-Joins-Wir.wv` deterministically emits a 1,733-byte WVB
-1.26 module at SHA-256
-`ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
+`Owned-Vector-Calls-And-Joins-Wir.wv` deterministically emits a 1,719-byte WVB
+1.26 module after direct borrowed-call lowering. Exact current bytes are in the
+[Vector forwarding evidence](../Documents/Evidence/2026-09-22-Vector-Borrow-Forwarding.json).
 The compiler-aligned verifier accepts it and rejects six exact version,
 parameter-mode, return, and local-shape corruptions. The source-built scalar
 runner returns `42`. Borrow-after-move, duplicate transfer, and asymmetric-join
@@ -1578,9 +1578,36 @@ otherwise inherit minor 39. The existing memory-budget split-execution owner
 provides `--vector-parameter-reads` with explicit analyzer, emitter, verifier,
 and runner products, with deterministic publication and negative ownership and
 bytecode cases. The [paired-host evidence](../Documents/Evidence/2026-09-15-Vector-Parameter-Length.json)
-records the passing direct-read cases. Borrowed-parameter forwarding through
-another helper and repeated borrowing across a loop backedge remain open
-call-lowering/lifetime gaps; their generated programs do not pass verification.
+records the original direct-read cases. The later
+[forwarding evidence](../Documents/Evidence/2026-09-22-Vector-Borrow-Forwarding.json)
+also covers borrowed-parameter forwarding, exclusive-to-immutable forwarding,
+duplicate immutable arguments, named argument evaluation order, and 128 repeated
+loop borrows on Windows and Debian. This is a compiler correction to existing
+calls, not a new instruction or a verifier relaxation.
+
+A direct Vector slot load used by a borrowed call now names its original slot
+until that call. Emission omits the intermediate load/store and loads the slot
+directly at the call; its unused temporary identity has unit metadata, never an
+invented Vector owner. Analysis, code sizes, stack bounds, and reachability use
+the same plan. This also corrects existing minor-26 borrowed calls without
+changing their bytecode version.
+
+Complete WVIR validation still proves same-block single-use owned temporaries.
+The additional plan tracks each slot's writes and reads between argument
+evaluation and consumption. It rejects replacement, moves, conflicting exclusive
+access, and reading after a pending value move; duplicate immutable access is
+allowed. Named arguments retain written evaluation order even when the call's
+parameter order differs. Foundation-projected payload views have separate
+provenance and remain unsupported by this direct-slot optimization; they reject
+before publication instead of becoming ordinary Vector owners.
+
+The plan stays within existing owned-function bounds: 4,096 operations, 4,096
+temporaries, and 64 named slots. Four fixed-width temporary tables and three slot
+tables retain at most 66,304 logical bytes, independent of runtime loop trips.
+Immutable table updates copy bounded buffers; this is not a peak-allocation
+measurement. Functions without Vector loads allocate none of these tables.
+Direct Option/Result Vector extraction, arbitrary projected forwarding, native
+minor-40 lowering, and installed promotion remain separate work.
 
 ## Expansion path
 

@@ -33,11 +33,11 @@ const EXPECTED_APPEND_SUCCESS_SHA256 =
 const EXPECTED_GROW_SUCCESS_SHA256 =
     '30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59';
 const EXPECTED_OWNED_CALL_SUCCESS_SHA256 =
-    'ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387';
+    '8a4a00c48fb2743ecb3d6d1c4ab532a6de0613b9374cfeae3dc031d159ffbde5';
 const EXPECTED_OWNED_AGGREGATE_SUCCESS_SHA256 =
     'b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395';
 const EXPECTED_USING_FALLTHROUGH_SHA256 =
-    'f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257';
+    '74bd91bf9764874562ebec6a61a2232e528ac7bfedc82107f05b59e7aff9e170';
 const EXPECTED_USING_NESTED_SHA256 =
     'e0c6bc8e2d31b9322dbbfd23c9b88fe5cb2ba820423c7fdb7a447a8e43380a1c';
 const EXPECTED_USING_TRY_SHA256 =
@@ -845,7 +845,7 @@ async function Runˉpublicationˉandˉexecution() {
     const Usingˉtryˉbytes = readFileSync(Usingˉtry);
     const Usingˉloopˉbytes = readFileSync(Usingˉloop);
     Requireˉusingˉidentity(
-        Usingˉfallthroughˉbytes, 1211, EXPECTED_USING_FALLTHROUGH_SHA256,
+        Usingˉfallthroughˉbytes, 1197, EXPECTED_USING_FALLTHROUGH_SHA256,
         'Main', [3], 'fallthrough',
     );
     Requireˉusingˉidentity(
@@ -1585,11 +1585,12 @@ async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyze
     const Fixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv');
     Requireˉordinaryˉfile(Fixture, 8192, 'Vector parameter fixture');
     const Source = readFileSync(Fixture, 'utf8');
-    function Arguments(Input, Output) {
+    function Arguments(Input, Output, Includeˉoption = false) {
         return [Admitter, Authenticator, Analyzer, Emitter,
             '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
             '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
-            Input, ...['Collections/Collections.wv', 'Memory/Memory.wv', 'Values/Result.wv']
+            Input, ...['Collections/Collections.wv', 'Memory/Memory.wv',
+                ...(Includeˉoption ? ['Values/Option.wv'] : []), 'Values/Result.wv']
                 .map(Name => path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output];
     }
     const Modules = [];
@@ -1630,6 +1631,26 @@ async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyze
             Reject(`Vector parameter mode differs for ${Name}.`);
         }
     }
+    // Forwarding must load the original borrowed parameter at the call;
+    // storing it in an ordinary Vector temporary would manufacture an owner.
+    const Forward = Parseˉfunction(Bytes, Sections[4], 'Forward');
+    const Readˉfunction = Reads.find(Read => Read.function.name === 'Read').function;
+    if (Forward.localShapes.includes(23)) Reject('Vector forwarding invented an owned local.');
+    const Forwardˉbegin = Sections[5].payload + Forward.codeOffset;
+    const Forwardˉend = Forwardˉbegin + Forward.codeLength;
+    let Previous = null;
+    let Forwardˉcalls = 0;
+    for (let Cursor = Forwardˉbegin; Cursor < Forwardˉend;) {
+        if (Bytes[Cursor] === 64 && Bytes.readUInt32LE(Cursor + 1) === Readˉfunction.index) {
+            if (Previous === null || Bytes[Previous] !== 4 || Bytes.readUInt32LE(Previous + 1) !== 0) {
+                Reject('Vector forwarding did not preserve the original parameter slot.');
+            }
+            Forwardˉcalls += 1;
+        }
+        Previous = Cursor;
+        Cursor += Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+    }
+    if (Forwardˉcalls !== 1) Reject('Expected exactly one forwarded Vector call.');
     const First = Reads[0].offset;
     const Types = Parseˉtypes(Bytes, Sections[7]);
     const Wrongˉtype = Types.findIndex(Type => Type.kind !== 5);
@@ -1689,24 +1710,122 @@ async function Verifyˉvectorˉparameterˉreads(Admitter, Authenticator, Analyze
         }
         process.stdout.write(`PASS Vector parameter malformed case=${Label}\n`);
     }
+    const Pendingˉmove = Source.slice(0, Source.indexOf('export fn Main(')) + `
+fn Consumeˉmarker(Value: Collections.Vector<i32>) -> u32 { return 7u32; }
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Created: Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Created {
+        case Result.Result.Valid { Value: Values } {
+            if Forward(borrow Values, Consumeˉmarker(Values)) != 0u64 { return 1; }
+            42
+        }
+        case Result.Result.Failure { Error: Failure } { 2 }
+    };
+}
+`;
+    const Aliasedˉmove = Pendingˉmove.replace(
+        'fn Consumeˉmarker(Value: Collections.Vector<i32>) -> u32 { return 7u32; }',
+        'fn Consumeˉmarker(View: borrow Collections.Vector<i32>, Value: Collections.Vector<i32>) -> u64 { return 0u64; }',
+    ).replace('Forward(borrow Values, Consumeˉmarker(Values))', 'Consumeˉmarker(borrow Values, Values)');
+    const Pendingˉmutation = Pendingˉmove
+        .replace('fn Consumeˉmarker(Value: Collections.Vector<i32>)',
+            'fn Consumeˉmarker(Value: borrow mut Collections.Vector<i32>)')
+        .replace('case Result.Result.Valid { Value: Values } {',
+            'case Result.Result.Valid { Value: Initial } {\n            var Values: Collections.Vector<i32> = Initial;')
+        .replace('Consumeˉmarker(Values)', 'Consumeˉmarker(borrow mut Values)');
+    const Movedˉbeforeˉread = Pendingˉmove.replace(
+        'fn Consumeˉmarker(Value: Collections.Vector<i32>) -> u32 { return 7u32; }',
+        'fn Consumeˉmarker(Value: Collections.Vector<i32>, Marker: u64) -> u64 { return 0u64; }',
+    ).replace('Forward(borrow Values, Consumeˉmarker(Values))',
+        'Consumeˉmarker(Values, Forward(borrow Values, 7u32))');
+    const Movedˉbeforeˉlength = Movedˉbeforeˉread.replace(
+        'Consumeˉmarker(Values, Forward(borrow Values, 7u32))',
+        'Consumeˉmarker(Values, Collections.Vectorˉlength(borrow Values))');
+    const Pendingˉnamedˉmove = Pendingˉmove.replace(
+        'Forward(borrow Values, Consumeˉmarker(Values))',
+        'Read(Value: borrow Values, Marker: Consumeˉmarker(Values))');
+    const Foundationˉprojection = Source.replace('import Foundationˉcollections as Collections;',
+        'import Foundationˉcollections as Collections;\nimport Foundationˉoption as Option;')
+        .replace('export fn Main(', `fn Observeˉprojection(Values: Collections.Vector<i32>) -> i32 {
+    let Owner: Option.Option<Collections.Vector<i32> > =
+        Option.Option.Present<Collections.Vector<i32> > { Value: Values };
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Item } {
+            if Forward(borrow Item, 7u32) != 1u64 { return 15; }
+            return 42;
+        }
+        case Option.Option.Absent { return 16; }
+    }
+}
+export fn Main(`)
+        .replace('Consumeˉwithˉmarker(Marker: Forward(borrow Values, 7u32), Value: Values)',
+            'Observeˉprojection(Values)');
     const Invalidˉsources = [
         ['consumed-parameter', Source.replace('fn Consume(Value: Collections.Vector<i32>) -> i32 {',
             'fn Consume(Value: Collections.Vector<i32>) -> i32 {\n    let Consumedˉbeforeˉread: Collections.Vector<i32> = Value;')],
         ['consume-borrowed', Source.replace('return Collections.Vectorˉlength(borrow Value);',
             'let Moved: Collections.Vector<i32> = Value;\n    return 1u64;')],
+        ['forward-after-move', Source.replace('if Forward(borrow Moved, 7u32) != 1u64',
+            'if Forward(borrow Value, 7u32) != 1u64')],
+        ['move-forwarded-parameter', Source.replace('return Read(Marker, borrow Value);',
+            'let Moved: Collections.Vector<i32> = Value;\n    return Read(Marker, borrow Moved);')],
+        ['pending-owner-move', Pendingˉmove, /Invalidˉwir|Unsupportedˉoperation/u],
+        ['aliased-owner-move', Aliasedˉmove, /Invalidˉwir|Unsupportedˉoperation/u],
+        ['pending-exclusive-borrow', Pendingˉmutation, /Invalidˉwir|Unsupportedˉoperation/u],
+        ['move-before-nested-read', Movedˉbeforeˉread, /Invalidˉwir|Unsupportedˉoperation/u],
+        ['move-before-direct-length', Movedˉbeforeˉlength, /Invalidˉwir|Unsupportedˉoperation/u],
+        ['named-pending-owner-move', Pendingˉnamedˉmove, /Invalidˉwir|Unsupportedˉoperation/u],
+        ['foundation-projected-vector', Foundationˉprojection, /Invalidˉwir|Unsupportedˉoperation/u],
     ];
-    for (const [Label, Text] of Invalidˉsources) {
+    for (const [Label, Text, Diagnostic = /Invalidˉwir/u] of Invalidˉsources) {
         if (Text === Source) Reject('Vector source mutation did not change its input.');
         const Input = path.join(Work, Label + '.wv');
         const Output = path.join(Work, Label + '.wvb');
         writeFileSync(Input, Text, { flag: 'wx' });
         const Result = await Runˉdevelopmentˉcommand(process.execPath,
-            [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output)],
+            [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'),
+                ...Arguments(Input, Output, Label === 'foundation-projected-vector')],
             Started + Maximumˉrunˉmilliseconds, false, MAXIMUM_DIAGNOSTIC_BYTES);
-        if (Result.Code !== 1 || existsSync(Output) || !Normalize(Result.Error).includes('Invalidˉwir')) {
-            Reject(`Invalid Vector ownership did not reject at WIR validation: ${Label}\n${Result.Output}${Result.Error}`);
+        if (Result.Code !== 1 || existsSync(Output) || !Diagnostic.test(Normalize(Result.Error))) {
+            Reject(`Invalid Vector ownership did not reject before publication: ${Label}\n${Result.Output}${Result.Error}`);
         }
-        process.stdout.write(`PASS Vector parameter source rejection case=${Label}\n`);
+        const Phase = Normalize(Result.Error).match(/Invalidˉwir|Unsupportedˉoperation/u)?.[0];
+        process.stdout.write(`PASS Vector parameter source rejection case=${Label} diagnostic=${Phase}\n`);
+    }
+    // The fix applies to the existing borrowed-call contract as well as minor
+    // 40. Keep transfer after observation and explicit scope release covered.
+    for (const [Name, Minor] of [['Owned-Vector-Calls-And-Joins-Wir', 26], ['Using-Vector-Fallthrough-Wir', 26]]) {
+        const Input = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0', Name + '.wv');
+        let First = null;
+        for (const Generation of ['a', 'b']) {
+            const Output = path.join(Work, Name + '-' + Generation + '.wvb');
+            await Runˉnode(Name + '-' + Generation, 'Run-Split-Compiler.mjs', Arguments(Input, Output));
+            const Payload = readFileSync(Output);
+            if (Payload.length > 8192 || Payload.readUInt16LE(6) !== Minor) {
+                Reject(`Legacy Vector call version or bound differs: ${Name}.`);
+            }
+            if (Generation === 'a') {
+                First = Payload;
+                if (Normalize(await Run(Name + '-verify', Verifier, [Output])) !==
+                    'wvb status=Valid profile=compiler-aligned\n' ||
+                    Normalize(await Run(Name + '-execute', Runner, [Output])) !== 'Result: 42\n') {
+                    Reject(`Legacy Vector call verification/execution differs: ${Name}.`);
+                }
+            } else if (!First.equals(Payload)) {
+                Reject(`Legacy Vector call publication is not deterministic: ${Name}.`);
+            }
+        }
+        if (Name === 'Owned-Vector-Calls-And-Joins-Wir') {
+            Inspectˉownedˉcallˉmodule(First);
+            if (First.length !== 1719 || Digest(First) !== EXPECTED_OWNED_CALL_SUCCESS_SHA256) {
+                Reject('Owned Vector call regression identity differs.');
+            }
+        } else {
+            Requireˉusingˉidentity(First, 1197, EXPECTED_USING_FALLTHROUGH_SHA256,
+                'Main', [3], 'fallthrough');
+        }
+        process.stdout.write(`PASS Vector call regression fixture=${Name} wvb-bytes=${First.length} wvb-sha256=${Digest(First)}\n`);
     }
     process.stdout.write(`native Vector parameter reads status=Passed reads=${Reads.length} malformed=${Mutations.length} source-rejections=${Invalidˉsources.length} ` +
         `wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)} qualification=false elapsed-ms=${Date.now() - Started}\n`);

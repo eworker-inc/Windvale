@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-15
+> Last reviewed: 2026-09-22
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -145,13 +145,16 @@ Debian direct-read tests with identical bytes; see the
 [paired-host evidence](../Evidence/2026-09-15-Vector-Parameter-Length.json) and
 [Vector parameter-read decision](../Decisions/0963-Read-Vector-Parameters-Without-Transferring-Ownership.md).
 
-The next call-lowering work must close two gaps exposed by the broader fixture:
-forwarding a borrowed Vector through another helper currently emits a temporary
-that fails typed verification, and repeated borrowing inside a loop fails the
-control-flow ownership check. Keep these as separate unfinished work, then
-connect useful owned Option/Result consumers. Direct payload extraction,
-exclusive Option/Result borrowing, Take, mapping, installed promotion, and full
-qualification are still open; this prerequisite does not close them.
+The two direct-call gaps are now closed in the focused candidate: a borrowed
+Vector can pass through another helper and can be borrowed repeatedly inside a
+loop without creating a false owner temporary. Windows and Debian emit identical
+bytes and execute the broader fixture, including named argument order and
+conflicting-access rejection; see the
+[forwarding checkpoint](../Evidence/2026-09-22-Vector-Borrow-Forwarding.json).
+The next gate remains a maintained owned Option/Result resource consumer.
+Foundation-projected Vector forwarding and direct payload extraction are still
+unsupported, and exclusive Option/Result borrowing, Take, mapping, installed
+promotion, and full qualification remain separate work.
 
 Before starting each, enumerate its finite accepted public operations, existing
 implementation, missing implementation, consumer, targets, and focused verifier.
