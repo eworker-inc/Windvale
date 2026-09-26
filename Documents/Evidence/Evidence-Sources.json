@@ -40,6 +40,14 @@
       "use": "Detailed historical gates, milestone audits, measurements, and proposed lanes from the pre-reorganization roadmap.",
       "limits": "Dated plan; use Documents/Project/Roadmap.md for current dependencies and gates.",
       "indexLevels": [2, 3]
+    },
+    {
+      "key": "verification-throughput-history-2026-09-26",
+      "path": "Documents/Project/Verification-Throughput-History-2026-09-26.md",
+      "kind": "historical-snapshot",
+      "use": "Earlier development verification checkpoints, qualification timings, and construction inventories preserved during the September 26 simplification program.",
+      "limits": "Dated implementation history; use the active Verification-Throughput-Plan.md for present standing and the current work order.",
+      "indexLevels": [2, 3]
     }
   ]
 }

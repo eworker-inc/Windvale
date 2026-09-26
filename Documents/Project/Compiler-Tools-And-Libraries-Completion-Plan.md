@@ -180,9 +180,9 @@ rejections and three bounds traps for `i32`, `u64` and one `u8`-backed enum.
 The supplied-product selector is the current evidence; automatic CI execution
 of those cases remains open. Paired Linux execution uses Windows-produced
 native images, not independent reconstruction or native E3 lowering. The next
-consumer gate now has the Copy-record element prerequisite below, but still
-needs allocation-budget threading outside Main and scanner ownership before
-the typed package-lock directory can replace its existing byte representation. Installed promotion
+consumer gate now has the Copy-record element and owned-budget helper
+prerequisites described below, but still needs scanner ownership integration
+before the typed package-lock directory can replace its byte representation. Installed promotion
 and full generic collection access are not established by this checkpoint.
 
 The record-element gate has a distinct runtime dependency. The intended

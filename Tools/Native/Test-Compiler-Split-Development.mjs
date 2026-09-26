@@ -7,6 +7,7 @@ import {
     readFile,
     realpath,
     rm,
+    writeFile,
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -54,6 +55,16 @@ const COMPLETE_WVB = {
     bytes: 395,
     sha256: '42810451eb302f79d0c167eda3fe62b681277661b277a06badcffd177aba5f35',
 };
+
+// Reuse this owner for supplied-product diagnostics. The snapshot bundle is
+// produced by normal admission/analysis; this selection never builds a compiler.
+if (process.argv[2] === '--emission-diagnostics') {
+    if (process.argv.length !== 5) {
+        Reject('Usage: --emission-diagnostics <emitter> <snapshot-directory>');
+    }
+    await Verifyˉemissionˉdiagnostics(process.argv[3], process.argv[4]);
+    process.exit(0);
+}
 
 if (!(HOST in COMPILERS)) {
     Reject(`The compiler split development test does not support ${HOST}.`);
@@ -172,6 +183,99 @@ async function Verifyˉadapterˉcontract() {
         Reject('The split emitter is not fixed to optimized target emission.');
     }
     await Readˉproject(EMITTER_PROJECT);
+}
+
+async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath) {
+    const { Runˉdevelopmentˉcommand } = await import('./Development-Command-Core.mjs');
+    const Emitter = path.resolve(Emitterˉpath);
+    const Snapshots = path.resolve(Snapshotˉpath);
+    await Fileˉevidence(Emitter, 134_217_728, 'diagnostic emitter');
+    const Names = ['Source.wvss', 'Analysis.wvam', 'Bindings.wvlb', 'Wir.wvir'];
+    const Inputs = {};
+    for (const Prefix of ['Positive', 'Negative']) {
+        Inputs[Prefix] = [];
+        for (const Name of Names) {
+            const File = path.join(Snapshots, `${Prefix}-${Name}`);
+            await Fileˉevidence(File, MAXIMUM_OUTPUT_BYTES, `${Prefix} ${Name}`);
+            Inputs[Prefix].push(File);
+        }
+    }
+    const Baseline = path.join(Snapshots, 'Positive-Baseline.wvb');
+    await Fileˉevidence(Baseline, MAXIMUM_OUTPUT_BYTES, 'unchanged emission baseline');
+    const Temporaryˉroot = realpathSync.native(os.tmpdir());
+    const Work = await mkdtemp(path.join(Temporaryˉroot, TEMPORARY_PREFIX));
+    const Deadline = Date.now() + 180_000;
+    let Cases = 0;
+    try {
+        const Positive = path.join(Work, 'Positive.wvb');
+        const Success = await Runˉdevelopmentˉcommand(
+            Emitter, [...Inputs.Positive, Positive], Deadline, false,
+            MAXIMUM_DIAGNOSTIC_BYTES,
+        );
+        if (Success.Code !== 0 || Success.Error !== '' ||
+            !Success.Output.startsWith('source emission status=Published ') ||
+            !(await readFile(Positive)).equals(await readFile(Baseline))) {
+            Reject('Diagnostic changes altered successful emission or its output bytes.');
+        }
+        Cases += 1;
+        console.log('compiler split diagnostics item=1/7 case=unchanged-success status=Passed');
+        const Sentinel = Buffer.from('preserve rejected output\n');
+        const Runˉrejection = async (Label, Arguments, Detailed, Providerˉlimit = false) => {
+            const Output = path.join(Work, `${Label}.wvb`);
+            await writeFile(Output, Sentinel, { flag: 'wx' });
+            const Result = await Runˉdevelopmentˉcommand(
+                Emitter, [...Arguments, Output], Deadline, false,
+                MAXIMUM_DIAGNOSTIC_BYTES,
+            );
+            const Diagnostic = Result.Error.replace(/\r\n/gu, '\n');
+            if (Result.Code !== (Providerˉlimit ? 73 : 1) || Result.Output !== '' ||
+                !(await readFile(Output)).equals(Sentinel)) {
+                Reject(`The ${Label} rejection did not preserve its failure/output contract: ` +
+                    `code=${Result.Code} stdout=${JSON.stringify(Result.Output)} ` +
+                    `stderr=${JSON.stringify(Result.Error)}.`);
+            }
+            if (Providerˉlimit) {
+                // The hosted file provider rejects over 4 MiB before the
+                // emitter receives bytes; no source context is available.
+                if (Diagnostic !== '') Reject('Oversized input reached emission diagnostics.');
+            } else if (Detailed) {
+                if (!Diagnostic.includes('wvb-status=Unsupportedˉshape ') ||
+                    !Diagnostic.includes('diagnostic-scope=function ') ||
+                    !/function-name="[^"\n]*Stepˉfailure"/u.test(Diagnostic) ||
+                    !/declaration-line=[1-9][0-9]* /u.test(Diagnostic) ||
+                    !Diagnostic.includes('operation-kind=17 ') ||
+                    !/type-name="[^"\n]*Lockˉstep"/u.test(Diagnostic) ||
+                    !Diagnostic.endsWith('rule=nominal-target-not-mapped\n')) {
+                    Reject(`The nominal failure lacks actionable context: ${Diagnostic}`);
+                }
+                process.stdout.write(Diagnostic);
+            } else if (!Diagnostic.startsWith('source emission status=Invalidˉanalysis ') ||
+                Diagnostic.includes('function-name=')) {
+                Reject(`The ${Label} failure exposed context from unvalidated evidence.`);
+            }
+            Cases += 1;
+            console.log(`compiler split diagnostics item=${Cases}/7 case=${Label} status=Passed`);
+        };
+        await Runˉrejection('nominal', Inputs.Negative, true);
+        for (let Index = 0; Index < Names.length; Index += 1) {
+            const Arguments = [...Inputs.Negative];
+            const Truncated = path.join(Work, `Truncated-${Names[Index]}`);
+            await writeFile(Truncated, (await readFile(Arguments[Index])).subarray(0, 3));
+            Arguments[Index] = Truncated;
+            await Runˉrejection(`truncated-${Index}`, Arguments, false);
+        }
+        const Oversized = path.join(Work, 'Oversized.wvir');
+        await writeFile(Oversized, Buffer.alloc(MAXIMUM_OUTPUT_BYTES + 1));
+        await Runˉrejection('oversized', [...Inputs.Negative.slice(0, 3), Oversized], false, true);
+        console.log(`compiler split diagnostics status=Passed cases=${Cases} successful-bytes=Unchanged`);
+    } finally {
+        const Resolved = path.resolve(Work);
+        if (!Sameˉpath(path.dirname(Resolved), Temporaryˉroot) ||
+            !path.basename(Resolved).startsWith(TEMPORARY_PREFIX)) {
+            Reject('Refusing to remove an unexpected diagnostic test directory.');
+        }
+        await rm(Resolved, { recursive: true, force: true });
+    }
 }
 
 function Requireˉevidence(Actual, Expected, Label) {

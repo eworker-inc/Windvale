@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-emission-diagnostics",
+  "date": "2026-09-26",
+  "subject": "Actionable current compiler emission failure diagnostics",
+  "claim": "The split emitter reports the containing source function and declaration line, module index, actual WIR function, operation kind, shape/type name and rejection rule for the captured Package-Lock nominal mapping failure. Both native hosts pass seven focused cases, including unchanged successful WVB bytes, preserved pre-existing output on rejection, four truncated analysis inputs and the hosted file-provider size boundary.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 31dc02a2f4a234f38a33f1f67f6e9cc9cfdb3266; input hashes bind the changed source and supplied local snapshots. Native products were constructed from one Windows WVB using retained tools, then executed on Windows and real Debian."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Diagnostic emitter Compile; retained construction tools",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb <prepared-tools>/Checkpoint-Analyzer.exe <prepared-tools>/Checkpoint-Analyzer.identity <prepared-tools>/Emitter.exe <prepared-tools>/Emitter.identity --authenticated-project4 <prepared-tools>/Predecessor-Products/Admitter.exe <prepared-tools>/Predecessor-Products/Authenticator.exe <prepared-tools>/Predecessor-Products/Reader.exe <prepared-tools>/Predecessor-Products/Binder.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 205240,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 9574,
+          "sha256": "7dd60c62266e5d873986aa229058a8c23b66994fdd60303b23db3c30a4b5fe30"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13218,
+          "sha256": "184d40a5fa1ff01af1af6e14770ef9587d2813e032310b6b80423160315981eb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 18444,
+          "sha256": "db0b195122a9a36121b23ed722e1f4f3c5f5969893718ff8e7bc0eff1160d441"
+        },
+        {
+          "path": "<prepared-tools>/Checkpoint-Analyzer.exe",
+          "size": 54982144,
+          "sha256": "2cd45bc82d595a63292eb63f2648b4171e4434aaa2d516a6c193d603deefca84"
+        },
+        {
+          "path": "<prepared-tools>/Checkpoint-Analyzer.identity",
+          "size": 177,
+          "sha256": "3694f849b5bc6ca917969deaf21bd0acf18033d12ffe2c2da9bea54f24d52072"
+        },
+        {
+          "path": "<prepared-tools>/Emitter.exe",
+          "size": 33114624,
+          "sha256": "cb72ebfc0e5ebef0743b7e66e9fefc576f71dee2c8183f67b36274ab1a1ee478"
+        },
+        {
+          "path": "<prepared-tools>/Emitter.identity",
+          "size": 183,
+          "sha256": "c3f9ff82f0d98f5a113f2c3414cf1f0af325d81025cbe08ca7da570e77dc2051"
+        },
+        {
+          "path": "<prepared-tools>/Predecessor-Products/Admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "<prepared-tools>/Predecessor-Products/Authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "<prepared-tools>/Predecessor-Products/Reader.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "<prepared-tools>/Predecessor-Products/Binder.exe",
+          "size": 18405376,
+          "sha256": "09584096ebbf6baa3e3405133a09381083d6ea8c9c2916b6ee932681574c3670"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Source-Names-Compile.log",
+          "size": 1868,
+          "sha256": "f741199317278a52d9d918a98f2d77d459ac1dd13601c0d9d640246640e9faa9"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb",
+          "size": 1642613,
+          "sha256": "afa50a42a0095e531df8fa6d7477792903e97360e6b24daee3cd78728b1559e6"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Diagnostic emitter Limits; retained construction tools",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 136,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 9574,
+          "sha256": "7dd60c62266e5d873986aa229058a8c23b66994fdd60303b23db3c30a4b5fe30"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13218,
+          "sha256": "184d40a5fa1ff01af1af6e14770ef9587d2813e032310b6b80423160315981eb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 18444,
+          "sha256": "db0b195122a9a36121b23ed722e1f4f3c5f5969893718ff8e7bc0eff1160d441"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb",
+          "size": 1642613,
+          "sha256": "afa50a42a0095e531df8fa6d7477792903e97360e6b24daee3cd78728b1559e6"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Source-Names-Limits.log",
+          "size": 237,
+          "sha256": "bec90c2358ac8d3f080ab0eee7eb52f9bf2014138d7a67da618fdb1666512b9b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Diagnostic emitter Windows-Package; retained construction tools",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790455198825 5 Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 324846,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 9574,
+          "sha256": "7dd60c62266e5d873986aa229058a8c23b66994fdd60303b23db3c30a4b5fe30"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13218,
+          "sha256": "184d40a5fa1ff01af1af6e14770ef9587d2813e032310b6b80423160315981eb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 18444,
+          "sha256": "db0b195122a9a36121b23ed722e1f4f3c5f5969893718ff8e7bc0eff1160d441"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb",
+          "size": 1642613,
+          "sha256": "afa50a42a0095e531df8fa6d7477792903e97360e6b24daee3cd78728b1559e6"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Source-Names-Windows-Package.log",
+          "size": 1730,
+          "sha256": "8e8ebf07c5062e18623bc81620a5b0609d03e30e69f7fc1094d5e44e651815cd"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.exe",
+          "size": 33377792,
+          "sha256": "761c5a2ffc56c1734da47e28b90753239681613904239d860a3a851d5b3a2ece"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; real Linux native execution",
+      "target": "Diagnostic emitter Debian-Package; retained construction tools",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790455198825 5 Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 342865,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 9574,
+          "sha256": "7dd60c62266e5d873986aa229058a8c23b66994fdd60303b23db3c30a4b5fe30"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13218,
+          "sha256": "184d40a5fa1ff01af1af6e14770ef9587d2813e032310b6b80423160315981eb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 18444,
+          "sha256": "db0b195122a9a36121b23ed722e1f4f3c5f5969893718ff8e7bc0eff1160d441"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.wvb",
+          "size": 1642613,
+          "sha256": "afa50a42a0095e531df8fa6d7477792903e97360e6b24daee3cd78728b1559e6"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Source-Names-Debian-Package.log",
+          "size": 1811,
+          "sha256": "131461e6d82cb10077f7b8bda6bad67eedcdf7bdb35eac56b59f8611bdd27009"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.elf",
+          "size": 33378304,
+          "sha256": "039eb4f5c13c6c36c88f23be3d5d17aa06dcf696c71793ec46aa01a6e1264cf9"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Seven supplied-product emission diagnostic cases",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs --emission-diagnostics Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.exe Artifacts/Work/Simplification-2026-09-26",
+      "result": "Passed",
+      "elapsedMilliseconds": 8139,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 9574,
+          "sha256": "7dd60c62266e5d873986aa229058a8c23b66994fdd60303b23db3c30a4b5fe30"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13218,
+          "sha256": "184d40a5fa1ff01af1af6e14770ef9587d2813e032310b6b80423160315981eb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 18444,
+          "sha256": "db0b195122a9a36121b23ed722e1f4f3c5f5969893718ff8e7bc0eff1160d441"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Source.wvss",
+          "size": 60447,
+          "sha256": "80051e6ded14d588eec198acc5bdf7dd7f2fd06f734eab76f0e4667d0a0e7b7f"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Analysis.wvam",
+          "size": 104,
+          "sha256": "4384f543c6303b7ad0f6130172746ebbaf8e4d8feb5797bd7d6001cfa8f9ef06"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Bindings.wvlb",
+          "size": 11020,
+          "sha256": "d88838c5649364339c60445455acddbc465f1c8ba0def2ad3ae279a835e41fdf"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Wir.wvir",
+          "size": 133560,
+          "sha256": "e594486665ba2a1b692eb7efcb2c31defcf9ea87557dfe0ff1e0034e2b6d83bc"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Baseline.wvb",
+          "size": 57977,
+          "sha256": "682a2677419c12a37c47159345a4d5099c746e1ccd302a6686a9deeb265982ef"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Source.wvss",
+          "size": 64090,
+          "sha256": "72b2440c2b34cfc6cf81ce0dc842a3d8064263eb33779a1a76c4e09578bac451"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Analysis.wvam",
+          "size": 104,
+          "sha256": "9bdae826705435cd493e0e7510de60bec5dc9aaa4b66157e2510d222864f8d59"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Bindings.wvlb",
+          "size": 11424,
+          "sha256": "f7850311a007ce7a57cb01713ec2b5f3f04400c11efb4e6f6a6eb6479d1cc3c9"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Wir.wvir",
+          "size": 141772,
+          "sha256": "7ce0fd5d8ee6f7e9cc701e280256c3fd0b717cc399ad838f5b898f38292f4994"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.exe",
+          "size": 33377792,
+          "sha256": "761c5a2ffc56c1734da47e28b90753239681613904239d860a3a851d5b3a2ece"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Diagnostics.log",
+          "size": 904,
+          "sha256": "0c37a438540224fcced1bdf11720d3577e3b6e021eda80ed5f691d20225a885a"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; real Linux native execution",
+      "target": "Seven supplied-product emission diagnostic cases",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs --emission-diagnostics Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.elf Artifacts/Work/Simplification-2026-09-26",
+      "result": "Passed",
+      "elapsedMilliseconds": 10859,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Emission-Core.wv",
+          "size": 9574,
+          "sha256": "7dd60c62266e5d873986aa229058a8c23b66994fdd60303b23db3c30a4b5fe30"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+          "size": 13218,
+          "sha256": "184d40a5fa1ff01af1af6e14770ef9587d2813e032310b6b80423160315981eb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 18444,
+          "sha256": "db0b195122a9a36121b23ed722e1f4f3c5f5969893718ff8e7bc0eff1160d441"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Source.wvss",
+          "size": 60447,
+          "sha256": "80051e6ded14d588eec198acc5bdf7dd7f2fd06f734eab76f0e4667d0a0e7b7f"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Analysis.wvam",
+          "size": 104,
+          "sha256": "4384f543c6303b7ad0f6130172746ebbaf8e4d8feb5797bd7d6001cfa8f9ef06"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Bindings.wvlb",
+          "size": 11020,
+          "sha256": "d88838c5649364339c60445455acddbc465f1c8ba0def2ad3ae279a835e41fdf"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Wir.wvir",
+          "size": 133560,
+          "sha256": "e594486665ba2a1b692eb7efcb2c31defcf9ea87557dfe0ff1e0034e2b6d83bc"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Baseline.wvb",
+          "size": 57977,
+          "sha256": "682a2677419c12a37c47159345a4d5099c746e1ccd302a6686a9deeb265982ef"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Source.wvss",
+          "size": 64090,
+          "sha256": "72b2440c2b34cfc6cf81ce0dc842a3d8064263eb33779a1a76c4e09578bac451"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Analysis.wvam",
+          "size": 104,
+          "sha256": "9bdae826705435cd493e0e7510de60bec5dc9aaa4b66157e2510d222864f8d59"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Bindings.wvlb",
+          "size": 11424,
+          "sha256": "f7850311a007ce7a57cb01713ec2b5f3f04400c11efb4e6f6a6eb6479d1cc3c9"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Wir.wvir",
+          "size": 141772,
+          "sha256": "7ce0fd5d8ee6f7e9cc701e280256c3fd0b717cc399ad838f5b898f38292f4994"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Source-Names.elf",
+          "size": 33378304,
+          "sha256": "039eb4f5c13c6c36c88f23be3d5d17aa06dcf696c71793ec46aa01a6e1264cf9"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Diagnostics.log",
+          "size": 904,
+          "sha256": "0c37a438540224fcced1bdf11720d3577e3b6e021eda80ed5f691d20225a885a"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is focused development evidence, not independent compiler reconstruction, full conformance, installed promotion or release qualification. Broad language, callable, admission, bootstrap and qualification owners were not run because source semantics and validation rules did not change.",
+    "WVIR has no expression source map. The reported declaration line is the containing function location; it is not the precise failing expression location. Module index refers to the admitted source-set order, not a fabricated filesystem path.",
+    "The underlying Package-Lock nominal target mapping rejection is diagnosed, not fixed. Source-name reporting is bounded to 1024 UTF-8 bytes per identifier.",
+    "The supplied snapshot bundle and product/log files remain in ignored local Artifacts/Work storage. Their exact hashes are recorded here, but this run is not independently reproducible from a fresh checkout until a maintained minimized reproducer is added.",
+    "The first diagnostic build called an unavailable general text-quote service and failed the negative probe. The corrected implementation uses validated identifier bytes and the existing text-concat service. The final seven-case runs are the passing evidence.",
+    "An oversized file returns the pre-existing hosted-provider exit code 73 with no compiler diagnostic; it never reaches analysis. Truncated accepted-size inputs retain exit code 1 and Invalid-analysis diagnostics.",
+    "Peak working-set memory was not measured. Construction uses retained lower-level products and is not a cold bootstrap measurement. The all-function inspection reports a maximum of 1504 parameter/local slots against the unchanged 2048-slot limit."
+  ],
+  "related": [
+    "Compiler/Windvale/Source-Emission-Core.wv",
+    "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
+    "Tools/Native/Test-Compiler-Split-Development.mjs",
+    "Documents/Project/Verification-Throughput-Plan.md"
+  ]
+}

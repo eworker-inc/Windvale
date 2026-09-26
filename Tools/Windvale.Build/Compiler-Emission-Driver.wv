@@ -31,9 +31,10 @@ fn Failure(Result: Emission.Compilerˉsourceˉemission) -> text {
         Report, U32ˉformat(Result.Compilation.Failureˉoperation)
     );
     Report = Textˉconcat(Report, " source-line=");
-    return Textˉconcat(
+    Report = Textˉconcat(
         Report, U32ˉformat(Result.Compilation.Failureˉline)
     );
+    return Textˉconcat(Report, Result.Diagnostic);
 }
 
 fn Success(Result: Emission.Compilerˉsourceˉemission) -> text {

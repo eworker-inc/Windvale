@@ -8,6 +8,8 @@ authority library;
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 import Compilerˉsourceˉanalysisˉvalidation as Analysisˉvalidation;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
@@ -20,6 +22,146 @@ export record Compilerˉsourceˉemission {
     Status: Compilerˉsourceˉemissionˉstatus;
     Analysisˉstatus: Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus;
     Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary;
+    Diagnostic: text;
+}
+
+fn Declarationˉline(Source: bytes, Offset: u32) -> u32 {
+    var Line: u32 = 1u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Offset && Cursor < Bytesˉlength(Source) {
+        if Bytesˉreadˉu8(Source, Cursor) == 10u8 { Line = Line + 1u32; }
+        Cursor = Cursor + 1u32;
+    }
+    return Line;
+}
+
+fn Diagnosticˉname(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Entry: u32
+) -> text {
+    let Source: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉwvb.Compilerˉsourceˉwvbˉsymbolˉsource(Input, Scan, Symbols, Entry);
+    let Directoryˉentry: u32 = 16u32 + Entry * 24u32;
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Directoryˉentry + 12u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Directoryˉentry + 16u32);
+    // Bound diagnostic text independently of accepted source identifier size.
+    if Length > 1024u32 { return "name-exceeds-diagnostic-limit"; }
+    return Textˉfromˉutf8(Bytesˉslice(Source.Source, Offset, Length));
+}
+
+fn Shapeˉname(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Shape: u32
+) -> text {
+    var Kind: u32 = 0u32;
+    var Index: u32 = 0u32;
+    if Shape >= 65536u32 && Shape - 65536u32 < Symbols.Records {
+        Kind = 4u32;
+        Index = Shape - 65536u32;
+    }
+    if Shape >= 131072u32 + Symbols.Records &&
+        Shape - 131072u32 - Symbols.Records < Symbols.Enums {
+        Kind = 5u32;
+        Index = Shape - 131072u32 - Symbols.Records;
+    }
+    if Shape >= 196608u32 + Symbols.Records + Symbols.Enums &&
+        Shape - 196608u32 - Symbols.Records - Symbols.Enums < Symbols.Variants {
+        Kind = 8u32;
+        Index = Shape - 196608u32 - Symbols.Records - Symbols.Enums;
+    }
+    if Kind == 0u32 { return "non-nominal-or-materialized"; }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    var Entry: u32 = 0u32;
+    var Seen: u32 = 0u32;
+    while Entry < Entries {
+        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, 16u32 + Entry * 24u32 + 4u32) == Kind {
+            if Seen == Index {
+                return Diagnosticˉname(
+                    Input, Scan, Symbols, Entry
+                );
+            }
+            Seen = Seen + 1u32;
+        }
+        Entry = Entry + 1u32;
+    }
+    return "unavailable";
+}
+
+// Called only after complete analysis validation. WVIR has no expression source
+// map: report the containing declaration, never invent an expression location.
+fn Emissionˉdiagnostic(
+    Input: bytes,
+    Analysis: Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation,
+    Bindings: bytes,
+    Wir: bytes,
+    Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary
+) -> text {
+    if Compilation.Status == Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return ""; }
+    let Operation: u32 = Compilation.Failureˉoperation;
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Wir, 8u32);
+    let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Wir, 16u32);
+    let Operations: u32 = Bytesˉreadˉu32ˉlittle(Wir, 24u32);
+    if Operation >= Operations {
+        return " phase=bytecode-emission diagnostic-scope=unavailable";
+    }
+    let Header: u32 = Wirˉconsumer.Compilerˉsourceˉwirˉheaderˉbytes(Wir);
+    var Function: u32 = 0u32;
+    // Failure-function may be an emission rank. Resolve ownership from the
+    // global operation range instead of treating that rank as a source index.
+    while Function < Functions {
+        let Entry: u32 = Header + Function * 48u32;
+        let First: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
+        if Operation >= First && Operation - First < Count { break; }
+        Function = Function + 1u32;
+    }
+    if Function == Functions {
+        return " phase=bytecode-emission diagnostic-scope=unavailable";
+    }
+    let Declaration: u32 = Sourceˉwvb.Compilerˉsourceˉwvbˉfunctionˉdeclaration(
+        Analysis.Symbols, Bindings, Function
+    );
+    if Declaration >= Bytesˉreadˉu32ˉlittle(Analysis.Symbols.Directory, 8u32) {
+        return " phase=bytecode-emission diagnostic-scope=unavailable";
+    }
+    let Source: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉwvb.Compilerˉsourceˉwvbˉsymbolˉsource(Input, Analysis.Scan, Analysis.Symbols, Declaration);
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Analysis.Symbols.Directory, 16u32 + Declaration * 24u32 + 8u32);
+    let Operationˉentry: u32 = Header + Functions * 48u32 + Blocks * 28u32 + Operation * 28u32;
+    let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
+    let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
+    var Report: text = " phase=bytecode-emission diagnostic-scope=function module-index=";
+    Report = Textˉconcat(Report, U32ˉformat(Source.Index));
+    // Validated identifiers cannot contain quotes or line breaks. The compiler
+    // hosted profile does not bind the general text-quote service.
+    Report = Textˉconcat(Report, " function-name=\"");
+    Report = Textˉconcat(Report,
+        Diagnosticˉname(Input, Analysis.Scan, Analysis.Symbols, Declaration)
+    );
+    Report = Textˉconcat(Report, "\" declaration-line=");
+    Report = Textˉconcat(Report, U32ˉformat(Declarationˉline(Source.Source, Offset)));
+    Report = Textˉconcat(Report, " wir-function=");
+    Report = Textˉconcat(Report, U32ˉformat(Function));
+    Report = Textˉconcat(Report, " operation-kind=");
+    Report = Textˉconcat(Report, U32ˉformat(Kind));
+    Report = Textˉconcat(Report, " shape=");
+    Report = Textˉconcat(Report, U32ˉformat(Shape));
+    Report = Textˉconcat(Report, " type-name=\"");
+    Report = Textˉconcat(Report, Shapeˉname(Input, Analysis.Scan, Analysis.Symbols, Shape));
+    Report = Textˉconcat(Report, "\" target=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32)));
+    Report = Textˉconcat(Report, " auxiliary=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32)));
+    Report = Textˉconcat(Report, " rule=");
+    if Compilation.Status == Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape &&
+        (Kind == 17u32 || Kind == 19u32) {
+        return Textˉconcat(Report, "nominal-target-not-mapped");
+    }
+    return Textˉconcat(Report, Enumˉname(Compilation.Status));
 }
 
 fn Compilerˉsourceˉemissionˉfailure(
@@ -35,7 +177,8 @@ fn Compilerˉsourceˉemissionˉfailure(
             0u32, 0u32,
             Bytesˉslice(Input, 0u32, 0u32),
             0u32, 0u32, 0u32
-        )
+        ),
+        ""
     );
 }
 
@@ -63,9 +206,7 @@ export fn Compilerˉemitˉsourceˉanalysis(
         Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidatedˉwir(
             Input, Manifest, Wirˉdirectory, Bindings, Analysis.Symbols
         );
-    return Compilerˉsourceˉemission(
-        Compilerˉsourceˉemissionˉstatus.Valid,
-        Analysis.Status,
+    let Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
         Sourceˉwvb.Compilerˉemitˉpreparedˉsourceˉwvb(
             Input,
             Analysis.Scan,
@@ -73,6 +214,11 @@ export fn Compilerˉemitˉsourceˉanalysis(
             Bindings,
             Wir,
             Optimize
-        )
+        );
+    return Compilerˉsourceˉemission(
+        Compilerˉsourceˉemissionˉstatus.Valid,
+        Analysis.Status,
+        Compilation,
+        Emissionˉdiagnostic(Input, Analysis, Bindingˉdirectory, Wirˉdirectory, Compilation)
     );
 }

@@ -2,7 +2,7 @@
 
 > Status: Current delivery inventory; candidate API choices remain unaccepted
 > Authority: Informative; linked contracts and decisions own requirements
-> Last reviewed: 2026-09-25
+> Last reviewed: 2026-09-26
 
 This is the finite tracking surface for the compiler, toolchain, and required
 Libraries 1.0 goal. The frozen Language 1.0 compiler and selected immutable
@@ -212,16 +212,12 @@ database-side owner.
    is [Package-Lock](../../Libraries/Package/Package-Lock.wv): replace its private
    repeatedly concatenated part-directory bytes with an owned typed directory,
    then query locked parts and dependency/path checks without consuming it.
-   This is not an implemented consumer. Selected scalar and Copy-record indexed
-   borrowing now has paired-host development evidence. Explicit allocation-budget
-   threading outside Main and scanner return/aggregate ownership remain
-   prerequisites before integrating the complete consumer. Candidate WVB 1.42
-   covers Copy record storage, growth, freezing and tracing; it does not enable
-   shared/owned fields or helper-level collection mutation. The bounded internal
-   budget collector has [54 passing accounting cases on both hosts](../Evidence/2026-09-25-Unreachable-Budget-Accounting.json),
-   but still needs complete typed-root gathering at helper returns before
-   helper admission can advance. More isolated
-   fixtures do not satisfy the maintained-consumer gate.
+   This is not an implemented consumer. Copy-record collections and owned-budget
+   helpers have focused Windows/Debian evidence under candidate WVB 1.42.
+   The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+   owns the current implementation boundary and emission blocker. Avoid copying
+   that changing prerequisite list into each overview. More isolated fixtures
+   do not satisfy the maintained-consumer gate.
    Preserve lock bytes, validation/failure ordering, bounded resource use and
    the existing `package-format` consumer oracle; document any unavoidable
    public API migration rather than hiding it in a parser refactor.
