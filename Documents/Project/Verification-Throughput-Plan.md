@@ -51,8 +51,12 @@ qualification. See the [stabilization evidence](../Evidence/2026-09-26-Developme
 The helper implementation and runner refactor are committed. The
 [consumer completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
 owns current Package-Lock standing; this page does not maintain another copy.
-The subsequent code CI run timed out during development preparation and did
-not establish a passing gate. Reliable automatic preparation remains open.
+One subsequent CI run timed out during development preparation. The next run
+restored a compiler checkpoint and completed its job, but admission and callable
+owners were classified as incomplete because their cold profiles exceeded the
+development budget. A green infrastructure job is not evidence that those
+owners passed. Reliable automatic preparation and complete affected execution
+remain open.
 
 Use prepared-only mode during ordinary Foundation implementation:
 
@@ -81,7 +85,7 @@ cleanup. Product milestones remain in the existing completion matrix.
 
 | Item | Completion evidence | Status |
 | --- | --- | --- |
-| 1. Emission diagnostics | Reproduce the current failure with function location, operation, type identity and rejection information; distinguish missing expression locations; cover malformed evidence and unchanged successful output. | In progress |
+| 1. Emission diagnostics | Maintained source reproducer and original Package-Lock snapshots pass seven cases each on Windows/Debian; exact rule, canonical type name, function location, malformed evidence and unchanged successful output covered. | Complete |
 | 2. CI preparation and reuse | One preparation per exact input closure; completed products survive a later failure; focused Windows/Linux jobs complete with cache-hit and cache-miss behavior measured. | Open |
 | 3. Targeted refactoring | Extract cohesive responsibilities from a changed large function; measure slot headroom and build/runtime cost; preserve behavior and output contracts. | Open |
 | 4. Verification consolidation | Audit overlapping wrappers and construction; merge/remove duplicated execution where no unique coverage is lost; retain named cases and required host boundaries. | Open |
@@ -96,15 +100,22 @@ are not obsolete merely because they resemble other source files.
 
 ### First cleanup batch
 
-The split emitter now reports the containing source function, declaration line,
-module index, WIR operation, nominal type and rejection rule for the captured
-Package-Lock failure. Seven focused cases pass on Windows and real Debian in
-8.1 and 10.9 seconds with prepared products; successful WVB bytes remain exact.
-The corrected emitter took about 9 minutes 8 seconds to compile and package
-both native hosts using retained tools. See the [diagnostic evidence](../Evidence/2026-09-26-Emission-Diagnostics.json)
-for identities and limits. The diagnostic does not fix the nominal mapping bug
-or invent an expression location. A maintained minimal reproducer is still
-needed before item 1 closes; the current snapshot bundle is local evidence.
+The split emitter reports the containing source function, declaration line,
+module index, WIR operation, nominal type and the rule from the actual rejection
+branch. The maintained reproducer intentionally separates canonical type order
+from declaration order. It revealed a wrong type name in the first diagnostic;
+the emitter now uses the validated reverse symbol lookup.
+
+The original Package-Lock rejection is an exhausted ownership-analysis bound,
+not an unmapped nominal target. Repeated constructors trigger conservative
+rejection even for acyclic Copy-only records. Diagnostics identify that rule;
+they do not fix the underlying scan or invent an expression location. The
+[corrected evidence](../Evidence/2026-09-26-Emission-Diagnostic-Correction.json)
+supersedes the initial inferred cause while retaining the original run history.
+The maintained source preparation and seven cases take 2.5 seconds on Windows
+and 7.3 seconds on Debian. The original snapshots also pass seven cases per
+host. Final emitter compilation and parallel packaging took about 8 minutes
+29 seconds, with 1,504 of 2,048 function slots used. Peak memory was not measured.
 
 Completed checkpoint chronology and the earlier qualification review now live
 in the dated history. The completion plan owns the current consumer blockers;

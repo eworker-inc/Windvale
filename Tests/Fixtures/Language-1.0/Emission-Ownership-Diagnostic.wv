@@ -1,0 +1,97 @@
+#!wv/1 en@1
+module Emissionˉdiagnosticˉfixture;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
+
+fn Observe() -> i32 {
+    let Owner: Option.Option<i32> = Option.Option.Present<i32> { Value: 42 };
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Value } { return Value; }
+        case Option.Option.Absent { return 0; }
+    }
+}
+
+// Repeated constructors amplify the existing bounded ownership scan.
+// The records are acyclic and Copy-only; emission currently rejects this
+// reduced Package-Lock pattern. Declaration order deliberately differs from
+// canonical name order so diagnostics must resolve type indices correctly.
+record Span { Value: i32; }
+record Lockˉstate { First: Span; Second: Span; }
+record Lockˉstep { State: Lockˉstate; }
+
+fn Stepˉfailure(Value: Lockˉstate) -> Lockˉstep {
+    let Item0: Lockˉstep = Lockˉstep(Value);
+    let Item1: Lockˉstep = Lockˉstep(Value);
+    let Item2: Lockˉstep = Lockˉstep(Value);
+    let Item3: Lockˉstep = Lockˉstep(Value);
+    let Item4: Lockˉstep = Lockˉstep(Value);
+    let Item5: Lockˉstep = Lockˉstep(Value);
+    let Item6: Lockˉstep = Lockˉstep(Value);
+    let Item7: Lockˉstep = Lockˉstep(Value);
+    let Item8: Lockˉstep = Lockˉstep(Value);
+    let Item9: Lockˉstep = Lockˉstep(Value);
+    let Item10: Lockˉstep = Lockˉstep(Value);
+    let Item11: Lockˉstep = Lockˉstep(Value);
+    let Item12: Lockˉstep = Lockˉstep(Value);
+    let Item13: Lockˉstep = Lockˉstep(Value);
+    let Item14: Lockˉstep = Lockˉstep(Value);
+    let Item15: Lockˉstep = Lockˉstep(Value);
+    let Item16: Lockˉstep = Lockˉstep(Value);
+    let Item17: Lockˉstep = Lockˉstep(Value);
+    let Item18: Lockˉstep = Lockˉstep(Value);
+    let Item19: Lockˉstep = Lockˉstep(Value);
+    return Item0;
+}
+
+fn Stateˉvalue(Value: Span) -> Lockˉstate {
+    let Item0: Lockˉstate = Lockˉstate(Value, Value);
+    let Item1: Lockˉstate = Lockˉstate(Value, Value);
+    let Item2: Lockˉstate = Lockˉstate(Value, Value);
+    let Item3: Lockˉstate = Lockˉstate(Value, Value);
+    let Item4: Lockˉstate = Lockˉstate(Value, Value);
+    let Item5: Lockˉstate = Lockˉstate(Value, Value);
+    let Item6: Lockˉstate = Lockˉstate(Value, Value);
+    let Item7: Lockˉstate = Lockˉstate(Value, Value);
+    let Item8: Lockˉstate = Lockˉstate(Value, Value);
+    let Item9: Lockˉstate = Lockˉstate(Value, Value);
+    let Item10: Lockˉstate = Lockˉstate(Value, Value);
+    let Item11: Lockˉstate = Lockˉstate(Value, Value);
+    let Item12: Lockˉstate = Lockˉstate(Value, Value);
+    let Item13: Lockˉstate = Lockˉstate(Value, Value);
+    let Item14: Lockˉstate = Lockˉstate(Value, Value);
+    let Item15: Lockˉstate = Lockˉstate(Value, Value);
+    let Item16: Lockˉstate = Lockˉstate(Value, Value);
+    let Item17: Lockˉstate = Lockˉstate(Value, Value);
+    let Item18: Lockˉstate = Lockˉstate(Value, Value);
+    let Item19: Lockˉstate = Lockˉstate(Value, Value);
+    return Item0;
+}
+
+fn Spanˉvalue(Value: i32) -> Span {
+    let Item0: Span = Span(Value);
+    let Item1: Span = Span(Value);
+    let Item2: Span = Span(Value);
+    let Item3: Span = Span(Value);
+    let Item4: Span = Span(Value);
+    let Item5: Span = Span(Value);
+    let Item6: Span = Span(Value);
+    let Item7: Span = Span(Value);
+    let Item8: Span = Span(Value);
+    let Item9: Span = Span(Value);
+    let Item10: Span = Span(Value);
+    let Item11: Span = Span(Value);
+    let Item12: Span = Span(Value);
+    let Item13: Span = Span(Value);
+    let Item14: Span = Span(Value);
+    let Item15: Span = Span(Value);
+    let Item16: Span = Span(Value);
+    let Item17: Span = Span(Value);
+    let Item18: Span = Span(Value);
+    let Item19: Span = Span(Value);
+    return Item0;
+}
+
+export fn Main() -> i32 { return Observe(); }

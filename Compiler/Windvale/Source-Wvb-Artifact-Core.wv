@@ -75,6 +75,7 @@ Codeˉlength: u32;
 Maximumˉstack: u32;
 Blockˉoffsets: bytes;
 Failureˉoperation: u32;
+Failureˉrule: text;
 }
 record Compilerˉsourceˉwvbˉfunctionˉencoding {
 Status: Compilerˉsourceˉwvbˉstatus;
@@ -82,6 +83,7 @@ Metadata: bytes;
 Code: bytes;
 Failureˉoperation: u32;
 Features: u32;
+Failureˉrule: text;
 }
 record Compilerˉsourceˉwvbˉsymbolˉorder {
 Entries: bytes;
@@ -136,6 +138,7 @@ Bytecode: bytes;
 Failureˉfunction: u32;
 Failureˉoperation: u32;
 Failureˉline: u32;
+Failureˉrule: text;
 }
 export record Compilerˉsourceˉwvbˉreachability {
 Status: Compilerˉsourceˉwvbˉstatus;
@@ -197,6 +200,18 @@ Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
 Function: u32,
 Operation: u32
 ) -> Compilerˉsourceˉwvbˉsummary {
+return Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
+Input, Status, Wirˉstatus, Function, Operation, Enumˉname(Status)
+);
+}
+fn Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
+Input: bytes,
+Status: Compilerˉsourceˉwvbˉstatus,
+Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
+Function: u32,
+Operation: u32,
+Rule: text
+) -> Compilerˉsourceˉwvbˉsummary {
 return Compilerˉsourceˉwvbˉsummary(
 Status,
 Wirˉstatus,
@@ -205,7 +220,8 @@ Wirˉstatus,
 Compilerˉsourceˉwvbˉempty(Input),
 Function,
 Operation,
-0u32
+0u32,
+Rule
 );
 }
 export fn Compilerˉsourceˉwvbˉreachabilityˉfailure(
@@ -3756,8 +3772,18 @@ Wir: bytes,
 Status: Compilerˉsourceˉwvbˉstatus,
 Operation: u32
 ) -> Compilerˉsourceˉwvbˉanalysis {
+return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
+Wir, Status, Operation, Enumˉname(Status)
+);
+}
+fn Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
+Wir: bytes,
+Status: Compilerˉsourceˉwvbˉstatus,
+Operation: u32,
+Rule: text
+) -> Compilerˉsourceˉwvbˉanalysis {
 return Compilerˉsourceˉwvbˉanalysis(
-Status, 0u32, 0u32, Compilerˉsourceˉwvbˉempty(Wir), Operation
+Status, 0u32, 0u32, Compilerˉsourceˉwvbˉempty(Wir), Operation, Rule
 );
 }
 export fn Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
@@ -4014,9 +4040,9 @@ if (Operation == 17u32 || Operation == 19u32) &&
 Compilerˉsourceˉwvbˉplannedˉnominalˉtarget(
 Target, Symbols, Orders
 ) == 4294967295u32 {
-return Compilerˉsourceˉwvbˉanalysisˉfailure(
+return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-Globalˉoperation
+Globalˉoperation, "nominal-target-not-mapped"
 );
 }
 if ((Operation >= 65u32 && Operation <= 67u32) ||
@@ -4447,15 +4473,15 @@ Wir, Shape, Orders
 !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
 Shape, true, Symbols, Orders
 ) {
-return Compilerˉsourceˉwvbˉanalysisˉfailure(
+return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-Globalˉoperation
+Globalˉoperation, "operation-result-shape-not-supported"
 );
 }
 if Compilerˉsourceˉwvbˉshapeˉownershipˉisˉunknown(Wir, Shape, Orders) {
-return Compilerˉsourceˉwvbˉanalysisˉfailure(
+return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-Globalˉoperation
+Globalˉoperation, "operation-result-ownership-unknown"
 );
 }
 var Operationˉstack: u32 = Operands;
@@ -4530,7 +4556,8 @@ Compilerˉsourceˉwvbˉstatus.Valid,
 Codeˉlength,
 Maximumˉstack,
 Blockˉoffsets,
-Bytesˉreadˉu32ˉlittle(Wir, 24u32)
+Bytesˉreadˉu32ˉlittle(Wir, 24u32),
+""
 );
 }
 export fn Compilerˉsourceˉwvbˉinstructionˉu32(Opcode: u8, Value: u32) -> bytes {
@@ -6169,7 +6196,7 @@ Operation: u32
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
 let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
 return Compilerˉsourceˉwvbˉfunctionˉencoding(
-Status, Empty, Empty, Operation, 0u32
+Status, Empty, Empty, Operation, 0u32, Enumˉname(Status)
 );
 }
 export fn Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
@@ -6419,8 +6446,10 @@ Compilerˉsourceˉwvbˉanalyzeˉfunction(
 Wir, Function, Symbols, Orders, Vectorˉborrows
 );
 if Analysis.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-return Compilerˉsourceˉwvbˉfunctionˉfailure(
-Wir, Analysis.Status, Analysis.Failureˉoperation
+return Compilerˉsourceˉwvbˉfunctionˉencoding(
+Analysis.Status, Compilerˉsourceˉwvbˉempty(Wir),
+Compilerˉsourceˉwvbˉempty(Wir), Analysis.Failureˉoperation,
+0u32, Analysis.Failureˉrule
 );
 }
 let Functionˉentry: u32 =
@@ -7009,7 +7038,8 @@ Compilerˉsourceˉwvbˉstatus.Valid,
 Metadata,
 Code,
 Analysis.Failureˉoperation,
-Features
+Features,
+""
 );
 }
 fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
@@ -7551,12 +7581,13 @@ Validationˉfunction,
 );
 if Validationˉencoding.Status !=
 Compilerˉsourceˉwvbˉstatus.Valid {
-return Compilerˉsourceˉwvbˉsummaryˉfailure(
+return Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
 Input,
 Validationˉencoding.Status,
 Wirˉsummary.Status,
 Validationˉrank,
-Validationˉencoding.Failureˉoperation
+Validationˉencoding.Failureˉoperation,
+Validationˉencoding.Failureˉrule
 );
 }
 }
@@ -7616,12 +7647,13 @@ Wirˉsummary.Directory,
 Functionˉentry, Codeˉoffset, true, Foundationˉborrowˉmodule
 );
 if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-return Compilerˉsourceˉwvbˉsummaryˉfailure(
+return Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
 Input,
 Encoded.Status,
 Wirˉsummary.Status,
 Functionˉrank,
-Encoded.Failureˉoperation
+Encoded.Failureˉoperation,
+Encoded.Failureˉrule
 );
 }
 Features = Features | Encoded.Features;
@@ -7775,6 +7807,7 @@ Bytesˉlength(Codeˉpayload),
 Bytecode,
 Symbols.Functions,
 Wirˉsummary.Operations,
-0u32
+0u32,
+""
 );
 }

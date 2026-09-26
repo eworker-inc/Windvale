@@ -36,7 +36,8 @@ fn Compilerˉsourceˉwvbˉcompilationˉfailureˉat(
         Sourceˉwvb.Compilerˉsourceˉwvbˉempty(Input),
         Function,
         Operation,
-        Line
+        Line,
+        Enumˉname(Status)
     );
 }
 

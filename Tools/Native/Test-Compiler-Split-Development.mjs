@@ -59,10 +59,14 @@ const COMPLETE_WVB = {
 // Reuse this owner for supplied-product diagnostics. The snapshot bundle is
 // produced by normal admission/analysis; this selection never builds a compiler.
 if (process.argv[2] === '--emission-diagnostics') {
-    if (process.argv.length !== 5) {
-        Reject('Usage: --emission-diagnostics <emitter> <snapshot-directory>');
+    if (process.argv.length === 7) {
+        await Verifyˉemissionˉsources(...process.argv.slice(3));
+    } else if (process.argv.length === 5) {
+        await Verifyˉemissionˉdiagnostics(process.argv[3], process.argv[4]);
+    } else {
+        Reject('Usage: --emission-diagnostics <admitter> <authenticator> <analyzer> <emitter> ' +
+            'or --emission-diagnostics <emitter> <snapshot-directory>');
     }
-    await Verifyˉemissionˉdiagnostics(process.argv[3], process.argv[4]);
     process.exit(0);
 }
 
@@ -185,7 +189,64 @@ async function Verifyˉadapterˉcontract() {
     await Readˉproject(EMITTER_PROJECT);
 }
 
-async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath) {
+async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emitter) {
+    const { Runˉdevelopmentˉcommand } = await import('./Development-Command-Core.mjs');
+    const Deadline = Date.now() + 180_000;
+    for (const Tool of [Admitter, Authenticator, Analyzer, Emitter]) {
+        await Fileˉevidence(path.resolve(Tool), 134_217_728, 'prepared diagnostic tool');
+    }
+    const Temporaryˉroot = realpathSync.native(os.tmpdir());
+    const Work = await mkdtemp(path.join(Temporaryˉroot, TEMPORARY_PREFIX));
+    const Profile = path.join(REPOSITORY_ROOT, 'Documents', 'Project',
+        'Language-1.0-Localization-Workloads', '01-Source-Profile-Admission', 'Reference-Artifacts');
+    const Fixtures = path.join(REPOSITORY_ROOT, 'Tests', 'Fixtures', 'Language-1.0');
+    const Run = async (Tool, Arguments) => {
+        const Result = await Runˉdevelopmentˉcommand(
+            Tool, Arguments, Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES,
+        );
+        if (Result.Code !== 0 || Result.Error !== '') {
+            Reject(`Diagnostic fixture preparation failed: ${Result.Output}${Result.Error}`);
+        }
+    };
+    try {
+        for (const [Prefix, Sources] of [
+            ['Positive', [path.join(Fixtures, 'Minimum-Program.wv')]],
+            ['Negative', [path.join(Fixtures, 'Emission-Ownership-Diagnostic.wv'),
+                path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', 'Values', 'Option.wv')]],
+        ]) {
+            console.log(`compiler split diagnostics step=prepare case=${Prefix}`);
+            const Admitted = path.join(Work, `${Prefix}-Admitted.wvss`);
+            await Run(process.execPath, [path.join(SCRIPT_DIRECTORY, 'Run-Authenticated-Source-Admission.mjs'),
+                path.resolve(Admitter), path.resolve(Authenticator),
+                '--source-input-lock', path.join(Profile, 'Source-Inputs.wvlock'),
+                '9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e',
+                '--source-profile', path.join(Profile, 'En-Source-Profile.wvsp'),
+                '--target-descriptor', path.join(REPOSITORY_ROOT, 'Projects', 'Targets',
+                    `${process.platform === 'win32' ? 'Windows' : 'Linux'}-X64-No-Foreign.wvtd`),
+                ...Sources, Admitted]);
+            const Analyzed = path.join(Work, `${Prefix}-Source.wvss`);
+            await Run(path.resolve(Analyzer), ['--internal-source-set', Admitted, Analyzed,
+                ...['Analysis.wvam', 'Bindings.wvlb', 'Wir.wvir'].map(Name => path.join(Work, `${Prefix}-${Name}`))]);
+            if (!(await readFile(Admitted)).equals(await readFile(Analyzed))) {
+                Reject('Diagnostic analysis changed the admitted source set.');
+            }
+        }
+        await Verifyˉemissionˉdiagnostics(Emitter, Work, Deadline, {
+            bytes: 221,
+            sha256: '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae',
+        }, (await readFile(path.join(Fixtures, 'Emission-Ownership-Diagnostic.wv'), 'utf8'))
+            .split('fn Stepˉfailure(')[0].split('\n').length);
+    } finally {
+        if (!Sameˉpath(path.dirname(path.resolve(Work)), Temporaryˉroot) ||
+            !path.basename(Work).startsWith(TEMPORARY_PREFIX)) {
+            Reject('Refusing to remove an unexpected diagnostic fixture directory.');
+        }
+        await rm(Work, { recursive: true, force: true });
+    }
+}
+
+async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath,
+    Deadline = Date.now() + 180_000, Baselineˉevidence = null, Declarationˉline = null) {
     const { Runˉdevelopmentˉcommand } = await import('./Development-Command-Core.mjs');
     const Emitter = path.resolve(Emitterˉpath);
     const Snapshots = path.resolve(Snapshotˉpath);
@@ -201,10 +262,11 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath) {
         }
     }
     const Baseline = path.join(Snapshots, 'Positive-Baseline.wvb');
-    await Fileˉevidence(Baseline, MAXIMUM_OUTPUT_BYTES, 'unchanged emission baseline');
+    if (Baselineˉevidence === null) {
+        await Fileˉevidence(Baseline, MAXIMUM_OUTPUT_BYTES, 'unchanged emission baseline');
+    }
     const Temporaryˉroot = realpathSync.native(os.tmpdir());
     const Work = await mkdtemp(path.join(Temporaryˉroot, TEMPORARY_PREFIX));
-    const Deadline = Date.now() + 180_000;
     let Cases = 0;
     try {
         const Positive = path.join(Work, 'Positive.wvb');
@@ -213,9 +275,16 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath) {
             MAXIMUM_DIAGNOSTIC_BYTES,
         );
         if (Success.Code !== 0 || Success.Error !== '' ||
-            !Success.Output.startsWith('source emission status=Published ') ||
-            !(await readFile(Positive)).equals(await readFile(Baseline))) {
+            !Success.Output.startsWith('source emission status=Published ')) {
             Reject('Diagnostic changes altered successful emission or its output bytes.');
+        }
+        if (Baselineˉevidence === null) {
+            if (!(await readFile(Positive)).equals(await readFile(Baseline))) {
+                Reject('Diagnostic changes altered successful output bytes.');
+            }
+        } else {
+            Requireˉevidence(await Fileˉevidence(Positive, MAXIMUM_OUTPUT_BYTES,
+                'successful emission'), Baselineˉevidence, 'successful emission');
         }
         Cases += 1;
         console.log('compiler split diagnostics item=1/7 case=unchanged-success status=Passed');
@@ -245,8 +314,13 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath) {
                     !/declaration-line=[1-9][0-9]* /u.test(Diagnostic) ||
                     !Diagnostic.includes('operation-kind=17 ') ||
                     !/type-name="[^"\n]*Lockˉstep"/u.test(Diagnostic) ||
-                    !Diagnostic.endsWith('rule=nominal-target-not-mapped\n')) {
-                    Reject(`The nominal failure lacks actionable context: ${Diagnostic}`);
+                    !Diagnostic.endsWith('rule=operation-result-ownership-unknown\n')) {
+                    Reject(`The ownership failure lacks actionable context: ${Diagnostic}`);
+                }
+                if (Declarationˉline !== null &&
+                    (!Diagnostic.includes('module-index=0 ') ||
+                     !Diagnostic.includes(`declaration-line=${Declarationˉline} `))) {
+                    Reject(`The failure identifies the wrong source declaration: ${Diagnostic}`);
                 }
                 process.stdout.write(Diagnostic);
             } else if (!Diagnostic.startsWith('source emission status=Invalidˉanalysis ') ||
@@ -256,7 +330,7 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath) {
             Cases += 1;
             console.log(`compiler split diagnostics item=${Cases}/7 case=${Label} status=Passed`);
         };
-        await Runˉrejection('nominal', Inputs.Negative, true);
+        await Runˉrejection('ownership', Inputs.Negative, true);
         for (let Index = 0; Index < Names.length; Index += 1) {
             const Arguments = [...Inputs.Negative];
             const Truncated = path.join(Work, `Truncated-${Names[Index]}`);

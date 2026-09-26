@@ -234,10 +234,13 @@ single block.
 The typed Package-Lock consumer is not delivered. The September 26 integration
 probe passes source and WIR validation after separating record parsing from
 directory ownership and using immutable Result borrowing. Bytecode emission
-still rejects it with `Unsupportedˉshape`. An isolated parser-state refactor
-also reaches that emission rejection, whereas the unchanged parser compiles
-with the same supplied tools. Resolve the emission failure before attributing
-it solely to owned scan parameters or changing the maintained package API.
+still rejects it with `Unsupportedˉshape`. The
+[corrected emission diagnostic](../Evidence/2026-09-26-Emission-Diagnostic-Correction.json)
+identifies an exhausted ownership-analysis bound; a small maintained fixture
+reproduces it with repeated construction of acyclic Copy-only records. An
+isolated parser-state refactor also reaches that rejection, whereas the
+unchanged parser compiles with the same supplied tools. Resolve the bounded
+scan before changing the maintained package API to work around it.
 The candidate changes were retained locally for diagnosis; the maintained
 scanner and its fixture remain unchanged. Preserve lock bytes, failure order,
 explicit allocation failures and resource bounds when the migration resumes.

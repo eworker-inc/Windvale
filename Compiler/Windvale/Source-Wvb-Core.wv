@@ -85,6 +85,7 @@ record Compilerˉsourceˉwvbˉanalysis {
     Maximumˉstack: u32;
     Blockˉoffsets: bytes;
     Failureˉoperation: u32;
+    Failureˉrule: text;
 }
 
 
@@ -94,6 +95,7 @@ record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Code: bytes;
     Failureˉoperation: u32;
     Features: u32;
+    Failureˉrule: text;
 }
 
 record Compilerˉsourceˉwvbˉsymbolˉorder {
@@ -152,6 +154,7 @@ export record Compilerˉsourceˉwvbˉsummary {
     Failureˉfunction: u32;
     Failureˉoperation: u32;
     Failureˉline: u32;
+    Failureˉrule: text;
 }
 
 export record Compilerˉsourceˉwvbˉreachability {
@@ -218,6 +221,19 @@ export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
     Function: u32,
     Operation: u32
 ) -> Compilerˉsourceˉwvbˉsummary {
+    return Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
+        Input, Status, Wirˉstatus, Function, Operation, Enumˉname(Status)
+    );
+}
+
+fn Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉwvbˉstatus,
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
+    Function: u32,
+    Operation: u32,
+    Rule: text
+) -> Compilerˉsourceˉwvbˉsummary {
     return Compilerˉsourceˉwvbˉsummary(
         Status,
         Wirˉstatus,
@@ -226,7 +242,8 @@ export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
         Compilerˉsourceˉwvbˉempty(Input),
         Function,
         Operation,
-        0u32
+        0u32,
+        Rule
     );
 }
 
@@ -3928,8 +3945,19 @@ export fn Compilerˉsourceˉwvbˉanalysisˉfailure(
     Status: Compilerˉsourceˉwvbˉstatus,
     Operation: u32
 ) -> Compilerˉsourceˉwvbˉanalysis {
+    return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
+        Wir, Status, Operation, Enumˉname(Status)
+    );
+}
+
+fn Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
+    Wir: bytes,
+    Status: Compilerˉsourceˉwvbˉstatus,
+    Operation: u32,
+    Rule: text
+) -> Compilerˉsourceˉwvbˉanalysis {
     return Compilerˉsourceˉwvbˉanalysis(
-        Status, 0u32, 0u32, Compilerˉsourceˉwvbˉempty(Wir), Operation
+        Status, 0u32, 0u32, Compilerˉsourceˉwvbˉempty(Wir), Operation, Rule
     );
 }
 
@@ -4205,9 +4233,9 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                 Compilerˉsourceˉwvbˉplannedˉnominalˉtarget(
                     Target, Symbols, Orders
                 ) == 4294967295u32 {
-                return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                    Globalˉoperation
+                    Globalˉoperation, "nominal-target-not-mapped"
                 );
             }
             if ((Operation >= 65u32 && Operation <= 67u32) ||
@@ -4638,15 +4666,15 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                 !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
                 Shape, true, Symbols, Orders
             ) {
-                return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                    Globalˉoperation
+                    Globalˉoperation, "operation-result-shape-not-supported"
                 );
             }
             if Compilerˉsourceˉwvbˉshapeˉownershipˉisˉunknown(Wir, Shape, Orders) {
-                return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                return Compilerˉsourceˉwvbˉanalysisˉruleˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                    Globalˉoperation
+                    Globalˉoperation, "operation-result-ownership-unknown"
                 );
             }
             var Operationˉstack: u32 = Operands;
@@ -4723,7 +4751,8 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
         Codeˉlength,
         Maximumˉstack,
         Blockˉoffsets,
-        Bytesˉreadˉu32ˉlittle(Wir, 24u32)
+        Bytesˉreadˉu32ˉlittle(Wir, 24u32),
+        ""
     );
 }
 
@@ -6407,7 +6436,7 @@ export fn Compilerˉsourceˉwvbˉfunctionˉfailure(
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     return Compilerˉsourceˉwvbˉfunctionˉencoding(
-        Status, Empty, Empty, Operation, 0u32
+        Status, Empty, Empty, Operation, 0u32, Enumˉname(Status)
     );
 }
 
@@ -6661,8 +6690,10 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Wir, Function, Symbols, Orders, Vectorˉborrows
         );
     if Analysis.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉfunctionˉfailure(
-            Wir, Analysis.Status, Analysis.Failureˉoperation
+        return Compilerˉsourceˉwvbˉfunctionˉencoding(
+            Analysis.Status, Compilerˉsourceˉwvbˉempty(Wir),
+            Compilerˉsourceˉwvbˉempty(Wir), Analysis.Failureˉoperation,
+            0u32, Analysis.Failureˉrule
         );
     }
     let Functionˉentry: u32 =
@@ -7254,7 +7285,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Metadata,
         Code,
         Analysis.Failureˉoperation,
-        Features
+        Features,
+        ""
     );
 }
 
@@ -7888,12 +7920,13 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
                     );
                 if Validationˉencoding.Status !=
                     Compilerˉsourceˉwvbˉstatus.Valid {
-                    return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                    return Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
                         Input,
                         Validationˉencoding.Status,
                         Wirˉsummary.Status,
                         Validationˉrank,
-                        Validationˉencoding.Failureˉoperation
+                        Validationˉencoding.Failureˉoperation,
+                        Validationˉencoding.Failureˉrule
                     );
                 }
             }
@@ -7956,12 +7989,13 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
                 Functionˉentry, Codeˉoffset, true, Foundationˉborrowˉmodule
             );
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-            return Compilerˉsourceˉwvbˉsummaryˉfailure(
+            return Compilerˉsourceˉwvbˉsummaryˉruleˉfailure(
                 Input,
                 Encoded.Status,
                 Wirˉsummary.Status,
                 Functionˉrank,
-                Encoded.Failureˉoperation
+                Encoded.Failureˉoperation,
+                Encoded.Failureˉrule
             );
         }
         Features = Features | Encoded.Features;
@@ -8115,6 +8149,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
         Bytecode,
         Symbols.Functions,
         Wirˉsummary.Operations,
-        0u32
+        0u32,
+        ""
     );
 }

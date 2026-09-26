@@ -57,38 +57,27 @@ fn Shapeˉname(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Shape: u32
 ) -> text {
-    var Kind: u32 = 0u32;
-    var Index: u32 = 0u32;
+    var Nominal: u32 = 4294967295u32;
     if Shape >= 65536u32 && Shape - 65536u32 < Symbols.Records {
-        Kind = 4u32;
-        Index = Shape - 65536u32;
+        Nominal = Shape - 65536u32;
     }
     if Shape >= 131072u32 + Symbols.Records &&
         Shape - 131072u32 - Symbols.Records < Symbols.Enums {
-        Kind = 5u32;
-        Index = Shape - 131072u32 - Symbols.Records;
+        Nominal = Shape - 131072u32;
     }
     if Shape >= 196608u32 + Symbols.Records + Symbols.Enums &&
         Shape - 196608u32 - Symbols.Records - Symbols.Enums < Symbols.Variants {
-        Kind = 8u32;
-        Index = Shape - 196608u32 - Symbols.Records - Symbols.Enums;
+        Nominal = Shape - 196608u32;
     }
-    if Kind == 0u32 { return "non-nominal-or-materialized"; }
+    if Nominal == 4294967295u32 { return "non-nominal-or-materialized"; }
+    // WIR nominal indices follow canonical emitted-name order, not declaration
+    // order. Use the validated symbol lookup to recover the source declaration.
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-    var Entry: u32 = 0u32;
-    var Seen: u32 = 0u32;
-    while Entry < Entries {
-        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, 16u32 + Entry * 24u32 + 4u32) == Kind {
-            if Seen == Index {
-                return Diagnosticˉname(
-                    Input, Scan, Symbols, Entry
-                );
-            }
-            Seen = Seen + 1u32;
-        }
-        Entry = Entry + 1u32;
-    }
-    return "unavailable";
+    let Entry: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Lookup, 4112u32 + Entries * 4u32 + Nominal * 4u32
+    );
+    if Entry >= Entries { return "unavailable"; }
+    return Diagnosticˉname(Input, Scan, Symbols, Entry);
 }
 
 // Called only after complete analysis validation. WVIR has no expression source
@@ -157,11 +146,7 @@ fn Emissionˉdiagnostic(
     Report = Textˉconcat(Report, " auxiliary=");
     Report = Textˉconcat(Report, U32ˉformat(Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32)));
     Report = Textˉconcat(Report, " rule=");
-    if Compilation.Status == Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape &&
-        (Kind == 17u32 || Kind == 19u32) {
-        return Textˉconcat(Report, "nominal-target-not-mapped");
-    }
-    return Textˉconcat(Report, Enumˉname(Compilation.Status));
+    return Textˉconcat(Report, Compilation.Failureˉrule);
 }
 
 fn Compilerˉsourceˉemissionˉfailure(
@@ -176,7 +161,7 @@ fn Compilerˉsourceˉemissionˉfailure(
             Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
             0u32, 0u32,
             Bytesˉslice(Input, 0u32, 0u32),
-            0u32, 0u32, 0u32
+            0u32, 0u32, 0u32, ""
         ),
         ""
     );
