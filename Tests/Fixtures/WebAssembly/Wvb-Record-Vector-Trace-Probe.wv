@@ -6,6 +6,7 @@ authority application;
 
 import WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore as Collections;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore as Values;
+import Recordˉvectorˉtraceˉboundaries as Boundaries;
 
 export fn Main() -> i32 {
     let Zero: bytes = Bytesˉfromˉu64ˉlittle(0u64);
@@ -117,5 +118,5 @@ export fn Main() -> i32 {
             Metadata, Value
         );
     if Wrong.Valid { return 4; }
-    return 42;
+    return Boundaries.Checkˉboundaries(Module, Typeˉoffsets, Heap, Allocation, Metadata, Value, Zero);
 }

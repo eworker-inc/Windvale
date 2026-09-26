@@ -2624,12 +2624,16 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     const Traceˉfixture = path.join(Repositoryˉroot,
         'Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Probe.wv');
     Requireˉordinaryˉfile(Traceˉfixture, 8192, 'record Vector trace fixture');
+    const Traceˉboundaries = path.join(Repositoryˉroot,
+        'Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Boundaries.wv');
+    Requireˉordinaryˉfile(Traceˉboundaries, 8192, 'record Vector trace boundaries');
     const Traceˉoutput = path.join(Work, 'record-vector-trace.wvb');
     await Runˉnode('record-vector-trace-compile', 'Run-Split-Compiler.mjs', [
         Admitter, Authenticator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
         Traceˉfixture,
+        Traceˉboundaries,
         ...[
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv',
@@ -2648,7 +2652,7 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     if (Normalize(Traceˉexecuted) !== 'Result: 42\n') {
         Reject('Record Vector trace result differs.');
     }
-    process.stdout.write('PASS record Vector trace graph=record-vector-record stale=rejected wrong-type=rejected\n');
+    process.stdout.write('PASS record Vector trace graph=record-vector-record stale=rejected wrong-type=rejected boundaries=passed\n');
     process.stdout.write(`native Foundation owned payloads publication=Passed cases=${Completed} trace-cases=1 budget-rejections=${Invalidˉbudgets.length} owned-execution=Passed qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 

@@ -1,0 +1,88 @@
+#!wv/1 en@1
+module Recordˉvectorˉtraceˉboundaries;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore as Collections;
+
+fn Rejects(
+    Module: bytes, Types: bytes, Count: u32,
+    Heap: bytes, Allocations: bytes, Allocationˉcount: u32,
+    Metadata: bytes, Value: bytes
+) -> bool {
+    let Traced: Collections.Collectionˉrecordˉroots =
+        Collections.Collectionˉrecordˉelementˉroots(
+            Module, Types, Count, Heap, Allocations, Allocationˉcount,
+            Metadata, Value
+        );
+    return !Traced.Valid && Bytesˉlength(Traced.Roots) == 0u32;
+}
+
+export fn Checkˉboundaries(
+    Module: bytes, Types: bytes, Heap: bytes, Allocation: bytes,
+    Metadata: bytes, Value: bytes, Zero: bytes
+) -> i32 {
+    let Empty: bytes = Bytesˉslice(Zero, 0u32, 0u32);
+    if Collections.Collectionˉbackingˉvalid(Heap, Empty, 1u32, Value) ||
+        Collections.Collectionˉbackingˉvalid(Heap, Allocation, 4294967295u32, Value) ||
+        Collections.Collectionˉscalarˉelement(Empty, 0u32) ||
+        Collections.Collectionˉscalarˉelement(Module, Bytesˉlength(Module)) {
+        return 9;
+    }
+    let Shortˉtypes: bytes = Bytesˉslice(Types, 0u32, 8u32);
+    if !Rejects(Module, Shortˉtypes, 3u32, Heap, Allocation, 1u32, Metadata, Value) { return 10; }
+    if !Rejects(Module, Types, 4294967295u32, Heap, Allocation, 1u32, Metadata, Value) { return 11; }
+    let Badˉoffsets: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Types, 0u32, 4u32), Bytesˉfromˉu32ˉlittle(4294967295u32)),
+        Bytesˉslice(Types, 8u32, 4u32)
+    );
+    if !Rejects(Module, Badˉoffsets, 3u32, Heap, Allocation, 1u32, Metadata, Value) { return 12; }
+    let Vectorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Types, 4u32);
+    // A bounded header can still contain an overflowing name or truncated nominal.
+    let Badˉname: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Module, 0u32, Vectorˉoffset + 1u32), Bytesˉfromˉu32ˉlittle(4294967295u32)),
+        Bytesˉslice(Module, Vectorˉoffset + 5u32, Bytesˉlength(Module) - Vectorˉoffset - 5u32)
+    );
+    if !Rejects(Badˉname, Types, 3u32, Heap, Allocation, 1u32, Metadata, Value) { return 13; }
+    var End: u32 = Vectorˉoffset;
+    while End < Vectorˉoffset + 10u32 {
+        if !Rejects(Bytesˉslice(Module, 0u32, End), Types, 3u32,
+                Heap, Allocation, 1u32, Metadata, Value) { return 14; }
+        End = End + 1u32;
+    }
+    // A record shape must reference a record declaration, not the Vector itself.
+    let Wrongˉnominal: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Module, 0u32, Vectorˉoffset + 6u32), Bytesˉfromˉu32ˉlittle(1u32)),
+        Bytesˉslice(Module, Vectorˉoffset + 10u32, Bytesˉlength(Module) - Vectorˉoffset - 10u32)
+    );
+    let Wrongˉmetadata: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉslice(Metadata, 4u32, 6140u32));
+    let Wrongˉheap: bytes = Bytesˉconcat(Bytesˉslice(Heap, 0u32, 12u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉslice(Heap, 16u32, 8u32)));
+    if !Rejects(Wrongˉnominal, Types, 3u32, Wrongˉheap, Allocation, 1u32, Wrongˉmetadata, Value) { return 15; }
+    if !Rejects(Module, Types, 3u32, Heap, Empty, 1u32, Metadata, Value) { return 16; }
+    if !Rejects(Module, Types, 3u32, Heap, Allocation, 4294967295u32, Metadata, Value) { return 17; }
+    if !Rejects(Module, Types, 3u32, Heap, Allocation, 1u32, Empty, Value) { return 18; }
+    if !Rejects(Module, Types, 3u32, Heap, Allocation, 1u32, Metadata, Empty) { return 19; }
+    let Released: bytes = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    if !Rejects(Module, Types, 3u32, Heap, Released, 1u32, Metadata, Value) { return 20; }
+    let Badˉcount: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(3u32), Bytesˉslice(Heap, 4u32, 20u32));
+    if !Rejects(Module, Types, 3u32, Badˉcount, Allocation, 1u32, Metadata, Value) { return 21; }
+    let Badˉslot: bytes = Bytesˉconcat(Bytesˉslice(Heap, 0u32, 8u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(768u32), Bytesˉslice(Heap, 12u32, 12u32)));
+    if !Rejects(Module, Types, 3u32, Badˉslot, Allocation, 1u32, Metadata, Value) { return 22; }
+    let Badˉdescriptor: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32), Bytesˉslice(Value, 4u32, 4u32));
+    if !Rejects(Module, Types, 3u32, Heap, Allocation, 1u32, Metadata, Badˉdescriptor) { return 23; }
+    // Empty and grown backings remain valid; Sequence uses the same trace boundary.
+    let Backing: bytes = Collections.Collectionˉemptyˉbacking(2u32, 1u32, Zero);
+    if Rejects(Module, Types, 3u32, Backing, Allocation, 1u32, Metadata, Value) { return 24; }
+    let Grown: bytes = Collections.Collectionˉgrownˉbacking(Heap, Value, 4u32, Zero);
+    let Grownˉvalue: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(40u32));
+    let Grownˉallocation: bytes = Bytesˉconcat(Grownˉvalue, Bytesˉfromˉu32ˉlittle(1u32));
+    let Sequence: bytes = Bytesˉconcat(Bytesˉslice(Module, 0u32, Vectorˉoffset),
+        Bytesˉconcat(Bytesˉfromˉu8(6u8), Bytesˉslice(Module, Vectorˉoffset + 1u32, Bytesˉlength(Module) - Vectorˉoffset - 1u32)));
+    let Traced: Collections.Collectionˉrecordˉroots = Collections.Collectionˉrecordˉelementˉroots(
+        Sequence, Types, 3u32, Grown, Grownˉallocation, 1u32, Metadata, Grownˉvalue);
+    if !Traced.Valid || Bytesˉlength(Traced.Roots) != 8u32 { return 25; }
+    return 42;
+}

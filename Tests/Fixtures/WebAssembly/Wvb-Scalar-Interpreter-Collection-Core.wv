@@ -12,21 +12,36 @@ export fn Collectionˉelementˉshape(
     Type: u32,
     Expectedˉkind: u32
 ) -> u32 {
-    if Type >= Typeˉcount { return 4294967295u32; }
+    if Type >= Typeˉcount || Typeˉcount > 2097151u32 ||
+        Bytesˉlength(Typeˉoffsets) != Typeˉcount * 4u32 {
+        return 4294967295u32;
+    }
     let Typeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
         Typeˉoffsets, Type * 4u32
     );
+    if Typeˉoffset > Bytesˉlength(Module) ||
+        Bytesˉlength(Module) - Typeˉoffset < 6u32 {
+        return 4294967295u32;
+    }
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉoffset)) != Expectedˉkind {
         return 4294967295u32;
     }
     let Nameˉoffset: u32 = Typeˉoffset + 1u32;
-    return Nameˉoffset + 4u32 + Bytesˉreadˉu32ˉlittle(
-        Module, Nameˉoffset
-    );
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Module, Nameˉoffset);
+    if Nameˉlength >= Bytesˉlength(Module) - Nameˉoffset - 4u32 {
+        return 4294967295u32;
+    }
+    let Shape: u32 = Nameˉoffset + 4u32 + Nameˉlength;
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+    if (Kind == 7u32 || Kind == 8u32) &&
+        Bytesˉlength(Module) - Shape < 5u32 {
+        return 4294967295u32;
+    }
+    return Shape;
 }
 
 export fn Collectionˉscalarˉelement(Module: bytes, Shape: u32) -> bool {
-    if Shape == 4294967295u32 { return false; }
+    if Shape >= Bytesˉlength(Module) { return false; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
     if Kind == 1u32 || Kind == 2u32 || Kind == 4u32 || Kind == 5u32 ||
         Kind == 8u32 || Kind == 9u32 || Kind == 10u32 ||
@@ -82,7 +97,11 @@ export fn Collectionˉbackingˉvalid(
     Allocationˉcount: u32,
     Value: bytes
 ) -> bool {
-    if Bytesˉlength(Value) != 8u32 { return false; }
+    if Bytesˉlength(Value) != 8u32 || Allocationˉcount > 4096u32 ||
+        Bytesˉlength(Allocations) != Allocationˉcount * 12u32 ||
+        Bytesˉlength(Heap) > 65536u32 {
+        return false;
+    }
     let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
     if Length < 16u32 || Length > 16384u32 || Length % 8u32 != 0u32 ||
@@ -272,6 +291,13 @@ export fn Collectionˉrecordˉelementˉroots(
     }
     let Recordˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
     if Recordˉtype >= Typeˉcount { return Invalid; }
+    let Recordˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets, Recordˉtype * 4u32
+    );
+    if Recordˉoffset >= Bytesˉlength(Module) ||
+        Bytesˉreadˉu8(Module, Recordˉoffset) != 1u8 {
+        return Invalid;
+    }
     let Expectedˉowner: u32 = Recordˉtype + 1u32;
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
     var Roots: bytes = Empty;
