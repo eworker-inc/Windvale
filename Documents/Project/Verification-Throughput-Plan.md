@@ -87,7 +87,7 @@ cleanup. Product milestones remain in the existing completion matrix.
 | --- | --- | --- |
 | 1. Emission diagnostics | Maintained source reproducer and original Package-Lock snapshots pass seven cases each on Windows/Debian; exact rule, canonical type name, function location, malformed evidence and unchanged successful output covered. | Complete |
 | 2. CI preparation and reuse | One preparation per exact input closure; completed products survive a later failure; focused Windows/Linux jobs complete with cache-hit and cache-miss behavior measured. | In progress |
-| 3. Targeted refactoring | Extract cohesive responsibilities from a changed large function; measure slot headroom and build/runtime cost; preserve behavior and output contracts. | Open |
+| 3. Targeted refactoring | Emission analysis delegates vector/resource validation to private helpers; its slots fall from 1,486 to 645. Windows/Debian each pass 32 byte/diagnostic comparisons and seven diagnostic cases; construction and emission costs recorded. | Complete |
 | 4. Verification consolidation | Project-WVB host wrappers share one implementation and retain old checkpoints; 125 Windows/128 Debian cache cases and 335 routing cases pass. Distinct publication, reconstruction and legacy coverage remain retained by audit. | Complete |
 | 5. Active documentation | Throughput and library checkpoint history archived and indexed; Progress and the matrix point to the completion plan's current blockers; active links/catalogs verified. | Complete |
 | 6. Obsolete-code audit | Named cleanup candidates audited against consumers, generators and recovery dependencies; retained candidates and reasons recorded; no unsupported deletion or cache purge. | Complete |
@@ -191,6 +191,25 @@ filename-level route; inspect the changed section before running its proposed
 domain owner. Other wrappers retain the distinct responsibilities documented
 in the dependency audit. This consolidation does not retire legacy front-door
 coverage or complete CI preparation.
+
+### Emission validation refactor
+
+The emission analysis function now owns bytecode sizing and stack accounting,
+with private helpers for vector and task/foreign-resource validation. Its slot
+use falls from 1,486 to 645; the helpers use 354 and 581. The separate WIR
+validator still owns the emitter's overall maximum of 1,504 slots. This creates
+headroom in the changed function without claiming a lower global maximum.
+
+The [refactor evidence](../Evidence/2026-09-26-Emission-Validation-Refactor.json)
+records 32 old/new comparisons on each host, covering all 20 moved operation
+kinds, and seven diagnostic cases on each host. Successful bytes, rejection
+diagnostics and preserved output match. Emission command time remains close:
+6.56/6.54 seconds for reference/candidate on Windows and 17.10/17.24 seconds on
+Debian. These include process startup and are not a throughput-speedup claim.
+Candidate construction and parallel packaging took about 8 minutes 13 seconds.
+The emitter WVB grows by 1,012 bytes; process peak memory was not measured.
+The independent ownership-analysis bound remains a product issue in the
+completion plan. CI preparation and reuse remain open under item 2.
 
 ## Earlier baseline
 

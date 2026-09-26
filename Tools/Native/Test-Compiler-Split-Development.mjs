@@ -58,6 +58,13 @@ const COMPLETE_WVB = {
 
 // Reuse this owner for supplied-product diagnostics. The snapshot bundle is
 // produced by normal admission/analysis; this selection never builds a compiler.
+if (process.argv[2] === '--emission-equivalence') {
+    if (process.argv.length !== 9) {
+        Reject('Usage: --emission-equivalence <admitter> <authenticator> <analyzer> <reference-emitter> <candidate-emitter> <binder>');
+    }
+    await Verifyˉemissionˉequivalence(...process.argv.slice(3));
+    process.exit(0);
+}
 if (process.argv[2] === '--emission-diagnostics') {
     if (process.argv.length === 7) {
         await Verifyˉemissionˉsources(...process.argv.slice(3));
@@ -187,6 +194,159 @@ async function Verifyˉadapterˉcontract() {
         Reject('The split emitter is not fixed to optimized target emission.');
     }
     await Readˉproject(EMITTER_PROJECT);
+}
+
+async function Verifyˉemissionˉequivalence(Admitter, Authenticator, Analyzer, Reference, Candidate, Binder) {
+    const { Runˉdevelopmentˉcommand } = await import('./Development-Command-Core.mjs');
+    const Deadline = Date.now() + 300_000;
+    for (const Tool of [Admitter, Authenticator, Analyzer, Reference, Candidate, Binder]) {
+        await Fileˉevidence(path.resolve(Tool), 134_217_728, 'prepared equivalence tool');
+    }
+    const Temporaryˉroot = realpathSync.native(os.tmpdir());
+    const Work = await mkdtemp(path.join(Temporaryˉroot, TEMPORARY_PREFIX));
+    const Profile = path.join(REPOSITORY_ROOT, 'Documents', 'Project',
+        'Language-1.0-Localization-Workloads', '01-Source-Profile-Admission', 'Reference-Artifacts');
+    const Fixtures = path.join(REPOSITORY_ROOT, 'Tests', 'Fixtures', 'Language-1.0');
+    const Libraries = new Map([
+        ['Foundationˉcollections', 'Collections/Collections.wv'],
+        ['Foundationˉmemory', 'Memory/Memory.wv'],
+        ['Foundationˉoperation', 'Operations/Operation.wv'],
+        ['Foundationˉoption', 'Values/Option.wv'],
+        ['Foundationˉresult', 'Values/Result.wv'],
+        ['Foundationˉtask', 'Tasks/Task.wv'],
+        ['Foundationˉunsafe', 'Unsafe/Unsafe.wv'],
+    ]);
+    const Sources = [
+        'Vector-Read-Freeze-Main-Pipeline.wv',
+        'Vector-Construct-Reserved-Executable.wv',
+        'Vector-Append-Executable.wv',
+        'Vector-Grow-Reserved-Executable.wv',
+        'Using-Vector-Fallthrough-Wir.wv',
+        'Foundation-Value-Borrow-Vector-Executable.wv',
+        'Foundation-Vector-Payload-Borrow-Executable.wv',
+        'Foundation-Vector-Indexed-Borrow-Executable.wv',
+        'Structured-Tasks-Executable.wv',
+        'Structured-Task-Four-Child-Cancellation-Executable.wv',
+    ].map(Name => path.join(Fixtures, Name));
+    Sources.push(path.join(REPOSITORY_ROOT, 'Runtime', 'Windvale', 'Foreign-Record-Consumer.wv'));
+    const Target = path.join(Work, 'Target.wvtd');
+    const Seen = new Set();
+    const Mutated = new Set();
+    const Timings = [0, 0];
+    let Cases = 0;
+    const Run = async (Tool, Arguments) => Runˉdevelopmentˉcommand(
+        path.resolve(Tool), Arguments, Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+    const Successful = Result => {
+        if (Result.Code !== 0 || Result.Error !== '') {
+            Reject(`Equivalence fixture preparation failed: ${Result.Output}${Result.Error}`);
+        }
+    };
+    try {
+        Successful(await Run(process.execPath, [path.join(SCRIPT_DIRECTORY,
+            'Write-Canonical-Language-1.0-Target-Descriptor.mjs'), Target]));
+        const Scratchˉlength = path.join(Work, 'Foreign-Scratch-Length.wv');
+        const Foreignˉsource = await readFile(Sources.at(-1), 'utf8');
+        const Withˉlength = Foreignˉsource.replace('    unsafe {\n',
+            '    unsafe {\n' +
+            '        let Length: u64 = Unsafe.Scratchˉlength::<Bufferˉsourceˉabi>(Scratch: borrow Scratch);\n' +
+            '        if Length != 64u64 { return 6; }\n');
+        if (Withˉlength === Foreignˉsource) Reject('Foreign scratch fixture has no expected unsafe boundary.');
+        await writeFile(Scratchˉlength, Withˉlength, { flag: 'wx' });
+        Sources.push(Scratchˉlength);
+        for (let Index = 0; Index < Sources.length; Index += 1) {
+            const Source = Sources[Index];
+            const Dependencies = new Map();
+            async function Include(File) {
+                const Text = await readFile(File, 'utf8');
+                for (const Match of Text.matchAll(/^import ([^ ]+) as /gmu)) {
+                    if (Dependencies.has(Match[1])) continue;
+                    if (!Libraries.has(Match[1])) Reject(`Unknown equivalence fixture dependency: ${Match[1]}`);
+                    const Dependency = path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', Libraries.get(Match[1]));
+                    Dependencies.set(Match[1], Dependency);
+                    await Include(Dependency);
+                }
+            }
+            await Include(Source);
+            console.log(`compiler emission equivalence step=prepare item=${Index + 1}/${Sources.length} source=${path.basename(Source)}`);
+            const Admitted = path.join(Work, `Admitted-${Index}.wvss`);
+            Successful(await Run(process.execPath, [path.join(SCRIPT_DIRECTORY, 'Run-Authenticated-Source-Admission.mjs'),
+                path.resolve(Admitter), path.resolve(Authenticator),
+                '--source-input-lock', path.join(Profile, 'Source-Inputs.wvlock'),
+                '9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e',
+                '--source-profile', path.join(Profile, 'En-Source-Profile.wvsp'),
+                '--target-descriptor', Target, Source,
+                ...[...Dependencies.keys()].sort().map(Name => Dependencies.get(Name)), Admitted]));
+            const Inputs = ['Source.wvss', 'Analysis.wvam', 'Bindings.wvlb', 'Wir.wvir'].map(Name => path.join(Work, `${Index}-${Name}`));
+            const Prefix = Admitted.slice(0, -'.wvss'.length);
+            const Catalog = await readFile(`${Prefix}.wvfc`);
+            const Foreign = Catalog.readUInt32LE(12) !== 0;
+            Successful(await Run(Analyzer, [Foreign ? '--internal-foreign-source-set' : '--internal-source-set', Admitted, ...Inputs]));
+            if (!(await readFile(Admitted)).equals(await readFile(Inputs[0]))) Reject('Equivalence analysis changed the admitted source set.');
+            const Carrier = path.join(Work, `${Index}-Foreign.wvfb`);
+            if (Foreign) {
+                Successful(await Run(Binder, ['--internal-bind-analyzed', Admitted,
+                    `${Prefix}.wvtd`, `${Prefix}.wvfc`, Inputs[3], Carrier]));
+                Successful(await Run(Binder, ['--internal-pair-analysis', Admitted, Carrier, Inputs[3]]));
+            }
+            const Wir = await readFile(Inputs[3]);
+            const Minor = Wir.readUInt16LE(6);
+            if (Minor > 36) Reject('Unknown equivalence WIR version.');
+            const Header = Minor >= 18 && Minor % 2 === 0 ? 64 :
+                ([10, 12, 14, 16].includes(Minor) || Minor >= 17) ? 56 : 48;
+            const Offset = Header + Wir.readUInt32LE(8) * 48 + Wir.readUInt32LE(16) * 28;
+            const Count = Wir.readUInt32LE(24);
+            if (Count > 65_536 || Offset + Count * 28 > Wir.length) Reject('Equivalence WIR operation directory exceeds its bound.');
+            async function Compare(Label, Arguments, Positive) {
+                const Results = [];
+                const Sentinel = Buffer.from('preserve rejected emission\n');
+                for (const [Toolˉindex, Tool] of [Reference, Candidate].entries()) {
+                    const Output = path.join(Work, `Output-${Toolˉindex}.wvb`);
+                    await writeFile(Output, Sentinel);
+                    const Start = Date.now();
+                    const Result = await Run(Tool, Foreign ?
+                        ['--internal-paired-foreign-source', ...Arguments, Carrier, Output] : [...Arguments, Output]);
+                    Timings[Toolˉindex] += Date.now() - Start;
+                    Results.push({ code: Result.Code, output: Result.Output.replaceAll('\r\n', '\n'),
+                        error: Result.Error.replaceAll('\r\n', '\n'), bytes: await readFile(Output) });
+                }
+                if (Positive && (Results[0].code !== 0 || Results[0].error !== '')) {
+                    Reject(`Reference emitter rejected ${Label}: ${Results[0].error}`);
+                }
+                if (!Positive && (Results[0].code !== 1 || !Results[0].bytes.equals(Sentinel))) {
+                    Reject(`Reference emitter did not reject ${Label}.`);
+                }
+                if (Results[0].code !== Results[1].code || Results[0].output !== Results[1].output ||
+                    Results[0].error !== Results[1].error || !Results[0].bytes.equals(Results[1].bytes)) {
+                    Reject(`Emitter equivalence differs: ${Label}`);
+                }
+                Cases += 1;
+                console.log(`compiler emission equivalence item=${Cases} case=${Label} status=Passed bytes=${Results[0].bytes.length} sha256=${createHash('sha256').update(Results[0].bytes).digest('hex')}`);
+            }
+            await Compare(path.basename(Source), Inputs, true);
+            for (let Operation = 0; Operation < Count; Operation += 1) {
+                const Entry = Offset + Operation * 28;
+                const Kind = Wir.readUInt16LE(Entry + 4);
+                if ((Kind < 169 || Kind > 175) && (Kind < 180 || Kind > 192)) continue;
+                Seen.add(Kind);
+                if (Mutated.has(Kind)) continue;
+                Mutated.add(Kind);
+                const Invalid = Buffer.from(Wir);
+                Invalid.writeUInt32LE(0xffff_ffff, Entry + 20);
+                const Invalidˉpath = path.join(Work, 'Invalid.wvir');
+                await writeFile(Invalidˉpath, Invalid);
+                await Compare(`operation-${Kind}-invalid-target`, [...Inputs.slice(0, 3), Invalidˉpath], false);
+            }
+        }
+        for (const Kind of [169, 170, 171, 172, 173, 174, 175,
+            180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192]) {
+            if (!Seen.has(Kind)) Reject(`Emission equivalence lacks operation ${Kind}.`);
+        }
+        console.log(`compiler emission equivalence status=Passed cases=${Cases} operations=${[...Seen].sort((A, B) => A - B).join(',')} reference-ms=${Timings[0]} candidate-ms=${Timings[1]} output-bytes=Unchanged`);
+    } finally {
+        if (!Sameˉpath(path.dirname(path.resolve(Work)), Temporaryˉroot) ||
+            !path.basename(Work).startsWith(TEMPORARY_PREFIX)) Reject('Unexpected equivalence fixture directory.');
+        await rm(Work, { recursive: true, force: true });
+    }
 }
 
 async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emitter) {

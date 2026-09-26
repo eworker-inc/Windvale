@@ -1,0 +1,460 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-emission-validation-refactor",
+  "date": "2026-09-26",
+  "subject": "Separate vector and resource validation from bytecode sizing",
+  "claim": "The emission analyzer delegates its existing vector and task/foreign-resource validation to two private Boolean helpers. The targeted function decreases from 1486 slots and 24280 code bytes to 645 slots and 10358 code bytes. The helpers use 354 and 581 slots. Windows and Debian each pass 32 old/new emission comparisons covering all 20 moved operation kinds plus seven unchanged diagnostic cases; successful target bytes and rejection diagnostics match.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 6c7fdd2b66ee57fdb05261b63d3e286911305e5a; current changed source and native product digests are recorded as run inputs and outputs."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Compile",
+      "tool": "Build-Cached-Split-Project-Wvb",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.wvb C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Analyzer.exe C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Analyzer.identity C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Emitter.exe C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Emitter.identity --authenticated-project4 C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Admitter.exe C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Authenticator.exe C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Reader.exe C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Binder.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 178423,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Refactored-Validation-Compile.log",
+          "size": 1750,
+          "sha256": "25b3105f39c7696130a91589100c54f1d349fd16156540f8b840995df9ac5c8b"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.wvb",
+          "size": 1643702,
+          "sha256": "302915ccd13d52a454214557b479b4d4e72c33789664f51a7a36643120dc5b10"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Limits",
+      "tool": "Test-Language-1.0-Memory-Budget-Split-Execution",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 122,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Refactored-Validation-Limits.log",
+          "size": 237,
+          "sha256": "1448e2cb91246f69f08419dbc9dddee0f3f885fbfa83346b9864391b787b9392"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Windows-Package",
+      "tool": "Build-Cached-Segmented-Hosted-Wvb",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790461065106 5 Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.wvb Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 303166,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Refactored-Validation-Windows-Package.log",
+          "size": 1730,
+          "sha256": "970362d30117db6ed2778cdea58a05436ec6ff58ad1876771a21cf571ee5d4b3"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe",
+          "size": 33406976,
+          "sha256": "a5f169497d35465bc7e31f2d62f7538c84f74ac0d5177e316c274c33b195f7b2"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Debian-Package",
+      "tool": "Build-Cached-Segmented-Hosted-Wvb",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790461065106 5 Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.wvb Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 314075,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Refactored-Validation-Debian-Package.log",
+          "size": 1726,
+          "sha256": "6e9dac136cd467ccbb2b92fd67f5885dce0136a48b4c3a3fc9ad0c2e7e3ce663"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf",
+          "size": 33406976,
+          "sha256": "b3c3bfd13f7b43f2a280f2453c7484903ebb66e7eeecae2a80cb510aa1f482a8"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "32 emission comparisons: 12 valid programs and 20 malformed operation targets",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Test-Compiler-Split-Development.mjs --emission-equivalence Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.exe Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Binder.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 21641,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 32990,
+          "sha256": "d85b780e3f000b02bcfb9b3e4ab821cc346db023e2a61753f9eef9806e65ef26"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.exe",
+          "size": 33390080,
+          "sha256": "69a280eeab2c1c6ff5fd5acf8449a2fd0eed4fdd172e8efcf9f5f0f6fb25425b"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe",
+          "size": 33406976,
+          "sha256": "a5f169497d35465bc7e31f2d62f7538c84f74ac0d5177e316c274c33b195f7b2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/e5bb45c637b96b72436e96672cb86ee61f3093ad8ee884b814af0f8cab8f0a51/Binder.exe",
+          "size": 18405888,
+          "sha256": "c3c871cc87b98558712f30c31289b168b22bc8711f787823f5e09154838beb54"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Refactor-Equivalence.log",
+          "size": 6833,
+          "sha256": "dd86a58ef959780cd65ff8d73d8c2940a7cc6f3a916431d9b4ce94b1b7eaa23f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Seven source diagnostics, truncated-input and oversized-input cases",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Test-Compiler-Split-Development.mjs --emission-diagnostics Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 2084,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 32990,
+          "sha256": "d85b780e3f000b02bcfb9b3e4ab821cc346db023e2a61753f9eef9806e65ef26"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.exe",
+          "size": 33390080,
+          "sha256": "69a280eeab2c1c6ff5fd5acf8449a2fd0eed4fdd172e8efcf9f5f0f6fb25425b"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe",
+          "size": 33406976,
+          "sha256": "a5f169497d35465bc7e31f2d62f7538c84f74ac0d5177e316c274c33b195f7b2"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Refactor-Diagnostics.log",
+          "size": 1018,
+          "sha256": "4e0f0188cbf742c29289b9bf1f054157d5c0b2350126e0c2382bd5631e295d2c"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "32 emission comparisons: 12 valid programs and 20 malformed operation targets",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Compiler-Split-Development.mjs --emission-equivalence Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.elf Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf Artifacts/Work/Simplification-2026-09-26/Binder-Current.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 60017,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 32990,
+          "sha256": "d85b780e3f000b02bcfb9b3e4ab821cc346db023e2a61753f9eef9806e65ef26"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.elf",
+          "size": 33390592,
+          "sha256": "38085154837500f2f8cb01108dc2cb810bbbe64ead47d0dd6e841205529a3cd7"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf",
+          "size": 33406976,
+          "sha256": "b3c3bfd13f7b43f2a280f2453c7484903ebb66e7eeecae2a80cb510aa1f482a8"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.elf",
+          "size": 18407424,
+          "sha256": "3426c136cf1d05dae3c3b48a113410b6b078d4cd82f8e9fcad91522f8a17c3d4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Refactor-Equivalence.log",
+          "size": 6835,
+          "sha256": "e0da0e88976e0cdb146420edc0251773bdfd90bdbc56592897118a240b524ee4"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Seven source diagnostics, truncated-input and oversized-input cases",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Compiler-Split-Development.mjs --emission-diagnostics Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 6355,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343331,
+          "sha256": "47e8b1a8423db01bcb12db8f2cd7d0e5cc1680ec02229d5eef4674352bfd5168"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260428,
+          "sha256": "e6bd1a6ddee19ba0951fc7004e9a9ff99cf8defdb354483ab7aa377d4240c2c2"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 32990,
+          "sha256": "d85b780e3f000b02bcfb9b3e4ab821cc346db023e2a61753f9eef9806e65ef26"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.elf",
+          "size": 33390592,
+          "sha256": "38085154837500f2f8cb01108dc2cb810bbbe64ead47d0dd6e841205529a3cd7"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf",
+          "size": 33406976,
+          "sha256": "b3c3bfd13f7b43f2a280f2453c7484903ebb66e7eeecae2a80cb510aa1f482a8"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Refactor-Diagnostics.log",
+          "size": 1018,
+          "sha256": "4e0f0188cbf742c29289b9bf1f054157d5c0b2350126e0c2382bd5631e295d2c"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Package the retained current binder for authenticated foreign comparisons",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790461045248 7 Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb Artifacts/Work/Simplification-2026-09-26/Binder-Current.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 170927,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.elf",
+          "size": 18407424,
+          "sha256": "3426c136cf1d05dae3c3b48a113410b6b078d4cd82f8e9fcad91522f8a17c3d4"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Refactor-Binder-Package.log",
+          "size": 1304,
+          "sha256": "171b96876088234da6caad6d39f2bfe95ca40e51be82672d475eb9b707868a52"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Function slot and code-size comparison using existing bounded WVB inspector and source declaration mapping",
+      "tool": "Test-Language-1.0-Memory-Budget-Split-Execution",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Function-Headroom.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Canonical-Diagnostics.wvb",
+          "size": 1642690,
+          "sha256": "5d3cbb73c6d00b74587be801b63cb2fa32e1e583b563e8c15c2630e0b8941f8b"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.wvb",
+          "size": 1643702,
+          "sha256": "302915ccd13d52a454214557b479b4d4e72c33789664f51a7a36643120dc5b10"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 244194,
+          "sha256": "e607d12a8605abbd293def4f798eae2a1627a5150202dbfab2a783ad53358ca7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Refactor-Function-Headroom.json",
+          "size": 2466,
+          "sha256": "af3ee18d6f9ebbaae0068cecbee77b7e87c0dc77aba3193d74dd3126988e3af4"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The source extraction preserves the 19 rejection predicates, their operation selection, failure status, failure operation and diagnostic rule. The helpers return only validation success; bytecode length, stack accounting and diagnostic construction remain in the owning analysis function. Generated artifact readers remain generator-owned; the 14-file generation check passes.",
+    "Headroom is per changed function, not an overall compiler maximum improvement. Before: analyze-function __WvM25F111, 5 parameters, 1481 locals, 1486 slots, 24280 code bytes, maximum stack 6. After: vector helper __WvM25F111 uses 354 slots/5627 code bytes/stack 3; resource helper __WvM25F112 uses 581 slots/9245 bytes/stack 3; analyze-function __WvM25F113 uses 645 slots/10358 bytes/stack 6. The separate Source-Wir-Validation-Core function Compiler-source-wir-function-operations-are-valid (__WvM24F69) remains the overall maximum at 1504 slots, 24466 code bytes and stack 15. The existing all-function inspector enforces the 2048-slot boundary on both products.",
+    "The current emitter WVB is 1643702 bytes, versus the 1642690-byte reference: 1012 extra bytes for the extracted helpers and calls. Its Windows and Debian native packages are each 33406976 bytes. Source-to-WVB construction took 178423 ms; Windows and Debian packaging ran in parallel at 303166 and 314075 ms, about 8 minutes 13 seconds including compilation. Prior diagnostic construction measured 176232 ms plus parallel 323240/332712 ms packaging. Producer profiles and cache conditions differ; these are bounded development construction measurements, not a controlled build-speed claim.",
+    "Emission command time for all 32 cases was 6562 ms reference / 6541 ms candidate on Windows, and 17103 / 17237 ms on Debian WSL. These include native process startup and filesystem access, and are a single interleaved comparison run. They do not establish a throughput speedup or stable timing threshold. Peak working-set memory was not captured; slot counts are structural resource measurements, not a claim about resident memory.",
+    "All 20 operation kinds are required by the comparison test: 169 through 175, and 180 through 192. Each has a valid source-derived occurrence and one invalid-target WIR mutation. Malformed inputs may be rejected by the unchanged WIR validation before helper dispatch; these negative cases protect the outer rejection/output contract, not every private predicate in isolation. Twelve positive cases cover vectors, using/release, payload and indexed borrowing, structured tasks, cancellation, and authenticated foreign scratch/region/pointer/call behavior.",
+    "The foreign scratch-length case derives a bounded variant of the existing Foreign-Record-Consumer source to exercise operation 187. The existing canonical target writer, authenticated admission helper and native binder supply its normal foreign carrier. The first harness attempt omitted that binding phase; later coverage checking also exposed the missing release fixture. Both setup gaps were corrected before the final passing runs. No validation bypass or compiler construction was added to the comparison mode.",
+    "Compilation and native packaging use retained validated bootstrap products. The Windows-produced candidate WVB is packaged for both hosts, then admission, analysis, binding and emission execute natively on each host. This is focused cross-host development evidence, not independent bootstrap reconstruction or full release qualification.",
+    "The source diagnostic ownership-bound failure intentionally remains unchanged. This refactor does not repair the separate repeated-constructor ownership analysis limitation or change accepted source semantics. CI preparation and reuse remain the one open simplification item.",
+    "The reviewed filename plan conservatively selected broad compiler, lowerer, unsafe-runtime and reconstruction owners. Only changed emission validation was exercised through the existing supplied-product comparison/diagnostic owner, plus generated-reader consistency, routing inventory and documentation checks. Unchanged parser/editor grammar, lowerer execution, broad runtime suites and independent reconstruction were not rerun."
+  ],
+  "related": [
+    "Compiler/Windvale/Source-Wvb-Core.wv",
+    "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+    "Tools/Native/Test-Compiler-Split-Development.mjs",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-26-Emission-Diagnostic-Correction.json",
+    "Tools/Native/Generate-Compiler-Artifact-Readers.mjs",
+    "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+    "Tools/Verify/Verify-Verification-Plan.ps1",
+    "Runtime/Windvale/Foreign-Record-Consumer.wv"
+  ]
+}

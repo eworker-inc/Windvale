@@ -4172,6 +4172,327 @@ fn Compilerˉsourceˉwvbˉvectorˉborrowsˉretainˉprojections(
     return Compilerˉsourceˉwvbˉvectorˉborrowˉplan(true, Sources, Plan.Failureˉoperation);
 }
 
+fn Compilerˉsourceˉwvbˉvectorˉoperationˉisˉvalid(
+    Wir: bytes,
+    Function: u32,
+    Operationˉentry: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+    let Functionˉentry: u32 =
+        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) + Function * 48u32;
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
+    let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
+    let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
+    let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
+    let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
+    let Operands: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
+    if Operation == 169u32 || Operation == 170u32 || Operation == 192u32 {
+        let Plannedˉvector: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if (Target < Parameters && Operation == 170u32) ||
+            Target >= Parameters + Locals ||
+            Plannedˉvector < 327680u32 ||
+            Plannedˉvector >= 393216u32 ||
+            (Operation == 192u32 && Operands != 1u32) {
+            return false;
+        }
+        if Operation == 170u32 {
+            let Plannedˉresultˉsequence: u32 =
+                Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                    Shape, Symbols, Orders
+                );
+            if Plannedˉresultˉsequence < 393216u32 ||
+                Plannedˉresultˉsequence >= 458752u32 {
+                return false;
+            }
+        }
+    }
+    if Operation == 171u32 {
+        let Plannedˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        if Target < Parameters || Target >= Parameters + Locals ||
+            Operands != 2u32 || Plannedˉresult < 196608u32 ||
+            Plannedˉresult >= 262144u32 {
+            return false;
+        }
+    }
+    if Operation == 172u32 {
+        let Plannedˉvectorˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 1u32 ||
+            Plannedˉvectorˉresult < 196608u32 ||
+            Plannedˉvectorˉresult >= 262144u32 {
+            return false;
+        }
+    }
+    if Operation == 173u32 {
+        let Plannedˉappendˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        let Plannedˉappendˉvector: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if Target < Parameters || Target >= Parameters + Locals ||
+            Operands != 1u32 || Plannedˉappendˉresult < 196608u32 ||
+            Plannedˉappendˉresult >= 262144u32 ||
+            Plannedˉappendˉvector < 327680u32 ||
+            Plannedˉappendˉvector >= 393216u32 {
+            return false;
+        }
+    }
+    if Operation == 174u32 {
+        let Plannedˉreleasedˉvector: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+                    Wir, Function, Target
+                ), Symbols, Orders
+            );
+        if Target < Parameters || Target >= Parameters + Locals ||
+            Operands != 0u32 || Shape != 0u32 || Auxiliary != 0u32 ||
+            ((Plannedˉreleasedˉvector < 327680u32 ||
+                Plannedˉreleasedˉvector >= 393216u32) &&
+                Plannedˉreleasedˉvector != 805306369u32) {
+            return false;
+        }
+    }
+    if Operation == 175u32 {
+        let Plannedˉgrowˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        let Plannedˉgrowˉvector: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+                    Wir, Function, Target
+                ), Symbols, Orders
+            );
+        if Target < Parameters || Target >= Parameters + Locals ||
+            Auxiliary >= Parameters + Locals ||
+            Target == Auxiliary || Operands != 1u32 ||
+            Plannedˉgrowˉresult < 196608u32 ||
+            Plannedˉgrowˉresult >= 262144u32 ||
+            Plannedˉgrowˉvector < 327680u32 ||
+            Plannedˉgrowˉvector >= 393216u32 {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉwvbˉresourceˉoperationˉisˉvalid(
+    Wir: bytes,
+    Function: u32,
+    Operationˉentry: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+    let Functionˉentry: u32 =
+        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) + Function * 48u32;
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
+    let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
+    let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
+    let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
+    let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
+    let Operands: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
+    if Operation == 180u32 {
+        let Plannedˉscopeˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        if Target >= Parameters + Locals ||
+            Operands != 2u32 || Auxiliary == 0u32 ||
+            Plannedˉscopeˉresult < 196608u32 ||
+            Plannedˉscopeˉresult >= 262144u32 {
+            return false;
+        }
+    }
+    if Operation == 181u32 {
+        let Plannedˉcontext: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 0u32 ||
+            Auxiliary != 0u32 || Plannedˉcontext < 65536u32 ||
+            Plannedˉcontext >= 131072u32 {
+            return false;
+        }
+    }
+    if Operation == 182u32 {
+        let Plannedˉspawnˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        let Plannedˉtask: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 1u32 ||
+            Plannedˉspawnˉresult < 196608u32 ||
+            Plannedˉspawnˉresult >= 262144u32 ||
+            Plannedˉtask < 65536u32 || Plannedˉtask >= 131072u32 {
+            return false;
+        }
+    }
+    if Operation == 183u32 {
+        let Plannedˉoutcome: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        if Target >= Parameters + Locals ||
+            Auxiliary >= Parameters + Locals ||
+            Target == Auxiliary || Operands != 0u32 ||
+            Plannedˉoutcome < 196608u32 ||
+            Plannedˉoutcome >= 262144u32 {
+            return false;
+        }
+    }
+    if Operation == 184u32 {
+        let Plannedˉcancellation: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 0u32 ||
+            Auxiliary != 0u32 || Plannedˉcancellation < 196608u32 ||
+            Plannedˉcancellation >= 262144u32 {
+            return false;
+        }
+    }
+    if Operation == 185u32 &&
+        (Target < Parameters || Target >= Parameters + Locals ||
+            Operands != 0u32 || Shape != 0u32 || Auxiliary > 2u32) {
+        return false;
+    }
+    if Operation == 186u32 {
+        let Plannedˉscratchˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        let Plannedˉabi: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 2u32 ||
+            Plannedˉscratchˉresult < 196608u32 ||
+            Plannedˉscratchˉresult >= 262144u32 ||
+            Plannedˉabi < 131072u32 || Plannedˉabi >= 196608u32 {
+            return false;
+        }
+    }
+    if Operation == 187u32 {
+        let Plannedˉlengthˉabi: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 0u32 ||
+            Shape != 8u32 || Plannedˉlengthˉabi < 131072u32 ||
+            Plannedˉlengthˉabi >= 196608u32 {
+            return false;
+        }
+    }
+    if Operation == 188u32 {
+        let Plannedˉregionˉresult: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        let Plannedˉregionˉabi: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 3u32 ||
+            Plannedˉregionˉresult < 196608u32 ||
+            Plannedˉregionˉresult >= 262144u32 ||
+            Plannedˉregionˉabi < 131072u32 ||
+            Plannedˉregionˉabi >= 196608u32 {
+            return false;
+        }
+    }
+    if Operation == 189u32 {
+        let Plannedˉpointer: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Shape, Symbols, Orders
+            );
+        let Plannedˉpointerˉabi: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Auxiliary, Symbols, Orders
+            );
+        if Target >= Parameters + Locals || Operands != 0u32 ||
+            Plannedˉpointer < 65536u32 ||
+            Plannedˉpointer >= 131072u32 ||
+            Plannedˉpointerˉabi < 131072u32 ||
+            Plannedˉpointerˉabi >= 196608u32 {
+            return false;
+        }
+    }
+    if Operation == 190u32 {
+        let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, 8u32
+        );
+        var Plannedˉforeignˉpointer: u32 = 4294967295u32;
+        if Operands == 3u32 {
+            let Foreignˉfirstˉtemporary: u32 =
+                Bytesˉreadˉu32ˉlittle(
+                    Wir,
+                    Compilerˉsourceˉwvbˉoperandsˉoffset(Wir) +
+                        Bytesˉreadˉu32ˉlittle(
+                            Wir, Operationˉentry + 16u32
+                        ) * 4u32
+                );
+            let Foreignˉpointerˉshape: u32 =
+                Bytesˉreadˉu32ˉlittle(
+                    Wir,
+                    Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir) +
+                        (Bytesˉreadˉu32ˉlittle(
+                            Wir, Functionˉentry + 20u32
+                        ) + Foreignˉfirstˉtemporary) * 4u32
+                );
+            Plannedˉforeignˉpointer =
+                Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                    Foreignˉpointerˉshape, Symbols, Orders
+                );
+        }
+        if Target >= Symbolˉentries || Operands != 3u32 ||
+            Shape != 7u32 || Auxiliary != 0u32 ||
+            Plannedˉforeignˉpointer < 65536u32 ||
+            Plannedˉforeignˉpointer >= 131072u32 ||
+            Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, 16u32 + Target * 24u32 + 4u32
+            ) != 9u32 ||
+            Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, 16u32 + Target * 24u32 + 20u32
+            ) != 3u32 {
+            return false;
+        }
+    }
+    if Operation == 191u32 {
+        let Plannedˉoption: u32 =
+            Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+                    Shape
+                ),
+                Symbols,
+                Orders
+            );
+        if Target >= Parameters + Locals || Operands != 0u32 ||
+            Auxiliary < 1u32 || Auxiliary > 3u32 ||
+            Plannedˉoption < 196608u32 ||
+            Plannedˉoption >= 262144u32 {
+            return false;
+        }
+    }
+    return true;
+}
+
 export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
     Wir: bytes,
     Function: u32,
@@ -4185,7 +4506,6 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
     let Firstˉblock: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 4u32);
     let Blockˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 8u32);
     let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
-    let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
     let Blocksˉoffset: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
     let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     if !Vectorˉborrows.Valid {
@@ -4273,125 +4593,14 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 }
             }
-            if Operation == 169u32 || Operation == 170u32 || Operation == 192u32 {
-                let Plannedˉvector: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if (Target < Parameters && Operation == 170u32) ||
-                    Target >= Parameters + Locals ||
-                    Plannedˉvector < 327680u32 ||
-                    Plannedˉvector >= 393216u32 ||
-                    (Operation == 192u32 && Operands != 1u32) {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-                if Operation == 170u32 {
-                    let Plannedˉresultˉsequence: u32 =
-                        Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                            Shape, Symbols, Orders
-                        );
-                    if Plannedˉresultˉsequence < 393216u32 ||
-                        Plannedˉresultˉsequence >= 458752u32 {
-                        return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                            Wir,
-                            Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                            Globalˉoperation
-                        );
-                    }
-                }
-            }
-            if Operation == 171u32 {
-                let Plannedˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                if Target < Parameters || Target >= Parameters + Locals ||
-                    Operands != 2u32 || Plannedˉresult < 196608u32 ||
-                    Plannedˉresult >= 262144u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 172u32 {
-                let Plannedˉvectorˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 1u32 ||
-                    Plannedˉvectorˉresult < 196608u32 ||
-                    Plannedˉvectorˉresult >= 262144u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 173u32 {
-                let Plannedˉappendˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                let Plannedˉappendˉvector: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if Target < Parameters || Target >= Parameters + Locals ||
-                    Operands != 1u32 || Plannedˉappendˉresult < 196608u32 ||
-                    Plannedˉappendˉresult >= 262144u32 ||
-                    Plannedˉappendˉvector < 327680u32 ||
-                    Plannedˉappendˉvector >= 393216u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 174u32 {
-                let Plannedˉreleasedˉvector: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
-                            Wir, Function, Target
-                        ), Symbols, Orders
-                    );
-                if Target < Parameters || Target >= Parameters + Locals ||
-                    Operands != 0u32 || Shape != 0u32 || Auxiliary != 0u32 ||
-                    ((Plannedˉreleasedˉvector < 327680u32 ||
-                        Plannedˉreleasedˉvector >= 393216u32) &&
-                        Plannedˉreleasedˉvector != 805306369u32) {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 175u32 {
-                let Plannedˉgrowˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                let Plannedˉgrowˉvector: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
-                            Wir, Function, Target
-                        ), Symbols, Orders
-                    );
-                if Target < Parameters || Target >= Parameters + Locals ||
-                    Auxiliary >= Parameters + Locals ||
-                    Target == Auxiliary || Operands != 1u32 ||
-                    Plannedˉgrowˉresult < 196608u32 ||
-                    Plannedˉgrowˉresult >= 262144u32 ||
-                    Plannedˉgrowˉvector < 327680u32 ||
-                    Plannedˉgrowˉvector >= 393216u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
+            if ((Operation >= 169u32 && Operation <= 175u32) || Operation == 192u32) &&
+                !Compilerˉsourceˉwvbˉvectorˉoperationˉisˉvalid(
+                    Wir, Function, Operationˉentry, Symbols, Orders
+                ) {
+                return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                    Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                    Globalˉoperation
+                );
             }
             if Operation == 177u32 || Operation == 179u32 {
                 let Functionˉorder: Compilerˉsourceˉwvbˉsymbolˉorder =
@@ -4432,226 +4641,14 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 }
             }
-            if Operation == 180u32 {
-                let Plannedˉscopeˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals ||
-                    Operands != 2u32 || Auxiliary == 0u32 ||
-                    Plannedˉscopeˉresult < 196608u32 ||
-                    Plannedˉscopeˉresult >= 262144u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 181u32 {
-                let Plannedˉcontext: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 0u32 ||
-                    Auxiliary != 0u32 || Plannedˉcontext < 65536u32 ||
-                    Plannedˉcontext >= 131072u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 182u32 {
-                let Plannedˉspawnˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                let Plannedˉtask: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 1u32 ||
-                    Plannedˉspawnˉresult < 196608u32 ||
-                    Plannedˉspawnˉresult >= 262144u32 ||
-                    Plannedˉtask < 65536u32 || Plannedˉtask >= 131072u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 183u32 {
-                let Plannedˉoutcome: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals ||
-                    Auxiliary >= Parameters + Locals ||
-                    Target == Auxiliary || Operands != 0u32 ||
-                    Plannedˉoutcome < 196608u32 ||
-                    Plannedˉoutcome >= 262144u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 184u32 {
-                let Plannedˉcancellation: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 0u32 ||
-                    Auxiliary != 0u32 || Plannedˉcancellation < 196608u32 ||
-                    Plannedˉcancellation >= 262144u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 185u32 &&
-                (Target < Parameters || Target >= Parameters + Locals ||
-                    Operands != 0u32 || Shape != 0u32 || Auxiliary > 2u32) {
+            if (Operation >= 180u32 && Operation <= 191u32) &&
+                !Compilerˉsourceˉwvbˉresourceˉoperationˉisˉvalid(
+                    Wir, Function, Operationˉentry, Symbols, Orders
+                ) {
                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                     Globalˉoperation
                 );
-            }
-            if Operation == 186u32 {
-                let Plannedˉscratchˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                let Plannedˉabi: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 2u32 ||
-                    Plannedˉscratchˉresult < 196608u32 ||
-                    Plannedˉscratchˉresult >= 262144u32 ||
-                    Plannedˉabi < 131072u32 || Plannedˉabi >= 196608u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 187u32 {
-                let Plannedˉlengthˉabi: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 0u32 ||
-                    Shape != 8u32 || Plannedˉlengthˉabi < 131072u32 ||
-                    Plannedˉlengthˉabi >= 196608u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 188u32 {
-                let Plannedˉregionˉresult: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                let Plannedˉregionˉabi: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 3u32 ||
-                    Plannedˉregionˉresult < 196608u32 ||
-                    Plannedˉregionˉresult >= 262144u32 ||
-                    Plannedˉregionˉabi < 131072u32 ||
-                    Plannedˉregionˉabi >= 196608u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 189u32 {
-                let Plannedˉpointer: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Shape, Symbols, Orders
-                    );
-                let Plannedˉpointerˉabi: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Auxiliary, Symbols, Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 0u32 ||
-                    Plannedˉpointer < 65536u32 ||
-                    Plannedˉpointer >= 131072u32 ||
-                    Plannedˉpointerˉabi < 131072u32 ||
-                    Plannedˉpointerˉabi >= 196608u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 190u32 {
-                let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
-                    Symbols.Directory, 8u32
-                );
-                var Plannedˉforeignˉpointer: u32 = 4294967295u32;
-                if Operands == 3u32 {
-                    let Foreignˉfirstˉtemporary: u32 =
-                        Bytesˉreadˉu32ˉlittle(
-                            Wir,
-                            Compilerˉsourceˉwvbˉoperandsˉoffset(Wir) +
-                                Bytesˉreadˉu32ˉlittle(
-                                    Wir, Operationˉentry + 16u32
-                                ) * 4u32
-                        );
-                    let Foreignˉpointerˉshape: u32 =
-                        Bytesˉreadˉu32ˉlittle(
-                            Wir,
-                            Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir) +
-                                (Bytesˉreadˉu32ˉlittle(
-                                    Wir, Functionˉentry + 20u32
-                                ) + Foreignˉfirstˉtemporary) * 4u32
-                        );
-                    Plannedˉforeignˉpointer =
-                        Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                            Foreignˉpointerˉshape, Symbols, Orders
-                        );
-                }
-                if Target >= Symbolˉentries || Operands != 3u32 ||
-                    Shape != 7u32 || Auxiliary != 0u32 ||
-                    Plannedˉforeignˉpointer < 65536u32 ||
-                    Plannedˉforeignˉpointer >= 131072u32 ||
-                    Bytesˉreadˉu32ˉlittle(
-                        Symbols.Directory, 16u32 + Target * 24u32 + 4u32
-                    ) != 9u32 ||
-                    Bytesˉreadˉu32ˉlittle(
-                        Symbols.Directory, 16u32 + Target * 24u32 + 20u32
-                    ) != 3u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
-            }
-            if Operation == 191u32 {
-                let Plannedˉoption: u32 =
-                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
-                        Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
-                            Shape
-                        ),
-                        Symbols,
-                        Orders
-                    );
-                if Target >= Parameters + Locals || Operands != 0u32 ||
-                    Auxiliary < 1u32 || Auxiliary > 3u32 ||
-                    Plannedˉoption < 196608u32 ||
-                    Plannedˉoption >= 262144u32 {
-                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
-                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                        Globalˉoperation
-                    );
-                }
             }
             if Operation != 171u32 && Operation != 172u32 &&
                 Operation != 173u32 && Operation != 180u32 &&
