@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-25
+> Last reviewed: 2026-09-26
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -223,12 +223,24 @@ ownership. Existing scalar borrowing, owned-payload tracing, and collection
 lifetime selections also pass. Source empty-record declarations remain rejected;
 the internal sentinel representation has direct runtime boundary coverage.
 
-The next consumer prerequisites are explicit budget operations in helpers and
-scanner return/aggregate ownership. Construction, append and growth still use
-the Main-owned budget execution profile, and source freezing still requires a
-single block. These limits prevent treating this checkpoint as the maintained
-Package-Lock migration. Preserve the existing package-format consumer oracle,
-lock bytes, failure ordering and resource bounds during that migration.
+The [owned-budget helper implementation](../Decisions/0968-Thread-Owned-Budgets-Through-Collection-Helpers.md)
+now supports construction, splitting, append and growth outside Main in the
+candidate compiler/verifier/interpreter path. Helper return cleanup retains
+caller, operand, returned-aggregate, task and allocation-lease roots. The
+[development stabilization evidence](../Evidence/2026-09-26-Development-Stabilization.json)
+records focused Windows/Debian coverage. Source freezing still requires a
+single block.
+
+The typed Package-Lock consumer is not delivered. The September 26 integration
+probe passes source and WIR validation after separating record parsing from
+directory ownership and using immutable Result borrowing. Bytecode emission
+still rejects it with `Unsupportedˉshape`. An isolated parser-state refactor
+also reaches that emission rejection, whereas the unchanged parser compiles
+with the same supplied tools. Resolve the emission failure before attributing
+it solely to owned scan parameters or changing the maintained package API.
+The candidate changes were retained locally for diagnosis; the maintained
+scanner and its fixture remain unchanged. Preserve lock bytes, failure order,
+explicit allocation failures and resource bounds when the migration resumes.
 
 These immutable bridges do not enable consuming extraction or arbitrary payload
 composition. Native lowering for minors 40 through 42, installed promotion,

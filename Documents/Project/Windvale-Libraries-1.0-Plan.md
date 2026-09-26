@@ -2,7 +2,7 @@
 
 > Status: Proposed suite catalog with an active Option/Result implementation goal
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-25
+> Last reviewed: 2026-09-26
 
 ## Status
 
@@ -66,20 +66,23 @@ complete-verifier and interpreter agreement. The
 [Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json)
 records seven deterministic positive programs and fifteen rejection groups on
 Windows and Debian, plus inherited borrowing, tracing and lifetime regressions.
-The typed Package-Lock directory still needs budget operations outside Main and
-scanner ownership integration. This is a prerequisite for that consumer;
-shared/owned record fields, wider collection APIs, native lowering and installed
-promotion remain open.
+The [owned-budget helper implementation](../Decisions/0968-Thread-Owned-Budgets-Through-Collection-Helpers.md)
+now permits budget and collection operations outside Main in the candidate
+compiler, complete verifier and interpreter. Scanner ownership integration is
+still required for the typed Package-Lock directory. Wider collection APIs,
+native lowering and installed promotion remain open.
 
 A bounded internal budget collector now passes the existing accounting fixture
 on Windows and Debian: 54 cases cover live budgets and leases, stale generations,
 deferred parent release, malformed roots and capacity limits. The
 [accounting evidence](../Evidence/2026-09-25-Unreachable-Budget-Accounting.json)
 records identical bytecode across four compilations and measured execution.
-It is not yet connected to interpreter helper returns. That connection must
-gather live caller, operand, returned-aggregate and allocation-lease roots before
-reclaiming unreferenced owners; helper-level admission and the Package-Lock
-migration remain open.
+The subsequent helper implementation connects it to interpreter returns and
+gathers live caller, operand, returned-aggregate, task and allocation-lease roots
+before reclaiming unreferenced owners. The
+[development stabilization evidence](../Evidence/2026-09-26-Development-Stabilization.json)
+records focused Windows/Debian checks. The Package-Lock migration, native
+lowering and independent qualification remain open.
 
 Selecting and migrating a maintained owned-resource consumer remains a separate
 wider milestone, not a new requirement for the delivered package-parser gate.
