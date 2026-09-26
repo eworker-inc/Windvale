@@ -1,0 +1,557 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-25-unreachable-budget-accounting",
+  "date": "2026-09-25",
+  "subject": "Bounded collection of unreachable internal memory-budget owners",
+  "claim": "The existing memory-budget accounting fixture passes 54 cases on Windows and Debian after adding 25 collector checks to its prior 29 cases. Collection preserves current-generation live budgets and allocation leases, ignores stale generations, defers parent reclamation while a child lease remains live, returns malformed inputs unchanged, handles empty and duplicate roots, accepts the 2,162,688-byte root ceiling and rejects one extra cell before scanning, and reclaims a full 65-entry table while retaining the highest-index live child. Two source compilations per host produce the same 49,269-byte WVB; each module passes complete verification. Profile-1 native execution returns 42 on both hosts. Debian execution peaks at 11,812,864 bytes of resident memory.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "c1de7f957b3a5fe789d6729119ac846ed2779a7c"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 development host",
+      "target": "Memory-budget accounting Compile-A",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "node Tools/Native/Run-Split-Compiler.mjs Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Record-Collections-2026-09-25/Emitter.exe --source-input-lock Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e --source-profile Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp --target-descriptor Projects/Targets/Windows-X64-No-Foreign.wvtd Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-A.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 3412,
+      "inputs": [
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Emitter.exe",
+          "size": 33156608,
+          "sha256": "2097b1f737005f1172f80928f539c3ffdfc5f3844d16e42b8bb7203017aa3a99"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv",
+          "size": 18282,
+          "sha256": "cbecb771c91900bccb2f5b65f4eb96980a45c660d840a6e54422634fee7523de"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 28452,
+          "sha256": "11d61c16826145833a53b20044563ae9f18cdba9b883024d9cd6143955073567"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-A.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Compile-A.log",
+          "size": 806,
+          "sha256": "7d100011cba65653e5977dec07fae06f221eabeb90331080369d57dcd78371d4"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Memory-budget accounting Verify-A",
+      "tool": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.exe",
+      "command": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.exe Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-A.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 592,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.exe",
+          "size": 5079040,
+          "sha256": "650b3b2fc9b93a395bf12f2c182a9fd5b40b5e00bb58c4bf7d9778f154fe5312"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-A.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Verify-A.log",
+          "size": 42,
+          "sha256": "1510a56a31f6f4de9da414ea40a6aa1d54a54d48beb1642db5879648c4fafc6a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Memory-budget accounting Compile-B",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "node Tools/Native/Run-Split-Compiler.mjs Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Record-Collections-2026-09-25/Emitter.exe --source-input-lock Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e --source-profile Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp --target-descriptor Projects/Targets/Windows-X64-No-Foreign.wvtd Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-B.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 4017,
+      "inputs": [
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Emitter.exe",
+          "size": 33156608,
+          "sha256": "2097b1f737005f1172f80928f539c3ffdfc5f3844d16e42b8bb7203017aa3a99"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv",
+          "size": 18282,
+          "sha256": "cbecb771c91900bccb2f5b65f4eb96980a45c660d840a6e54422634fee7523de"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 28452,
+          "sha256": "11d61c16826145833a53b20044563ae9f18cdba9b883024d9cd6143955073567"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-B.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Compile-B.log",
+          "size": 806,
+          "sha256": "88aa7cde833fa57ab00bb2bb1135348d67185b540a613e4ab957235e6fb3df27"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Memory-budget accounting Verify-B",
+      "tool": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.exe",
+      "command": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.exe Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-B.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 627,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.exe",
+          "size": 5079040,
+          "sha256": "650b3b2fc9b93a395bf12f2c182a9fd5b40b5e00bb58c4bf7d9778f154fe5312"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-B.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Verify-B.log",
+          "size": 42,
+          "sha256": "1510a56a31f6f4de9da414ea40a6aa1d54a54d48beb1642db5879648c4fafc6a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Memory-budget accounting Package",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790391602866 1 Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-A.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 13819,
+      "inputs": [
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 42214,
+          "sha256": "8f6a742777e9b2966e52056f88294cae76cec05aa11d67297418d6cc3cf51296"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting-A.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting.exe",
+          "size": 608768,
+          "sha256": "7a8e1ade2770331fc38e9beaa013284d770c56bd6cb6a5a0093412588d0594d5"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Package.log",
+          "size": 976,
+          "sha256": "2a2b8e511e95addcf4a9743be1c2ca4c8fea581f46991abd1e526373b6a25af7"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Memory-budget accounting Execute",
+      "tool": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting.exe",
+      "command": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting.exe ",
+      "result": "Passed",
+      "elapsedMilliseconds": 472,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Accounting.exe",
+          "size": 608768,
+          "sha256": "7a8e1ade2770331fc38e9beaa013284d770c56bd6cb6a5a0093412588d0594d5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Windows-Execute.log",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Memory-budget accounting Compile-A",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Run-Split-Compiler.mjs Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Record-Collections-2026-09-25/Emitter.elf --source-input-lock Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e --source-profile Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp --target-descriptor Projects/Targets/Linux-X64-No-Foreign.wvtd Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-A.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 5708,
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Emitter.elf",
+          "size": 33157120,
+          "sha256": "c044950542ce2f9d2e463e1763be2ba455a8b27c7f76bfb7aee73aac59defbf6"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv",
+          "size": 18282,
+          "sha256": "cbecb771c91900bccb2f5b65f4eb96980a45c660d840a6e54422634fee7523de"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 28452,
+          "sha256": "11d61c16826145833a53b20044563ae9f18cdba9b883024d9cd6143955073567"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-A.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Compile-A.log",
+          "size": 809,
+          "sha256": "70a5a5abe2613c927e342c9c9f21934490a29f6e66fc97745747089b35a866ce"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Memory-budget accounting Verify-A",
+      "tool": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.elf",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- Artifacts/Work/Record-Collections-2026-09-25/Verifier.elf Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-A.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 634,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.elf",
+          "size": 5079040,
+          "sha256": "d1b366e78f743e9eaff5cc66a252955aabe5fb6e774af659f7df6ce37b1d6c8e"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-A.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Verify-A.log",
+          "size": 42,
+          "sha256": "1510a56a31f6f4de9da414ea40a6aa1d54a54d48beb1642db5879648c4fafc6a"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Memory-budget accounting Compile-B",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Run-Split-Compiler.mjs Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Record-Collections-2026-09-25/Emitter.elf --source-input-lock Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e --source-profile Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp --target-descriptor Projects/Targets/Linux-X64-No-Foreign.wvtd Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-B.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 5010,
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Emitter.elf",
+          "size": 33157120,
+          "sha256": "c044950542ce2f9d2e463e1763be2ba455a8b27c7f76bfb7aee73aac59defbf6"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv",
+          "size": 18282,
+          "sha256": "cbecb771c91900bccb2f5b65f4eb96980a45c660d840a6e54422634fee7523de"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 28452,
+          "sha256": "11d61c16826145833a53b20044563ae9f18cdba9b883024d9cd6143955073567"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-B.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Compile-B.log",
+          "size": 808,
+          "sha256": "0c63bc10411b2f9f81611d0a185d8b949807c728304aa72741cea8f0742cd7b6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Memory-budget accounting Verify-B",
+      "tool": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.elf",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- Artifacts/Work/Record-Collections-2026-09-25/Verifier.elf Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-B.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 589,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Verifier.elf",
+          "size": 5079040,
+          "sha256": "d1b366e78f743e9eaff5cc66a252955aabe5fb6e774af659f7df6ce37b1d6c8e"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-B.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Verify-B.log",
+          "size": 42,
+          "sha256": "1510a56a31f6f4de9da414ea40a6aa1d54a54d48beb1642db5879648c4fafc6a"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Memory-budget accounting Package",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790391610824 1 Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-A.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 11736,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 42214,
+          "sha256": "8f6a742777e9b2966e52056f88294cae76cec05aa11d67297418d6cc3cf51296"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting-A.wvb",
+          "size": 49269,
+          "sha256": "12e9cdafb3badeb468310b50c2ae699c40e38fa4d1afb5c8f916505a0f56b3b7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting.elf",
+          "size": 610304,
+          "sha256": "12c60640f099d64220b797b5b113e231dc8ffdc9fa50228f779160b63726e866"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Package.log",
+          "size": 972,
+          "sha256": "34a83de96649f0c34aa366e3a531478a04c0b13ea27f2666abda3dd4cbe9b4dc"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Memory-budget accounting Execute",
+      "tool": "python3",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- python3 -c \"import resource,subprocess,sys,time; start=time.monotonic(); result=subprocess.run([sys.argv[1]],timeout=30); usage=resource.getrusage(resource.RUSAGE_CHILDREN); print(\"elapsed-seconds=\"+str(time.monotonic()-start)+\" peak-working-set-bytes=\"+str(usage.ru_maxrss*1024)); sys.exit(result.returncode)\" Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 323,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Accounting.elf",
+          "size": 610304,
+          "sha256": "12c60640f099d64220b797b5b113e231dc8ffdc9fa50228f779160b63726e866"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Accounting-Final/Debian-Execute.log",
+          "size": 68,
+          "sha256": "d6ee756b3a6715f23b3e7f61dd37a81a770cc7918a5fb71adc5bde7fbabbef3d"
+        }
+      ],
+      "peakWorkingSetBytes": 11812864
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is an internal accounting prerequisite. The interpreter does not yet call the new collector at helper returns. Complete typed roots from caller frames, operand cells, returned/live aggregates, and allocation leases remain required before enabling helper-level budget and collection operations.",
+    "No source, WVB version, verifier admission, public Foundation API, installed tool, or Package-Lock consumer contract changes in this checkpoint. The maintained typed Package-Lock migration remains open.",
+    "The exact accounting fixture/source closure was compiled and completely verified twice per host, then packaged with the existing cached segmented profile-1 builder. Compiler products reuse the prior Windows-constructed compiler WVB packaged for each host; this is host execution and deterministic fixture compilation, not independent compiler reconstruction.",
+    "The final harness used a ten-minute finite deadline per host. Windows compile/verify/package/execute totalled 22,939 milliseconds; Debian source and package stages and execution are individually recorded. The Debian timing wrapper initially could not start because /usr/bin/time was absent. Only execution was then resumed through Python subprocess with a 30-second timeout; compilation and packaging results were reused.",
+    "Verify-Changed -PlanOnly selected accounting and split-execution, estimating 915 seconds with a 3,900-second maximum. Only the accounting source fixture can invoke this newly added function at this checkpoint, so the broad split-execution owner and cold compiler reconstruction were not run. The existing accounting leaf wrappers were updated to the measured WVB size and 54-case count; their full default cold-build orchestration was not executed. The shell wrapper passed bash -n.",
+    "Root marking uses a fixed 65-byte mark set and scans at most 270,336 eight-byte root cells. It validates the entire root list before changing ownership. Duplicate marked identities avoid repeated token slicing and mark-buffer replacement. State release uses the existing bounded parent-chain accounting; no runtime root-discovery performance claim is made.",
+    "No full native owner suite, complete Windows/Linux product qualification, native lowering for candidate 1.42, installed promotion, release signing, or publication was performed. Earlier frozen qualification applies only to its recorded state."
+  ],
+  "related": [
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+    "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv",
+    "Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.cmd",
+    "Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.sh",
+    "Documents/Evidence/2026-09-25-Copy-Record-Collections.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-1.0-Matrix.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md"
+  ]
+}

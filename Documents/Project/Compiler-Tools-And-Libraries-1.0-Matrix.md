@@ -217,7 +217,10 @@ database-side owner.
    threading outside Main and scanner return/aggregate ownership remain
    prerequisites before integrating the complete consumer. Candidate WVB 1.42
    covers Copy record storage, growth, freezing and tracing; it does not enable
-   shared/owned fields or helper-level collection mutation. More isolated
+   shared/owned fields or helper-level collection mutation. The bounded internal
+   budget collector has [54 passing accounting cases on both hosts](../Evidence/2026-09-25-Unreachable-Budget-Accounting.json),
+   but still needs complete typed-root gathering at helper returns before
+   helper admission can advance. More isolated
    fixtures do not satisfy the maintained-consumer gate.
    Preserve lock bytes, validation/failure ordering, bounded resource use and
    the existing `package-format` consumer oracle; document any unavoidable
