@@ -72,7 +72,9 @@ try {
     await rm(Allocatedˉtestˉroot, { recursive: true, force: true });
     throw Error;
 }
-const Projectˉparent = realpathSync.native(path.join(REPOSITORY_ROOT, 'Artifacts', 'Work'));
+const Projectˉparentˉpath = path.join(REPOSITORY_ROOT, 'Artifacts', 'Work');
+await mkdir(Projectˉparentˉpath, { recursive: true });
+const Projectˉparent = realpathSync.native(Projectˉparentˉpath);
 const Projectˉroot = await mkdtemp(path.join(Projectˉparent, TEMPORARY_PREFIX));
 try {
     PROJECT = path.join(Projectˉroot, 'Legacy.wvproj');
@@ -540,8 +542,9 @@ try {
     const Foundationˉcases = await Verifyˉfoundationˉtestˉproducts(Testˉroot);
     const Deadlineˉcases = await Verifyˉconstructionˉdeadlineˉadmission();
     const Processˉcases = await Verifyˉconstructionˉprocessˉstatuses(Testˉroot);
+    const Inspectionˉcases = await Verifyˉfunctionˉlimitˉdiagnostics(Testˉroot);
     console.log(
-        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Processˉcases} status=Passed current-compiler-pair=Verified ` +
+        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Processˉcases + Inspectionˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -549,7 +552,7 @@ try {
         'raw-project2-route=Passed symbol-resume=Passed ' +
         'symbol-corruption=Rejected final-product-reuse=Passed ' +
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
-        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} construction-statuses=${Processˉcases}`,
+        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases}`,
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -894,6 +897,42 @@ function Sameˉpath(Left, Right) {
 
 function Reject(Message) {
     throw new Error(Message);
+}
+
+async function Verifyˉfunctionˉlimitˉdiagnostics(Testˉroot) {
+    const Owner = path.join(SCRIPT_DIRECTORY, 'Test-Language-1.0-Memory-Budget-Split-Execution.mjs');
+    function U32(Value) { const Bytes = Buffer.alloc(4); Bytes.writeUInt32LE(Value); return Bytes; }
+    function Entry(Name, Locals, Code, Stack) {
+        const Text = Buffer.from(Name);
+        return Buffer.concat([U32(Text.length), Text, U32(0), Buffer.from([5]),
+            U32(Locals), Buffer.alloc(Locals, 5), U32(0), U32(Code), U32(Stack)]);
+    }
+    const Cases = [
+        ['valid', 2047, 100, 1, 0, /largest-name=LargeCode.*most-slots-name=LargeSlots most-slots=2047/u],
+        ['locals', 2048, 100, 1, 1, /LargeSlots.*total-slots=2048/u],
+        ['code', 1, 131073, 1, 1, /LargeCode.*code-bytes=131073/u],
+        ['stack', 1, 100, 1025, 1, /LargeSlots.*maximum-stack=1025/u],
+    ];
+    for (const [Name, Locals, Code, Stack, Status, Diagnostic] of Cases) {
+        // Directory-only diagnostic input: deliberately not an executable module.
+        const Sections = [];
+        for (let Kind = 1; Kind <= 7; Kind += 1) {
+            const Body = Kind === 4 ? Buffer.concat([U32(2),
+                Entry('LargeCode', 0, Code, 1), Entry('LargeSlots', Locals, 1, Stack)]) : Buffer.alloc(0);
+            Sections.push(Buffer.from([Kind, 0, 0, 0]), U32(Body.length), Body);
+        }
+        const Input = path.join(Testˉroot, `Limit-${Name}.wvb`);
+        await writeFile(Input, Buffer.concat([Buffer.alloc(12), ...Sections]), { flag: 'wx' });
+        const Result = spawnSync(process.execPath, [Owner, '--inspect-function-limits', Input], {
+            cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true,
+            timeout: 5_000, maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        });
+        Assert.equal(Result.error, undefined);
+        Assert.equal(Result.status, Status, Name);
+        Assert.match(Result.stdout + Result.stderr, Diagnostic);
+        if (Status !== 0) Assert.doesNotMatch(Result.stdout, /status=Valid/u);
+    }
+    return Cases.length;
 }
 
 async function Verifyˉconstructionˉdeadlineˉadmission() {

@@ -2360,7 +2360,8 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-parallel-task-scheduler'
     } elseif ($Path -eq 'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs') {
-        Add-Suite 'language-1-memory-budget-split-execution'
+        # Acquisition edits use their cache owner. The language test owner,
+        # compiler, runtime and fixtures retain their execution coverage.
         Add-Suite 'compiler-split-development'
     } elseif ($Path -eq 'Tools/Native/Development-Command-Core.mjs') {
         Add-Suite 'compiler-split-development'

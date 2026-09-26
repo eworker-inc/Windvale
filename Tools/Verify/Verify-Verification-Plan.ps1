@@ -2334,6 +2334,7 @@ $NativeCases = @(
     @{
         Name = 'split cache verifier edits remain focused'
         Paths = @(
+            'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs',
             'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
             'Tools/Native/Test-Compiler-Split-Development.mjs',
             'Tools/Native/Test-Compiler-Split-Development.cmd',
@@ -5933,6 +5934,15 @@ foreach ($Path in $VectorBorrowIntegrationPaths) {
         & $NativePlanner -ChangedPath 'Tools/Native/Test-Cached-Split-Project-Wvb.mjs' -PassThru -Quiet `
             -InitializationCache $NativePlannerInitializationCache
     } else { [pscustomobject]@{ ExpectedSeconds = 0; MaximumSeconds = 0 } }
+    if ($IncludesCacheOwner) {
+        if ($IntegrationPlan.UseVectorBorrowIntegrationDevelopment -or
+            ($IntegrationPlan.Suites -join ',') -cne 'compiler-split-development' -or
+            $IntegrationPlan.ExpectedSeconds -ne $CacheOwnerPlan.ExpectedSeconds -or
+            $IntegrationPlan.MaximumSeconds -ne $CacheOwnerPlan.MaximumSeconds) {
+            throw 'Product acquisition edits must use their focused harness owner.'
+        }
+        continue
+    }
     if (!$IntegrationPlan.UseVectorBorrowIntegrationDevelopment -or
         ($IntegrationPlan.Suites -join ',') -cne ($ExpectedIntegrationSuites -join ',') -or
         $IntegrationPlan.Gaps.Count -ne 0 -or
