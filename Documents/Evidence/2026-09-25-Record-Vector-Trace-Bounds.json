@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-25-record-vector-trace-bounds",
+  "date": "2026-09-25",
+  "subject": "Bounded reads for record collection tracing",
+  "claim": "At the recorded source commit, a runner built from current source on Windows and packaged for Windows and Debian passed the existing owned-payload owner with expanded synthetic record tracing boundaries. Each host passed nine owned-payload cases, two budget rejections, and the record-Vector-record probe, including truncated type records, overflowing names and offsets, inconsistent tables, wrong nominal declaration kinds, stale allocations, invalid handles, empty backings, and grown Sequence backings. The separate existing runtime owner passed 15 Vector/Sequence cases and three aggregate lifetime cases per host. The pre-fix collection source reproduced runtime bounds failure 3008 on the new complete-verified probe.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "771db9553e0ea4d08af3d3e3710dfb5fc48ce594"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 development host",
+      "target": "Current-source portable WVB runner",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.wvb --deadline-ms 1790383017000",
+      "result": "Passed",
+      "elapsedMilliseconds": 252692,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.wvb",
+          "size": 1197981,
+          "sha256": "ed707d5084816e20335e388c138ea0c6fc5d19ed5e2c62cfbac312c9c4ea6874"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 17282,
+          "sha256": "11d7e420707538ab92003707fb1f03cfd4f20ab276e63bdb20b6ab0d7c278dfb"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "size": 1910,
+          "sha256": "cde07641d498121d91029a0539a25fd31edb678adc7692f98e0a552891acf788"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Complete-verified hosted runner",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790383017000 5 Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.wvb Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.exe",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.exe",
+          "size": 12384768,
+          "sha256": "c7ac48791687db52736cd3afdc3293f35db34919b18f2ec86a3fd8ac9fe04821"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 42214,
+          "sha256": "8f6a742777e9b2966e52056f88294cae76cec05aa11d67297418d6cc3cf51296"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.wvb",
+          "size": 1197981,
+          "sha256": "ed707d5084816e20335e388c138ea0c6fc5d19ed5e2c62cfbac312c9c4ea6874"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL, Linux 6.18.33.2-microsoft-standard-WSL2",
+      "target": "Complete-verified Linux runner packaged from Windows-produced WVB",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "wsl --cd /mnt/d/windvale/dev01 -d Debian -- node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790383017000 5 Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.wvb Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.elf",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.elf",
+          "size": 12386304,
+          "sha256": "16b991ae1ea8617025d7fe7de3bf0d435673ac4c036b87d59977260013f2c378"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 42214,
+          "sha256": "8f6a742777e9b2966e52056f88294cae76cec05aa11d67297418d6cc3cf51296"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.wvb",
+          "size": 1197981,
+          "sha256": "ed707d5084816e20335e388c138ea0c6fc5d19ed5e2c62cfbac312c9c4ea6874"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Owned-payload and record collection trace boundaries",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 24831,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Windows-Owned.log",
+          "size": 25373,
+          "sha256": "979bec966aef254b9e1b3dad502f442f2645d0f4551b2f83cc8e676ab8fca2f1"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 219244,
+          "sha256": "9a3d7079dbf94fdac29534977d18736e31088f9bea5832ee67f07072e6daa451"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Analysis-Recovery-2026-09-22T10-57-37-289Z/Analyzer.exe",
+          "size": 54963712,
+          "sha256": "50c2d5d675eae7bac83ddd3418c367b06e189216068d9eb424fdf3fb734b0b78"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.exe",
+          "size": 33134592,
+          "sha256": "edda3e8238b17fa1a04b69d258fc5e3d86a9dd3ea2558877a704ba411a5e44d4"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+          "size": 5038592,
+          "sha256": "161c08a1a786acc669243beca96d4fcdc68a9f5a85a92c429aa398bfb0ab31f6"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.exe",
+          "size": 12384768,
+          "sha256": "c7ac48791687db52736cd3afdc3293f35db34919b18f2ec86a3fd8ac9fe04821"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Owned-payload and record collection trace boundaries",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl --cd /mnt/d/windvale/dev01 -d Debian -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Analyzer.elf Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf Projects/Targets/Linux-X64-No-Foreign.wvtd Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 63367,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Debian-Owned.log",
+          "size": 25497,
+          "sha256": "385caa4466b02a91cd413366e4ccf51df8c797055fd0a5b88326fd54d6af6def"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 219244,
+          "sha256": "9a3d7079dbf94fdac29534977d18736e31088f9bea5832ee67f07072e6daa451"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Analyzer.elf",
+          "size": 54906880,
+          "sha256": "9cbe3eeea80ec5aa15dcbc8dad8ace5219476b7811b4b786b51487d1662e64ff"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Emitter.elf",
+          "size": 33136640,
+          "sha256": "306558381e439004cf17dc68278390e1ca7e142be85b1a5d12de08f3ea180535"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf",
+          "size": 5038080,
+          "sha256": "7aedda472c8e93bfc6732c650320a39dc2ff209945618a5a2e994957dee9320d"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.elf",
+          "size": 12386304,
+          "sha256": "16b991ae1ea8617025d7fe7de3bf0d435673ac4c036b87d59977260013f2c378"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "15 Vector/Sequence runtime cases and three aggregate Sequence lifetime cases",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.exe Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb Artifacts/Work/Record-Vector-Bounds-2026-09-25/Windows-Runtime",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Windows-Runtime.log",
+          "size": 550,
+          "sha256": "35db184981d3618e7f6b013001cf640b30a5c34924d867e657fd90557c47756e"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+          "size": 5038592,
+          "sha256": "161c08a1a786acc669243beca96d4fcdc68a9f5a85a92c429aa398bfb0ab31f6"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.exe",
+          "size": 12384768,
+          "sha256": "c7ac48791687db52736cd3afdc3293f35db34919b18f2ec86a3fd8ac9fe04821"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb",
+          "size": 978,
+          "sha256": "1529450042936edf659a7f5efe917ad9f5ee8d23804019f9fc8c3da1ef4c9a75"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "15 Vector/Sequence runtime cases and three aggregate Sequence lifetime cases",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "wsl --cd /mnt/d/windvale/dev01 -d Debian -- node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.elf Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb Artifacts/Work/Record-Vector-Bounds-2026-09-25/Debian-Runtime",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Debian-Runtime.log",
+          "size": 550,
+          "sha256": "35db184981d3618e7f6b013001cf640b30a5c34924d867e657fd90557c47756e"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.elf",
+          "size": 5038080,
+          "sha256": "7aedda472c8e93bfc6732c650320a39dc2ff209945618a5a2e994957dee9320d"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Runner.elf",
+          "size": 12386304,
+          "sha256": "16b991ae1ea8617025d7fe7de3bf0d435673ac4c036b87d59977260013f2c378"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb",
+          "size": 978,
+          "sha256": "1529450042936edf659a7f5efe917ad9f5ee8d23804019f9fc8c3da1ef4c9a75"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Verification-plan contracts, 31 general and 303 native cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 362702,
+          "sha256": "a2a2e52987fd16f64e32870610f81a4053d49aac7180210cc605db19ea98474f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Regression control: new probe with pre-fix collection source from 2d128a8c1b55389b21f5a5533fd5ee8553ba011e; complete verification passed, execution reproduced bounds failure 3008",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe Artifacts/Work/Record-Vector-Bounds-2026-09-25/Baseline-Probe.wvb; Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.exe Artifacts/Work/Record-Vector-Bounds-2026-09-25/Baseline-Probe.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Baseline-Collection-Core.wv",
+          "size": 10306,
+          "sha256": "0840913f7c22e807b95db09c81961dde08b29b20399c37fce6bcf0644a9ce051"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Bounds-2026-09-25/Baseline-Probe.wvb",
+          "size": 37416,
+          "sha256": "03d5cd8ada76ddd03f645490524f8c4f394350f11a9c72de8296f12bd38f4744"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Artifacts/Work/Indexed-Vector-Borrow-2026-09-22/Continuation-1-2026-09-22T10-27-06-156Z/Verifier.exe",
+          "size": 5038592,
+          "sha256": "161c08a1a786acc669243beca96d4fcdc68a9f5a85a92c429aa398bfb0ab31f6"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Runner-Record-Trace-Final.exe",
+          "size": 12372480,
+          "sha256": "21953c40763dc261bcb3191b949ceb6ecccb36e2548aac7414d45b0fc75e7607"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is a prerequisite boundary correction. Source-level record Vector admission, full generic collection ownership, and the maintained Package-Lock owned-resource consumer remain open.",
+    "The runner WVB was constructed on Windows and packaged on both hosts. Independent Debian reconstruction, native lowering of candidate collection additions, installed promotion, whole-product qualification, full WebAssembly engine coverage, and release signing were not run.",
+    "The source probe uses synthetic internal type, heap, and allocation tables; complete untrusted-WVB validation remains the verifier's responsibility.",
+    "The local verification-plan check passed after correcting the stale Run-Split-Compiler inventory from 94 to 95 sites. This does not assert a passing GitHub run for the new commit.",
+    "Products and raw logs are local work artifacts. Elapsed owner times include focused compilation and execution; no peak-memory measurement was collected."
+  ],
+  "related": [
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-22-Record-Vector-Trace-Checkpoint.json",
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv",
+    "Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Probe.wv",
+    "Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Boundaries.wv",
+    "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+    "Tools/Verify/Verify-Verification-Plan.ps1"
+  ]
+}

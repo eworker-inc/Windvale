@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-22
+> Last reviewed: 2026-09-25
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -201,7 +201,13 @@ record handles. The focused
 checks the nested record-to-Vector-to-record path; the
 [paired-host checkpoint](../Evidence/2026-09-22-Record-Vector-Trace-Checkpoint.json)
 records its limited result. This is not record-element source admission or
-paired-host qualification. Next extend source/WIR
+paired-host qualification. The subsequent trace-boundary checks validate type
+directory lengths, offsets, names, record references and backing-allocation
+tables before reading them. The existing trace probe includes truncated and
+overflowing inputs, stale allocations, wrong nominal kinds, empty collections,
+and grown Sequence backings; its
+[bounds checkpoint](../Evidence/2026-09-25-Record-Vector-Trace-Bounds.json)
+records the exact development evidence and limits. Next extend source/WIR
 admission, complete WVB verification, and interpreter execution together under
 a versioned candidate; reject copied borrows, malformed backing, and budget
 exhaustion before the Package-Lock migration.
