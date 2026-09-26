@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { lstat, mkdtemp, realpath } from 'node:fs/promises';
+import { lstat, mkdtemp, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -49,7 +49,8 @@ async function Directory(Candidate) {
     if (!Sameˉpath(await realpath(Resolved), Resolved)) {
         Reject('Foundation test work must use its canonical path.');
     }
-    const Information = await lstat(Resolved);
+    // Windows file identifiers may exceed Number's exact integer range.
+    const Information = await lstat(Resolved, { bigint: true });
     return { Path: Resolved, Device: Information.dev, Inode: Information.ino };
 }
 
@@ -113,7 +114,7 @@ async function Requireˉinputsˉunchanged(Snapshot, Check) {
 // and reject a nonzero exit or stderr. This helper owns no process or cache writer.
 // Injected cache/snapshot callbacks are only for the existing focused unit owner.
 export async function Acquireˉfoundationˉborrowˉtestˉproducts({
-    Work, Deadline, Run,
+    Work, Deadline, Run, Prepareˉcompiler = false,
     Getˉkey = Getˉcurrentˉsplitˉcompilerˉkey,
     Getˉfamily = Getˉcurrentˉsplitˉcompilerˉfamily,
     Acquire = Acquireˉcurrentˉsplitˉcompiler,
@@ -122,6 +123,7 @@ export async function Acquireˉfoundationˉborrowˉtestˉproducts({
 }) {
     if (typeof Work !== 'string' || !path.isAbsolute(Work) ||
         !Number.isSafeInteger(Deadline) || typeof Run !== 'function' ||
+        typeof Prepareˉcompiler !== 'boolean' ||
         [Getˉkey, Getˉfamily, Acquire, Snapshot, Requireˉunchanged]
             .some(Callback => typeof Callback !== 'function') ||
         process.arch !== 'x64' || !['win32', 'linux'].includes(process.platform)) {
@@ -158,24 +160,28 @@ export async function Acquireˉfoundationˉborrowˉtestˉproducts({
     }
     const Products = { Work: Workspace.Path, Compilerˉkey: Key };
     const Measurements = [];
-    const Arguments = [];
-    for (const [Index, [Name]] of TARGETS.entries()) {
+    for (const [Name] of TARGETS) {
         Products[Name + 'ˉwvb'] = path.join(Workspace.Path, Name + '.wvb');
         Products[Name] = path.join(Workspace.Path, Name + SUFFIX);
-        Arguments.push(Projects[Index], Products[Name + 'ˉwvb']);
     }
-    await Requireˉwork();
-    await Run('foundation-products-build', process.execPath,
-        [path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs'),
-            '--deadline-ms', String(Deadline), ...Arguments], Deadline);
-    Check();
+    if (Prepareˉcompiler) {
+        await Requireˉwork();
+        await Run('foundation-products-build', process.execPath,
+            [path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs'),
+                '--deadline-ms', String(Deadline),
+                ...TARGETS.flatMap(([Name], Index) => [Projects[Index], Products[Name + 'ˉwvb']])], Deadline);
+        Check();
+    }
     async function Requireˉcompilerˉunchanged() {
         Check();
         if (await Getˉkey() !== Key) Reject('Foundation test compiler inputs changed.');
         Check();
     }
     const Family = await Getˉfamily();
-    const Neverˉproduce = async () => Reject('Current compiler checkpoint missing after Foundation test construction.');
+    const Neverˉproduce = async () => Reject(
+        'Current compiler checkpoint missing. Foundation verification did not rebuild the compiler. ' +
+        'Prepare it explicitly with Build-Current-Split-Project-Wvb.mjs and a selected deadline, ' +
+        'or use the supplied-product development selections.');
     const Checkpoint = await Acquire(Family, Key, Neverˉproduce, Requireˉcompilerˉunchanged);
     if (Checkpoint.status !== 'Hit' || !Sameˉpath(Checkpoint.directory, path.join(Family, Key))) {
         Reject('Foundation test acquisition requires the existing exact compiler checkpoint.');
@@ -188,7 +194,22 @@ export async function Acquireˉfoundationˉborrowˉtestˉproducts({
         Products[Name + 'ˉidentity'] = path.join(Checkpoint.directory, Name + '.identity');
         Measurements.push(await Evidence(Products[Name + 'ˉidentity'], 1_024, false, Check));
     }
-    for (const [Name] of TARGETS) {
+    // Prepared-only development builds affected test products with the retained
+    // compiler; it cannot recursively initiate compiler construction on a miss.
+    for (const [Index, [Name]] of TARGETS.entries()) {
+        if (!Prepareˉcompiler) {
+            await Requireˉwork();
+            const Modern = (await readFile(Projects[Index], 'utf8')).split(/\r?\n/u)[0] === 'windvale-project 4';
+            await Run('foundation-products-build-' + Name.toLowerCase(), process.execPath,
+                [path.join(SCRIPT_DIRECTORY, 'Build-Cached-Split-Project-Wvb.mjs'),
+                    Projects[Index], Products[Name + 'ˉwvb'],
+                    Products.Analyzer, Products.Analyzerˉidentity,
+                    Products.Emitter, Products.Emitterˉidentity,
+                    ...(Modern ? ['--authenticated-project4',
+                        Products.Admitter, Products.Authenticator, Products.Reader, Products.Binder]
+                        : ['--symbol-checkpoint'])], Deadline);
+            Check();
+        }
         Measurements.push(await Evidence(Products[Name + 'ˉwvb'], MAXIMUM_WVB_BYTES, false, Check));
     }
     await Requireˉunchanged(Inputs, Check);

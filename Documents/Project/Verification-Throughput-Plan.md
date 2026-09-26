@@ -2,7 +2,7 @@
 
 > Status: Active implementation plan
 > Authority: Informative
-> Last reviewed: 2026-09-06
+> Last reviewed: 2026-09-26
 
 ## Goal
 
@@ -40,6 +40,40 @@ These are redesign targets, not current claims or pass thresholds. Measure each
 phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
+
+The current workflow trial separates compiler preparation from the Foundation
+integration loop. During local implementation, use the existing owner with:
+
+```powershell
+node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-borrow-integration --maximum-seconds 600 --prepared-compiler-only
+```
+
+This mode requires an exact, validated current compiler checkpoint. A missing
+checkpoint stops before any build command, with instructions to prepare the
+compiler explicitly or use the existing supplied-product selections. It never
+starts bootstrap reconstruction as hidden test setup. Missing target products
+may still need compilation and packaging within the same selected deadline.
+The existing construction-enabled invocation remains available to automation
+and deliberately selected cold runs; its progress now states whether compiler
+preparation is allowed. Neither mode omits integration assertions.
+
+For an individual runtime or compiler diagnostic, prefer the existing focused
+selection with explicitly identified products. Rebuild only products whose
+declared inputs changed. Passing a check with an older product does not verify
+new source changes. Run the combined integration selection at a coherent feature
+boundary and independent qualification at the existing promotion/release gates.
+
+Before native packaging, the existing `--inspect-function-limits <module.wvb>`
+diagnostic now checks every function and separately identifies the largest code
+body and largest local-slot requirement. Previously it reported only the
+largest code body as valid, allowing an oversized different function to reach
+packaging before rejection. This is an early diagnostic, not complete WVB
+verification or proof that native lowering supports every operation.
+
+Cold source analysis and emission remain the dominant measured cost of the
+active runner edit. This trial does not establish a faster cold compiler or
+completion of the collection/budget feature. Its measurements and exact scope
+are in the [workflow evidence](../Evidence/2026-09-26-Prepared-Compiler-Feedback.json).
 
 SHA-256 compression now expresses its fixed rotations directly, removing 576
 variable-distance helper calls per block. Repeated benchmark medians fell from

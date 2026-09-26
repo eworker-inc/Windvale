@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-prepared-compiler-feedback",
+  "date": "2026-09-26",
+  "subject": "Separate prepared-compiler development feedback from cold construction",
+  "claim": "The existing Foundation integration owner has a prepared-compiler-only mode which validates the exact checkpoint and refuses a miss before issuing build commands. Existing construction-enabled behavior remains available. Existing function-limit inspection now checks all functions instead of reporting only the largest bytecode body. Focused checks and supplied-product timings are recorded on Windows and Debian.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 1fc58960, with the workflow edits identified by run input hashes and pre-existing uncommitted collection/budget work. Runtime samples deliberately use the identified earlier Runner-Complete and Verifier-Lifetime products. These samples do not validate the pending feature implementation."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Existing split cache owner: 89 grouped checks, including 20 Foundation acquisition cases. Prepared-only misses invoke zero build commands; explicit construction remains available; bounded workers, identities, failures and cleanup remain covered.",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 13393,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 84415,
+          "sha256": "2799c10a28050ddbfb5eea5685d2aa409874c308c619163ea0fa148f2e959831"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12874,
+          "sha256": "a97cc38aa59402f8ac42aadc02ebc15d827ed3529fc9ba130e586af242504fb7"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Windows-Cache.log",
+          "size": 544,
+          "sha256": "29780f22257859999405936e59878683f53df796b35430da446821c6b6ecdd10"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Prepared-only CLI with an empty private WINDVALE_NATIVE_CACHE_ROOT: expected exit 1 and actionable missing-checkpoint diagnostic, with no compiler or target build command. This is not a passing feature test.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-borrow-integration --maximum-seconds 60 --prepared-compiler-only",
+      "result": "Passed",
+      "elapsedMilliseconds": 687,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12874,
+          "sha256": "a97cc38aa59402f8ac42aadc02ebc15d827ed3529fc9ba130e586af242504fb7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Windows-Missing-Compiler.log",
+          "size": 348,
+          "sha256": "f6afb892c53d6e670edbc7c86669f71046ec0afba6366c1791346fad28a9fe58"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "All-function bounds inspection accepts the earlier runner: largest code body is function 188; most slots are in function 370 (2043). Not complete WVB verification.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 134,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.wvb",
+          "size": 1221253,
+          "sha256": "b6ac7ee598a775114ecfdf1c44c4b5c09ef51e65cd4ed3d99903fe2c99091b7c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Windows-Supported-Limits.log",
+          "size": 234,
+          "sha256": "02d7944e178bdc806a24776cfd95905780654c2d2f2c826dcc314bf540c2c2fd"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "All-function bounds inspection rejects the later runner before native packaging: function 370 has 2057 total slots although function 188 has more bytecode. Expected exit 1.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 126,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan.wvb",
+          "size": 1222537,
+          "sha256": "f7d82abe9b6628c52ab803b15c00e9c6b7e8931814e1f77b451418983dd8702c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Windows-Unsupported-Limits.log",
+          "size": 962,
+          "sha256": "69c856dc09ab4a5e246401fe71ae46eb29b0dcd9273e4b569fc6c15e117c7ca9"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Existing focused runtime owner with explicitly supplied products: 15 Vector/Sequence checks and three aggregate-lifetime cases. Timing sample only for the recorded products, not verification of pending runner edits.",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.exe Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Windows-Runtime",
+      "result": "Passed",
+      "elapsedMilliseconds": 1303,
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe",
+          "size": 5076992,
+          "sha256": "5924ffc7b5f7328b6d4cd725f398eab8af2774bb079840323d17f31ebff170b6"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.exe",
+          "size": 12604928,
+          "sha256": "ca8c8adaf473f42c757a2b562fb0750a02e65848a73848519e70757eb72266a5"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb",
+          "size": 978,
+          "sha256": "1529450042936edf659a7f5efe917ad9f5ee8d23804019f9fc8c3da1ef4c9a75"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Windows-Runtime.log",
+          "size": 546,
+          "sha256": "a949793280d6bc9f2f068b17565973e83ea6df94ed7c752e214a94f78d30ecf8"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; Node v20.19.2",
+      "target": "Existing split cache owner: 91 grouped checks, including 20 Foundation acquisition cases. Prepared-only misses invoke zero build commands; explicit construction remains available; bounded workers, identities, failures and cleanup remain covered.",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 31829,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 84415,
+          "sha256": "2799c10a28050ddbfb5eea5685d2aa409874c308c619163ea0fa148f2e959831"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12874,
+          "sha256": "a97cc38aa59402f8ac42aadc02ebc15d827ed3529fc9ba130e586af242504fb7"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Debian-Cache.log",
+          "size": 544,
+          "sha256": "e17771662b73d636a376681baba36640eab50028ff3d7cf2ff4cf84f805b8ca6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; Node v20.19.2",
+      "target": "Prepared-only CLI with an empty private WINDVALE_NATIVE_CACHE_ROOT: expected exit 1 and actionable missing-checkpoint diagnostic, with no compiler or target build command. This is not a passing feature test.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-borrow-integration --maximum-seconds 60 --prepared-compiler-only",
+      "result": "Passed",
+      "elapsedMilliseconds": 6557,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12874,
+          "sha256": "a97cc38aa59402f8ac42aadc02ebc15d827ed3529fc9ba130e586af242504fb7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Debian-Missing-Compiler.log",
+          "size": 348,
+          "sha256": "f6afb892c53d6e670edbc7c86669f71046ec0afba6366c1791346fad28a9fe58"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; Node v20.19.2",
+      "target": "All-function bounds inspection accepts the earlier runner: largest code body is function 188; most slots are in function 370 (2043). Not complete WVB verification.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 415,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.wvb",
+          "size": 1221253,
+          "sha256": "b6ac7ee598a775114ecfdf1c44c4b5c09ef51e65cd4ed3d99903fe2c99091b7c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Debian-Supported-Limits.log",
+          "size": 234,
+          "sha256": "02d7944e178bdc806a24776cfd95905780654c2d2f2c826dcc314bf540c2c2fd"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; Node v20.19.2",
+      "target": "All-function bounds inspection rejects the later runner before native packaging: function 370 has 2057 total slots although function 188 has more bytecode. Expected exit 1.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 371,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan.wvb",
+          "size": 1222537,
+          "sha256": "f7d82abe9b6628c52ab803b15c00e9c6b7e8931814e1f77b451418983dd8702c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Debian-Unsupported-Limits.log",
+          "size": 981,
+          "sha256": "a9ac8fb27132586bf316240981f6995c7fc861f70ca7a59c8e8da72e416cf4a6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; Node v20.19.2",
+      "target": "Existing focused runtime owner with explicitly supplied products: 15 Vector/Sequence checks and three aggregate-lifetime cases. Timing sample only for the recorded products, not verification of pending runner edits.",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.elf Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Debian-Runtime",
+      "result": "Passed",
+      "elapsedMilliseconds": 1809,
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf",
+          "size": 5079040,
+          "sha256": "1c91366fe78322edf8b1151e9419891b414f3631dc1ecc2413ab28caabf6e38f"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Complete.elf",
+          "size": 12603392,
+          "sha256": "8a899de3b32689212fd59326dda8eefdb597bc7d702bea14c347d5fbe3bdc3f6"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb",
+          "size": 978,
+          "sha256": "1529450042936edf659a7f5efe917ad9f5ee8d23804019f9fc8c3da1ef4c9a75"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Workflow-Debian-Runtime.log",
+          "size": 546,
+          "sha256": "a949793280d6bc9f2f068b17565973e83ea6df94ed7c752e214a94f78d30ecf8"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; earlier local development build",
+      "target": "Recorded representative source edit: 1161192 source-set bytes, 467 emitted functions. Analysis ran from elapsed 5912 to 147687 ms (141775 ms); emission to 249655 ms (101968 ms). Compiler products were retained. Subsequent native packaging rejected oversized function 370 after a 20-second complete-verification phase.",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "Earlier runner construction recorded in Runner-Task-Scan-Compile.log using the retained explicit analyzer, emitter and authenticated Project 4 admission tools.",
+      "result": "Passed",
+      "elapsedMilliseconds": 249678,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan-Compile.log",
+          "size": 2104,
+          "sha256": "d32d335d0ab240c567222054327c629095c0a2fa04ab6bcff7e45b8ebf7725c4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan.wvb",
+          "size": 1222537,
+          "sha256": "f7d82abe9b6628c52ab803b15c00e9c6b7e8931814e1f77b451418983dd8702c"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Task-Scan-Package.log",
+          "size": 364,
+          "sha256": "6745293b25d95190603525622e5efae05fe74c269bb279e2c3403dc80beb3a41"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is the first bounded workflow trial, not a compiler rewrite, cold compiler optimization, complete integration pass, installed promotion, independent reconstruction or whole-product qualification. No release scope was reduced.",
+    "The prepared-only path can still compile/package missing target products, bounded by the selected total deadline. A missing compiler checkpoint is an incomplete development prerequisite, never passing evidence. Existing default construction-enabled CLI and automatic verification routing remain unchanged.",
+    "The cache owner uses controlled producers for acquisition and failure tests. The real CLI miss uses an empty private cache. A complete current-source integration run with a populated exact current compiler checkpoint was not run; retained products support the separate runtime timing sample.",
+    "One final timing sample per host on the same physical machine, with overlapping host runs and WSL repository access. No isolated performance threshold or peak-memory claim. Windows and Debian Node versions differ and are recorded per run.",
+    "The earlier 249678 ms source build and 20-second package precheck are historical local diagnostic logs. All-function inspection can reject that known native bound early; it does not replace verification or native lowering on accepted inputs.",
+    "Windows replacement-race testing exposed imprecise numeric file identifiers. Work-directory identity now uses bigint stat fields; the existing directory replacement case passes. An initial Windows run failed its replacement-case command-count assertion before this correction.",
+    "A temporary measurement wrapper initially expected the wrong runtime summary string; the underlying Debian runtime owner passed. The wrapper was corrected before the recorded final measurements.",
+    "Broader compiler/runtime/source suites were not run for these JavaScript workflow changes. The full changed-file plan also includes unfinished feature changes and was deliberately not executed."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+    "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+    "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs"
+  ]
+}

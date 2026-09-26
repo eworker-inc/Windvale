@@ -68,6 +68,10 @@ const EXPECTED_STRUCTURED_TASK_PROVIDER_RECOVERY_SHA256 =
 const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
+// The fast loop must never initiate compiler construction on a cache miss.
+const Preparedˉcompilerˉonly = process.argv[2] === '--vector-borrow-integration' &&
+    process.argv.at(-1) === '--prepared-compiler-only';
+if (Preparedˉcompilerˉonly) process.argv.pop();
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
 const Foundationˉsourceˉonly = process.argv.length === 8 &&
     process.argv[2] === '--foundation-source-ownership';
@@ -135,7 +139,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-owned-payloads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--vector-parameter-reads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--record-vector-elements <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
-        '--vector-borrow-integration [--maximum-seconds <seconds>]|' +
+        '--vector-borrow-integration [--maximum-seconds <seconds>] [--prepared-compiler-only]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -165,10 +169,13 @@ if (Inspectionˉonly) {
             `spawn=${Layout.spawn} await=${Layout.await} exit=${Layout.exit}\n`,
         );
     } else {
-        const Entries = Parseˉfunctionˉentries(Bytes, Parseˉsections(Bytes)[4]);
+        const Entries = Requireˉnativeˉfunctionˉlimits(Bytes);
         let Largest = Entries[0];
+        let Mostˉslots = Entries[0];
         for (const Entry of Entries) {
             if (Entry.codeLength > Largest.codeLength) Largest = Entry;
+            if (Entry.parameterCount + Entry.localCount >
+                Mostˉslots.parameterCount + Mostˉslots.localCount) Mostˉslots = Entry;
         }
         process.stdout.write(
             'function limits inspection status=Valid ' +
@@ -176,7 +183,9 @@ if (Inspectionˉonly) {
             `largest-name=${Largest.name} code-bytes=${Largest.codeLength} ` +
             `parameters=${Largest.parameterCount} locals=${Largest.localCount} ` +
             `total-slots=${Largest.parameterCount + Largest.localCount} ` +
-            `maximum-stack=${Largest.maximumStack}\n`,
+            `maximum-stack=${Largest.maximumStack} ` +
+            `most-slots-index=${Mostˉslots.index} most-slots-name=${Mostˉslots.name} ` +
+            `most-slots=${Mostˉslots.parameterCount + Mostˉslots.localCount}\n`,
         );
     }
     process.exit(0);
@@ -326,9 +335,10 @@ async function Main() {
 async function Runˉvectorˉborrowˉintegration() {
     const Deadline = Developmentˉdeadline;
     process.stdout.write('native Vector borrow integration phase=construction status=Started ' +
-        `maximum-seconds=${Maximumˉrunˉmilliseconds / 1000}\n`);
+        `maximum-seconds=${Maximumˉrunˉmilliseconds / 1000} ` +
+        `compiler-preparation=${Preparedˉcompilerˉonly ? 'forbidden' : 'allowed'}\n`);
     const Products = await Acquireˉfoundationˉborrowˉtestˉproducts({
-        Work, Deadline,
+        Work, Deadline, Prepareˉcompiler: !Preparedˉcompilerˉonly,
         Run: (Label, Command, Arguments, Childˉdeadline) =>
             Run(Label, Command, Arguments, 0, Childˉdeadline),
     });
@@ -4248,6 +4258,7 @@ function Requireˉnativeˉfunctionˉlimits(Bytes) {
             );
         }
     }
+    return Entries;
 }
 
 function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {

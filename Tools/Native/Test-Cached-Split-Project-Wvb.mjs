@@ -1092,7 +1092,7 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
         }), /deadline expired|Invalid Foundation test product/);
         Cases += 1;
     }
-    for (const Mode of ['complete', 'build-failure', 'missing-cache', 'key-change',
+    for (const Mode of ['complete', 'explicit-construction', 'build-failure', 'missing-cache', 'key-change',
         'source-change', 'verifier-failure', 'runner-failure', 'both-failures', 'verifier-timeout', 'mixed-failures',
         'components-failure', 'product-change', 'compiler-product-change',
         'late-input-change', 'oversized-wvb', 'work-replacement']) {
@@ -1141,18 +1141,35 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
             Maximumˉactive = Math.max(Maximumˉactive, Active);
             try {
                 if (Label === 'foundation-products-build') {
+                    Assert.equal(Mode, 'explicit-construction');
                     Assert.equal(path.basename(Arguments[0]), 'Build-Current-Split-Project-Wvb.mjs');
                     Assert.deepEqual(Arguments.slice(1, 3), ['--deadline-ms', String(Deadline)]);
                     Assert.equal(Arguments.length, 9);
-                    if (Mode === 'build-failure') throw new Error(Mode);
                     for (let Index = 3; Index < Arguments.length; Index += 2) {
                         Assert.equal(path.extname(Arguments[Index]), '.wvproj');
                         Outputˉdirectory = path.dirname(Arguments[Index + 1]);
                         Assert.equal(path.dirname(Outputˉdirectory), Work);
                         await writeFile(Arguments[Index + 1], Buffer.from('bounded WVB'), { flag: 'wx' });
                     }
+                    return;
+                }
+                if (Label.startsWith('foundation-products-build-')) {
+                    Assert.equal(path.basename(Arguments[0]), 'Build-Cached-Split-Project-Wvb.mjs');
+                    Assert.equal(Arguments.length, 12);
+                    Assert.equal(Arguments[7], '--authenticated-project4');
+                    Assert.deepEqual(Arguments.slice(3, 7), [
+                        path.join(Family, Key, 'Analyzer' + Suffix), path.join(Family, Key, 'Analyzer.identity'),
+                        path.join(Family, Key, 'Emitter' + Suffix), path.join(Family, Key, 'Emitter.identity'),
+                    ]);
+                    Assert.deepEqual(Arguments.slice(8), ['Admitter', 'Authenticator', 'Reader', 'Binder']
+                        .map(Name => path.join(Family, Key, Name + Suffix)));
+                    if (Mode === 'build-failure') throw new Error(Mode);
+                    Assert.equal(path.extname(Arguments[1]), '.wvproj');
+                    Outputˉdirectory = path.dirname(Arguments[2]);
+                    Assert.equal(path.dirname(Outputˉdirectory), Work);
+                    await writeFile(Arguments[2], Buffer.from('bounded WVB'), { flag: 'wx' });
                     if (Mode === 'oversized-wvb') {
-                        const Handle = await open(Arguments[4], 'r+');
+                        const Handle = await open(Arguments[2], 'r+');
                         try { await Handle.truncate(16_777_217); }
                         finally { await Handle.close(); }
                     }
@@ -1195,7 +1212,7 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
             } finally { Active -= 1; }
         };
         const Acquisition = Acquireˉfoundationˉborrowˉtestˉproducts({
-            Work, Deadline, Run,
+            Work, Deadline, Run, Prepareˉcompiler: Mode === 'explicit-construction',
             Getˉkey: async () => {
                 Keyˉreads += 1;
                 return Mode === 'key-change' && Keyˉreads > 1 ? '6'.repeat(64) : Key;
@@ -1232,7 +1249,7 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
                 Assert.equal(Arrivals, 2, 'Foundation packaging branches were serialized.');
                 if (Mode === 'components-failure') {
                     await Componentˉready;
-                    Assert.equal(Calls.length, 4, 'The third package did not reuse an available leaf.');
+                    Assert.equal(Calls.length, 6, 'The third package did not reuse an available leaf.');
                 }
                 // Allow the failing branch to report without releasing its live peer.
                 for (let Iteration = 0; Iteration < 8; Iteration += 1) {
@@ -1246,10 +1263,10 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
             const Result = await Acquisition;
             Assert.equal(Active, 0);
             Assert.ok(Maximumˉactive <= 2);
-            if (Mode === 'complete') {
+            if (Mode === 'complete' || Mode === 'explicit-construction') {
                 Assert.equal(Result.Error, undefined);
                 Assert.equal(Maximumˉactive, 2);
-                Assert.equal(Calls.length, 4);
+                Assert.equal(Calls.length, Mode === 'complete' ? 6 : 4);
                 Assert.equal(Acquisitions, 2);
                 Assert.equal(Checks, 2);
                 Assert.equal(Result.Value.Compilerˉkey, Key);
@@ -1271,13 +1288,14 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
                         Assert.equal(Result.Error.exitCode, 2);
                         Assert.equal(Result.Error.cleanupUncertain, true);
                     }
-                    Assert.equal(Calls.length, Mode === 'components-failure' ? 4 : 3,
+                    Assert.equal(Calls.length, Mode === 'components-failure' ? 6 : 5,
                         'Foundation acquisition started queued commands after a branch failed.');
                 } else if (['product-change', 'compiler-product-change', 'late-input-change'].includes(Mode)) {
-                    Assert.equal(Calls.length, 4);
+                    Assert.equal(Calls.length, 6);
                     Assert.match(Result.Error.message, /product changed|checkpoint record differs|source changed/);
                 } else {
-                    Assert.equal(Calls.length, 1);
+                    Assert.equal(Calls.length, ['missing-cache', 'key-change'].includes(Mode) ? 0 :
+                        Mode === 'source-change' ? 3 : 1, Mode + ': ' + Result.Error.message);
                     const Diagnostic = Result.Error instanceof AggregateError
                         ? Result.Error.errors.map(Error => Error.message).join('\n') : Result.Error.message;
                     Assert.match(Diagnostic, /build-failure|checkpoint missing|inputs changed|source changed|bounded ordinary file|directory changed/);
