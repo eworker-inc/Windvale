@@ -2,7 +2,7 @@
 
 > Status: Current delivery inventory; candidate API choices remain unaccepted
 > Authority: Informative; linked contracts and decisions own requirements
-> Last reviewed: 2026-09-22
+> Last reviewed: 2026-09-25
 
 This is the finite tracking surface for the compiler, toolchain, and required
 Libraries 1.0 goal. The frozen Language 1.0 compiler and selected immutable
@@ -66,7 +66,7 @@ distribution lock and implementation/target mapping remain to be reconciled.
 | F03 `Foundationˉnumeric` | All registered integer/float conversion and reinterpretation families, strict floating operations and whole-u64 decimal parsing. | No complete canonical module/binding identified; compiler primitive support and Seed decimal parsing are different APIs. | Numeric/parser consumers; every declaration needs implementation and boundary/rounding/overflow evidence. Decimal128 requires the separate contract reconciliation below. |
 | F04 `Foundationˉordering` | Equality, deterministic total ordering and comparison protocol. | Existing byte/record comparison primitives are reusable, not a registry-conformance claim. | Package ordering and collection keys; exact equality/order laws, deterministic results and comparison-work bounds. |
 | F05 `Foundationˉmemory` | Budgets, allocation limits, ownership-return failures, and the registry's `Split` function. | [Memory source](../../Libraries/Foundation/Memory/Memory.wv); [owned-payload reclamation](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json) proves selected paths. | Collection and parser consumers; complete registry mapping, exhaustion, release, stale/consumed budget rejection and measured bounds. |
-| F06 `Foundationˉcollections` | Arrays, Vector, Sequence, slices, maps, sets, iterators and arenas. | [Collection source](../../Libraries/Foundation/Collections/Collections.wv) and compiler operations cover subsets. [Scalar indexed borrowing evidence](../Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json) covers eight positive cases, fourteen malformed modules, ten source rejections and three bounds traps using supplied products on Windows/Debian: `i32`, `u64` and one `u8`-backed enum, not full generic access. | Complete generic `Vectorˉborrowˉat`, mutable indexing, replacement/removal, all seven slice functions, Map/Set/Arena and Iterator families. Package/database consumers must prove borrow invalidation, capacity failures, iterator rules and teardown. Automatic CI execution of the supplied-product indexed selection remains open. |
+| F06 `Foundationˉcollections` | Arrays, Vector, Sequence, slices, maps, sets, iterators and arenas. | [Collection source](../../Libraries/Foundation/Collections/Collections.wv) and compiler operations cover subsets. [Scalar indexed borrowing evidence](../Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json) covers eight positive cases, fourteen malformed modules, ten source rejections and three bounds traps using supplied products on Windows/Debian: `i32`, `u64` and one `u8`-backed enum, not full generic access. [Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json) adds seven deterministic Copy-record programs and fifteen rejection groups on both hosts, including growth, freezing and reclamation. | Complete generic `Vectorˉborrowˉat`, mutable indexing, replacement/removal, all seven slice functions, Map/Set/Arena and Iterator families. Package/database consumers must prove borrow invalidation, capacity failures, iterator rules and teardown. Automatic CI execution of the supplied-product indexed selection remains open. |
 | F07 `Foundationˉbytes` | Immutable bytes/ranges, buffers, reserved builders, registered endian/decimal appends and freeze. | Seed [byte construction](../../Foundation/Byte-Construction.wv) is reusable, not the registered budget-aware module. | Compiler, package and codecs; boundary/malformed inputs, builder ownership and deterministic output. |
 | F08 `Foundationˉtext` | Strict UTF-8 decoding, scalar observations/ranges, builders and formatting. | Existing compiler/runtime text support is not a complete canonical module. | Source diagnostics and data codecs; malformed UTF-8, limits, formatting determinism and allocation failures. |
 | F09 `Foundationˉresource` | Local-release protocol and mutation outcomes. | Compiler `using` support and [resource store](../../Libraries/Foundation/Resources/Resource-Store.wv) are distinct; the latter does not establish this whole module. | Resource-owning file/service consumers; release on every exit, exact partial/indeterminate completion and failure behavior. |
@@ -212,12 +212,13 @@ database-side owner.
    is [Package-Lock](../../Libraries/Package/Package-Lock.wv): replace its private
    repeatedly concatenated part-directory bytes with an owned typed directory,
    then query locked parts and dependency/path checks without consuming it.
-   This is not an implemented consumer. It requires accepted immutable
-   `Vectorˉborrowˉat` (its selected scalar implementation has paired-host evidence),
-   record-element Vector support, explicit allocation-budget threading outside
-   Main, and scanner return/aggregate ownership. Extend indexed observation to
-   record elements with exact ownership and tracing before integrating the
-   complete consumer. More scalar or length-only fixtures do not satisfy this gate.
+   This is not an implemented consumer. Selected scalar and Copy-record indexed
+   borrowing now has paired-host development evidence. Explicit allocation-budget
+   threading outside Main and scanner return/aggregate ownership remain
+   prerequisites before integrating the complete consumer. Candidate WVB 1.42
+   covers Copy record storage, growth, freezing and tracing; it does not enable
+   shared/owned fields or helper-level collection mutation. More isolated
+   fixtures do not satisfy the maintained-consumer gate.
    Preserve lock bytes, validation/failure ordering, bounded resource use and
    the existing `package-format` consumer oracle; document any unavoidable
    public API migration rather than hiding it in a parser refactor.

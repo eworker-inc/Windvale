@@ -62,3 +62,10 @@ append, and growth retain Main-owned budget execution; freezing retains the
 source validator's single-block restriction. The candidate's eventual
 execution evidence must distinguish paired host execution from independent
 compiler reconstruction.
+
+## Evidence
+
+The [paired-host development record](../Evidence/2026-09-25-Copy-Record-Collections.json)
+contains exact source/product identities, commands, results and qualification
+limits. All seven positive source programs emit identical bytes on Windows and
+Debian; the same owner retains fifteen rejection groups.

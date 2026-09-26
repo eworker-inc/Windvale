@@ -2,7 +2,7 @@
 
 > Status: Proposed suite catalog with an active Option/Result implementation goal
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-22
+> Last reviewed: 2026-09-25
 
 ## Status
 
@@ -60,6 +60,16 @@ phantom-type Copy control checks that ownership follows stored fields, not an
 unused Vector type argument. The
 [projected-payload evidence](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
 owns exact host results and limits.
+
+Candidate WVB 1.42 adds Copy-record Vector and Sequence elements with source,
+complete-verifier and interpreter agreement. The
+[Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json)
+records seven deterministic positive programs and fifteen rejection groups on
+Windows and Debian, plus inherited borrowing, tracing and lifetime regressions.
+The typed Package-Lock directory still needs budget operations outside Main and
+scanner ownership integration. This is a prerequisite for that consumer;
+shared/owned record fields, wider collection APIs, native lowering and installed
+promotion remain open.
 
 Selecting and migrating a maintained owned-resource consumer remains a separate
 wider milestone, not a new requirement for the delivered package-parser gate.

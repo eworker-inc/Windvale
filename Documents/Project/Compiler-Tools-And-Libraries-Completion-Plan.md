@@ -6,10 +6,10 @@
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
-Windows/Debian package execution. Focused candidate WVB 1.40/1.41 bridges let
-immutable helpers observe raw Vector payloads and borrow scalar elements without
-consuming their owners. The next
-milestones are a separate owned-resource consumer, wider composition, exclusive
+Windows/Debian package execution. Focused candidate WVB 1.40 through 1.42 bridges
+let immutable helpers observe raw Vector payloads and borrow scalar or Copy-record
+elements without consuming their owners. The next milestones are a separate
+owned-resource consumer, wider composition, exclusive
 borrowing, take, mapping, and the wider Libraries 1.0 suite. The
 maintainer approved this delivery split on
 15 September 2026; it changes progress reporting, not language or release scope.
@@ -180,9 +180,9 @@ rejections and three bounds traps for `i32`, `u64` and one `u8`-backed enum.
 The supplied-product selector is the current evidence; automatic CI execution
 of those cases remains open. Paired Linux execution uses Windows-produced
 native images, not independent reconstruction or native E3 lowering. The next
-consumer gate still needs record-element storage/tracing, allocation-budget
-threading outside Main, and scanner ownership before the typed package-lock
-directory can replace its existing byte representation. Installed promotion
+consumer gate now has the Copy-record element prerequisite below, but still
+needs allocation-budget threading outside Main and scanner ownership before
+the typed package-lock directory can replace its existing byte representation. Installed promotion
 and full generic collection access are not established by this checkpoint.
 
 The record-element gate has a distinct runtime dependency. The intended
@@ -190,8 +190,9 @@ Package-Lock entries contain scalar offsets and lengths, but a record value is
 held by an aggregate handle. The interpreter's eight-byte collection backing
 now retains its nominal Vector or Sequence type through construction, append,
 and growth. That type identifies the element shape without changing the WVB
-format or public collection API. This is an internal prerequisite: collection
-admission, the compiler, and the verifier still accept only scalar elements.
+format or public collection API. At that internal-prerequisite checkpoint,
+collection admission, the compiler, and the verifier still accepted only scalar
+elements.
 The current-source interpreter now follows record handles held by live Vector
 and Sequence backings at allocation-pressure and function-return collection
 points, including collections reached through a marked record. The scan is
@@ -207,15 +208,30 @@ tables before reading them. The existing trace probe includes truncated and
 overflowing inputs, stale allocations, wrong nominal kinds, empty collections,
 and grown Sequence backings; its
 [bounds checkpoint](../Evidence/2026-09-25-Record-Vector-Trace-Bounds.json)
-records the exact development evidence and limits. Next extend source/WIR
-admission, complete WVB verification, and interpreter execution together under
-a versioned candidate; reject copied borrows, malformed backing, and budget
-exhaustion before the Package-Lock migration.
-Use the existing memory-budget execution owner and package-format consumer
-oracle for the paired-host gate.
+records the exact development evidence and limits.
+
+Candidate WVB 1.42 now joins source/WIR admission, complete verification and
+interpreter execution for recursively Copy record elements. Seven positive
+programs and fifteen rejection groups pass on each host, with identical emitted
+bytes and instruction counts for all seven programs. The
+[Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json)
+covers ordinary and materialized generic records, explicit indexed borrowing,
+growth retaining nested records, freezing
+and Sequence aliases, append refusal, and 900 reclamation iterations. Growth
+collects unreachable result wrappers before enforcing exclusive backing
+ownership. Existing scalar borrowing, owned-payload tracing, and collection
+lifetime selections also pass. Source empty-record declarations remain rejected;
+the internal sentinel representation has direct runtime boundary coverage.
+
+The next consumer prerequisites are explicit budget operations in helpers and
+scanner return/aggregate ownership. Construction, append and growth still use
+the Main-owned budget execution profile, and source freezing still requires a
+single block. These limits prevent treating this checkpoint as the maintained
+Package-Lock migration. Preserve the existing package-format consumer oracle,
+lock bytes, failure ordering and resource bounds during that migration.
 
 These immutable bridges do not enable consuming extraction or arbitrary payload
-composition. Native lowering for minors 40 and 41, installed promotion,
+composition. Native lowering for minors 40 through 42, installed promotion,
 exclusive Option/Result borrowing, Take, mapping, and full qualification remain
 separate. A maintained owned-resource consumer is the next wider milestone; it
 does not reopen the already delivered package-parser consumer gate.
