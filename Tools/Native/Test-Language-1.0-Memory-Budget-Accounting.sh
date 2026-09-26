@@ -57,8 +57,8 @@ echo 'START language 1 memory budget accounting phase=build item=2/4'
 cmp -s -- "$work/Accounting-A.wvb" "$work/Accounting-B.wvb" || \
     fail deterministic-wvb
 wvb_bytes=$(wc -c < "$work/Accounting-A.wvb")
-[[ $wvb_bytes -eq 37445 ]] || \
-    fail wvb-size "expected=37445 actual=$wvb_bytes"
+[[ $wvb_bytes -eq 49269 ]] || \
+    fail wvb-size "expected=49269 actual=$wvb_bytes"
 
 echo 'START language 1 memory budget accounting phase=package item=3/4'
 "$script_directory/Package-Hosted-Wvb.sh" 1 "$work/Accounting-A.wvb" \
@@ -73,5 +73,5 @@ execution_result=$?
     fail execute-result "expected=42 actual=$execution_result"
 [[ ! -s $work/Run.out && ! -s $work/Run.err ]] || fail execute-output
 
-printf 'native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=%s\n' \
+printf 'native language 1 memory budget accounting status=Passed cases=54 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=%s\n' \
     "$wvb_bytes"

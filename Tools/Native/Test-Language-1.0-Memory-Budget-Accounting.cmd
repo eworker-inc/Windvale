@@ -10,7 +10,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
 set "Project=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj"
-set "ExpectedWvbBytes=37445"
+set "ExpectedWvbBytes=49269"
 
 :allocate
 set "Work=%TEMP%\windvale-memory-budget-accounting-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -64,5 +64,5 @@ if not "%Result%"=="0" (
 )
 if exist "%Work%\." rmdir /s /q "%Work%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=%WvbBytes%
+echo native language 1 memory budget accounting status=Passed cases=54 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=%WvbBytes%
 exit /b 0

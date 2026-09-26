@@ -510,6 +510,65 @@ export fn Releaseˉmemoryˉbudget(
     return Releaseˉownedˉentry(State, Value);
 }
 
+// Roots are typed owner cells, including the first eight bytes of live leases.
+// A moved aggregate can physically retain an older generation; only a current
+// owner token keeps an entry alive. Validate every input before any release.
+export fn Collectˉunreachableˉmemoryˉbudgets(
+    State: bytes,
+    Roots: bytes
+) -> Memoryˉbudgetˉreleaseˉresult {
+    let Invalid: Memoryˉbudgetˉreleaseˉresult =
+        Memoryˉbudgetˉreleaseˉresult(false, State);
+    // Covers 64 frames of 4,096 locals, aggregate cells, operand cells and
+    // 4,096 allocation leases, with a finite root-buffer ceiling.
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        Bytesˉlength(Roots) > 2162688u32 || Bytesˉlength(Roots) % 8u32 != 0u32 {
+        return Invalid;
+    }
+    var Marks: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Marks) < MEMORY_BUDGET_CAPACITY {
+        Marks = Bytesˉconcat(Marks, Marks);
+    }
+    Marks = Bytesˉslice(Marks, 0u32, MEMORY_BUDGET_CAPACITY);
+    var Offset: u32 = 0u32;
+    while Offset < Bytesˉlength(Roots) {
+        let Identity: u32 = Bytesˉreadˉu32ˉlittle(Roots, Offset);
+        let Generation: u32 = Bytesˉreadˉu32ˉlittle(Roots, Offset + 4u32);
+        if Identity == 0u32 {
+            if Generation != 0u32 { return Invalid; }
+        } else {
+            if Identity > MEMORY_BUDGET_CAPACITY || Generation == 0u32 {
+                return Invalid;
+            }
+            if Bytesˉreadˉu8(Marks, Identity - 1u32) == 0u8 &&
+                Tokenˉownsˉentry(State, Bytesˉslice(Roots, Offset, 8u32)) {
+                Marks = Bytesˉconcat(
+                    Bytesˉconcat(Bytesˉslice(Marks, 0u32, Identity - 1u32),
+                        Bytesˉfromˉu8(1u8)),
+                    Bytesˉslice(Marks, Identity, MEMORY_BUDGET_CAPACITY - Identity)
+                );
+            }
+        }
+        Offset = Offset + 8u32;
+    }
+    var Candidate: bytes = State;
+    var Unmarked: u32 = 1u32;
+    while Unmarked <= MEMORY_BUDGET_CAPACITY {
+        if Entryˉactive(Candidate, Unmarked) &&
+            Entryˉownerˉactive(Candidate, Unmarked) &&
+            Bytesˉreadˉu8(Marks, Unmarked - 1u32) == 0u8 {
+            let Released: Memoryˉbudgetˉreleaseˉresult = Releaseˉownedˉentry(
+                Candidate, Token(Unmarked,
+                    Bytesˉreadˉu32ˉlittle(Candidate, Entryˉoffset(Unmarked)))
+            );
+            if !Released.Valid { return Invalid; }
+            Candidate = Released.State;
+        }
+        Unmarked = Unmarked + 1u32;
+    }
+    return Memoryˉbudgetˉreleaseˉresult(true, Candidate);
+}
+
 fn Allocationˉleaseˉinvalid(
     State: bytes,
     Requestedˉbytes: u64,
