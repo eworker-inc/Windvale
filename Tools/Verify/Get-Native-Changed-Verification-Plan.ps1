@@ -4560,6 +4560,8 @@ foreach ($Path in $Paths) {
             $RunPlanVerification = $true
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Application-Checkpoint.md') {
             Add-Suite 'segmented-hosted-wvb-cache'
+        } elseif ($Path -eq 'Specifications/Windvale-Project-Wvb-Checkpoint.md') {
+            Add-Suite 'compiler-split-development'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Tool-Checkpoint.md') {
             Add-Suite 'database-storage'
         } elseif ($Path -eq 'Specifications/Windvale-Console-Application-Verification.md') {

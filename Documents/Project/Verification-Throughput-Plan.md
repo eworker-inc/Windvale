@@ -58,6 +58,10 @@ development budget. A green infrastructure job is not evidence that those
 owners passed. Reliable automatic preparation and complete affected execution
 remain open.
 
+The Project-WVB cache now has its own specification and focused lifecycle
+owner mapping. Its cache-only edits no longer inherit the database behavior
+plan; the shared cache-root and database-consumer contract retains that routing.
+
 Use prepared-only mode during ordinary Foundation implementation:
 
 ```powershell

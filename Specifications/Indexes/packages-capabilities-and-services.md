@@ -34,6 +34,7 @@ Projects, packages, installation, applications, capabilities, storage, and servi
 | [Windvale Linux console application target](../Windvale-Linux-Console-Application.md) | Documented |
 | [Windvale package bundle version 1](../Windvale-Package-Bundle.md) | Implemented |
 | [Windvale Package 1 and Lock 1](../Windvale-Package.md) | Implemented |
+| [Windvale project-WVB checkpoint](../Windvale-Project-Wvb-Checkpoint.md) | Implemented |
 | [Windvale workspace and project manifests](../Windvale-Project.md) | Documented |
 | [Windvale release envelope version 1](../Windvale-Release-Envelope.md) | Candidate |
 | [Windvale resource-service IPC](../Windvale-Resource-Service-Ipc.md) | Candidate |

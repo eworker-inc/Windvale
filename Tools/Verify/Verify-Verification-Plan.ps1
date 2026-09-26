@@ -4458,6 +4458,7 @@ $NativeCases = @(
     @{
         Name = 'shared project WVB checkpoint lifecycle owner'
         Paths = @(
+            'Specifications/Windvale-Project-Wvb-Checkpoint.md',
             'Tools/Native/Build-Cached-Project-Wvb.cmd',
             'Tools/Native/Build-Cached-Project-Wvb.sh',
             'Tools/Native/Build-Cached-Project-Wvb.mjs'
