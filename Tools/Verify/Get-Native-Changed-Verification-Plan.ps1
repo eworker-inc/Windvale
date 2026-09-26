@@ -1467,6 +1467,7 @@ function Add-Native-Tool-Suite {
         return
     }
     if ($Stem -in @(
+        'Build-Cached-Project-Wvb',
         'Build-Cached-Split-Project-Wvb',
         'Source-Edition-Predecessor-Core',
         'Test-Cached-Split-Project-Wvb',
@@ -1496,7 +1497,6 @@ function Add-Native-Tool-Suite {
         'Build-Cached-Linked-Image',
         'Build-Cached-Linked-Image-Set',
         'Build-Cached-Project-Object',
-        'Build-Cached-Project-Wvb',
         'Build-Cached-Segmented-Project',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
@@ -1511,7 +1511,6 @@ function Add-Native-Tool-Suite {
         $script:DatabaseDevelopmentRequiresAllTargets = $true
         Add-Suite 'database-storage'
         if ($Stem -in @(
-            'Build-Cached-Project-Wvb',
             'Get-Native-Project-Cache-Key',
             'Native-Project-Cache-Key-Core'
         )) {

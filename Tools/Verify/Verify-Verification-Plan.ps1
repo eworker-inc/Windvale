@@ -4432,8 +4432,6 @@ $NativeCases = @(
             'Tools/Native/Build-Cached-Project-Object.cmd',
             'Tools/Native/Build-Cached-Project-Object.mjs',
             'Tools/Native/Build-Cached-Project-Object.sh',
-            'Tools/Native/Build-Cached-Project-Wvb.cmd',
-            'Tools/Native/Build-Cached-Project-Wvb.sh',
             'Tools/Native/Build-Cached-Segmented-Project.cmd',
             'Tools/Native/Build-Cached-Segmented-Project.mjs',
             'Tools/Native/Build-Cached-Segmented-Project.sh',
@@ -4456,6 +4454,17 @@ $NativeCases = @(
         OsX64Development = $true
         OsX64Target = 'all'
         DatabaseDevelopment = $true
+    },
+    @{
+        Name = 'shared project WVB checkpoint lifecycle owner'
+        Paths = @(
+            'Tools/Native/Build-Cached-Project-Wvb.cmd',
+            'Tools/Native/Build-Cached-Project-Wvb.sh',
+            'Tools/Native/Build-Cached-Project-Wvb.mjs'
+        )
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
     },
     @{
         Name = 'nested record database owner'

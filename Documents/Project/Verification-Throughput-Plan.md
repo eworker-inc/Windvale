@@ -88,7 +88,7 @@ cleanup. Product milestones remain in the existing completion matrix.
 | 1. Emission diagnostics | Maintained source reproducer and original Package-Lock snapshots pass seven cases each on Windows/Debian; exact rule, canonical type name, function location, malformed evidence and unchanged successful output covered. | Complete |
 | 2. CI preparation and reuse | One preparation per exact input closure; completed products survive a later failure; focused Windows/Linux jobs complete with cache-hit and cache-miss behavior measured. | In progress |
 | 3. Targeted refactoring | Extract cohesive responsibilities from a changed large function; measure slot headroom and build/runtime cost; preserve behavior and output contracts. | Open |
-| 4. Verification consolidation | Audit overlapping wrappers and construction; merge/remove duplicated execution where no unique coverage is lost; retain named cases and required host boundaries. | Open |
+| 4. Verification consolidation | Project-WVB host wrappers share one implementation and retain old checkpoints; 125 Windows/128 Debian cache cases and 335 routing cases pass. Distinct publication, reconstruction and legacy coverage remain retained by audit. | Complete |
 | 5. Active documentation | Throughput and library checkpoint history archived and indexed; Progress and the matrix point to the completion plan's current blockers; active links/catalogs verified. | Complete |
 | 6. Obsolete-code audit | Named cleanup candidates audited against consumers, generators and recovery dependencies; retained candidates and reasons recorded; no unsupported deletion or cache purge. | Complete |
 
@@ -131,7 +131,7 @@ or source remain. Preserve the [Stage 0 recovery provenance](../../Bootstrap/Sta
 and valid development caches. The [scoped audit](../Evidence/2026-09-26-Simplification-Documentation-And-Retention.json)
 also identifies consumers for the historical source predecessor, paired host
 launchers, build wrappers and full front-door owner. They cannot be removed as
-unused code. Item 4 still owns consolidation of their duplicated implementation;
+unused code. Item 4 owns consolidation of their duplicated implementation;
 the audit does not claim whole-repository reachability or current qualification.
 
 The [library checkpoint history](Library-Development-History-2026-09-26.md)
@@ -167,6 +167,30 @@ behavior. The full legacy front-door script expects
 compiler emits it successfully. Do not repair that mismatch by changing only
 the expected diagnostic text. Audit the owning cases and current selectors
 before retiring or replacing the old checkpoint.
+
+### Shared project cache wrapper
+
+The project-WVB development cache now has one implementation and two four-line
+host launchers. This replaces 266 lines of paired shell logic with 211 lines
+of shared code and eight launcher lines. Cache identities, host record endings
+and successful output bytes remain compatible. The existing split-cache owner
+covers construction, corruption, cleanup, publication races, changing inputs,
+linked paths and prepared-only Project 4 delegation; no new verification owner
+or compiler pipeline was added.
+
+The [consolidation evidence](../Evidence/2026-09-26-Shared-Project-Wvb-Cache.json)
+records 125 passing cache cases on Windows in 25 seconds and 128 on Debian in
+129 seconds, plus 335 routing cases. The small retained-cache workload improves
+from a 0.58-second warm median to 0.23 seconds on Windows; Debian remains about
+1.08 seconds. These are local measurements with concurrent work, not controlled
+compiler-throughput claims. Peak process memory was not measured.
+
+Wrapper-only changes now select that focused owner instead of database and OS
+behavior suites. The shared checkpoint specification remains a conservative
+filename-level route; inspect the changed section before running its proposed
+domain owner. Other wrappers retain the distinct responsibilities documented
+in the dependency audit. This consolidation does not retire legacy front-door
+coverage or complete CI preparation.
 
 ## Earlier baseline
 

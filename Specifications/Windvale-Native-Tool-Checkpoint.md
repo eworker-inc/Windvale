@@ -224,6 +224,19 @@ complete expected record, and materializes a fresh byte-identical copy. The
 keyed build driver and its mandatory verification are the admission boundary;
 the cache does not reinterpret or execute the WVB.
 
+The Windows and Linux `Build-Cached-Project-Wvb` launchers share one JavaScript
+implementation. Existing host line endings, key framing, namespace and records
+remain unchanged. The owner validates the selected entry and its ancestors,
+without scanning unrelated cache entries. A miss rechecks the complete input
+key after construction and before publication. A concurrent winner is accepted
+only when its validated product is byte-identical to the local candidate.
+The owner removes its own bounded `.new-` directory after a failed build or
+lost race; uncertain process termination preserves that directory and reports
+its path. It does not sweep other partial entries or evict completed evidence.
+One ten-minute deadline bounds construction, with a cleanup reserve. Project 4
+dispatches to the existing current split-project builder and preserves its
+prepared-only environment policy and failure code.
+
 `Build-Cached-Os-X64-Project-Wvbs.mjs` accepts the canonical target manifest,
 one private output directory, one already staged and digest-verified build
 driver, and either one target or `all`. It validates all 56 manifest rows,

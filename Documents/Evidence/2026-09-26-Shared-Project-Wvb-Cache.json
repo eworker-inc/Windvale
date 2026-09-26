@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-shared-project-wvb-cache",
+  "date": "2026-09-26",
+  "subject": "One project-WVB cache implementation for Windows and Linux",
+  "claim": "Thin Windows and Linux launchers share construction, bounded checkpoint validation, output verification and owned cleanup. Existing cache keys, host record bytes and successful products remain compatible. Failed and uncertain construction, corrupt records/products, link paths, changing inputs, publication races and prepared-only Project 4 delegation have focused evidence. Generic wrapper changes select the existing compiler-split-development owner instead of replaying database and OS suites.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on eb2bda52fb996bdbcf2a76a290321835d4042f91; exact changed implementation and verifier identities are recorded per run."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Shared project-WVB construction, validation, publication and existing split-cache lifecycle",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 25305,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.mjs",
+          "size": 10308,
+          "sha256": "a42c09dd087d1161421415cc3074c84e9c37167bd8d27ef8554b62975da00e4a"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.cmd",
+          "size": 129,
+          "sha256": "5cb886666e49683d2ff708537d88184dcaf5feafef989ff22c22f864add858e3"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.sh",
+          "size": 166,
+          "sha256": "35f7cbeff8bf2285c81d08a72cb8f5f8aa7ba6a35326b0f90d9d7a4a150badb1"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 14074,
+          "sha256": "edacf86b48e36e9214c2d2a2886df98010fece3c792d8a7c9c849cc6255a8ebb"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 100021,
+          "sha256": "30c09766054717c8844a776f6d71cea562a2c45699af56984cacd6f6d1f96db7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Shared-Cache-Bounded.log",
+          "size": 1767,
+          "sha256": "0dc7ca6f8674111478aae9d2b4053777e1027e6affd4dd59ecf0f0fac8b29656"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Original wrappers: one cold and three warm constructions",
+      "tool": "Build-Cached-Project-Wvb",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Legacy-Cache.mjs Before",
+      "result": "Passed",
+      "elapsedMilliseconds": 2707,
+      "inputs": [],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Legacy-Before.json",
+          "size": 2803,
+          "sha256": "ce4409af14a6fba83340db3c979a67f8e3622d1b38686f0299769b3add8a59d5"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Legacy-Before-0.wvb",
+          "size": 816,
+          "sha256": "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Shared wrapper: four hits on the retained original-wrapper cache",
+      "tool": "Build-Cached-Project-Wvb",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Legacy-Cache.mjs Bounded-Final",
+      "result": "Passed",
+      "elapsedMilliseconds": 926,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.mjs",
+          "size": 10308,
+          "sha256": "a42c09dd087d1161421415cc3074c84e9c37167bd8d27ef8554b62975da00e4a"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.cmd",
+          "size": 129,
+          "sha256": "5cb886666e49683d2ff708537d88184dcaf5feafef989ff22c22f864add858e3"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.sh",
+          "size": 166,
+          "sha256": "35f7cbeff8bf2285c81d08a72cb8f5f8aa7ba6a35326b0f90d9d7a4a150badb1"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 14074,
+          "sha256": "edacf86b48e36e9214c2d2a2886df98010fece3c792d8a7c9c849cc6255a8ebb"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Legacy-Bounded-Final.json",
+          "size": 2875,
+          "sha256": "5426a9f9d589818bf43d6685133aa879f50b5cd1e24202bfa622b6cba9736169"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Legacy-Bounded-Final-0.wvb",
+          "size": 816,
+          "sha256": "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Shared project-WVB construction, validation, publication and existing split-cache lifecycle",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 128708,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.mjs",
+          "size": 10308,
+          "sha256": "a42c09dd087d1161421415cc3074c84e9c37167bd8d27ef8554b62975da00e4a"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.cmd",
+          "size": 129,
+          "sha256": "5cb886666e49683d2ff708537d88184dcaf5feafef989ff22c22f864add858e3"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.sh",
+          "size": 166,
+          "sha256": "35f7cbeff8bf2285c81d08a72cb8f5f8aa7ba6a35326b0f90d9d7a4a150badb1"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 14074,
+          "sha256": "edacf86b48e36e9214c2d2a2886df98010fece3c792d8a7c9c849cc6255a8ebb"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 100021,
+          "sha256": "30c09766054717c8844a776f6d71cea562a2c45699af56984cacd6f6d1f96db7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Shared-Cache-Bounded.log",
+          "size": 1838,
+          "sha256": "0dee2dfb0343ba0ca16b596431cbbc3d50a5cced4e779a7d77db2677edbacbf8"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Original wrappers: one cold and three warm constructions",
+      "tool": "Build-Cached-Project-Wvb",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Legacy-Cache.mjs Before",
+      "result": "Passed",
+      "elapsedMilliseconds": 5351,
+      "inputs": [],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Legacy-Before.json",
+          "size": 2747,
+          "sha256": "93785f89ae3b16dd61145340de2dcf3d5935856f55a7ab419acec5628ed7cc9b"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Legacy-Before-0.wvb",
+          "size": 816,
+          "sha256": "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Shared wrapper: four hits on the retained original-wrapper cache",
+      "tool": "Build-Cached-Project-Wvb",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Legacy-Cache.mjs Bounded-Final",
+      "result": "Passed",
+      "elapsedMilliseconds": 4312,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.mjs",
+          "size": 10308,
+          "sha256": "a42c09dd087d1161421415cc3074c84e9c37167bd8d27ef8554b62975da00e4a"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.cmd",
+          "size": 129,
+          "sha256": "5cb886666e49683d2ff708537d88184dcaf5feafef989ff22c22f864add858e3"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.sh",
+          "size": 166,
+          "sha256": "35f7cbeff8bf2285c81d08a72cb8f5f8aa7ba6a35326b0f90d9d7a4a150badb1"
+        },
+        {
+          "path": "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+          "size": 12527,
+          "sha256": "4616b34c1cec5cd29e0b699ae0b20e4fef051ad2c6eaf745d3d6ab628fbb940f"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 14074,
+          "sha256": "edacf86b48e36e9214c2d2a2886df98010fece3c792d8a7c9c849cc6255a8ebb"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Legacy-Bounded-Final.json",
+          "size": 2827,
+          "sha256": "37565147d1b672734b25394e049ca9a05b25f03e3737cafcb417f0c66d5e4117"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Legacy-Bounded-Final-0.wvb",
+          "size": 816,
+          "sha256": "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "31 general and 304 native routing cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 35266,
+      "inputs": [
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 294832,
+          "sha256": "3f20c7bda8c8d277fa898a79da044c77034b72ffb82ce5a86a26cab53053bd23"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 363888,
+          "sha256": "1f65a2a1f01a99e161c92a04b9cf63d145988694c7cc745fa9bdd173a9e2a889"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Routing-Shared-Cache.log",
+          "size": 4308,
+          "sha256": "9cf439ac8bedb8e7b9241dfbd8541c4fcf964dcfb7dbac611ab43a69b25f7bb4"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Windows reports 125 split-cache cases, including 15 legacy-wrapper cases; Debian reports 128, including 16 legacy cases. The additional Linux case rejects a file symlink, alongside existing Unix process-group checks. Windows also rejects a junction in the cache path. The original compiler-split owner separately passed all four top-level cases on both hosts; only its affected cache child was rerun after the bounded metadata-read correction.",
+    "Measurements use the 816-byte Function-Only Project 2 fixture and the pinned native driver, on Windows and Debian WSL with the repository and measurement caches on the D: filesystem. All before/after products have the same SHA-256 and retain their host-specific keys. These are local feedback measurements, not statistically controlled compiler throughput benchmarks. Baseline ran while native compiler preparation was active; final measurement ran alongside cache tests. First samples are excluded from warm medians. Raw repetitions: {\"Windows-Before\":{\"warmMilliseconds\":[581,581,597],\"medianMilliseconds\":581},\"Windows-Bounded-Final\":{\"warmMilliseconds\":[226,230,231],\"medianMilliseconds\":230},\"Debian-Before\":{\"warmMilliseconds\":[1044,1082,1453],\"medianMilliseconds\":1082},\"Debian-Bounded-Final\":{\"warmMilliseconds\":[1070,1082,1113],\"medianMilliseconds\":1082}}",
+    "The first shared-wrapper draft redundantly rehashed the complete producer set on a warm hit and slowed Debian. That draft was corrected before acceptance. The final hit computes its key once as the original wrapper did; a miss additionally recomputes the key after compilation and before checkpoint publication. No mtime-only identity shortcut was added.",
+    "Metadata parsing consumes the same bounded bytes that were validated: project at most 65536 bytes, checkpoint record 1024 bytes, product 67108864 bytes with at most 1 MiB streaming chunks. Peak process memory was not measured. Existing completed entries and unrelated partial entries are retained; only locally owned candidates are cleaned after certain termination.",
+    "The initial Windows top-level run rejected intentional stderr from a negative case; the case now captures and asserts that diagnostic in a child. Debian had no pwsh binary, so its registered shell entry point was used. These setup failures were diagnosed before the passing focused runs, not relabeled as passes.",
+    "Routing verification passed 335 cases. The shared native checkpoint specification still conservatively selects database-storage by filename; this edit only changes the project-WVB section, so the causal final selection excludes database behavior. Database implementation, OS execution, broad compiler/runtime qualification and independent bootstrap reconstruction were not run or claimed.",
+    "This closes the scoped wrapper-consolidation item. Full legacy front-door coverage, distinct current-WVB publication, predecessor reconstruction and generated readers remain retained for the dependency reasons in the prior audit. Current-compiler CI preparation and large-function refactoring remain separate open items."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-26-Simplification-Documentation-And-Retention.json",
+    "Specifications/Windvale-Native-Tool-Checkpoint.md",
+    "Tools/Native/Build-Cached-Project-Wvb.mjs",
+    "Tools/Native/Build-Cached-Project-Wvb.cmd",
+    "Tools/Native/Build-Cached-Project-Wvb.sh",
+    "Tools/Native/Native-Project-Cache-Key-Core.mjs",
+    "Tools/Native/Development-Command-Core.mjs",
+    "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+    "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+    "Tools/Verify/Verify-Verification-Plan.ps1"
+  ]
+}

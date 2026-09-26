@@ -1,4 +1,5 @@
 import Assert from 'node:assert/strict';
+import { Buildˉcachedˉprojectˉwvb } from './Build-Cached-Project-Wvb.mjs';
 import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
 import {
     Constructˉsourceˉeditionˉpredecessor,
@@ -549,8 +550,9 @@ try {
     const Preparationˉcases = await Verifyˉcompilerˉpreparationˉcli(Testˉroot);
     const Processˉcases = await Verifyˉconstructionˉprocessˉstatuses(Testˉroot);
     const Inspectionˉcases = await Verifyˉfunctionˉlimitˉdiagnostics(Testˉroot);
+    const Legacyˉcases = await Verifyˉlegacyˉprojectˉcheckpoint(Testˉroot);
     console.log(
-        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases} status=Passed current-compiler-pair=Verified ` +
+        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -558,7 +560,7 @@ try {
         'raw-project2-route=Passed symbol-resume=Passed ' +
         'symbol-corruption=Rejected final-product-reuse=Passed ' +
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
-        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases}`,
+        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases} legacy-project-cache=${Legacyˉcases}`,
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -572,6 +574,162 @@ try {
         Reject('Refusing to remove an unexpected legacy project fixture directory.');
     }
     await rm(Projectˉroot, { recursive: true, force: false });
+}
+
+async function Verifyˉlegacyˉprojectˉcheckpoint(Root) {
+    const Previousˉcache = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Previousˉprepared = process.env.WINDVALE_PREPARED_COMPILER_ONLY;
+    const Cache = path.join(Root, 'legacy-checkpoints');
+    const Output = path.join(Root, 'Legacy-Output.wvb');
+    const Windows = process.platform === 'win32';
+    const Family = path.join(Cache, 'project-wvb-v2', Windows ? 'windows-x64' : 'linux-x64');
+    const Wrapper = path.join(SCRIPT_DIRECTORY, `Build-Cached-Project-Wvb.${Windows ? 'cmd' : 'sh'}`);
+    let Cases = 0;
+    function Pass(Name) {
+        Cases += 1;
+        console.log(`legacy project cache item=${Cases} case=${Name} status=Passed`);
+    }
+    function Record(Key, Product) {
+        return Buffer.from(['windvale-native-project-wvb-checkpoint 1', `key ${Key}`,
+            `wvb-bytes ${Product.length}`,
+            `wvb-sha256 ${createHash('sha256').update(Product).digest('hex')}`, '']
+            .join(Windows ? '\r\n' : '\n'));
+    }
+    async function Launch(Project = PROJECT) {
+        return Runˉdevelopmentˉcommand(Windows ? Wrapper : 'bash',
+            Windows ? [Project, Output] : [Wrapper, Project, Output], Date.now() + 30_000,
+            false, MAXIMUM_DIAGNOSTIC_BYTES);
+    }
+    try {
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Cache;
+        delete process.env.WINDVALE_PREPARED_COMPILER_ONLY;
+        let Result = await Launch();
+        Assert.equal(Result.Code, 0, Result.Error);
+        Assert.match(Result.Output, /status=Created key=[0-9a-f]{64}/u);
+        const Product = await readFile(Output);
+        Assert.equal(Product.subarray(0, 3).toString('ascii'), 'WVB');
+        const Key = /key=([0-9a-f]{64})/u.exec(Result.Output)[1];
+        const Place = path.join(Family, Key);
+        const Recordˉpath = path.join(Place, 'Checkpoint.txt');
+        const Productˉpath = path.join(Place, 'Product.wvb');
+        const Manifest = Record(Key, Product);
+        Assert.deepEqual(await readFile(Recordˉpath), Manifest);
+        Pass('cold-build-legacy-record');
+        await writeFile(Output, Buffer.alloc(0));
+        Result = await Launch();
+        Assert.equal(Result.Code, 0, Result.Error);
+        Assert.match(Result.Output, /status=Hit/u);
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('warm-reuse-empty-output');
+
+        async function Rejected(Name) {
+            const Result = await Launch();
+            Assert.equal(Result.Code, 1, Result.Error);
+            Assert.deepEqual(await readFile(Output), Product, 'Rejection replaced existing output.');
+            Pass(Name);
+        }
+        for (const [Name, Bytes] of [['truncated-record', Manifest.subarray(0, 25)],
+            ['oversized-record', Buffer.alloc(1_025)],
+            ['wrong-key-record', Buffer.from(Manifest.toString().replace(Key, '0'.repeat(64)))]]) {
+            await writeFile(Recordˉpath, Bytes);
+            await Rejected(Name);
+        }
+        await writeFile(Recordˉpath, Manifest);
+        const Changed = Buffer.from(Product);
+        Changed[Changed.length - 1] ^= 1;
+        await writeFile(Productˉpath, Changed);
+        await Rejected('corrupt-product');
+        await writeFile(Productˉpath, Buffer.alloc(0));
+        await Rejected('empty-product');
+        const Large = await open(Productˉpath, 'r+');
+        try { await Large.truncate(67_108_865); } finally { await Large.close(); }
+        await Rejected('oversized-product');
+        await writeFile(Productˉpath, Product);
+        if (!Windows) {
+            const Link = path.join(Root, 'Legacy-Link.wvb');
+            await symlink(Output, Link);
+            await Assert.rejects(Buildˉcachedˉprojectˉwvb(PROJECT, Link), /non-link file/u);
+            Assert.deepEqual(await readFile(Output), Product);
+            Pass('linked-output-rejected');
+        }
+        const Linkedˉcache = path.join(Root, 'Legacy-Linked-Cache');
+        await symlink(Cache, Linkedˉcache, Windows ? 'junction' : 'dir');
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Linkedˉcache;
+        await Assert.rejects(Buildˉcachedˉprojectˉwvb(PROJECT, Output), /link or non-directory/u);
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('linked-cache-rejected');
+
+        async function Constructionˉcase(Name, Execute, Expected) {
+            const Private = path.join(Root, `legacy-${Name}`);
+            process.env.WINDVALE_NATIVE_CACHE_ROOT = Private;
+            if (Expected) await Assert.rejects(Buildˉcachedˉprojectˉwvb(PROJECT, Output, Execute), Expected);
+            else await Buildˉcachedˉprojectˉwvb(PROJECT, Output, Execute);
+            Assert.deepEqual(await readFile(Output), Product);
+            const Entries = await readdir(path.join(Private, 'project-wvb-v2', path.basename(Family)));
+            Pass(Name);
+            return Entries;
+        }
+        Assert.deepEqual(await Constructionˉcase('failed-build-cleanup', async () =>
+            ({ Code: 1, Output: '', Error: 'deliberate construction failure' }), /deliberate construction failure/u), []);
+        const Uncertainˉroot = path.join(Root, 'legacy-uncertain');
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Uncertainˉroot;
+        const Probe = `import { Buildˉcachedˉprojectˉwvb as Build } from ${JSON.stringify(
+            pathToFileURL(path.join(SCRIPT_DIRECTORY, 'Build-Cached-Project-Wvb.mjs')).href)};
+            const Failure = Object.assign(new Error('deliberate uncertain termination'), { cleanupUncertain: true });
+            try {
+                await Build(${JSON.stringify(PROJECT)}, ${JSON.stringify(Output)}, async () => { throw Failure; });
+                throw new Error('The uncertain termination was not reported.');
+            } catch (Error) { if (Error !== Failure) throw Error; }`;
+        const Uncertainˉresult = await Runˉdevelopmentˉcommand(process.execPath,
+            ['--input-type=module', '--eval', Probe], Date.now() + 30_000, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        Assert.equal(Uncertainˉresult.Code, 0, Uncertainˉresult.Error);
+        Assert.match(Uncertainˉresult.Error, /Preserved project-WVB work after uncertain process termination/u);
+        const Retained = await readdir(path.join(Uncertainˉroot, 'project-wvb-v2', path.basename(Family)));
+        Assert.equal(Retained.length, 1);
+        Assert.ok(Retained[0].startsWith(`.new-${Key}-`));
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('uncertain-termination-preserves-work');
+
+        for (const Divergent of [false, true]) {
+            const Entries = await Constructionˉcase(Divergent ? 'divergent-race' : 'identical-race',
+                async (Command, Arguments) => {
+                    const Temporaryˉproduct = Arguments.at(-1);
+                    await writeFile(Temporaryˉproduct, Product);
+                    const Winner = path.join(path.dirname(path.dirname(Temporaryˉproduct)), Key);
+                    await mkdir(Winner);
+                    const Winnerˉproduct = Divergent ? Changed : Product;
+                    await writeFile(path.join(Winner, 'Product.wvb'), Winnerˉproduct);
+                    await writeFile(path.join(Winner, 'Checkpoint.txt'), Record(Key, Winnerˉproduct));
+                    return { Code: 0, Output: '', Error: '' };
+                }, Divergent ? /Concurrent project-WVB construction differs/u : null);
+            Assert.deepEqual(Entries, [Key]);
+        }
+        const Source = path.join(path.dirname(PROJECT), 'Legacy.wv');
+        const Original = await readFile(Source);
+        try {
+            Assert.deepEqual(await Constructionˉcase('changed-construction-input', async (Command, Arguments) => {
+                await writeFile(Arguments.at(-1), Product);
+                await writeFile(Source, Buffer.concat([Original, Buffer.from('\n')]));
+                return { Code: 0, Output: '', Error: '' };
+            }, /construction inputs changed/u), []);
+        } finally { await writeFile(Source, Original); }
+
+        const Current = path.join(Root, 'Prepared-Only.wvproj');
+        await writeFile(Current, 'windvale-project 4\n');
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = path.join(Root, 'legacy-current-missing');
+        process.env.WINDVALE_PREPARED_COMPILER_ONLY = '1';
+        Result = await Launch(Current);
+        Assert.equal(Result.Code, 64, Result.Error);
+        Assert.match(Result.Error, /prepar/iu);
+        Assert.deepEqual(await readFile(Output), Product);
+        Pass('project4-preparation-miss-preserves-output');
+        return Cases;
+    } finally {
+        if (Previousˉcache === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Previousˉcache;
+        if (Previousˉprepared === undefined) delete process.env.WINDVALE_PREPARED_COMPILER_ONLY;
+        else process.env.WINDVALE_PREPARED_COMPILER_ONLY = Previousˉprepared;
+    }
 }
 
 function Childˉdiagnostic(Result) {
