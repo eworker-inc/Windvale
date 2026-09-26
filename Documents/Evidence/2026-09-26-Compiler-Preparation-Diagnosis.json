@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-compiler-preparation-diagnosis",
+  "date": "2026-09-26",
+  "subject": "Compiler preparation CPU costs and isolated compact stack initialization comparison",
+  "claim": "The sampled native analyzer spent 23 of 50 instruction-pointer samples in unrolled stack initialization. Replacing only those clearing sequences in a private executable copy reduced analysis of the same 1715676-byte admitted source set from 100462 ms to 59355 ms (40.9% less elapsed time). Source-set, manifest, bindings and WIR outputs were byte-identical. This identifies a backend optimization candidate; it does not implement or qualify a production compiler change.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "7d84e53a0fcd52321c7b16bb4e68a4f97d2d069c"
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "50 instruction-pointer samples of the active checkpoint analyzer; 23 within stack-clearing prefixes",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Sample-Native-Thread.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Work/Simplification-2026-09-26/Sample-Native-Thread.ps1 -TargetProcessId 18064 -OutputPath Artifacts/Work/Simplification-2026-09-26/Analyzer-Native-Samples.json",
+      "result": "Passed",
+      "elapsedMilliseconds": 5690,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline.exe",
+          "size": 54966272,
+          "sha256": "3149d54f22aeb750d78721103f4b877870b213e6a11c8ff613c40c3fce1fabfb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Sample-Native-Thread.ps1",
+          "size": 3069,
+          "sha256": "69265673ab3254fe8778e98cdec721482e50001839c323865c0421e205612c7e"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Map-Native-Samples.mjs",
+          "size": 3217,
+          "sha256": "ea2b1c363a6ddfe1bffff86109a768e435add4ef905815407c001a0be542a41d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Native-Samples.json",
+          "size": 5295,
+          "sha256": "1d7504ee3e9b51da51fe6a2016dd4a577ae48c20adcff9e89f0f2a83475ad88c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Native-Attribution.json",
+          "size": 13635,
+          "sha256": "17a133e0bd687fbdebf53716a436369f6379023aee63e79f52fbe5d239e89b2a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, AMD Ryzen 9 3900X reported as 6 cores / 12 logical processors, Node 24.18.0",
+      "target": "Original analyzer, 1715676-byte admitted source set",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline.exe",
+      "command": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline.exe --internal-source-set Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Source.wvss Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Manifest.wvca Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Bindings.wvcb Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Wir.wvir",
+      "result": "Passed",
+      "elapsedMilliseconds": 100462,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline.exe",
+          "size": 54966272,
+          "sha256": "3149d54f22aeb750d78721103f4b877870b213e6a11c8ff613c40c3fce1fabfb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Source.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Manifest.wvca",
+          "size": 104,
+          "sha256": "73c612f7c505ead9362f2ab128ef301c2408a8293b34d93fb1bfea40f732afbb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Bindings.wvcb",
+          "size": 301972,
+          "sha256": "a2e076b595828574641d177d72916ac539aa8f99375c7afa05a75b2f1c18fd2c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline-Wir.wvir",
+          "size": 3982268,
+          "sha256": "be37d2c3d5d36bee5803474de0506c738fd6788398ed9afc357182d597b59c56"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, AMD Ryzen 9 3900X reported as 6 cores / 12 logical processors, Node 24.18.0",
+      "target": "Diagnostic compact stack clearing; byte equality against baseline for source set, manifest, bindings and WIR",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate.exe",
+      "command": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate.exe --internal-source-set Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Source.wvss Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Manifest.wvca Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Bindings.wvcb Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Wir.wvir",
+      "result": "Passed",
+      "elapsedMilliseconds": 59355,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate.exe",
+          "size": 54966272,
+          "sha256": "cc115be2d886db59a9b935439e348a3695c88868ad11567faca2540b7d4011da"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Source.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Manifest.wvca",
+          "size": 104,
+          "sha256": "73c612f7c505ead9362f2ab128ef301c2408a8293b34d93fb1bfea40f732afbb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Bindings.wvcb",
+          "size": 301972,
+          "sha256": "a2e076b595828574641d177d72916ac539aa8f99375c7afa05a75b2f1c18fd2c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Candidate-Wir.wvir",
+          "size": 3982268,
+          "sha256": "be37d2c3d5d36bee5803474de0506c738fd6788398ed9afc357182d597b59c56"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Existing bounded current compiler Prepare",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Current-Split-Project-Wvb.mjs\",\"--prepare-only\",\"--deadline-ms\",\"1790467397749\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 1806980,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Current-CI-Compiler-Prepare.json",
+          "size": 342,
+          "sha256": "2a79312ca8718251c2ea09aeb4c429f937f011bfdcfbcb6f7ecc481db3dbc124"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Current-CI-Compiler-Prepare.log",
+          "size": 30266,
+          "sha256": "d996ac61e4c87993f5df942a03f27e4d8cda6c73cf4bcbde8eb236d7bcd44233"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Existing bounded current compiler Reuse",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Current-Split-Project-Wvb.mjs\",\"--prepare-only\",\"--deadline-ms\",\"1790467397749\",\"--prepared-compiler-only\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 1085,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Current-CI-Compiler-Reuse.json",
+          "size": 369,
+          "sha256": "5133a84d5b777da81ab677ffb454bb92b353643aceddedf430eb90e6acb09ece"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Current-CI-Compiler-Reuse.log",
+          "size": 237,
+          "sha256": "e5fc6e8d2c163d25b162ef90ca18fe4e9ed663838b1c5f39e438e0c709533af3"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "One Windows baseline-then-candidate pair ran concurrently with pre-existing Windows and Debian preparation. This is causal diagnostic evidence, not an isolated statistical benchmark, cross-host conformance or a claim of 41% faster complete builds. Peak working set was not measured. The executable retained its original size and all code offsets.",
+    "The 5.690-second sample consumed 5.672 seconds of analyzer CPU. Function attribution matched 830 native prologue signatures to 830 WVB entries in native emission order, then mapped emitted module/function ordinals to source declarations. Sampling was brief and concentrated in one analysis interval; 46% is not a measured whole-build fraction.",
+    "The diagnostic patch replaces 858 contiguous runs of zero-valued MOV [RSP+offset],EAX stores, totaling 5096448 original code bytes. Replacement: PUSH RDI; PUSH RCX; LEA RDI,[RSP+offset+16]; MOV ECX,dwordCount; CLD; REP STOSD; POP RCX; POP RDI; JMP to the original run end. Runs below 32 code bytes remain unchanged. Hidden return storage gaps are retained; all branch and relocation offsets remain unchanged. The bytes are in an ignored private copy, never installed or placed in a production cache. Production source must instead emit compact sequences and update every size/relocation calculation, then validate ABI, stack bounds, return storage, fuel/depth failures and both hosts.",
+    "The first probe supplied source-edition text in a legacy WVSS-1 envelope and was rejected by the baseline in 299 ms. The corrected comparison used the existing native source admitter to produce its admitted source set. That rejection is not counted as a passing comparison.",
+    "The earlier completed Windows preparation took 1165577 ms. The current run rebuilt the analyzer in 311795 ms versus the earlier 316751 ms, producing the same 1694926-byte WVB with SHA-256 5b8820e988d63fa4fd3fa14483e601d257550ca8f303549bbfb0522b0d25e1ec. The authenticated Project 4 WVB cache binds all producer identities and the entire coordinator; unlike its Project 2 path, an authenticated miss has no separate reusable analysis checkpoint. This explains repeat work, not permission to omit dependencies or authentication.",
+    "Current Windows checkpoint-analyzer packaging reported 35 seconds complete verification, 233 seconds native staging and 223 seconds container construction (497029 ms total). A sampled metadata-request process accumulated over 64 seconds user CPU while reading about 37.8 MB. Native streaming SHA-256 and large generated images are additional packaging costs; their complete phase share has not been isolated.",
+    "The existing Windows preparation subsequently completed in 1806980 ms (30 minutes 7 seconds), followed by validated compiler reuse in 1085 ms. This illustrates the gap between construction and warm reuse; it is not a completely empty-cache measurement. Debian preparation and GitHub run 36278108329 remain separate incomplete evidence at recording time. No new cold reconstruction or broad conformance suite was launched for the diagnostic patch. A 360-second bound covered the successful admission/baseline/candidate experiment; it completed within that bound.",
+    "Diagnostic scripts, executables and output artifacts are retained locally under ignored Artifacts/Work. The evidence includes identities and the exact substitution recipe; a clean checkout does not contain those generated artifacts."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+    "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+    "Tools/Native/Current-Split-Compiler-Cache-Core.mjs"
+  ]
+}

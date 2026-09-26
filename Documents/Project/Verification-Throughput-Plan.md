@@ -40,6 +40,19 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Cold compiler and packaging performance is the immediate priority. A native
+CPU sample found 23 of 50 instruction pointers in unrolled stack initialization.
+A private analyzer copy using compact clearing analyzed the same 1.7 MB source
+set in 59.4 seconds instead of 100.5 seconds, with all four output files
+byte-identical. This is one Windows diagnostic comparison during concurrent
+preparation, not a shipped optimization or an overall build speedup. The
+[performance diagnosis](../Evidence/2026-09-26-Compiler-Preparation-Diagnosis.json)
+also records repeated byte-identical analyzer construction and costly native
+packaging. Next, implement compact initialization in the backend's emission,
+size and relocation calculations, verify calling conventions and hidden return
+storage on both hosts, then measure the affected cold construction. Do not
+substitute longer timeouts or warm-cache results for that work.
+
 Focused runtime execution takes seconds with prepared tools, while changed tool
 construction still takes minutes. The latest runner rebuild took 276 seconds,
 followed by Windows and Debian packaging in parallel at 120 and 127 seconds:
