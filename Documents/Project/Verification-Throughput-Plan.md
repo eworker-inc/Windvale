@@ -62,6 +62,15 @@ The Project-WVB cache now has its own specification and focused lifecycle
 owner mapping. Its cache-only edits no longer inherit the database behavior
 plan; the shared cache-root and database-consumer contract retains that routing.
 
+Prepared-product mode now stops compiler, split-WVB and segmented hosted-product
+misses before construction. Both hosts pass the focused cache checks. A real
+binder application took 161/163 seconds to package on Windows/Debian, then
+0.29/2.69 seconds to validate and reuse. A later profile miss preserved that
+completed product. The [cache enforcement evidence](../Evidence/2026-09-26-Prepared-Product-Cache-Enforcement.json)
+records the bounds and failed preliminary probes. CI preparation/execution
+integration remains open, including reconciliation of the older console-packager
+reconstruction expectations after its Project 4 migration.
+
 Use prepared-only mode during ordinary Foundation implementation:
 
 ```powershell

@@ -20,6 +20,25 @@ optimized output for the same accepted Project 2 input. The one-shot
 `--complete` mode remains the explicit diagnostic and differential oracle; it
 is not a hidden split-cache option.
 
+## Prepared-product execution
+
+`WINDVALE_PREPARED_PRODUCTS_ONLY=1` selects reuse without construction in
+`Build-Current-Split-Project-Wvb.mjs`, `Build-Cached-Split-Project-Wvb.mjs` and
+`Build-Cached-Segmented-Hosted-Wvb.mjs`. Other defined values are rejected.
+The current compiler, final project WVB and final hosted application must each
+have an exact valid checkpoint. A missing checkpoint exits with status 64 and
+preparation instructions before launching a producer or allocating a candidate.
+An invalid existing checkpoint fails closed. Hits retain complete validation,
+input-identity checks and private output materialization; missing intermediate
+analysis or image checkpoints do not require reconstruction when the final
+product is valid. A miss leaves previous owner output and completed cache entries
+unchanged. Ordinary invocation without this variable retains bounded construction.
+
+Preparation runs the same builders without this variable in a separately
+declared budget. This mode does not freeze unrelated repository tools or replace
+the selected owner's fresh behavior execution. It is a prerequisite for CI phase
+separation; merely enabling it does not establish complete CI coverage.
+
 ## Producer identity
 
 `Write-Split-Compiler-Producer-Identity.mjs` hashes a bounded ordinary analyzer

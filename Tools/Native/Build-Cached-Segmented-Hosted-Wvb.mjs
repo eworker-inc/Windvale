@@ -1037,7 +1037,37 @@ async function Getˉcheckpointˉfamily(namespace = CACHE_NAMESPACE) {
     );
 }
 
+export async function Acquireˉsegmentedˉhostedˉcheckpoint(
+    checkpointDirectory, key, profile, input, construct, preparedOnly = false,
+) {
+    if (typeof preparedOnly !== 'boolean' || typeof construct !== 'function') {
+        Reject('The segmented hosted checkpoint acquisition is invalid.');
+    }
+    const information = await lstat(checkpointDirectory).catch(error => {
+        if (error?.code === 'ENOENT') return null;
+        throw error;
+    });
+    let status = 'Hit';
+    if (information === null) {
+        if (preparedOnly) {
+            throw Object.assign(new Error(
+                `Prepared segmented hosted product missing key=${key}. ` +
+                'Run the same build in the separately budgeted preparation phase.',
+            ), { exitCode: 64 });
+        }
+        status = await construct();
+    }
+    const checkpoint = await Validateˉsegmentedˉhostedˉcheckpoint(
+        checkpointDirectory, key, profile, input,
+    );
+    return { checkpoint, status };
+}
+
 async function Main() {
+    const Productˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    if (Productˉmode !== undefined && Productˉmode !== '1') {
+        Reject('WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1.');
+    }
     const Request = Parseˉsegmentedˉhostedˉarguments(process.argv.slice(2));
     const { Deadline } = Request;
     const profile = Request.Profile;
@@ -1048,44 +1078,29 @@ async function Main() {
     Segmentedˉhostedˉcommandˉdeadline(Deadline);
     const checkpointFamily = await Getˉcheckpointˉfamily();
     const checkpointDirectory = path.join(checkpointFamily, key);
-    let checkpointInformation = await lstat(checkpointDirectory).catch(error => {
-        if (error?.code === 'ENOENT') {
-            return null;
-        }
-        throw error;
-    });
-    let status = 'Hit';
-    if (checkpointInformation === null) {
-        await Completeˉverifyˉinput(input, Deadline);
-        status = await Createˉsegmentedˉhostedˉcheckpoint(
-            checkpointFamily,
-            checkpointDirectory,
-            key,
-            profile,
-            input,
-            temporary => Buildˉcandidate(
-                temporary,
+    const { checkpoint, status } = await Acquireˉsegmentedˉhostedˉcheckpoint(
+        checkpointDirectory, key, profile, input, async () => {
+            await Completeˉverifyˉinput(input, Deadline);
+            return Createˉsegmentedˉhostedˉcheckpoint(
+                checkpointFamily,
+                checkpointDirectory,
+                key,
                 profile,
                 input,
-                Segmentedˉhostedˉcommandˉdeadline(Deadline),
-                imageKey,
-                Deadline,
-            ),
-            async () => {
-                await Requireˉproducersˉunchanged(profile, input, key);
-                Segmentedˉhostedˉcommandˉdeadline(Deadline);
-            },
-        );
-        checkpointInformation = await lstat(checkpointDirectory).catch(() => null);
-        if (checkpointInformation === null) {
-            Reject('The published segmented hosted checkpoint is unavailable.');
-        }
-    }
-    const checkpoint = await Validateˉsegmentedˉhostedˉcheckpoint(
-        checkpointDirectory,
-        key,
-        profile,
-        input,
+                temporary => Buildˉcandidate(
+                    temporary,
+                    profile,
+                    input,
+                    Segmentedˉhostedˉcommandˉdeadline(Deadline),
+                    imageKey,
+                    Deadline,
+                ),
+                async () => {
+                    await Requireˉproducersˉunchanged(profile, input, key);
+                    Segmentedˉhostedˉcommandˉdeadline(Deadline);
+                },
+            );
+        }, Productˉmode === '1',
     );
     await Materializeˉsegmentedˉhostedˉcheckpoint(
         checkpoint,

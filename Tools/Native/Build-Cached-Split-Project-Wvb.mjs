@@ -42,6 +42,10 @@ const PRODUCER_TIMEOUT_MILLISECONDS = 300_000;
 const AUTHENTICATED_TIMEOUT_MILLISECONDS = 900_000;
 const HOST = `${process.platform}-${process.arch}`;
 const TEST_HOOKS = Readˉtestˉhooks();
+const Productˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+if (Productˉmode !== undefined && Productˉmode !== '1') {
+    Reject('WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1.');
+}
 
 const Authenticatedˉproject = process.argv.length === 13 &&
     process.argv[8] === '--authenticated-project4';
@@ -560,6 +564,13 @@ async function Acquireˉemission(
         await Validateˉemission(Checkpoint, Request.key, Analysisˉkey);
         console.log(`split project step=emission cache=Hit key=${Request.key}`);
         return Checkpoint;
+    }
+    if (Productˉmode === '1') {
+        process.stderr.write(
+            `Prepared split-project product missing key=${Request.key}. ` +
+            'Run the same build in the separately budgeted preparation phase.\n',
+        );
+        process.exit(64);
     }
     const Analysisˉcheckpoint = Buildˉauthenticated === null ? await Acquireˉanalysisˉcheckpoint() : null;
     let Temporary = null;

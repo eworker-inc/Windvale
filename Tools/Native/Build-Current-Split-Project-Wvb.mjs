@@ -61,6 +61,11 @@ async function Buildˉcurrentˉsplitˉprojects() {
         Reject('WINDVALE_PREPARED_COMPILER_ONLY must be absent or 1.');
     }
     Preparedˉonly ||= Environmentˉmode === '1';
+    const Productˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    if (Productˉmode !== undefined && Productˉmode !== '1') {
+        Reject('WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1.');
+    }
+    Preparedˉonly ||= Productˉmode === '1';
     const Argumentˉcount = Targetˉarguments.length;
     if ((Prepareˉonly ? Argumentˉcount !== 0 || Deadline === null : Argumentˉcount < 2) ||
         Argumentˉcount % 2 !== 0 ||

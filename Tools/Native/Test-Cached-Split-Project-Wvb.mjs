@@ -552,7 +552,7 @@ try {
     const Inspectionˉcases = await Verifyˉfunctionˉlimitˉdiagnostics(Testˉroot);
     const Legacyˉcases = await Verifyˉlegacyˉprojectˉcheckpoint(Testˉroot);
     console.log(
-        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases} status=Passed current-compiler-pair=Verified ` +
+        `split project cache test cases=${41 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -945,8 +945,10 @@ async function Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot) {
             path.join(Cacheˉroot, `${Namespace}.evicted`));
     }
     const Completedˉphases = await readFile(Record, 'ascii');
-    const Runˉagain = () => spawnSync(process.execPath, Arguments, {
-        cwd: REPOSITORY_ROOT, encoding: 'utf8', env: Environment,
+    const Runˉagain = (Mode = '1') => spawnSync(process.execPath, Arguments, {
+        cwd: REPOSITORY_ROOT, encoding: 'utf8',
+        env: { ...Environment,
+            ...(Mode === null ? {} : { WINDVALE_PREPARED_PRODUCTS_ONLY: Mode }) },
         maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
         timeout: FAILURE_TIMEOUT_MILLISECONDS, windowsHide: true,
     });
@@ -968,6 +970,19 @@ async function Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot) {
     const Product = path.join(Family, Entries[0], 'Product.wvb');
     const Manifest = path.join(Family, Entries[0], 'Checkpoint.txt');
     const Originalˉmanifest = await readFile(Manifest, 'ascii');
+    const Savedˉcheckpoint = path.join(Family, `${Entries[0]}.saved`);
+    await rename(path.join(Family, Entries[0]), Savedˉcheckpoint);
+    const Missing = Runˉagain();
+    Assert.equal(Missing.status, 64, Childˉdiagnostic(Missing));
+    Assert.match(Missing.stderr, /Prepared split-project product missing/u);
+    Assert.equal(await readFile(Record, 'ascii'), Completedˉphases);
+    Assert.deepEqual(await readFile(Output), Buffer.from([0x57]));
+    Assert.deepEqual(await readdir(Family), [`${Entries[0]}.saved`]);
+    Assert.deepEqual(await Findˉtemporaryˉdirectories(Cacheˉroot), []);
+    await rename(Savedˉcheckpoint, path.join(Family, Entries[0]));
+    const Invalidˉmode = Runˉagain('0');
+    Assert.equal(Invalidˉmode.status, 1, Childˉdiagnostic(Invalidˉmode));
+    Assert.match(Invalidˉmode.stderr, /WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1/u);
     for (const Mutation of ['product', 'analysis-key']) {
         if (Mutation === 'product') {
             await writeFile(Product, Buffer.from([0x58]));
@@ -986,7 +1001,7 @@ async function Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot) {
         await writeFile(Manifest, Originalˉmanifest, 'ascii');
     }
     await writeFile(Analyzerˉidentity, Identity('analyzer', 2, '0'.repeat(64)), 'ascii');
-    const Changed = Runˉagain();
+    const Changed = Runˉagain(null);
     if (Changed.status === 0 || !Changed.stderr.includes(
         'analyzer producer does not match its identity') ||
         Changed.stdout.includes('step=emission cache=Hit') ||
@@ -1547,7 +1562,9 @@ async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
     const Probe = (Mode, Status, Diagnostic, Arguments = [], Prepare = true) => {
         const Environment = { ...process.env, WINDVALE_NATIVE_CACHE_ROOT: Root };
         delete Environment.WINDVALE_PREPARED_COMPILER_ONLY;
-        if (Mode !== 'flag' && Mode !== 'normal') Environment.WINDVALE_PREPARED_COMPILER_ONLY = Mode;
+        delete Environment.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        if (Mode.startsWith('products-')) Environment.WINDVALE_PREPARED_PRODUCTS_ONLY = Mode.slice(9);
+        else if (Mode !== 'flag' && Mode !== 'normal') Environment.WINDVALE_PREPARED_COMPILER_ONLY = Mode;
         const Result = spawnSync(process.execPath, [Builder,
             ...(Prepare ? ['--prepare-only'] : []), '--deadline-ms', String(Date.now() + 60_000),
             ...(Mode === 'flag' ? ['--prepared-compiler-only'] : []), ...Arguments], {
@@ -1566,6 +1583,8 @@ async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
     // CLI phase selection. A different input key is not a prepared checkpoint.
     Probe('flag', 64, /Current compiler checkpoint missing/u);
     Probe('1', 64, /Current compiler checkpoint missing/u);
+    Probe('products-1', 64, /Current compiler checkpoint missing/u);
+    Probe('products-0', 1, /WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1/u);
     const Output = path.join(Testˉroot, 'Prepared-only.wvb');
     const Sentinel = Buffer.from('preserve the previous output');
     await writeFile(Output, Sentinel);
@@ -1578,6 +1597,7 @@ async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
         Writeˉcompilerˉcheckpointˉfixture, async () => {});
     Probe('flag', 0, /preparation status=Complete steps=0 key=[a-f0-9]{64}/u);
     Probe('1', 0, /cache status=Hit/u);
+    Probe('products-1', 0, /cache status=Hit/u);
     Probe('normal', 0, /cache status=Hit/u);
     // A later invocation failure must leave the completed checkpoint reusable.
     Probe('flag', 64, /Usage:/u, ['unexpected.wvproj', 'unexpected.wvb']);

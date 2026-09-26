@@ -16,6 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
+    Acquireˉsegmentedˉhostedˉcheckpoint,
     Acquireˉsegmentedˉimageˉcheckpoint,
     Validateˉsegmentedˉimageˉcheckpoint,
     Createˉsegmentedˉhostedˉcheckpoint,
@@ -220,16 +221,19 @@ try {
     const createdDirectory = path.join(checkpointFamily, createdKey);
     const productBytes = Buffer.from('segmented hosted product\n', 'ascii');
     let createdAdmissions = 0;
-    const createdStatus = await Createˉsegmentedˉhostedˉcheckpoint(
-        checkpointFamily,
-        createdDirectory,
-        createdKey,
-        profile,
-        input,
-        temporary => Writeˉproduct(temporary, productBytes),
-        async () => {
-            createdAdmissions += 1;
-        },
+    const { status: createdStatus } = await Acquireˉsegmentedˉhostedˉcheckpoint(
+        createdDirectory, createdKey, profile, input,
+        () => Createˉsegmentedˉhostedˉcheckpoint(
+            checkpointFamily,
+            createdDirectory,
+            createdKey,
+            profile,
+            input,
+            temporary => Writeˉproduct(temporary, productBytes),
+            async () => {
+                createdAdmissions += 1;
+            },
+        ),
     );
     if (createdStatus !== 'Created' || createdAdmissions !== 1) {
         Reject(`The first checkpoint status differs: ${createdStatus}`);
@@ -241,6 +245,22 @@ try {
         profile,
         input,
     );
+    const Forbiddenˉconstruction = async () => {
+        Reject('Prepared-only execution called a constructor.');
+    };
+    const Prepared = await Acquireˉsegmentedˉhostedˉcheckpoint(
+        createdDirectory, createdKey, profile, input, Forbiddenˉconstruction, true,
+    );
+    if (Prepared.status !== 'Hit') Reject('Prepared checkpoint did not report a hit.');
+    const Missingˉkey = '6'.repeat(64);
+    await Expectˉrejection(Acquireˉsegmentedˉhostedˉcheckpoint(
+        path.join(checkpointFamily, Missingˉkey), Missingˉkey, profile, input,
+        Forbiddenˉconstruction, true,
+    ), 'Prepared segmented hosted product missing', 64);
+    if (await lstat(path.join(checkpointFamily, Missingˉkey)).catch(() => null) !== null) {
+        Reject('Prepared-only miss created a checkpoint.');
+    }
+    await Requireˉnoˉtemporaryˉcheckpoints(checkpointFamily);
     const outputPath = path.join(outputRoot, OUTPUT_LEAF);
     await writeFile(outputPath, Buffer.from('previous output\n', 'ascii'));
     await Materializeˉsegmentedˉhostedˉcheckpoint(
@@ -270,6 +290,9 @@ try {
         ),
         'manifest differs',
     );
+    await Expectˉrejection(Acquireˉsegmentedˉhostedˉcheckpoint(
+        createdDirectory, createdKey, profile, input, Forbiddenˉconstruction, true,
+    ), 'manifest differs');
 
     const raceKey = '3'.repeat(64);
     const raceDirectory = path.join(checkpointFamily, raceKey);
@@ -312,14 +335,14 @@ try {
     }
 
     console.log(
-        'segmented hosted WVB cache test cases=16 status=Passed ' +
+        'segmented hosted WVB cache test cases=17 status=Passed ' +
         'deadline-tree-termination=Passed output-bound-termination=Passed ' +
         'termination-failure-settle=Passed ' +
         'deadline-arguments=Passed deadline-reserve=Passed ' +
         'deadline-status=Passed nested-detached-deadline=Passed ' +
         'forced-failure-cleanup=Passed publication-cleanup=Passed ' +
         'prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed ' +
-        'race-cleanup=Passed executable-materialization=Passed image-reuse=Passed hosted-session=Passed',
+        'race-cleanup=Passed executable-materialization=Passed image-reuse=Passed hosted-session=Passed prepared-products=Passed',
     );
 } finally {
     const resolved = path.resolve(testRoot);
@@ -512,6 +535,17 @@ async function Checkˉdeadlineˉarguments(Directory) {
     const Input = path.join(Directory, 'Absent.wvb');
     const Output = path.join(Directory, OUTPUT_LEAF);
     const Cache = path.join(Directory, 'Uncreated-cache');
+    const Invalidˉmode = spawnSync(process.execPath, [Builder, '5', Input, Output], {
+        encoding: 'utf8', timeout: 10_000, maxBuffer: 65_536, windowsHide: true,
+        env: { ...process.env, WINDVALE_PREPARED_PRODUCTS_ONLY: '0',
+            WINDVALE_NATIVE_CACHE_ROOT: Cache },
+    });
+    if (Invalidˉmode.error || Invalidˉmode.status !== 1 ||
+        !Invalidˉmode.stderr.includes('WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1') ||
+        await lstat(Cache).catch(() => null) !== null ||
+        await lstat(Output).catch(() => null) !== null) {
+        Reject(`Invalid prepared-product mode was accepted: ${JSON.stringify(Invalidˉmode)}`);
+    }
     const Legacy = Parseˉsegmentedˉhostedˉarguments(['5', Input, Output]);
     if (Legacy.Deadline !== null || Legacy.Profile !== '5' ||
         Legacy.Input !== Input || Legacy.Output !== Output) {

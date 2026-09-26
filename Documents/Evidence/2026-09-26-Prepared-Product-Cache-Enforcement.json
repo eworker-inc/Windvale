@@ -1,0 +1,513 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-prepared-product-cache-enforcement",
+  "date": "2026-09-26",
+  "subject": "Fail-before-construction cache-only execution on Windows and Debian",
+  "claim": "The current compiler, split-project WVB and segmented hosted application builders enforce prepared-product mode. Exact hits validate and materialize; misses return 64 before native construction; corrupt entries fail closed. Both hosts pass the focused lifecycle owners and a real binder miss/prepare/hit/later-miss/hit sequence, preserving existing outputs and completed caches. The packaged binder executes its expected usage rejection on both hosts. CI phase integration remains unfinished.",
+  "source": {
+    "kind": "Other",
+    "value": "6038ecdc plus the exact changed implementation and verifier identities recorded in runs. Cache tests use bounded fixture producers; the separate measured binder sequence uses retained native tools and a 774724-byte previously compiled binder WVB."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "130 split-cache lifecycle cases",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 19083,
+          "sha256": "b70c28add935432c3d91ccc10d459d03bdcd2784faaab2107e97c5785a030be1"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45550,
+          "sha256": "a5fd4d411bd97077b2a431ce7589b2f02c4d30ccaa32f26a11cb2067b1184a55"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 101384,
+          "sha256": "2db8191b521be039e62d5734749b9960a765853dd911a79d3d230ebd348c6ab0"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 29566,
+          "sha256": "3a72e72faaf77a3f801b66e13b636425ad180d5f597beef0158b45502abb0061"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24259,
+          "sha256": "b5885382f94307974e9e6f9b58b0be633b8184778b2eff607953af48596e5ed3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Split.log",
+          "size": 1784,
+          "sha256": "cad4e990f34c866f2e8ec23ce871b7338db795e92f8cd95cf59af99ce47d54d9"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "17 hosted-cache lifecycle cases",
+      "tool": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner segmented-hosted-wvb-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 29566,
+          "sha256": "3a72e72faaf77a3f801b66e13b636425ad180d5f597beef0158b45502abb0061"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24259,
+          "sha256": "b5885382f94307974e9e6f9b58b0be633b8184778b2eff607953af48596e5ed3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Hosted.json",
+          "size": 526,
+          "sha256": "88cdf3844a0a02bbcfd5712511e386658861b5918f501760421177d0c5fba603"
+        }
+      ],
+      "elapsedMilliseconds": 9919
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Real binder product missing",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462531382\",\"7\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Binder-Current.wvb\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Windows-Prepared-Products-Binder.exe\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 231,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder.json",
+          "size": 2972,
+          "sha256": "c3362fec9cc7d57b3459e695d1f3adcf98e00d2f4dd025266274fc44d615153c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder-missing.log",
+          "size": 177,
+          "sha256": "f4bc7bd98ce7d140bd787f009102f31e553f7b54772270c90b004f0409acfc20"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Real binder product prepare",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462531382\",\"7\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Binder-Current.wvb\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Windows-Prepared-Products-Binder.exe\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 161149,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder.json",
+          "size": 2972,
+          "sha256": "c3362fec9cc7d57b3459e695d1f3adcf98e00d2f4dd025266274fc44d615153c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder-prepare.log",
+          "size": 1308,
+          "sha256": "93f4ff9206a801b691ef5fa2a0e3518f0e99a45950b987752430932fea41a8ef"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Real binder product reuse",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462531382\",\"7\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Binder-Current.wvb\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Windows-Prepared-Products-Binder.exe\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 287,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder.json",
+          "size": 2972,
+          "sha256": "c3362fec9cc7d57b3459e695d1f3adcf98e00d2f4dd025266274fc44d615153c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder-reuse.log",
+          "size": 149,
+          "sha256": "0431c9abdd0692c38c399715c89e7a554dc41ff366c73ea46a22593385726b2f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Real binder product later-profile-miss",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462531382\",\"6\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Binder-Current.wvb\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Windows-Prepared-Products-Binder.exe\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 214,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder.json",
+          "size": 2972,
+          "sha256": "c3362fec9cc7d57b3459e695d1f3adcf98e00d2f4dd025266274fc44d615153c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder-later-profile-miss.log",
+          "size": 177,
+          "sha256": "480497cf7591ab659f9a1d2d808b42e74a4812fb05a715a57fa9bdbc2bb4027a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Real binder product reuse-after-failure",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462531382\",\"7\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Binder-Current.wvb\",\"D:\\\\windvale\\\\dev01\\\\Artifacts\\\\Work\\\\Simplification-2026-09-26\\\\Windows-Prepared-Products-Binder.exe\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 285,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder.json",
+          "size": 2972,
+          "sha256": "c3362fec9cc7d57b3459e695d1f3adcf98e00d2f4dd025266274fc44d615153c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Prepared-Products-Binder-reuse-after-failure.log",
+          "size": 149,
+          "sha256": "0431c9abdd0692c38c399715c89e7a554dc41ff366c73ea46a22593385726b2f"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "133 split-cache lifecycle cases",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 19083,
+          "sha256": "b70c28add935432c3d91ccc10d459d03bdcd2784faaab2107e97c5785a030be1"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45550,
+          "sha256": "a5fd4d411bd97077b2a431ce7589b2f02c4d30ccaa32f26a11cb2067b1184a55"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 101384,
+          "sha256": "2db8191b521be039e62d5734749b9960a765853dd911a79d3d230ebd348c6ab0"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 29566,
+          "sha256": "3a72e72faaf77a3f801b66e13b636425ad180d5f597beef0158b45502abb0061"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24259,
+          "sha256": "b5885382f94307974e9e6f9b58b0be633b8184778b2eff607953af48596e5ed3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Split.log",
+          "size": 1838,
+          "sha256": "8e9aefa5de2efee5fe5fa3cb76b2e966dfcc98ee5c1803d48a8c617acf5d7afc"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "17 hosted-cache lifecycle cases",
+      "tool": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 29566,
+          "sha256": "3a72e72faaf77a3f801b66e13b636425ad180d5f597beef0158b45502abb0061"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24259,
+          "sha256": "b5885382f94307974e9e6f9b58b0be633b8184778b2eff607953af48596e5ed3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Hosted.log",
+          "size": 1116,
+          "sha256": "a21615e3b99c0a984d5434ab7688fb49355786fe20abba2eedc0109178c62233"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, Node v20.19.2",
+      "target": "Real binder product missing",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"/usr/bin/node\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462533993\",\"7\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.elf\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 1670,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.json",
+          "size": 2807,
+          "sha256": "171d07c538655252bcf91aa3eeb0edc504764b560e626d12068b157fc23290ed"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder-missing.log",
+          "size": 177,
+          "sha256": "c16e9964fd211f5a238c1b94fd87e8181cac330a79dc99aa5101c2c481740a39"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, Node v20.19.2",
+      "target": "Real binder product prepare",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"/usr/bin/node\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462533993\",\"7\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.elf\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 163151,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.json",
+          "size": 2807,
+          "sha256": "171d07c538655252bcf91aa3eeb0edc504764b560e626d12068b157fc23290ed"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder-prepare.log",
+          "size": 1304,
+          "sha256": "f0068c7b04b581834a06b60ed55d900ea57538216f07f73db3166fd97c0d7977"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, Node v20.19.2",
+      "target": "Real binder product reuse",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"/usr/bin/node\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462533993\",\"7\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.elf\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 2694,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.json",
+          "size": 2807,
+          "sha256": "171d07c538655252bcf91aa3eeb0edc504764b560e626d12068b157fc23290ed"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder-reuse.log",
+          "size": 145,
+          "sha256": "255c8ca8c6b02badbdffa18c156e8526fff8635fce88978f9abc0667880d3baa"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, Node v20.19.2",
+      "target": "Real binder product later-profile-miss",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"/usr/bin/node\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462533993\",\"6\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.elf\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 1584,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.json",
+          "size": 2807,
+          "sha256": "171d07c538655252bcf91aa3eeb0edc504764b560e626d12068b157fc23290ed"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder-later-profile-miss.log",
+          "size": 177,
+          "sha256": "0cb02b9c07aef381a4dc79ea66a649c1de9e78bb32683571c0d105d4d349d08f"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, Node v20.19.2",
+      "target": "Real binder product reuse-after-failure",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "[\"/usr/bin/node\",\"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\",\"--deadline-ms\",\"1790462533993\",\"7\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb\",\"/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.elf\"]",
+      "result": "Passed",
+      "elapsedMilliseconds": 2752,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.wvb",
+          "size": 774724,
+          "sha256": "492ba6a44c48e9c5505900963bef06700687941d009dc219017e6aa448cc8dda"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder.json",
+          "size": 2807,
+          "sha256": "171d07c538655252bcf91aa3eeb0edc504764b560e626d12068b157fc23290ed"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Prepared-Products-Binder-reuse-after-failure.log",
+          "size": 145,
+          "sha256": "255c8ca8c6b02badbdffa18c156e8526fff8635fce88978f9abc0667880d3baa"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This adds an enforceable construction boundary, not a completed CI workflow. It neither refreshes the entire current compiler nor claims complete affected-owner execution or qualification. The mode only applies to the three named builders.",
+    "The 816-byte legacy and 221-byte minimum-program probes failed existing packaging: the enum metadata reader rejects zero nominal types. A 1281-byte nominal fixture failed staging with Unsupported_module detail=105. Those failed probes were diagnosed and retained locally; their failures were not relabeled as passes. The first Windows long-path probe additionally reported transport status 70; path sensitivity is an inference, not an isolated measurement.",
+    "The successful measurement uses the binder WVB already packaged in prior evidence. Each host starts a fresh private cache, uses one five-minute deadline for the complete sequence, and validates exact output bytes on every reuse or rejected profile change. Windows and Debian ran concurrently; this is one construction/reuse observation, not a throughput regression threshold. Peak working set was not measured.",
+    "Windows used Node 24.18.0; Debian WSL used Node 20.19.2 and the repository on /mnt/d. Debian has no pwsh installation, so its existing Node leaf owners were invoked directly. The first split-cache run exposed a test expectation using prepared mode for an existing ordinary-construction producer-identity case; the test restored that case to ordinary mode before the passing rerun.",
+    "Routing verification passed 31 general and 304 native cases. Broad compiler/runtime conformance, independent reconstruction, database behavior and release qualification were not run: the changed contract is cache-only acquisition and rejection, not compilation semantics.",
+    "CI run 36275830472 timed out on Windows and failed the Linux ordinary console-packager source reconstructed-WVB-size assertion. The packager projects were migrated to Project 4 after that older byte-pinned verifier was written. This needs reconciliation and is not treated as passing CI evidence."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Specifications/Windvale-Project-Wvb-Checkpoint.md",
+    "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+    "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+    "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+    "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tests/Native/Verification-Owners.txt"
+  ]
+}
