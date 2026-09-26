@@ -24,6 +24,61 @@ export fn Checkˉboundaries(
     Metadata: bytes, Value: bytes, Zero: bytes
 ) -> i32 {
     let Empty: bytes = Bytesˉslice(Zero, 0u32, 0u32);
+    // Cell validation runs before append mutation and indexed publication.
+    // This synthetic module tests the boundary independently of source checks.
+    let Cellˉheader: bytes = Bytesˉconcat(
+        Bytesˉconcat(Textˉtoˉutf8("WVB1"), Bytesˉfromˉu32ˉlittle(2752513u32)),
+        Bytesˉconcat(Bytesˉfromˉu8(7u8), Bytesˉfromˉu32ˉlittle(0u32))
+    );
+    let Cellˉmodule: bytes = Bytesˉconcat(Cellˉheader, Module);
+    let Cellˉtypes: bytes = Bytesˉfromˉu32ˉlittle(13u32);
+    let Cell: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(1u32));
+    if !Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32, Cellˉtypes, 1u32, Metadata, Cell) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32, Cellˉtypes, 1u32, Empty, Cell) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32, Cellˉtypes, 1u32, Metadata, Empty) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 4294967295u32, Cellˉtypes, 1u32, Metadata, Cell) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Bytesˉslice(Cellˉmodule, 0u32, 12u32), 8u32, Cellˉtypes, 1u32, Metadata, Cell) {
+        return 26;
+    }
+    let Wrongˉcell: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(2u32));
+    let Outsideˉcell: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(768u32), Bytesˉfromˉu32ˉlittle(1u32));
+    let Staleˉmetadata: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(0u32)),
+        Bytesˉslice(Metadata, 8u32, 6136u32));
+    let Earlierˉmodule: bytes = Bytesˉconcat(Bytesˉconcat(Textˉtoˉutf8("WVB1"),
+        Bytesˉfromˉu32ˉlittle(2686977u32)), Bytesˉslice(Cellˉmodule, 8u32, 5u32));
+    if Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32, Cellˉtypes, 1u32, Metadata, Wrongˉcell) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32, Cellˉtypes, 1u32, Metadata, Outsideˉcell) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32, Cellˉtypes, 1u32, Staleˉmetadata, Cell) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Earlierˉmodule, 8u32, Cellˉtypes, 1u32, Metadata, Cell) {
+        return 27;
+    }
+    let Emptyˉrecordˉmodule: bytes = Bytesˉconcat(Cellˉheader,
+        Bytesˉconcat(Bytesˉfromˉu8(1u8), Zero));
+    let Emptyˉrecord: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32),
+        Bytesˉfromˉu32ˉlittle(1u32));
+    if !Collections.Collectionˉelementˉvalueˉvalid(Emptyˉrecordˉmodule, 8u32,
+            Cellˉtypes, 1u32, Metadata, Emptyˉrecord) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Cellˉmodule, 8u32,
+            Cellˉtypes, 1u32, Metadata, Emptyˉrecord) ||
+        Collections.Collectionˉelementˉvalueˉvalid(Emptyˉrecordˉmodule, 8u32,
+            Cellˉtypes, 1u32, Metadata, Cell) {
+        return 28;
+    }
+    let Emptyˉtraceˉmodule: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Module, 0u32, 5u32), Bytesˉfromˉu32ˉlittle(0u32)),
+        Bytesˉslice(Module, 9u32, Bytesˉlength(Module) - 9u32));
+    let Emptyˉtraceˉheap: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Heap, 0u32, 8u32), Emptyˉrecord),
+        Bytesˉslice(Heap, 16u32, Bytesˉlength(Heap) - 16u32));
+    let Emptyˉtraced: Collections.Collectionˉrecordˉroots =
+        Collections.Collectionˉrecordˉelementˉroots(
+            Emptyˉtraceˉmodule, Types, 3u32, Emptyˉtraceˉheap, Allocation,
+            1u32, Metadata, Value);
+    if !Emptyˉtraced.Valid || Bytesˉlength(Emptyˉtraced.Roots) != 0u32 ||
+        !Rejects(Emptyˉtraceˉmodule, Types, 3u32, Heap, Allocation, 1u32, Metadata, Value) {
+        return 29;
+    }
     if Collections.Collectionˉbackingˉvalid(Heap, Empty, 1u32, Value) ||
         Collections.Collectionˉbackingˉvalid(Heap, Allocation, 4294967295u32, Value) ||
         Collections.Collectionˉscalarˉelement(Empty, 0u32) ||

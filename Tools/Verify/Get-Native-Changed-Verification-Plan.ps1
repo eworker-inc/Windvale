@@ -4946,7 +4946,7 @@ $UseVectorBorrowIntegrationDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -a
 # Current-product acquisition can exceed the automatic 15-minute CI job budget.
 $VectorBorrowIntegrationDevelopmentExpectedSeconds = [long]900
 $VectorBorrowIntegrationDevelopmentMaximumSeconds = [long]3600
-$VectorBorrowIntegrationDevelopmentCaseCount = 497
+$VectorBorrowIntegrationDevelopmentCaseCount = 519
 if ($UseVectorBorrowIntegrationDevelopment) {
     $VectorBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'

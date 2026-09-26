@@ -75,6 +75,8 @@ const Foundationˉownedˉonly = process.argv.length === 10 &&
     process.argv[2] === '--foundation-owned-payloads';
 const Vectorˉparameterˉonly = process.argv.length === 10 &&
     process.argv[2] === '--vector-parameter-reads';
+const Recordˉvectorˉonly = process.argv.length === 10 &&
+    process.argv[2] === '--record-vector-elements';
 const Vectorˉintegrationˉonly = (process.argv.length === 3 || process.argv.length === 5) &&
     process.argv[2] === '--vector-borrow-integration';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
@@ -96,7 +98,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-owners';
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
-const Developmentˉonly = Vectorˉintegrationˉonly || Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
+const Developmentˉonly = Recordˉvectorˉonly || Vectorˉintegrationˉonly || Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if ((Foundationˉonly || Vectorˉintegrationˉonly) && process.argv.length >= 5) {
@@ -132,6 +134,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-source-ownership <admitter> <validator> <analyzer> <emitter> <target.wvtd>|' +
         '--foundation-owned-payloads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--vector-parameter-reads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
+        '--record-vector-elements <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--vector-borrow-integration [--maximum-seconds <seconds>]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
@@ -224,7 +227,9 @@ async function Runˉdevelopmentˉcommand(...Arguments) {
 async function Main() {
     let Primaryˉfailure = null;
     try {
-        if (Vectorˉintegrationˉonly) {
+        if (Recordˉvectorˉonly) {
+            await Verifyˉrecordˉvectorˉelements(...process.argv.slice(3).map(Value => path.resolve(Value)));
+        } else if (Vectorˉintegrationˉonly) {
             await Runˉvectorˉborrowˉintegration();
         } else if (Vectorˉparameterˉonly) {
             await Verifyˉvectorˉparameterˉreads(...process.argv.slice(3).map(Value => path.resolve(Value)));
@@ -292,11 +297,11 @@ async function Main() {
     if (Vectorˉintegrationˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Vector borrow integration exceeded its total budget during cleanup.', 124);
-        process.stdout.write('native Vector borrow integration status=Passed cases=497 ' +
-            'components=388 vector-groups=80 owned-payload-groups=19 runtime-groups=10 ' +
+        process.stdout.write('native Vector borrow integration status=Passed cases=519 ' +
+            'components=388 vector-groups=80 record-collection-groups=22 owned-payload-groups=19 runtime-groups=10 ' +
             `qualification=false elapsed-ms=${Elapsed}\n`);
     }
-    if (Developmentˉonly && !Vectorˉintegrationˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
+    if (Developmentˉonly && !Recordˉvectorˉonly && !Vectorˉintegrationˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) {
             Reject('The focused Foundation borrow development budget expired during cleanup.', 124);
@@ -332,6 +337,8 @@ async function Runˉvectorˉborrowˉintegration() {
     const Components = await Run('foundation-borrow-components-execute', Products.Components, [], 42);
     if (Components !== '') Reject('The combined Foundation component test emitted unexpected output.');
     await Verifyˉvectorˉparameterˉreads(Products.Admitter, Products.Authenticator,
+        Products.Analyzer, Products.Emitter, Target, Products.Verifier, Products.Runner);
+    await Verifyˉrecordˉvectorˉelements(Products.Admitter, Products.Authenticator,
         Products.Analyzer, Products.Emitter, Target, Products.Verifier, Products.Runner);
     Validator = Products.Authenticator;
     Targetˉdescriptor = Target;
@@ -1893,6 +1900,210 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
         `wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)} qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 
+async function Verifyˉrecordˉvectorˉelements(Admitter, Authenticator, Analyzer, Emitter, Target, Verifier, Runner) {
+    for (const Product of [Admitter, Authenticator, Analyzer, Emitter, Verifier, Runner]) {
+        Requireˉordinaryˉfile(Product, 134_217_728, 'record Vector predecessor');
+    }
+    const Fixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Foundation-Record-Vector-Executable.wv');
+    Requireˉordinaryˉfile(Fixture, 8192, 'record Vector fixture');
+    const Source = readFileSync(Fixture, 'utf8');
+    function Arguments(Input, Output) {
+        return [Admitter, Authenticator, Analyzer, Emitter,
+            '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+            '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
+            Input, ...['Collections/Collections.wv', 'Memory/Memory.wv', 'Values/Option.wv', 'Values/Result.wv']
+                .map(Name => path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output];
+    }
+    function Replace(Text, Before, After) {
+        if (Text.split(Before).length !== 2) Reject('Record Vector mutation is ambiguous: ' + Before);
+        return Text.replace(Before, After);
+    }
+    const Observeˉstart = Source.indexOf('fn Observe(');
+    const Observeˉend = Source.indexOf('export fn Main(');
+    if (Observeˉstart < 0 || Observeˉend <= Observeˉstart) Reject('Record Vector fixture boundaries differ.');
+    const Frozen = Source.slice(0, Observeˉstart) + `fn Freeze(Values: Collections.Vector<Entry>) -> Collections.Sequence<Entry> {
+    let Owned: Collections.Vector<Entry> = Values;
+    return Collections.Vectorˉfreeze(Owned);
+}
+
+fn Observe(Values: Collections.Vector<Entry>) -> i32 {
+    let Frozen: Collections.Sequence<Entry> = Freeze(Values);
+    let Alias: Collections.Sequence<Entry> = Frozen;
+    if Collections.Sequenceˉlength(borrow Alias) != 2u64 { return 7; }
+    let Frozenˉfirst: Entry = Collections.Sequenceˉat(borrow Frozen, 0u64);
+    let Frozenˉsecond: Entry = Collections.Sequenceˉat(borrow Alias, 1u64);
+    if Check(Frozenˉfirst) != 7u32 || Check(Frozenˉsecond) != 42u32 { return 8; }
+    return 42;
+}
+
+` + Source.slice(Observeˉend);
+    const Refused = Replace(Source, '    return Observe(Values);', `    let Refused: Result.Result<unit, Collections.Vectorˉappendˉfailure<Entry> > =
+        Collections.Vectorˉappend(borrow mut Values, Entry(Span(17u32, 25u32), 18446744073709551615u64));
+    match Refused {
+        case Result.Result.Valid { Value: Unexpected } { return 9; }
+        case Result.Result.Failure { Error: Failure } {
+            if Check(Failure.Value) != 42u32 { return 10; }
+        }
+    }
+    return Observe(Values);`);
+    const Churn = Replace(Source, '                Iteration = Iteration + 1u32;',
+        '                if Check(Entry(Span(17u32, 25u32), 18446744073709551615u64)) != 42u32 { return 11; }\n                Iteration = Iteration + 1u32;')
+        .replace('while Iteration < 4u32', 'while Iteration < 900u32');
+    const Grown = Source.slice(0, Source.indexOf('export fn Main(')) + `export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Root: Memory.Memoryˉbudget = Budget;
+    let Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> = Memory.Split(borrow mut Root, 16u64, 0u32);
+    return match Split {
+        case Result.Result.Failure { Error: Splitˉfailure } { 12 }
+        case Result.Result.Valid { Value: Child } {
+            let Created: Result.Result<Collections.Vector<Entry>, Memory.Allocationˉfailure> =
+                Collections.Vectorˉconstructˉreserved::<Entry>(Child, 1u64);
+            match Created {
+                case Result.Result.Failure { Error: Createˉfailure } { 13 }
+                case Result.Result.Valid { Value: Initial } {
+                    var Values: Collections.Vector<Entry> = Initial;
+                    let First: Result.Result<unit, Collections.Vectorˉappendˉfailure<Entry> > =
+                        Collections.Vectorˉappend(borrow mut Values, Entry(Span(3u32, 4u32), 18446744073709551615u64));
+                    match First {
+                        case Result.Result.Failure { Error: Firstˉfailure } { return 14; }
+                        case Result.Result.Valid { Value: Firstˉaccepted } { }
+                    }
+                    let Grown: Result.Result<unit, Memory.Allocationˉfailure> =
+                        Collections.Vectorˉgrowˉreserved::<Entry>(borrow mut Values, borrow mut Root, 2u64);
+                    match Grown {
+                        case Result.Result.Failure { Error: Growˉfailure } { return 15; }
+                        case Result.Result.Valid { Value: Growˉaccepted } { }
+                    }
+                    let Second: Result.Result<unit, Collections.Vectorˉappendˉfailure<Entry> > =
+                        Collections.Vectorˉappend(borrow mut Values, Entry(Span(17u32, 25u32), 18446744073709551615u64));
+                    match Second {
+                        case Result.Result.Failure { Error: Secondˉfailure } { 16 }
+                        case Result.Result.Valid { Value: Secondˉaccepted } { Observe(Values) }
+                    }
+                }
+            }
+        }
+    };
+}
+`;
+    function Genericˉrecord(Text) {
+        let Generic = Text.replaceAll(/\bEntry\b/gu, 'Entry<Span>').replaceAll('Span>>', 'Span> >');
+        Generic = Replace(Generic, 'record Entry<Span> { Range: Span; Marker: u64; }',
+            'record Entry<T> { Range: T; Marker: u64; }');
+        for (const [Offset, Length] of [[3, 4], [17, 25]]) {
+            Generic = Replace(Generic, `Entry<Span>(Span(${Offset}u32, ${Length}u32), 18446744073709551615u64)`,
+                `Entry<Span> { Range: Span(${Offset}u32, ${Length}u32), Marker: 18446744073709551615u64 }`);
+        }
+        return Replace(Generic, 'Collections.Vectorˉborrowˉat(Index:',
+            'Collections.Vectorˉborrowˉat::<Entry<Span> >(Index:');
+    }
+    let Emptyˉrecord = Replace(Source, 'record Entry { Range: Span; Marker: u64; }', 'record Entry {}');
+    Emptyˉrecord = Replace(Emptyˉrecord, '    if Value.Marker != 18446744073709551615u64 { return 1u32; }\n    return Value.Range.Offset + Value.Range.Length;', '    return 42u32;');
+    Emptyˉrecord = Emptyˉrecord.replaceAll(/Entry\(Span\((?:3u32, 4u32|17u32, 25u32)\), 18446744073709551615u64\)/gu, 'Entry()')
+        .replaceAll('!= 7u32', '!= 42u32');
+    const Cases = [['nested-record-indexed', Source], ['generic-record-indexed', Genericˉrecord(Source)],
+        ['freeze-alias-indexed', Frozen], ['growth-retains-records', Grown],
+        ['generic-growth-retains-records', Genericˉrecord(Grown)],
+        ['append-refusal-retains-record', Refused], ['record-reclamation', Churn]];
+    let Candidate = null;
+    for (const [Label, Text] of Cases) {
+        const Input = path.join(Work, 'Record-' + Label + '.wv');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        let Previous = null;
+        for (const Generation of ['a', 'b']) {
+            const Output = path.join(Work, 'Record-' + Label + '-' + Generation + '.wvb');
+            await Runˉnode('record-' + Label + '-' + Generation, 'Run-Split-Compiler.mjs', Arguments(Input, Output));
+            const Bytes = readFileSync(Output);
+            if (Bytes.length > 16384 || Bytes.readUInt16LE(6) !== 42) Reject('Record collection version or size differs.');
+            if (Previous !== null && !Previous.equals(Bytes)) Reject('Record collection publication is not deterministic.');
+            Previous = Bytes;
+            if (Generation === 'a') {
+                if (Normalize(await Run('record-' + Label + '-verify', Verifier, [Output])) !==
+                    'wvb status=Valid profile=compiler-aligned\n') Reject('Record collection verification differs: ' + Label);
+                const Execution = Normalize(await Run('record-' + Label + '-execute', Runner, [Output, '--report-steps']));
+                const Report = /^Result: 42\nInstructions: ([1-9][0-9]*)\n$/u.exec(Execution);
+                if (Report === null || Number(Report[1]) > 500000) Reject('Record collection execution differs: ' + Label);
+                process.stdout.write(`PASS record collection case=${Label} instructions=${Report[1]} wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)}\n`);
+            }
+        }
+        if (Label === 'nested-record-indexed') Candidate = Previous;
+    }
+    const Sections = Parseˉsections(Candidate);
+    const Types = Parseˉtypes(Candidate, Sections[7]);
+    const Vectors = Types.filter(Type => Type.kind === 5 && Type.element?.shape === 7);
+    if (Vectors.length !== 2 || Vectors[0].element.typeIndex === Vectors[1].element.typeIndex) {
+        Reject('Expected two distinct record element nominal identities.');
+    }
+    const Forward = Parseˉfunction(Candidate, Sections[4], 'Forward');
+    const Primary = Types[Candidate.readUInt32LE(Forward.parameterShapeOffsets[0] + 1)];
+    const Other = Vectors.find(Type => Type.element.typeIndex !== Primary.element.typeIndex);
+    if (Other === undefined || Primary.element?.shape !== 7) Reject('Record collection mutation targets differ.');
+    const Mutations = [
+        ['old-minor', Bytes => Bytes.writeUInt16LE(41, 6)],
+        ['future-minor', Bytes => Bytes.writeUInt16LE(43, 6)],
+        ['wrong-record-nominal', Bytes => Bytes.writeUInt32LE(Other.element.typeIndex, Primary.element.shapeOffset + 1)],
+        ['record-nominal-boundary', Bytes => Bytes.writeUInt32LE(Types.length, Primary.element.shapeOffset + 1)],
+        ['record-nominal-overflow', Bytes => Bytes.writeUInt32LE(0xffffffff, Primary.element.shapeOffset + 1)],
+        ['shared-record-field', Bytes => { Bytes[Types[Primary.element.typeIndex].fields[1].shapeOffset] = 6; }],
+        ['truncated-record-type', Bytes => Bytes.subarray(0, Primary.element.shapeOffset + 4)],
+    ];
+    for (const [Label, Mutate] of Mutations) {
+        let Bytes = Buffer.from(Candidate);
+        const Changed = Mutate(Bytes);
+        if (Buffer.isBuffer(Changed)) Bytes = Changed;
+        if (Bytes.equals(Candidate)) Reject('Record mutation did not change bytes: ' + Label);
+        const Input = path.join(Work, 'Record-malformed-' + Label + '.wvb');
+        writeFileSync(Input, Bytes, { flag: 'wx' });
+        for (const [Tool, Pattern] of [[Verifier, /^wvb status=Invalid phase=(?:envelope|metadata|semantic step=[a-z-]+|typed-execution|control-reachability)\n$/u],
+            [Runner, /^wvb run status=Unsupported profile=portable-main-i32 phase=envelope\n$/u]]) {
+            const Result = await Runˉdevelopmentˉcommand(Tool, [Input], Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 1 || Result.Output !== '' || !Pattern.test(Normalize(Result.Error))) {
+                Reject(`Malformed record collection did not reject: ${Label}\n${Result.Output}${Result.Error}`);
+            }
+        }
+        process.stdout.write(`PASS record collection malformed case=${Label}\n`);
+    }
+    const Header = Source.slice(0, Source.indexOf('record Span'));
+    const Invalidˉfields = [['shared-bytes', 'bytes'], ['shared-text', 'text'],
+        ['owned-vector', 'Collections.Vector<u32>'], ['shared-sequence', 'Collections.Sequence<u32>'],
+        ['empty-record', null]];
+    for (const [Label, Field] of Invalidˉfields) {
+        const Input = path.join(Work, 'Record-rejected-' + Label + '.wv');
+        const Output = path.join(Work, 'Record-rejected-' + Label + '.wvb');
+        writeFileSync(Input, Field === null ? Emptyˉrecord : Header + `record Nested<T> { Value: T; }
+record Bad<T> { Inner: T; }
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Created: Result.Result<Collections.Vector<Bad<Nested<${Field} > > >, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<Bad<Nested<${Field} > > >(Budget, 2u64);
+    return 42;
+}
+`, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(process.execPath,
+            [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output)],
+            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        const Expected = Field === null ? /symbol-status=Emptyˉrecord/u : /wir-status=Genericˉresolution/u;
+        if (Result.Code !== 1 || existsSync(Output) || !Expected.test(Normalize(Result.Error))) {
+            Reject(`Non-Copy record collection was not refused before publication: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS record collection source rejection case=${Label}\n`);
+    }
+    const Bounds = [['length', '2u64'], ['high-half-only', '4294967296u64'], ['maximum', '18446744073709551615u64']];
+    for (const [Label, Index] of Bounds) {
+        const Input = path.join(Work, 'Record-bounds-' + Label + '.wv');
+        const Output = path.join(Work, 'Record-bounds-' + Label + '.wvb');
+        writeFileSync(Input, Replace(Source, 'Forward(borrow Item, 1u64)', `Forward(borrow Item, ${Index})`), { flag: 'wx' });
+        await Runˉnode('record-bounds-' + Label, 'Run-Split-Compiler.mjs', Arguments(Input, Output));
+        if (Normalize(await Run('record-bounds-' + Label + '-verify', Verifier, [Output])) !==
+            'wvb status=Valid profile=compiler-aligned\n') Reject('Record bounds module is not structurally valid.');
+        const Result = await Runˉdevelopmentˉcommand(Runner, [Output], Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || Result.Output !== '' ||
+            !/^wvb run status=Failed code=3008 instructions=[1-9][0-9]*\n$/u.test(Normalize(Result.Error))) {
+            Reject(`Record bounds violation did not terminate: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS record collection bounds rejection case=${Label}\n`);
+    }
+    process.stdout.write(`native record collection elements status=Passed cases=${Cases.length} malformed=${Mutations.length} source-rejections=${Invalidˉfields.length} bounds=${Bounds.length} qualification=false elapsed-ms=${Date.now() - Started}\n`);
+}
+
 async function Verifyˉvectorˉindexedˉborrows(Arguments, Verifier, Runner) {
     const Fixture = path.join(Repositoryˉroot,
         'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv');
@@ -2626,7 +2837,7 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     Requireˉordinaryˉfile(Traceˉfixture, 8192, 'record Vector trace fixture');
     const Traceˉboundaries = path.join(Repositoryˉroot,
         'Tests/Fixtures/WebAssembly/Wvb-Record-Vector-Trace-Boundaries.wv');
-    Requireˉordinaryˉfile(Traceˉboundaries, 8192, 'record Vector trace boundaries');
+    Requireˉordinaryˉfile(Traceˉboundaries, 16384, 'record Vector trace boundaries');
     const Traceˉoutput = path.join(Work, 'record-vector-trace.wvb');
     await Runˉnode('record-vector-trace-compile', 'Run-Split-Compiler.mjs', [
         Admitter, Authenticator, Analyzer, Emitter,
@@ -4167,7 +4378,7 @@ function Parseˉtypes(Bytes, Section) {
                 Entry.fields.push(Shape);
                 Cursor = Shape.end;
             }
-        } else if (Kind === 5) {
+        } else if (Kind === 5 || Kind === 6) {
             Entry.element = Readˉshape(Bytes, Cursor);
             Cursor = Entry.element.end;
         } else if (Kind === 7) {

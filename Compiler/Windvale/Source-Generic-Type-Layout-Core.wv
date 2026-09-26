@@ -49,6 +49,35 @@ export record Compilerˉsourceˉgenericˉtypeˉcase {
     Fields: u32;
 }
 
+// Collection operations admit scalars and recursively Copy records. Shared
+// and owned record fields need separate element lifetime contracts.
+export fn Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32
+) -> bool {
+    if Shape == 1u32 || Shape == 2u32 || Shape == 3u32 ||
+        Shape == 4u32 || Shape == 7u32 || Shape == 8u32 ||
+        (Shape >= 11u32 && Shape <= 16u32) ||
+        (Shape >= 131072u32 + Symbols.Records &&
+            Shape < 131072u32 + Symbols.Records + Symbols.Enums) {
+        return true;
+    }
+    if Compilerˉsourceˉgenericˉtypeˉshapeˉnominalˉkind(
+            Symbols, Catalog,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog),
+            Shape
+        ) != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+        return false;
+    }
+    return Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Catalog,
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(), Shape
+    ) == 1u32;
+}
+
 // These are the WVIR value classes. Unknown is a refusal to copy through a
 // borrow, not evidence that the value is owned. Callable values are frame-owned
 // in the current executable profile and require exact WVFT catalog evidence.

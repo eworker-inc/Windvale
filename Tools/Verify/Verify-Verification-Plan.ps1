@@ -5323,7 +5323,7 @@ $QualificationPipelineExpected = @{
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|95'
+    'Run-Split-Compiler' = '3|98'
     'Run-Authenticated-Source-Admission' = '2|32'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
@@ -5940,7 +5940,7 @@ foreach ($Path in $VectorBorrowIntegrationPaths) {
         $IntegrationPlan.MaximumSeconds -ne (3600 + $CacheOwnerPlan.MaximumSeconds) -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentExpectedSeconds -ne 900 -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentMaximumSeconds -ne 3600 -or
-        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 497 -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 519 -or
         $IntegrationPlan.UseFoundationBorrowPlanDevelopment -or
         $IntegrationPlan.UseFoundationBorrowDirectoryDevelopment -or
         $IntegrationPlan.UseFoundationBorrowOwnerDevelopment -or
@@ -5977,7 +5977,7 @@ foreach ($Boundary in @(
 foreach ($Fragment in @(
     '$NativePlan.UseVectorBorrowIntegrationDevelopment',
     "@('--vector-borrow-integration', '--maximum-seconds', '3600')",
-    'mode=vector-borrow-integration cases=497 expected-seconds=900 maximum-seconds=3600',
+    'mode=vector-borrow-integration cases=519 expected-seconds=900 maximum-seconds=3600',
     'cold-duration-measured=false',
     'No cold product acquisition was started and no passing evidence was recorded.'
 )) {

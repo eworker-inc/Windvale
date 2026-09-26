@@ -4583,17 +4583,9 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
                 Typeˉcatalog, Vectorˉresultˉlayout.Index, 0u32
             );
-        return Vectorˉresultˉelement == 1u32 ||
-            Vectorˉresultˉelement == 2u32 ||
-            Vectorˉresultˉelement == 3u32 ||
-            Vectorˉresultˉelement == 4u32 ||
-            Vectorˉresultˉelement == 7u32 ||
-            Vectorˉresultˉelement == 8u32 ||
-            (Vectorˉresultˉelement >= 11u32 &&
-                Vectorˉresultˉelement <= 16u32) ||
-            (Vectorˉresultˉelement >= 131072u32 + Symbols.Records &&
-                Vectorˉresultˉelement <
-                    131072u32 + Symbols.Records + Symbols.Enums);
+        return Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+            Input, Scan, Symbols, Typeˉcatalog, Vectorˉresultˉelement
+        );
     }
     if Operation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
         if Operandˉcount != 1u32 { return false; }
@@ -4627,17 +4619,9 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
                     Typeˉcatalog, Auxiliary, 0u32
                 );
-        if !(Appendˉvectorˉelement == 1u32 ||
-            Appendˉvectorˉelement == 2u32 ||
-            Appendˉvectorˉelement == 3u32 ||
-            Appendˉvectorˉelement == 4u32 ||
-            Appendˉvectorˉelement == 7u32 ||
-            Appendˉvectorˉelement == 8u32 ||
-            (Appendˉvectorˉelement >= 11u32 &&
-                Appendˉvectorˉelement <= 16u32) ||
-            (Appendˉvectorˉelement >= 131072u32 + Symbols.Records &&
-                Appendˉvectorˉelement <
-                    131072u32 + Symbols.Records + Symbols.Enums)) {
+        if !(Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+            Input, Scan, Symbols, Typeˉcatalog, Appendˉvectorˉelement
+        )) {
             return false;
         }
         let Appendˉresultˉlayout: Compilerˉsourceˉwirˉmember =
@@ -4669,13 +4653,9 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
                     Typeˉcatalog, Auxiliary, 0u32
                 );
-        if !(Vectorˉelement == 1u32 || Vectorˉelement == 2u32 ||
-            Vectorˉelement == 3u32 || Vectorˉelement == 4u32 ||
-            Vectorˉelement == 7u32 || Vectorˉelement == 8u32 ||
-            (Vectorˉelement >= 11u32 && Vectorˉelement <= 16u32) ||
-            (Vectorˉelement >= 131072u32 + Symbols.Records &&
-                Vectorˉelement <
-                    131072u32 + Symbols.Records + Symbols.Enums)) {
+        if !(Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+            Input, Scan, Symbols, Typeˉcatalog, Vectorˉelement
+        )) {
             return false;
         }
         if Operation == 169u32 { return Shape == 8u32; }
@@ -4700,11 +4680,9 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
                     Typeˉcatalog, Target, 0u32
                 );
-        if !(Element == 1u32 || Element == 2u32 || Element == 3u32 ||
-            Element == 4u32 || Element == 7u32 || Element == 8u32 ||
-            (Element >= 11u32 && Element <= 16u32) ||
-            (Element >= 131072u32 + Symbols.Records &&
-                Element < 131072u32 + Symbols.Records + Symbols.Enums)) {
+        if !(Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+            Input, Scan, Symbols, Typeˉcatalog, Element
+        )) {
             return false;
         }
         if Operation == 167u32 {
@@ -6953,13 +6931,9 @@ fn Compilerˉsourceˉwirˉresourceˉoperationˉisˉvalid(
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
             Typeˉcatalog, Vectorˉshape, 0u32
         );
-    if !(Vectorˉelement == 1u32 || Vectorˉelement == 2u32 ||
-        Vectorˉelement == 3u32 || Vectorˉelement == 4u32 ||
-        Vectorˉelement == 7u32 || Vectorˉelement == 8u32 ||
-        (Vectorˉelement >= 11u32 && Vectorˉelement <= 16u32) ||
-        (Vectorˉelement >= 131072u32 + Symbols.Records &&
-            Vectorˉelement <
-                131072u32 + Symbols.Records + Symbols.Enums)) {
+    if !(Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+            Input, Scan, Symbols, Typeˉcatalog, Vectorˉelement
+        )) {
         return false;
     }
     return Wirˉconsumer.Compilerˉsourceˉwirˉbindingˉshape(

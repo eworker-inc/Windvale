@@ -26,7 +26,8 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    extension, the verified host-scalar candidate WVB 1.39 immutable
    Foundation value-payload-borrow extension, candidate WVB 1.40 read-only
    Vector parameter access and projected-Vector helper calls, and candidate
-   WVB 1.41 immutable scalar Vector indexed borrowing.
+   WVB 1.41 immutable scalar Vector indexed borrowing, and the in-development
+   WVB 1.42 Copy record collection candidate.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -222,6 +223,60 @@ rejections, and three bounds traps on Windows and Debian. Selected values are
 `i32`, full-width `u64`, and one `u8`-backed enum; this is not coverage of every
 scalar kind or enum backing family. Linux containers reuse Windows-produced
 native images, not an independently reconstructed compiler or native E3 lowering.
+
+## Candidate WVB 1.42 Copy record collection elements
+
+Status: implemented candidate; focused supplied-product checks pass on Windows
+and Debian. Independent reconstruction and installed promotion remain open. [Decision 0967](../Documents/Decisions/0967-Admit-Copy-Record-Collection-Elements.md)
+records the scope and rationale.
+
+Minor 42 retains the seven-section envelope and the minor-41 instruction
+encodings, including `E1`, `E2`, and `E3`. It admits record shape `7` as a
+collection-operation element only when recursive complete verification proves
+that all fields are Copy values. Nested records, variants, and fixed arrays
+must satisfy that same proof. Text, bytes, Sequences, owned resources, special
+resource-bearing records, and unproven callable fields reject. Earlier minors
+retain scalar-only collection operation admission. Existing declaration-only
+collection metadata is not evidence of operation admission.
+
+Canonical source emission selects 42 when a reachable collection operation
+uses a record element. Every minor-42 module must contain a kind-5 Vector or
+kind-6 Sequence Types entry whose element is record shape `7`; `E3` itself is
+optional. Complete typed verification checks each operation against the exact
+record identity and Copy proof. The bounded proof permits at most 8,192 steps,
+a 64-entry active type path, and 32,768 pending bytes; cycles, exhausted limits,
+or unproven fields reject.
+
+Reserved construction, append, growth, length, freezing, and indexing retain
+their existing argument, resource, failure, and authority rules. Append checks
+the live exact record handle before changing a cell or constructing a failure
+result. Capacity refusal preserves the Vector and returns the original Copy
+record value. Freezing requires matching element shape and nominal identity.
+The interpreter retains the original backing's type identity after freezing.
+Before minor-42 growth checks exclusive backing ownership, it collects
+unreachable aggregate wrappers and releases their retained descriptors. Active
+locals, caller frames, stack values, tasks, loans, and live collection cells
+remain roots; the exclusive-reference check is not weakened.
+
+`E3` produces immutable shape `37(7, record-type)`, with the inherited owner
+loan and invalidation rules. Copy read-through produces an ordinary record
+value; Sequence indexing also produces its ordinary Copy record value.
+Execution preserves aggregate result flags and validates each selected handle
+against the record metadata and declared field count before publication. An
+empty record uses the existing sentinel slot only with its exact nominal type
+and zero declared fields; it consumes no aggregate storage and adds no tracing
+root. Source empty-record declarations remain rejected under the existing
+language rule. Logical bounds failures trap
+without publishing an element. Collection tracing retains the record and its
+aggregate children while the collection remains reachable.
+
+The host scalar candidate retains 2,047 cells per collection, a 65,536-byte
+heap, 4,096 allocation entries, and 768 aggregate slots. This candidate does
+not admit shared or owned record fields, top-level variant/array elements, or
+new mutation APIs. Native lowering, browser/OS execution, installed identities,
+and independent qualification require separate evidence. Reserved construction,
+append, and growth still require the Main-owned budget execution profile;
+source freezing retains its current single-block validation restriction.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -1055,7 +1110,7 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.39 under the exact entry rules)
 35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.39)
 36 immutable-borrowed Memoryˉbudget view (WVB 1.34 through WVB 1.39 parameter or compiler-generated local only)
-37 recursively encoded immutable borrowed payload shape (WVB 1.39 through 1.41 ordinary immutable-borrow parameter or compiler-generated local only; Vector wrapper is minor-40/41 non-parameter local only)
+37 recursively encoded immutable borrowed payload shape (WVB 1.39 through 1.42 ordinary immutable-borrow parameter or compiler-generated local only; Vector wrapper is minor-40/41/42 non-parameter local only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -1180,11 +1235,11 @@ shape byte `25` under the System-profile rules are valid in WVB 1.33 through
 WVB 1.39. Shape byte `36` is valid in WVB 1.34 through WVB 1.39. Opcode `DD`
 is valid in WVB 1.35 through WVB 1.39, opcode `DE` in WVB 1.36 through
 WVB 1.39, opcode `DF` in WVB 1.37 through 1.39, opcode `E0` in WVB 1.38 and
-1.39. Candidates WVB 1.40 and 1.41 inherit these prior vocabulary ranges subject to their
+1.39. Candidates WVB 1.40 through 1.42 inherit these prior vocabulary ranges subject to their
 unchanged ownership and authority rules. Shape byte `37` and opcode `E1` are
-valid in WVB 1.39 through 1.41 under their exact payload rules; `E2` and the borrowed
-Vector-local wrapper are valid in WVB 1.40 and 1.41. Opcode `E3` is valid only in
-candidate WVB 1.41 under the indexed-borrow rules above.
+valid in WVB 1.39 through 1.42 under their exact payload rules; `E2` and the borrowed
+Vector-local wrapper are valid in WVB 1.40 through 1.42. Opcode `E3` is valid in
+candidates WVB 1.41 and 1.42 under their indexed-borrow rules above.
 Type kind `7` is valid in
 WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never

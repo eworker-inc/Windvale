@@ -5067,6 +5067,49 @@ Input, Scan, Symbols, Bindings, Orders, Wir, Function, Foundation, Vectors
 );
 return Compilerˉsourceˉwvbˉfunctionˉborrowˉplans(Foundation, Parameterˉborrows, Guardedˉvectors);
 }
+fn Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
+Wir: bytes,
+Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+Compilerˉsourceˉwvbˉbindingsˉtypeˉcatalog(Bindings.Directory);
+let Functions: Compilerˉsourceˉwvbˉsymbolˉorder = Compilerˉsourceˉwvbˉfunctionˉorder(Orders);
+var Index: u32 = 0u32;
+while Index < Bytesˉlength(Functions.Entries) / 4u32 {
+let Function: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Functions, Index);
+let Entry: u32 = Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) + Function * 48u32;
+var Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32);
+let End: u32 = Operation + Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
+while Operation < End {
+let Current: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) + Operation * 28u32;
+let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Current + 4u32);
+var Collection: u32 = 0u32;
+if Kind == 167u32 || Kind == 168u32 {
+Collection = Bytesˉreadˉu32ˉlittle(Wir, Current + 20u32);
+} else if Kind == 169u32 || Kind == 170u32 || Kind == 173u32 || Kind == 192u32 {
+Collection = Bytesˉreadˉu32ˉlittle(Wir, Current + 24u32);
+} else if Kind == 172u32 {
+Collection = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+Catalog, Bytesˉreadˉu32ˉlittle(Wir, Current + 8u32), 0u32);
+} else if Kind == 175u32 {
+Collection = Sourceˉwir.Compilerˉsourceˉwirˉbindingˉshape(
+Bindings, Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32), Function,
+Bytesˉreadˉu32ˉlittle(Wir, Current + 20u32));
+}
+if Collection != 0u32 {
+let Element: u32 = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+Catalog, Collection, 0u32);
+let Planned: bytes = Compilerˉsourceˉwvbˉplannedˉshape(Element, Symbols, Orders);
+if Bytesˉlength(Planned) == 5u32 && Bytesˉreadˉu8(Planned, 0u32) == 7u8 { return true; }
+}
+Operation = Operation + 1u32;
+}
+Index = Index + 1u32;
+}
+return false;
+}
 fn Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
 Wir: bytes,
 Orders: Compilerˉsourceˉwvbˉsymbolˉorders
@@ -7482,7 +7525,10 @@ var Exportˉcount: u32 = 0u32;
 var Codeˉoffset: u32 = 0u32;
 var Functionˉrank: u32 = 0u32;
 var Features: u32 = Typeˉencoding.Features;
-let Foundationˉborrowˉmodule: bool = Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
+let Recordˉcollectionˉmodule: bool = Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
+Wirˉsummary.Directory, Symbols, Bindings, Emissionˉorders
+);
+let Foundationˉborrowˉmodule: bool = Recordˉcollectionˉmodule || Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
 Wirˉsummary.Directory, Emissionˉorders
 );
 while Functionˉrank < Emissionˉfunctions {
@@ -7640,6 +7686,7 @@ Wvbˉminor = 40u32;
 if (Features & WVB_VECTOR_INDEXED_BORROW_FEATURE) != 0u32 {
 Wvbˉminor = 41u32;
 }
+if Recordˉcollectionˉmodule { Wvbˉminor = 42u32; }
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
 Bytecode = Bytesˉconcat(

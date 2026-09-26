@@ -11,7 +11,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Search status | Decisions |
 | --- | ---: |
 | Accepted | 354 |
-| Implemented | 500 |
+| Implemented | 501 |
 | Proposed | 4 |
 | Qualified | 95 |
 | Recorded | 9 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0967: admit Copy record collection elements](0967-Admit-Copy-Record-Collection-Elements.md) | Implemented |
 | [Decision 0966: accept Windvale 1.x stability and support policy](0966-Accept-Windvale-1.x-Stability-And-Support-Policy.md) | Accepted |
 | [Decision 0965: borrow scalar Vector elements without transferring ownership](0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md) | Recorded |
 | [Decision 0964: forward borrowed Vector payloads to immutable helpers](0964-Forward-Borrowed-Vector-Payloads-To-Immutable-Helpers.md) | Implemented |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0945: separate database behavior from cross-target packaging](0945-Separate-Database-Behavior-From-Cross-Target-Packaging.md) | Implemented |
 | [Decision 0944: select exact database development target sets](0944-Select-Exact-Database-Development-Target-Sets.md) | Implemented |
 | [Decision 0943: complete Windvale Language 1.0 Slice 8 qualification](0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) | Accepted |
-| [Decision 0942: advance the frozen source identity for Foreign and payload borrowing](0942-Advance-The-Frozen-Source-Identity-For-Foreign-And-Payload-Borrowing.md) | Accepted |
 
 ## Superseded or historical records
 

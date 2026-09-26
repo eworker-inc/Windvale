@@ -1433,19 +1433,6 @@ export fn Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
     );
 }
 
-export fn Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-    Shape: u32,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
-) -> bool {
-    if Shape == 1u32 || Shape == 2u32 || Shape == 3u32 ||
-        Shape == 4u32 || Shape == 7u32 || Shape == 8u32 ||
-        (Shape >= 11u32 && Shape <= 16u32) {
-        return true;
-    }
-    return Shape >= 131072u32 + Symbols.Records &&
-        Shape < 131072u32 + Symbols.Records + Symbols.Enums;
-}
-
 export fn Compilerˉsourceˉwirˉterminatorˉvalue(
     Terminator: Compilerˉsourceˉwirˉterminator
 ) -> u32 {
@@ -9146,16 +9133,16 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉgrowˉcall(
                 Expression.Column, Expression.Firstˉoffset
             );
         let Growˉexplicitˉtype:
-            Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Symbols.Directory, Symbols.Lookup,
-                Symbols.Visibility, Build.Currentˉmodule, Source,
-                Expression.Firstˉoffset,
+            Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+            Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
+                Input, Scan, Symbols, Source, Expression.Firstˉoffset,
                 Growˉtypeˉposition.Line, Growˉtypeˉposition.Column,
-                Symbols.Records, Symbols.Enums, false
+                0u32, 0u32, 0u32, 0u32, Build
             );
         if Growˉexplicitˉtype.Status !=
                 Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Growˉexplicitˉtype.Genericˉstatus !=
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
             Growˉexplicitˉtype.Nextˉoffset !=
                 Expression.Firstˉoffset + Expression.Firstˉlength {
             return Compilerˉsourceˉwirˉfailureˉvalue(
@@ -9164,23 +9151,18 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉgrowˉcall(
                 Growˉtypeˉposition.Line, Growˉtypeˉposition.Column
             );
         }
-        let Growˉelement: u32 =
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(
-                Growˉexplicitˉtype
-            );
+        let Growˉelement: u32 = Growˉexplicitˉtype.Shape;
         let Growˉcatalog:
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
-            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
-                Build.Genericˉevidence
-            );
+            Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(Growˉexplicitˉtype);
         let Growˉresultˉlayout: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
                 Input, Scan, Symbols, Growˉcatalog, Expectedˉshape
             );
         if !Growˉresultˉlayout.Found ||
             Growˉresultˉlayout.Index != 9u32 ||
-            !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-                Growˉelement, Symbols
+            !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+                Input, Scan, Symbols, Growˉcatalog, Growˉelement
             ) {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
@@ -9404,7 +9386,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉgrowˉcall(
                 Growˉmaximumˉexpression.Column,
                 Growˉmaximumˉexpression.Offset +
                     Growˉmaximumˉexpression.Length,
-                8u32, Build
+                8u32, Compilerˉsourceˉwirˉwithˉgenericˉtypeˉevidence(
+                    Build, Growˉexplicitˉtype.Catalogˉevidence)
             );
         if Growˉmaximum.Status != Compilerˉsourceˉwirˉstatus.Valid {
             return Growˉmaximum;
@@ -9475,9 +9458,9 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
     );
     if !Owner.Found || !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
             Owner.Shape, Catalog
-        ) || !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-            Element, Symbols
-        ) {
+        ) || !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+                Input, Scan, Symbols, Catalog, Element
+            ) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
@@ -9495,16 +9478,16 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
                 Source, Expression.Offset, Expression.Line, Expression.Column,
                 Expression.Firstˉoffset
             );
-        let Explicitˉtype: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility,
-                Build.Currentˉmodule, Source, Expression.Firstˉoffset,
+        let Explicitˉtype: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+            Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
+                Input, Scan, Symbols, Source, Expression.Firstˉoffset,
                 Typeˉposition.Line, Typeˉposition.Column,
-                Symbols.Records, Symbols.Enums, false
+                0u32, 0u32, 0u32, 0u32, Build
             );
         if Explicitˉtype.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Explicitˉtype.Genericˉstatus != Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
             Explicitˉtype.Nextˉoffset != Expression.Firstˉoffset + Expression.Firstˉlength ||
-            Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Explicitˉtype) != Element {
+            Explicitˉtype.Shape != Element {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
                 Callable.Module, Expression.Offset, Expression.Line, Expression.Column
@@ -9615,16 +9598,17 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
                 Expression.Firstˉoffset
             );
         let Constructˉexplicitˉtype:
-            Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Symbols.Directory, Symbols.Lookup,
-                Symbols.Visibility, Build.Currentˉmodule, Source,
+            Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+            Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
+                Input, Scan, Symbols, Source,
                 Expression.Firstˉoffset,
                 Constructˉtypeˉposition.Line, Constructˉtypeˉposition.Column,
-                Symbols.Records, Symbols.Enums, false
+                0u32, 0u32, 0u32, 0u32, Build
             );
         if Constructˉexplicitˉtype.Status !=
                 Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Constructˉexplicitˉtype.Genericˉstatus !=
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
             Constructˉexplicitˉtype.Nextˉoffset !=
                 Expression.Firstˉoffset + Expression.Firstˉlength {
             return Compilerˉsourceˉwirˉfailureˉvalue(
@@ -9633,13 +9617,10 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
                 Constructˉtypeˉposition.Line, Constructˉtypeˉposition.Column
             );
         }
-        let Constructˉelement: u32 =
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(
-                Constructˉexplicitˉtype
-            );
+        let Constructˉelement: u32 = Constructˉexplicitˉtype.Shape;
         let Constructˉtypeˉcatalog:
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
-            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Build.Genericˉevidence);
+            Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(Constructˉexplicitˉtype);
         let Constructˉresultˉlayout: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
                 Input, Scan, Symbols, Constructˉtypeˉcatalog, Expectedˉshape
@@ -9650,8 +9631,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             ) || Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
                 Constructˉresultˉlayout.Index, Constructˉtypeˉcatalog
             ) != Constructˉelement ||
-            !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-                Constructˉelement, Symbols
+            !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+                Input, Scan, Symbols, Constructˉtypeˉcatalog, Constructˉelement
             ) {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
@@ -9737,7 +9718,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
                 Constructˉmaximumˉexpression.Column,
                 Constructˉmaximumˉexpression.Offset +
                     Constructˉmaximumˉexpression.Length,
-                8u32, Build
+                8u32, Compilerˉsourceˉwirˉwithˉgenericˉtypeˉevidence(
+                    Build, Constructˉexplicitˉtype.Catalogˉevidence)
             );
         if Constructˉmaximum.Status != Compilerˉsourceˉwirˉstatus.Valid {
             return Constructˉmaximum;
@@ -9782,8 +9764,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
                 Appendˉresultˉlayout.Shape
             );
         if Appendˉelement == Compilerˉsourceˉwirˉsentinel() ||
-            !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-                Appendˉelement, Symbols
+            !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+                Input, Scan, Symbols, Appendˉcatalog, Appendˉelement
             ) {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
@@ -10024,9 +10006,9 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
     if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
             Local.Shape, Catalog
         ) ||
-        !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-            Element, Symbols
-        ) {
+        !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+                Input, Scan, Symbols, Catalog, Element
+            ) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
             Callable.Module,
@@ -12381,9 +12363,9 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉsequence(
                     Value.Shape, Sequenceˉcatalog
                 ) ||
-                !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
-                    Sequenceˉelement, Symbols
-                ) {
+                !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
+                Input, Scan, Symbols, Sequenceˉcatalog, Sequenceˉelement
+            ) {
                 return Compilerˉsourceˉwirˉfailureˉvalue(
                     Compilerˉsourceˉwirˉvalueˉbuild(Value),
                     Compilerˉsourceˉwirˉstatus.Invalidˉcollection,

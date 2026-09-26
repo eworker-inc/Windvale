@@ -1,0 +1,69 @@
+#!wv/1 en@1
+module Foundationˉrecordˉvectorˉexecutable;
+profile core;
+platform linux, windows;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+
+record Span { Offset: u32; Length: u32; }
+record Entry { Range: Span; Marker: u64; }
+record Other { Range: Span; Marker: u64; }
+
+export fn Otherˉtype(Value: borrow Collections.Vector<Other>) -> u32 { return 0u32; }
+
+fn Readˉentry(Value: borrow Entry) -> Entry { return Value; }
+
+fn Check(Value: Entry) -> u32 {
+    if Value.Marker != 18446744073709551615u64 { return 1u32; }
+    return Value.Range.Offset + Value.Range.Length;
+}
+
+fn Forward(Value: borrow Collections.Vector<Entry>, Index: u64) -> Entry {
+    return Readˉentry(Collections.Vectorˉborrowˉat(Index: Index, Vector: borrow Value));
+}
+
+fn Observe(Values: Collections.Vector<Entry>) -> i32 {
+    let Owner: Option.Option<Collections.Vector<Entry> > =
+        Option.Option.Present<Collections.Vector<Entry> > { Value: Values };
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Item } {
+            var Iteration: u32 = 0u32;
+            while Iteration < 4u32 {
+                let First: Entry = Collections.Vectorˉborrowˉat(borrow Item, 0u64);
+                let Second: Entry = Forward(borrow Item, 1u64);
+                if Check(First) != 7u32 || Check(Second) != 42u32 { return 3; }
+                Iteration = Iteration + 1u32;
+            }
+            return 42;
+        }
+        case Option.Option.Absent { return 4; }
+    }
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Created: Result.Result<Collections.Vector<Entry>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<Entry>(Budget, 2u64);
+    match Created {
+        case Result.Result.Valid { Value: Initial } {
+            var Values: Collections.Vector<Entry> = Initial;
+            let First: Result.Result<unit, Collections.Vectorˉappendˉfailure<Entry> > =
+                Collections.Vectorˉappend(borrow mut Values, Entry(Span(3u32, 4u32), 18446744073709551615u64));
+            match First {
+                case Result.Result.Failure { Error: Firstˉfailure } { return 5; }
+                case Result.Result.Valid { Value: Firstˉaccepted } { }
+            }
+            let Second: Result.Result<unit, Collections.Vectorˉappendˉfailure<Entry> > =
+                Collections.Vectorˉappend(borrow mut Values, Entry(Span(17u32, 25u32), 18446744073709551615u64));
+            match Second {
+                case Result.Result.Failure { Error: Secondˉfailure } { return 6; }
+                case Result.Result.Valid { Value: Secondˉaccepted } { }
+            }
+            return Observe(Values);
+        }
+        case Result.Result.Failure { Error: Allocationˉfailure } { return 2; }
+    }
+}

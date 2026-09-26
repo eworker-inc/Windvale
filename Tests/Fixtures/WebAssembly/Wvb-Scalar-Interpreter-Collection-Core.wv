@@ -51,6 +51,59 @@ export fn Collectionˉscalarˉelement(Module: bytes, Shape: u32) -> bool {
     return false;
 }
 
+// The complete verifier proves recursive Copy membership before execution.
+// Runtime admission still preserves the version and exact live handle checks.
+export fn Collectionˉexecutableˉelement(Module: bytes, Shape: u32) -> bool {
+    if Collectionˉscalarˉelement(Module, Shape) { return true; }
+    return Bytesˉlength(Module) >= 8u32 && Shape < Bytesˉlength(Module) &&
+        Bytesˉlength(Module) - Shape >= 5u32 &&
+        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32 &&
+        Bytesˉreadˉu8(Module, Shape) == 7u8;
+}
+
+export fn Collectionˉelementˉvalueˉvalid(
+    Module: bytes,
+    Shape: u32,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Recordˉmetadata: bytes,
+    Value: bytes
+) -> bool {
+    if Bytesˉlength(Value) != 8u32 || !Collectionˉexecutableˉelement(Module, Shape) {
+        return false;
+    }
+    if Bytesˉreadˉu8(Module, Shape) != 7u8 { return true; }
+    if Bytesˉlength(Recordˉmetadata) != 6144u32 { return false; }
+    let Type: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Fields: u32 = Collectionˉrecordˉfieldˉcount(Module, Typeˉoffsets, Typeˉcount, Type);
+    if Fields == 4294967295u32 || Bytesˉreadˉu32ˉlittle(Value, 4u32) != Type + 1u32 {
+        return false;
+    }
+    if Fields == 0u32 { return Slot == 4294967295u32; }
+    if Slot >= 768u32 || Fields > 768u32 - Slot { return false; }
+    return Bytesˉreadˉu32ˉlittle(Value, 4u32) == Type + 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32) == Type + 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32 + 4u32) == Fields;
+}
+
+fn Collectionˉrecordˉfieldˉcount(
+    Module: bytes, Typeˉoffsets: bytes, Typeˉcount: u32, Type: u32
+) -> u32 {
+    let Invalid: u32 = 4294967295u32;
+    let Total: u32 = Bytesˉlength(Module);
+    if Typeˉcount > 4096u32 || Type >= Typeˉcount ||
+        Bytesˉlength(Typeˉoffsets) != Typeˉcount * 4u32 { return Invalid; }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Typeˉoffsets, Type * 4u32);
+    if Offset > Total || Total - Offset < 9u32 ||
+        Bytesˉreadˉu8(Module, Offset) != 1u8 { return Invalid; }
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Module, Offset + 1u32);
+    if Nameˉlength > Total - Offset - 9u32 { return Invalid; }
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Module, Offset + 5u32 + Nameˉlength);
+    if Fields > 768u32 { return Invalid; }
+    return Fields;
+}
+
 export fn Collectionˉemptyˉbacking(
     Maximum: u32,
     Type: u32,
@@ -291,13 +344,9 @@ export fn Collectionˉrecordˉelementˉroots(
     }
     let Recordˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
     if Recordˉtype >= Typeˉcount { return Invalid; }
-    let Recordˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-        Typeˉoffsets, Recordˉtype * 4u32
-    );
-    if Recordˉoffset >= Bytesˉlength(Module) ||
-        Bytesˉreadˉu8(Module, Recordˉoffset) != 1u8 {
-        return Invalid;
-    }
+    let Recordˉfields: u32 = Collectionˉrecordˉfieldˉcount(
+        Module, Typeˉoffsets, Typeˉcount, Recordˉtype);
+    if Recordˉfields == 4294967295u32 { return Invalid; }
     let Expectedˉowner: u32 = Recordˉtype + 1u32;
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
     var Roots: bytes = Empty;
@@ -307,15 +356,21 @@ export fn Collectionˉrecordˉelementˉroots(
             Heap, Offset + 8u32 + Cell * 8u32, 8u32
         );
         let Slot: u32 = Bytesˉreadˉu32ˉlittle(Handle, 0u32);
-        if Slot >= 768u32 ||
-            Bytesˉreadˉu32ˉlittle(Handle, 4u32) != Expectedˉowner ||
-            Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32) !=
-                Expectedˉowner ||
-            Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32 + 4u32) ==
-                0u32 {
-            return Invalid;
+        if Recordˉfields == 0u32 {
+            if Slot != 4294967295u32 || Bytesˉreadˉu32ˉlittle(Handle, 4u32) != Expectedˉowner {
+                return Invalid;
+            }
+        } else {
+            if Slot >= 768u32 || Recordˉfields > 768u32 - Slot ||
+                Bytesˉreadˉu32ˉlittle(Handle, 4u32) != Expectedˉowner ||
+                Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32) !=
+                    Expectedˉowner ||
+                Bytesˉreadˉu32ˉlittle(Recordˉmetadata, Slot * 8u32 + 4u32) !=
+                    Recordˉfields {
+                return Invalid;
+            }
+            Roots = Bytesˉconcat(Roots, Handle);
         }
-        Roots = Bytesˉconcat(Roots, Handle);
         Cell = Cell + 1u32;
     }
     return Collectionˉrecordˉroots(true, Allocationˉindex, Roots);

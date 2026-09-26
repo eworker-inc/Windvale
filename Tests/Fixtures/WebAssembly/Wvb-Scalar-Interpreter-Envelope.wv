@@ -55,9 +55,9 @@ fn Moduleˉheaderˉisˉvalid(Module: bytes, Requestˉmajor: u32) -> bool {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return false; }
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return false; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-    if Moduleˉminor < 11u32 || Moduleˉminor > 41u32 { return false; }
+    if Moduleˉminor < 11u32 || Moduleˉminor > 42u32 { return false; }
     // Authenticate loan identity and lifetime before exposing candidate cells.
-    if Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || Moduleˉminor == 41u32 {
+    if Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || (Moduleˉminor == 41u32 || Moduleˉminor == 42u32) {
         if Requestˉmajor != 1u32 ||
             Compilerˉverifier.Compilerˉwvbˉverifyˉmetadata(Module) != 0u32 {
             return false;
@@ -691,7 +691,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                             Moduleˉminor == 36u32 ||
                             Moduleˉminor == 37u32 ||
                             Moduleˉminor == 38u32 ||
-                            (Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || Moduleˉminor == 41u32)) &&
+                            (Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || (Moduleˉminor == 41u32 || Moduleˉminor == 42u32))) &&
                             Variantˉfieldˉshape == 25u32 {
                             Extendedˉvariantˉshape = true;
                         }
