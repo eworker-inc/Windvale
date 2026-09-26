@@ -153,8 +153,13 @@ products, inherited prepared-only mode and reuse after a later failure; the
 [boundary evidence](../Evidence/2026-09-26-Compiler-Preparation-Boundary.json)
 records the paired-host checks. See the
 [preparation procedure](../Runbooks/Native-Tests.md#separate-current-compiler-preparation).
-This is the command boundary needed by CI; workflow integration and native
-checkpoint-miss/hit measurements remain open.
+The [native preparation measurement](../Evidence/2026-09-26-Native-Compiler-Preparation-Measurement.json)
+created the Windows compiler checkpoint in 19 minutes 26 seconds and reused it
+in 1.24 seconds. Debian lacked the historical predecessor and was stopped
+cleanly after 9 minutes 7 seconds when the original estimate proved wrong;
+completed caches were retained. These are different cache conditions, not a
+paired cold-build comparison. CI integration and completed Debian preparation
+remain open. Do not fit either cold graph inside a 15-minute behavior job.
 
 The wrapper audit must also distinguish old rejection checkpoints from current
 behavior. The full legacy front-door script expects
