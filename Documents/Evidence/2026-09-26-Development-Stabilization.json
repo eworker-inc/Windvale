@@ -1,0 +1,838 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-development-stabilization",
+  "date": "2026-09-26",
+  "subject": "Fresh-checkout harness repair and changed-runner development feedback",
+  "claim": "The cache owner creates its ignored workspace directory on a fresh checkout. Product-acquisition-only edits select the cache owner. Four diagnostic cases cover valid limits and independent slot, bytecode-size and stack failures. Extracting return ownership classification lowers the current runner maximum from 2057 to 2028 total slots without raising limits. The changed runner compiles and packages on both hosts with retained tools, and the selected behaviors pass on Windows and Debian after correcting one test fixture.",
+  "source": {
+    "kind": "Other",
+    "value": "Runner construction and initial behavior measurements used the worktree based on 6ab79a25aac7413fb6db4761f4740cb959f7c77f, including the pre-existing uncommitted collection/budget feature. Input hashes identify the measured files and products. The CI repair is committed as 0844170ca8e7db1f9ed46a92c1e915fc62d39404. The return-classification refactor and stack-witness correction remain with that pending feature work."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Compile for the changed runner; existing compiler and lower-level tool products retained",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb <prepared-tools>/Checkpoint-Analyzer.exe <prepared-tools>/Checkpoint-Analyzer.identity <prepared-tools>/Emitter.exe <prepared-tools>/Emitter.identity --authenticated-project4 <prepared-tools>/Admitter.exe <prepared-tools>/Authenticator.exe <prepared-tools>/Reader.exe <prepared-tools>/Binder.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 276118,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45089,
+          "sha256": "9d9888a3f6bb4887cd7c55d77c819127a785214c2da702845330afe230182501"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "size": 1910,
+          "sha256": "cde07641d498121d91029a0539a25fd31edb678adc7692f98e0a552891acf788"
+        },
+        {
+          "path": "Tools/Windvale.Run/Wvb-Runner-Tool.wv",
+          "size": 25906,
+          "sha256": "afa08302789b3773266872189aa319a82d046efc2050be4b4bde445e4c8a98c9"
+        },
+        {
+          "path": "Foundation/Sha256.wv",
+          "size": 16698,
+          "sha256": "629a94c51dfe1eb1056aef4f0745ff384433ddc415d85cf2b507ffebc733bd0c"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 394696,
+          "sha256": "aa7dbaf6bc9167eccc01e98194bfc4eabb7b4c4c65d8f830d86bda75f303e969"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv",
+          "size": 14013,
+          "sha256": "6ae10b5f76649ddd11cbe07140f99a6e9a7c3c9043864a6b6d4928f9b3a2cfa6"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+          "size": 40643,
+          "sha256": "f8eb718a1520618ae400966bf3046ac27fc085167de2617ccabb544c606367fe"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv",
+          "size": 25846,
+          "sha256": "f61cb623a719b5be552a044d5b80210d89cc42de9c63755c245537ad3eb7970f"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv",
+          "size": 20523,
+          "sha256": "c9004633500233203d5798c925ed94cdc2795b250bf71519bd7f6ceaa3f58f57"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv",
+          "size": 2024,
+          "sha256": "73f5b4eabbbcb93a605fdeb6f31b38a8d4162186b25b7a1c68cbabed0a01a2df"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "size": 28452,
+          "sha256": "11d61c16826145833a53b20044563ae9f18cdba9b883024d9cd6143955073567"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv",
+          "size": 2105,
+          "sha256": "d3ad441f40b2484d1e10791d91eb5a7eb093bfbc0912fa2e347d008c9887cbe2"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Task-Core.wv",
+          "size": 38619,
+          "sha256": "b7db453d647258f128e9eeb1bb3daa34ea9ee7a009179836966f43ab57dad3ef"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Unsafe-Scratch-Core.wv",
+          "size": 1497,
+          "sha256": "0e5c3393df7233596234d27ec0f02e01a5dc3ca668e03ed7bf1bbe53f88fa1cb"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 34750,
+          "sha256": "93d8b79fa3f19aa7f0e33722c2ecadedfc55c350b5a23e82cdef9a19a723a8e8"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 253608,
+          "sha256": "91b2c15fe3fd9ba123fbc9bd28ecc999e6956e265a3427681cb08b9e3c8fab25"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 32787,
+          "sha256": "647a2b8d08e722f84652f43a785f43875a62cef1ed64dc95e70ae9200d88f789"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 576,
+          "sha256": "192297b057afdaa453b23a4920d04d39ed63017d8f8ef1519727ebeffdaebd43"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 183722,
+          "sha256": "6764d3c155a45656744177869d0991c44a2a4d3ca017d3ceffdd85abff09a04d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10903,
+          "sha256": "ea76d85634dcd753ad54ad4e8e2edbafd6cd7bc0bf04e85812b87e7a70fc45da"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7469,
+          "sha256": "a3c7fcd527b70fbd4bcef59afaeb89ebd000f9acb18da75af8d4b59965c1ddcc"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-View-Core.wv",
+          "size": 11233,
+          "sha256": "4e78f18465885e889399a86fbb357be559c4b20b9ce28661d16c6f982c1040c9"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 15002,
+          "sha256": "6d3315276499c4981926da62e4fc0df6d0ed751168c4a946cdc8b7c660ba193e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "prepared-tools/Checkpoint-Analyzer.exe",
+          "size": 54982144,
+          "sha256": "2cd45bc82d595a63292eb63f2648b4171e4434aaa2d516a6c193d603deefca84"
+        },
+        {
+          "path": "prepared-tools/Checkpoint-Analyzer.identity",
+          "size": 177,
+          "sha256": "3694f849b5bc6ca917969deaf21bd0acf18033d12ffe2c2da9bea54f24d52072"
+        },
+        {
+          "path": "prepared-tools/Emitter.exe",
+          "size": 33114624,
+          "sha256": "cb72ebfc0e5ebef0743b7e66e9fefc576f71dee2c8183f67b36274ab1a1ee478"
+        },
+        {
+          "path": "prepared-tools/Emitter.identity",
+          "size": 183,
+          "sha256": "c3f9ff82f0d98f5a113f2c3414cf1f0af325d81025cbe08ca7da570e77dc2051"
+        },
+        {
+          "path": "prepared-tools/Admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "prepared-tools/Authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "prepared-tools/Reader.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "prepared-tools/Binder.exe",
+          "size": 18405376,
+          "sha256": "09584096ebbf6baa3e3405133a09381083d6ea8c9c2916b6ee932681574c3670"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Compile.log",
+          "size": 2222,
+          "sha256": "a1ca00da8235288ac20f385025365f18f0baf625a7747c6a3a96f1e3b40327fb"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb",
+          "size": 1222670,
+          "sha256": "018af6f7812bc06d1bb39eb4cf97b61810890c3676dcf4cf683b8f1586271dc2"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Limits for the changed runner; existing compiler and lower-level tool products retained",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --inspect-function-limits Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 113,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 244194,
+          "sha256": "e607d12a8605abbd293def4f798eae2a1627a5150202dbfab2a783ad53358ca7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb",
+          "size": 1222670,
+          "sha256": "018af6f7812bc06d1bb39eb4cf97b61810890c3676dcf4cf683b8f1586271dc2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Limits.log",
+          "size": 234,
+          "sha256": "660ea8c274d8c46977cca9ba0e4062cb09d2135113ae398977a4f54af9598cd5"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Windows-Package for the changed runner; existing compiler and lower-level tool products retained",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790448567662 5 Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 120447,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 42214,
+          "sha256": "8f6a742777e9b2966e52056f88294cae76cec05aa11d67297418d6cc3cf51296"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb",
+          "size": 1222670,
+          "sha256": "018af6f7812bc06d1bb39eb4cf97b61810890c3676dcf4cf683b8f1586271dc2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Windows-Package.log",
+          "size": 1144,
+          "sha256": "f9cbb761ea7970dfdaeef6dd761e9cc175dcfc7bf3e3ffd043476fc4773c96da"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+          "size": 12620800,
+          "sha256": "3791548a73dd4db3a9a155c1dbd595c1ad784e97608c97196905c672aaa35e51"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Debian-Package for the changed runner; existing compiler and lower-level tool products retained",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs --deadline-ms 1790448567662 5 Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 127356,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 42214,
+          "sha256": "8f6a742777e9b2966e52056f88294cae76cec05aa11d67297418d6cc3cf51296"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.wvb",
+          "size": 1222670,
+          "sha256": "018af6f7812bc06d1bb39eb4cf97b61810890c3676dcf4cf683b8f1586271dc2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Debian-Package.log",
+          "size": 1140,
+          "sha256": "167922514d61d1f942f0221265f05d88a34f0220257dbc4af0328a90080b176f"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+          "size": 12619776,
+          "sha256": "59747bc0d12f353536263308a94ed5525575996e7fc4b54a32845095d1829224"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Borrow focused development coverage",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 114117,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.exe",
+          "size": 33210368,
+          "sha256": "ca4fe3385eee9b6a43aca5d45654a5e81c9c4bc491e02a48e11042c179084e1c"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe",
+          "size": 5076992,
+          "sha256": "5924ffc7b5f7328b6d4cd725f398eab8af2774bb079840323d17f31ebff170b6"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+          "size": 12620800,
+          "sha256": "3791548a73dd4db3a9a155c1dbd595c1ad784e97608c97196905c672aaa35e51"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Windows-Borrow-Final.log",
+          "size": 60898,
+          "sha256": "fb45cfbd8faee9677ee53b22d883745943bb7028948cdfc5a4e1d7e103d8def4"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Owned focused development coverage",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 35648,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.exe",
+          "size": 33210368,
+          "sha256": "ca4fe3385eee9b6a43aca5d45654a5e81c9c4bc491e02a48e11042c179084e1c"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe",
+          "size": 5076992,
+          "sha256": "5924ffc7b5f7328b6d4cd725f398eab8af2774bb079840323d17f31ebff170b6"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+          "size": 12620800,
+          "sha256": "3791548a73dd4db3a9a155c1dbd595c1ad784e97608c97196905c672aaa35e51"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Windows-Owned-Final.log",
+          "size": 25084,
+          "sha256": "2d0857ab1bca5232f17b883cbb3e8a2fff35ddf428e0c17b705b2f23282c28a0"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Runtime focused development coverage",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Windows-Runtime-Final",
+      "result": "Passed",
+      "elapsedMilliseconds": 1631,
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe",
+          "size": 5076992,
+          "sha256": "5924ffc7b5f7328b6d4cd725f398eab8af2774bb079840323d17f31ebff170b6"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+          "size": 12620800,
+          "sha256": "3791548a73dd4db3a9a155c1dbd595c1ad784e97608c97196905c672aaa35e51"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb",
+          "size": 978,
+          "sha256": "1529450042936edf659a7f5efe917ad9f5ee8d23804019f9fc8c3da1ef4c9a75"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Windows-Runtime-Final.log",
+          "size": 546,
+          "sha256": "a949793280d6bc9f2f068b17565973e83ea6df94ed7c752e214a94f78d30ecf8"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 development host",
+      "target": "Records focused development coverage",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --record-vector-elements Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.exe Projects/Targets/Windows-X64-No-Foreign.wvtd Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 59958,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 244194,
+          "sha256": "e607d12a8605abbd293def4f798eae2a1627a5150202dbfab2a783ad53358ca7"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.exe",
+          "size": 33210368,
+          "sha256": "ca4fe3385eee9b6a43aca5d45654a5e81c9c4bc491e02a48e11042c179084e1c"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.exe",
+          "size": 5076992,
+          "sha256": "5924ffc7b5f7328b6d4cd725f398eab8af2774bb079840323d17f31ebff170b6"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+          "size": 12620800,
+          "sha256": "3791548a73dd4db3a9a155c1dbd595c1ad784e97608c97196905c672aaa35e51"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Windows-Records-Final.log",
+          "size": 45701,
+          "sha256": "6f19c6b892d0ed1868d80629894e50147616057b6b9722eb8a88964f931e4382"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Initial record/helper selection stopped on the hand-built stack witness: declared maximum exceeded actual maximum. Corrected fixture uses max(original, 2); other completed selections were retained.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Artifacts/Work/Budget-Helpers-2026-09-25/Final-Checks.mjs",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Windows-Records-Initial-Failure.log",
+          "size": 40221,
+          "sha256": "9303e422cbdc160bfc5416ef2fe6e64e4cf9d3925db7a46c6ef2e4306c428a07"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Existing split-development owner including four function-limit diagnostic cases and Foundation acquisition cache checks",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 12677,
+          "sha256": "b43a67da4d9656a3275d971f7a90573d2c0d1a05b930d5a5a0d9cd63621ef551"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 86729,
+          "sha256": "0b003404eb7ffa6ab53b1fdfcdbc1a5a8b149786a8397f95477cfbac6c15384a"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Windows-Harness.log",
+          "size": 697,
+          "sha256": "ca201ec2bd900735e319f4a3ee650dacaeece5c7adafb77ab4f17c5988feac27"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Borrow focused development coverage",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --vector-parameter-reads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.elf Projects/Targets/Linux-X64-No-Foreign.wvtd Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 203821,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.elf",
+          "size": 33210368,
+          "sha256": "9532e8120329e0b6cb588b5357441feb79d8efc521b307673f6e5ddfbaa5ec72"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf",
+          "size": 5079040,
+          "sha256": "1c91366fe78322edf8b1151e9419891b414f3631dc1ecc2413ab28caabf6e38f"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+          "size": 12619776,
+          "sha256": "59747bc0d12f353536263308a94ed5525575996e7fc4b54a32845095d1829224"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Debian-Borrow-Final.log",
+          "size": 61025,
+          "sha256": "95d61e260e2bb35402fca8688cf22799171f98ceed26fa24153f9d09567765e6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Owned focused development coverage",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-owned-payloads Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.elf Projects/Targets/Linux-X64-No-Foreign.wvtd Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 74656,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 243927,
+          "sha256": "ef9fb8522c38be8023f882c26be9cc23e43901d957058a67f054a710fc4989ed"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.elf",
+          "size": 33210368,
+          "sha256": "9532e8120329e0b6cb588b5357441feb79d8efc521b307673f6e5ddfbaa5ec72"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf",
+          "size": 5079040,
+          "sha256": "1c91366fe78322edf8b1151e9419891b414f3631dc1ecc2413ab28caabf6e38f"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+          "size": 12619776,
+          "sha256": "59747bc0d12f353536263308a94ed5525575996e7fc4b54a32845095d1829224"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Debian-Owned-Final.log",
+          "size": 25178,
+          "sha256": "a8b0e255f39bbb86e2a813fe2bd5e47093e9b4388a4bf0a828a7655978bb4570"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Runtime focused development coverage",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb Artifacts/Work/Budget-Helpers-2026-09-25/Debian-Runtime-Final",
+      "result": "Passed",
+      "elapsedMilliseconds": 2426,
+      "inputs": [
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf",
+          "size": 5079040,
+          "sha256": "1c91366fe78322edf8b1151e9419891b414f3631dc1ecc2413ab28caabf6e38f"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+          "size": 12619776,
+          "sha256": "59747bc0d12f353536263308a94ed5525575996e7fc4b54a32845095d1829224"
+        },
+        {
+          "path": "Artifacts/Work/Record-Vector-Backing-2026-09-22/Types.wvb",
+          "size": 978,
+          "sha256": "1529450042936edf659a7f5efe917ad9f5ee8d23804019f9fc8c3da1ef4c9a75"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Debian-Runtime-Final.log",
+          "size": 546,
+          "sha256": "a949793280d6bc9f2f068b17565973e83ea6df94ed7c752e214a94f78d30ecf8"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 WSL",
+      "target": "Records focused development coverage",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --record-vector-elements Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.elf Projects/Targets/Linux-X64-No-Foreign.wvtd Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 128685,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 244194,
+          "sha256": "e607d12a8605abbd293def4f798eae2a1627a5150202dbfab2a783ad53358ca7"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Emitter-Final.elf",
+          "size": 33210368,
+          "sha256": "9532e8120329e0b6cb588b5357441feb79d8efc521b307673f6e5ddfbaa5ec72"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Verifier-Lifetime.elf",
+          "size": 5079040,
+          "sha256": "1c91366fe78322edf8b1151e9419891b414f3631dc1ecc2413ab28caabf6e38f"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+          "size": 12619776,
+          "sha256": "59747bc0d12f353536263308a94ed5525575996e7fc4b54a32845095d1829224"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Debian-Records-Final.log",
+          "size": 45814,
+          "sha256": "5933abc348bd22b6630aa44f7aa702f2ae4962479c504898cf74852b64a0d45d"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Initial record/helper selection stopped on the hand-built stack witness: declared maximum exceeded actual maximum. Corrected fixture uses max(original, 2); other completed selections were retained.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Artifacts/Work/Budget-Helpers-2026-09-25/Final-Checks.mjs",
+      "result": "Failed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Debian-Records-Initial-Failure.log",
+          "size": 40288,
+          "sha256": "bef51d563a5d41b3fca19dd1b29bc9c4964618ebccfb48dd80f8aed65e59bf00"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Existing split-development owner including four function-limit diagnostic cases and Foundation acquisition cache checks",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 12677,
+          "sha256": "b43a67da4d9656a3275d971f7a90573d2c0d1a05b930d5a5a0d9cd63621ef551"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 86729,
+          "sha256": "0b003404eb7ffa6ab53b1fdfcdbc1a5a8b149786a8397f95477cfbac6c15384a"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Debian-Harness.log",
+          "size": 777,
+          "sha256": "d837bfa5ac705d9de2385f0adf842bf9d4d3120cc6d0faec50a5110de670c69d"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell",
+      "target": "31 general and 303 native routing cases; acquisition-only edits retain cache coverage, while language implementation and mixed fixture edits retain execution coverage",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 363470,
+          "sha256": "bf76cb60d20baceb9094d7a0da31350cfc13bc402892292518c9216300b1d50d"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 294872,
+          "sha256": "23257dfff3d133ee22f061bb0c26a85bbdf41c6d73082de493ae8bd04808ed55"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Stabilization-Routing.log",
+          "size": 4307,
+          "sha256": "d9dae34646844fa27d8692a4ce47c2ba3b1b94894455a8130529361b3b6f1e35"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is focused development evidence, not release qualification, installed-tool promotion, or completion of the collection/budget feature or typed Package-Lock consumer.",
+    "Compilation took 276118 ms; limits inspection took 113 ms; independently packaged Windows and Debian products took 120447 and 127356 ms in parallel. Their critical path is approximately 403587 ms. Existing compiler, admission and lower-level native tools were reused; no cold compiler speedup is claimed.",
+    "The runner WVB was compiled on Windows. Debian packaged that identical WVB and executed the focused behavior cases; independent Debian source compilation and reproducible native package construction were not performed.",
+    "Whole-repository qualification, full memory-budget integration, native candidate-42 lowering, and bootstrap reconstruction were not run because they exceed the causal scope of this stabilization measurement.",
+    "Peak working-set memory was not measured. These timings are single observations under concurrent work, not regression thresholds.",
+    "Prepared-tool command paths are normalized to placeholders; tool hashes retain their exact identities. Local logs and products remain in ignored Artifacts/Work storage.",
+    "The changed language test owner still selects its execution owner. Only the independently covered product-acquisition helper receives narrower routing."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-26-Prepared-Compiler-Feedback.json",
+    "https://github.com/eworker-inc/Windvale/actions/runs/36263698177"
+  ]
+}

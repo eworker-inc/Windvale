@@ -75,6 +75,28 @@ active runner edit. This trial does not establish a faster cold compiler or
 completion of the collection/budget feature. Its measurements and exact scope
 are in the [workflow evidence](../Evidence/2026-09-26-Prepared-Compiler-Feedback.json).
 
+The follow-up stabilization repairs fresh-checkout cache tests by creating their
+ignored work directory before resolving it. Product-acquisition-only edits now
+select the existing cache owner; language test, compiler, runtime, and fixture
+edits retain their execution coverage. The repair passes the Windows and Linux
+GitHub development jobs and aggregate gate. Four cases in the existing cache
+owner protect the function-limit diagnostic, including an oversized function
+that is not the largest code body.
+
+In the pending collection/budget work, extracting return ownership classification
+reduces the runner's largest function from 2,057 to 2,028 total slots without
+changing the 2,048 limit. Rebuilding changed runner source took 276 seconds;
+Windows and Debian packaging took 120 and 127 seconds in parallel, for about
+6 minutes 44 seconds to both executable products. This reused identified
+compiler tools and does not measure cold compiler reconstruction. Focused
+borrowing, ownership, runtime, and 40 record/helper cases pass on both hosts.
+The record/helper rerun took 60 seconds on Windows and 129 seconds on Debian
+after correcting a hand-built fixture's exact stack declaration. Unaffected
+passing selections were retained. The refactor and fixture correction remain
+with the pending feature batch; full integration and release qualification are
+still separate gates. Exact inputs, results, and limits are in the
+[stabilization evidence](../Evidence/2026-09-26-Development-Stabilization.json).
+
 SHA-256 compression now expresses its fixed rotations directly, removing 576
 variable-distance helper calls per block. Repeated benchmark medians fell from
 2.192 to 2.107 seconds on Windows and 2.271 to 2.130 seconds on Debian. All 20
