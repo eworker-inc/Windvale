@@ -65,6 +65,7 @@ fn Aggregateˉselectedˉfieldˉvalues(
             Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32;
         }
         if Selection == 2u32 { Selected = Kind == 23u32 || Kind == 24u32; }
+        if Selection == 3u32 { Selected = Kind == 25u32; }
         if Selected {
             Result = Bytesˉconcat(
                 Result,
@@ -99,6 +100,7 @@ export fn Aggregateˉselectedˉownerˉvalues(
                 Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32;
             }
             if Selection == 2u32 { Selected = Kind == 23u32 || Kind == 24u32; }
+            if Selection == 3u32 { Selected = Kind == 25u32; }
             var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
             if Selected {
                 var Index: u32 = 0u32;
@@ -737,9 +739,14 @@ export fn Prepareˉborrowˉstep(
     if Stackˉdescriptorˉcount > 0u32 {
         Topˉisˉview = Bytesˉreadˉu8(Borrowˉstack, Stackˉdescriptorˉcount - 1u32) == 1u8;
     }
-    // The caller admits WVB 1.39/1.40; this path is synchronous and capability-free.
-    if Requestˉmajor != 1u32 || Payloadˉlength == 65u32 ||
-        (Payloadˉlength >= 214u32 && Payloadˉlength <= 224u32) { return Invalid; }
+    // Candidate task envelopes retain their existing capability checks and
+    // task dispatch. Borrow preparation never grants a privileged operation.
+    let Taskˉrequest: bool = Requestˉmajor == 6u32 &&
+        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32;
+    if (Requestˉmajor != 1u32 && !Taskˉrequest) ||
+        (Payloadˉlength >= 220u32 && Payloadˉlength <= 224u32) ||
+        (!Taskˉrequest && (Payloadˉlength == 65u32 ||
+            (Payloadˉlength >= 214u32 && Payloadˉlength <= 219u32))) { return Invalid; }
     if Payloadˉlength == 225u32 {
         let Borrowed: Borrowˉframes.Execution = Executeˉfoundationˉborrow(
             Borrowˉstate, Module, Payload, Typeˉoffsets, Localˉshapes,

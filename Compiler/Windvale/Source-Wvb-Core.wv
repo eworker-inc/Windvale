@@ -5338,6 +5338,50 @@ fn Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
     return false;
 }
 
+fn Compilerˉsourceˉwvbˉmoduleˉhasˉcollectionˉhelper(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Wir: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+    let Functions: Compilerˉsourceˉwvbˉsymbolˉorder = Compilerˉsourceˉwvbˉfunctionˉorder(Orders);
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Functions.Entries) / 4u32 {
+        let Function: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Functions, Index);
+        let Declaration: u32 = Compilerˉsourceˉwvbˉfunctionˉdeclaration(Symbols, Bindings.Directory, Function);
+        let Name: bytes = Compilerˉsourceˉwvbˉfunctionˉname(Input, Scan, Symbols, Function);
+        let Entry: bool = Bytesˉlength(Name) == 4u32 &&
+            Bytesˉreadˉu32ˉlittle(Name, 0u32) == 1852399949u32 &&
+            Function == Declaration && Compilerˉsourceˉwvbˉsymbolˉmodule(Symbols, Declaration) == 0u32 &&
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉisˉexported(Symbols.Lookup, Function);
+        if !Entry {
+            let Directory: u32 = Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) + Function * 48u32;
+            let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Directory + 36u32);
+            var Parameter: u32 = 0u32;
+            while Parameter < Parameters {
+                if Sourceˉwir.Compilerˉsourceˉwirˉbindingˉshape(Bindings,
+                    Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32), Function, Parameter) == 805306368u32 &&
+                    Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                        Input, Scan, Symbols, Bindings, Function, Parameter
+                    ) == Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE { return true; }
+                Parameter = Parameter + 1u32;
+            }
+            var Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Directory + 12u32);
+            let End: u32 = Operation + Bytesˉreadˉu32ˉlittle(Wir, Directory + 16u32);
+            while Operation < End {
+                let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir,
+                    Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) + Operation * 28u32 + 4u32);
+                if Kind == 171u32 || Kind == 172u32 || Kind == 173u32 || Kind == 175u32 { return true; }
+                Operation = Operation + 1u32;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
 fn Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
     Wir: bytes,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders
@@ -6814,7 +6858,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             );
         let Isˉallowedˉbudgetˉparameter: bool =
             Parameterˉshape == 805306368u32 &&
-            (Isˉlauncherˉbudgetˉmain ||
+            (Isˉlauncherˉbudgetˉmain || Foundationˉborrowˉmodule ||
+             Parameterˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE ||
              Bytesˉreadˉu16ˉlittle(Wir, 6u32) >= 21u32) &&
             (Parameterˉmode ==
                 Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE ||
@@ -7864,10 +7910,12 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     var Features: u32 = Typeˉencoding.Features;
     // One reachable-operation scan selects the module contract. Parameter
     // identity comes from declarations, never caller order or a fixed point.
-    let Recordˉcollectionˉmodule: bool = Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
+    let Collectionˉownerˉmodule: bool = Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
         Wirˉsummary.Directory, Symbols, Bindings, Emissionˉorders
+    ) || Compilerˉsourceˉwvbˉmoduleˉhasˉcollectionˉhelper(
+        Input, Scan, Wirˉsummary.Directory, Symbols, Bindings, Emissionˉorders
     );
-    let Foundationˉborrowˉmodule: bool = Recordˉcollectionˉmodule || Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
+    let Foundationˉborrowˉmodule: bool = Collectionˉownerˉmodule || Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
         Wirˉsummary.Directory, Emissionˉorders
     );
     while Functionˉrank < Emissionˉfunctions {
@@ -8025,7 +8073,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     if (Features & WVB_VECTOR_INDEXED_BORROW_FEATURE) != 0u32 {
         Wvbˉminor = 41u32;
     }
-    if Recordˉcollectionˉmodule { Wvbˉminor = 42u32; }
+    if Collectionˉownerˉmodule { Wvbˉminor = 42u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(

@@ -306,8 +306,8 @@ async function Main() {
     if (Vectorˉintegrationˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Vector borrow integration exceeded its total budget during cleanup.', 124);
-        process.stdout.write('native Vector borrow integration status=Passed cases=519 ' +
-            'components=388 vector-groups=80 record-collection-groups=22 owned-payload-groups=19 runtime-groups=10 ' +
+        process.stdout.write('native Vector borrow integration status=Passed cases=537 ' +
+            'components=388 vector-groups=80 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
             `qualification=false elapsed-ms=${Elapsed}\n`);
     }
     if (Developmentˉonly && !Recordˉvectorˉonly && !Vectorˉintegrationˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
@@ -1918,11 +1918,18 @@ async function Verifyˉrecordˉvectorˉelements(Admitter, Authenticator, Analyze
     Requireˉordinaryˉfile(Fixture, 8192, 'record Vector fixture');
     const Source = readFileSync(Fixture, 'utf8');
     function Arguments(Input, Output) {
+        const Text = readFileSync(Input, 'utf8');
+        const Imports = [
+            ['collections', 'Collections/Collections.wv'], ['memory', 'Memory/Memory.wv'],
+            ['operation', 'Operations/Operation.wv'],
+            ['option', 'Values/Option.wv'], ['result', 'Values/Result.wv'],
+            ['task', 'Tasks/Task.wv'],
+        ].filter(([Module]) => Text.includes(`import Foundationˉ${Module} as `)).map(([, Name]) =>
+            path.join(Repositoryˉroot, 'Libraries/Foundation', Name));
         return [Admitter, Authenticator, Analyzer, Emitter,
             '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
             '--source-profile', Sourceˉprofile, '--target-descriptor', Target,
-            Input, ...['Collections/Collections.wv', 'Memory/Memory.wv', 'Values/Option.wv', 'Values/Result.wv']
-                .map(Name => path.join(Repositoryˉroot, 'Libraries/Foundation', Name)), Output];
+            Input, ...Imports, Output];
     }
     function Replace(Text, Before, After) {
         if (Text.split(Before).length !== 2) Reject('Record Vector mutation is ambiguous: ' + Before);
@@ -2014,7 +2021,29 @@ fn Observe(Values: Collections.Vector<Entry>) -> i32 {
         ['freeze-alias-indexed', Frozen], ['growth-retains-records', Grown],
         ['generic-growth-retains-records', Genericˉrecord(Grown)],
         ['append-refusal-retains-record', Refused], ['record-reclamation', Churn]];
+    function Inˉhelper(Text) {
+        return Replace(Text, 'export fn Main(Budget:', 'fn Build(Budget:') +
+            '\nexport fn Main(Budget: Memory.Memoryˉbudget) -> i32 { return Build(Budget); }\n';
+    }
+    const Budgetˉfixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Memory-Budget-Helper-Lifetime-Executable.wv');
+    Requireˉordinaryˉfile(Budgetˉfixture, 8192, 'budget helper fixture');
+    const Budgetˉsource = readFileSync(Budgetˉfixture, 'utf8');
+    Cases.push(['helper-record-construction', Inˉhelper(Source)],
+        ['helper-record-growth', Inˉhelper(Grown)],
+        ['helper-record-freeze', Inˉhelper(Frozen)],
+        ['helper-record-refusal', Inˉhelper(Refused)],
+        ['helper-unused-and-returned-budget', Budgetˉsource]);
+    const Taskˉfixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Structured-Tasks-Executable.wv');
+    Requireˉordinaryˉfile(Taskˉfixture, 16384, 'task scope budget fixture');
+    Cases.push(['helper-task-scope-budget', readFileSync(Taskˉfixture, 'utf8')]);
+    const Trapˉfixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Structured-Task-Trap-Executable.wv');
+    Requireˉordinaryˉfile(Trapˉfixture, 16384, 'task trap budget fixture');
+    Cases.push(['helper-task-trap-budget', readFileSync(Trapˉfixture, 'utf8')]);
+    const Scalarˉfixture = path.join(Repositoryˉroot, 'Tests/Fixtures/Language-1.0/Scalar-Collection-Helper-Executable.wv');
+    Requireˉordinaryˉfile(Scalarˉfixture, 8192, 'scalar collection helper fixture');
+    Cases.push(['helper-scalar-construction', readFileSync(Scalarˉfixture, 'utf8')]);
     let Candidate = null;
+    const Helperˉmodules = new Map();
     for (const [Label, Text] of Cases) {
         const Input = path.join(Work, 'Record-' + Label + '.wv');
         writeFileSync(Input, Text, { flag: 'wx' });
@@ -2031,11 +2060,103 @@ fn Observe(Values: Collections.Vector<Entry>) -> i32 {
                     'wvb status=Valid profile=compiler-aligned\n') Reject('Record collection verification differs: ' + Label);
                 const Execution = Normalize(await Run('record-' + Label + '-execute', Runner, [Output, '--report-steps']));
                 const Report = /^Result: 42\nInstructions: ([1-9][0-9]*)\n$/u.exec(Execution);
-                if (Report === null || Number(Report[1]) > 500000) Reject('Record collection execution differs: ' + Label);
-                process.stdout.write(`PASS record collection case=${Label} instructions=${Report[1]} wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)}\n`);
+                const Taskˉcase = Label.startsWith('helper-task-');
+                if (Taskˉcase ? Execution !== 'Result: 42\n' :
+                    Report === null || Number(Report[1]) > 500000) Reject('Record collection execution differs: ' + Label);
+                process.stdout.write(`PASS record collection case=${Label} instructions=${Taskˉcase ? 'not-reported' : Report[1]} wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)}\n`);
             }
         }
         if (Label === 'nested-record-indexed') Candidate = Previous;
+        if (Label.startsWith('helper-')) Helperˉmodules.set(Label, Previous);
+    }
+    const Budgetˉmodule = Helperˉmodules.get('helper-unused-and-returned-budget');
+    const Budgetˉsections = Parseˉsections(Budgetˉmodule);
+    const Budgetˉmain = Parseˉfunction(Budgetˉmodule, Budgetˉsections[4], 'Main');
+    const Pulse = Parseˉfunctionˉentries(Budgetˉmodule, Budgetˉsections[4]).find(Entry => Entry.name === 'Pulse');
+    function Opcodes(Bytes, Name, Opcode) {
+        const Layout = Parseˉsections(Bytes);
+        const Function = Parseˉfunction(Bytes, Layout[4], Name);
+        const Result = [];
+        const Start = Layout[5].payload + Function.codeOffset;
+        for (let Cursor = Start; Cursor < Start + Function.codeLength; Cursor += Wvbˉinstructionˉwidthˉat(Bytes, Cursor)) {
+            if (Bytes[Cursor] === Opcode) Result.push(Cursor);
+        }
+        if (Result.length === 0) Reject(`Missing helper mutation opcode ${Opcode} in ${Name}.`);
+        return Result;
+    }
+    const Firstˉtake = Opcodes(Budgetˉmodule, 'Main', 205)[0];
+    if (Pulse === undefined || Budgetˉmodule.readUInt32LE(Firstˉtake + 1) !== 0) Reject('Budget stack witness has no entry take.');
+    const Insert = Firstˉtake + 5;
+    const Insertˉrelative = Insert - Budgetˉsections[5].payload - Budgetˉmain.codeOffset;
+    if (Insertˉrelative !== 5) Reject('Budget stack witness must follow the initial owner take.');
+    const Prefix = Buffer.from(Budgetˉmodule.subarray(0, Insert));
+    for (const Entry of Parseˉfunctionˉentries(Budgetˉmodule, Budgetˉsections[4])) {
+        const Function = Parseˉfunction(Budgetˉmodule, Budgetˉsections[4], Entry.name);
+        if (Entry.name === 'Main') {
+            Prefix.writeUInt32LE(Function.codeLength + 6, Function.metadataOffset + 4);
+            // The inserted no-argument call peaks at two values, then pops its
+            // result. Later stack peaks are unchanged and must remain exact.
+            Prefix.writeUInt32LE(Math.max(Entry.maximumStack, 2), Function.metadataOffset + 8);
+        } else if (Function.codeOffset > Budgetˉmain.codeOffset) {
+            Prefix.writeUInt32LE(Function.codeOffset + 6, Function.metadataOffset);
+        }
+    }
+    Prefix.writeUInt32LE(Budgetˉsections[5].length + 6, Budgetˉsections[5].header + 4);
+    const Call = Buffer.alloc(6); Call[0] = 64; Call.writeUInt32LE(Pulse.index, 1); Call[5] = 80;
+    const Stackˉwitness = Buffer.concat([Prefix, Call, Budgetˉmodule.subarray(Insert)]);
+    const Stackˉstart = Budgetˉsections[5].payload + Budgetˉmain.codeOffset;
+    for (let Cursor = Stackˉstart; Cursor < Stackˉstart + Budgetˉmain.codeLength + 6; Cursor += Wvbˉinstructionˉwidthˉat(Stackˉwitness, Cursor)) {
+        if ((Stackˉwitness[Cursor] === 48 || Stackˉwitness[Cursor] === 49) && Stackˉwitness.readUInt32LE(Cursor + 1) >= Insertˉrelative) {
+            Stackˉwitness.writeUInt32LE(Stackˉwitness.readUInt32LE(Cursor + 1) + 6, Cursor + 1);
+        }
+    }
+    const Stackˉfile = path.join(Work, 'Budget-stack-owner-across-call.wvb');
+    writeFileSync(Stackˉfile, Stackˉwitness, { flag: 'wx' });
+    if (Normalize(await Run('budget-stack-owner-verify', Verifier, [Stackˉfile])) !== 'wvb status=Valid profile=compiler-aligned\n' ||
+        Normalize(await Run('budget-stack-owner-execute', Runner, [Stackˉfile])) !== 'Result: 42\n') {
+        Reject('Budget operand-stack owner did not survive a nested call.');
+    }
+    process.stdout.write('PASS budget helper operand-stack-owner\n');
+    const Scalarˉmodule = Helperˉmodules.get('helper-scalar-construction');
+    const Growˉmodule = Helperˉmodules.get('helper-record-growth');
+    const Ignore = Parseˉfunction(Budgetˉmodule, Budgetˉsections[4], 'Ignore');
+    const Growˉopcode = Opcodes(Growˉmodule, 'Build', 209)[0];
+    const Scalarˉopcode = Opcodes(Scalarˉmodule, 'Build', 207)[0];
+    const Helperˉmutations = [
+        ['immutable-view-as-owned-argument', Budgetˉmodule, Bytes => { Bytes[Ignore.parameterShapeOffsets[0]] = 36; }],
+        ['copy-owned-budget', Budgetˉmodule, Bytes => { Bytes[Firstˉtake] = 4; }],
+        ['split-wrong-local-kind', Budgetˉmodule, Bytes => { Bytes.writeUInt32LE(Budgetˉmain.parameterCount + Budgetˉmain.localShapes.findIndex(Kind => Kind === 2), Opcodes(Bytes, 'Main', 206)[0] + 1); }],
+        ['helper-construction-previous-minor', Scalarˉmodule, Bytes => Bytes.writeUInt16LE(39, 6)],
+        ['helper-construction-local-boundary', Scalarˉmodule, Bytes => Bytes.writeUInt32LE(0xffffffff, Scalarˉopcode + 1)],
+        ['helper-growth-aliased-budget', Growˉmodule, Bytes => Bytes.writeUInt32LE(Bytes.readUInt32LE(Growˉopcode + 1), Growˉopcode + 5)],
+        ['task-core-profile', Helperˉmodules.get('helper-task-scope-budget'), Bytes => { Bytes[20] = 1; }],
+    ];
+    for (const [Label, Original, Mutate] of Helperˉmutations) {
+        const Bytes = Buffer.from(Original); Mutate(Bytes);
+        if (Bytes.equals(Original)) Reject('Helper mutation did not change bytes: ' + Label);
+        const Input = path.join(Work, 'Helper-malformed-' + Label + '.wvb');
+        writeFileSync(Input, Bytes, { flag: 'wx' });
+        for (const Tool of [Verifier, Runner]) {
+            const Result = await Runˉdevelopmentˉcommand(Tool, [Input], Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 1 || Result.Output !== '' || !/^wvb (?:status=Invalid|run status=Unsupported).*\n$/u.test(Normalize(Result.Error))) {
+                Reject(`Malformed budget helper did not reject: ${Label}\n${Result.Output}${Result.Error}`);
+            }
+        }
+        process.stdout.write(`PASS budget helper malformed case=${Label}\n`);
+    }
+    const Helperˉrejections = [
+        ['reuse-consumed-budget', Replace(Budgetˉsource, 'if Ignore(Owner) != 42 { return 4; }', 'if Ignore(Owner) != 42 { return 4; }\n                        if Ignore(Owner) != 42 { return 5; }')],
+        ['split-immutable-budget', Replace(Budgetˉsource, 'fn Observe(Value: borrow Memory.Memoryˉbudget) -> i32 { return 42; }', 'fn Observe(Value: borrow Memory.Memoryˉbudget) -> i32 { let Split = Memory.Split(borrow mut Value, 16u64, 0u32); return 42; }')],
+    ];
+    for (const [Label, Text] of Helperˉrejections) {
+        const Input = path.join(Work, 'Helper-rejected-' + Label + '.wv');
+        const Output = path.join(Work, 'Helper-rejected-' + Label + '.wvb');
+        writeFileSync(Input, Text, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(process.execPath, [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'), ...Arguments(Input, Output)], Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || existsSync(Output) || !/source (?:analysis|emission) status=/u.test(Normalize(Result.Error))) {
+            Reject(`Invalid helper source was not refused before publication: ${Label}\n${Result.Output}${Result.Error}`);
+        }
+        process.stdout.write(`PASS budget helper source rejection case=${Label}\n`);
     }
     const Sections = Parseˉsections(Candidate);
     const Types = Parseˉtypes(Candidate, Sections[7]);
@@ -2111,7 +2232,7 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
         }
         process.stdout.write(`PASS record collection bounds rejection case=${Label}\n`);
     }
-    process.stdout.write(`native record collection elements status=Passed cases=${Cases.length} malformed=${Mutations.length} source-rejections=${Invalidˉfields.length} bounds=${Bounds.length} qualification=false elapsed-ms=${Date.now() - Started}\n`);
+    process.stdout.write(`native record collection elements status=Passed cases=${Cases.length} malformed=${Mutations.length + Helperˉmutations.length} source-rejections=${Invalidˉfields.length + Helperˉrejections.length} bounds=${Bounds.length} stack-owners=1 qualification=false elapsed-ms=${Date.now() - Started}\n`);
 }
 
 async function Verifyˉvectorˉindexedˉborrows(Arguments, Verifier, Runner) {
@@ -4364,6 +4485,7 @@ function Parseˉfunction(Bytes, Section, Wanted) {
                 localShapeOffsets: Localˉshapeˉoffsets,
                 codeOffset: Codeˉoffset,
                 codeLength: Codeˉlength,
+                metadataOffset: Cursor - 12,
             };
         }
     }

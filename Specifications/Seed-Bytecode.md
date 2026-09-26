@@ -27,7 +27,7 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    Foundation value-payload-borrow extension, candidate WVB 1.40 read-only
    Vector parameter access and projected-Vector helper calls, and candidate
    WVB 1.41 immutable scalar Vector indexed borrowing, and the in-development
-   WVB 1.42 Copy record collection candidate.
+   WVB 1.42 Copy record collection and helper ownership candidate.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -240,10 +240,12 @@ retain scalar-only collection operation admission. Existing declaration-only
 collection metadata is not evidence of operation admission.
 
 Canonical source emission selects 42 when a reachable collection operation
-uses a record element. Every minor-42 module must contain a kind-5 Vector or
-kind-6 Sequence Types entry whose element is record shape `7`; `E3` itself is
-optional. Complete typed verification checks each operation against the exact
-record identity and Copy proof. The bounded proof permits at most 8,192 steps,
+uses a record element, or a non-entry helper accepts an owned budget or performs
+Split, reserved construction, append or growth. Every minor-42 module must
+contain a kind-5 Vector or kind-6 Sequence Types entry whose element is record
+shape `7`, a non-entry shape-25 parameter, or a non-entry `CE` through `D1`
+operation. `E3` itself is optional. Complete typed verification checks each
+record operation against the exact identity and Copy proof. The bounded proof permits at most 8,192 steps,
 a 64-entry active type path, and 32,768 pending bytes; cycles, exhausted limits,
 or unproven fields reject.
 
@@ -257,6 +259,27 @@ Before minor-42 growth checks exclusive backing ownership, it collects
 unreachable aggregate wrappers and releases their retained descriptors. Active
 locals, caller frames, stack values, tasks, loans, and live collection cells
 remain roots; the exclusive-reference check is not weakened.
+
+[Decision 0968](../Documents/Decisions/0968-Thread-Owned-Budgets-Through-Collection-Helpers.md)
+extends this candidate's helper ownership path. `CE`, `CF`, `D0`, and `D1` may
+execute outside Main, with their exact shape, availability, nominal, bounds and
+failure rules retained. Shape `36` remains immutable and cannot serve as a split
+or construction owner. After aggregate collection at a function return, the
+interpreter gathers typed budget cells from remaining operands, caller frames,
+live aggregate fields, active task scopes and allocation leases. The returned
+aggregate remains live. Only current-generation owner tokens retain accounting
+entries; stale moved-wrapper tokens do not. Descriptor release commits after
+this collection, so pending allocation leases remain roots until their normal
+release. Root collection validates at most 2,162,688 bytes before releasing any
+owner, uses 65 mark bytes and retains the existing deferred parent-release rule.
+Helper source admission and interpreter execution remain distinct from native
+minor-42 lowering, installed promotion and complete qualification.
+
+A candidate structured-task entry retains the exact owned-budget and operation-
+context parameters of WVB 1.32. It uses request family 6 with the existing task
+environment and capability rules. Candidate metadata is authenticated before
+directory reading, and the complete entry signature is checked before the
+runner selects that envelope. A hosted profile byte alone is insufficient.
 
 `E3` produces immutable shape `37(7, record-type)`, with the inherited owner
 loan and invalidation rules. Copy read-through produces an ordinary record

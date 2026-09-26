@@ -11,7 +11,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Search status | Decisions |
 | --- | ---: |
 | Accepted | 354 |
-| Implemented | 501 |
+| Implemented | 502 |
 | Proposed | 4 |
 | Qualified | 95 |
 | Recorded | 9 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0968: thread owned budgets through collection helpers](0968-Thread-Owned-Budgets-Through-Collection-Helpers.md) | Implemented |
 | [Decision 0967: admit Copy record collection elements](0967-Admit-Copy-Record-Collection-Elements.md) | Implemented |
 | [Decision 0966: accept Windvale 1.x stability and support policy](0966-Accept-Windvale-1.x-Stability-And-Support-Policy.md) | Accepted |
 | [Decision 0965: borrow scalar Vector elements without transferring ownership](0965-Borrow-Scalar-Vector-Elements-Without-Transferring-Ownership.md) | Recorded |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0946: delegate portable database reproducibility to toolchain owners](0946-Delegate-Portable-Database-Reproducibility-To-Toolchain-Owners.md) | Implemented |
 | [Decision 0945: separate database behavior from cross-target packaging](0945-Separate-Database-Behavior-From-Cross-Target-Packaging.md) | Implemented |
 | [Decision 0944: select exact database development target sets](0944-Select-Exact-Database-Development-Target-Sets.md) | Implemented |
-| [Decision 0943: complete Windvale Language 1.0 Slice 8 qualification](0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) | Accepted |
 
 ## Superseded or historical records
 

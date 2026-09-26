@@ -2389,6 +2389,9 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
         'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv',
         'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Foundation-Record-Vector-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Memory-Budget-Helper-Lifetime-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Scalar-Collection-Helper-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',
@@ -4938,6 +4941,9 @@ $VectorBorrowIntegrationInputs = @(
     'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
     'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv',
     'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Record-Vector-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Memory-Budget-Helper-Lifetime-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Scalar-Collection-Helper-Executable.wv',
     'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs'
 )
 $UseVectorBorrowIntegrationDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
@@ -4947,7 +4953,7 @@ $UseVectorBorrowIntegrationDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -a
 # Current-product acquisition can exceed the automatic 15-minute CI job budget.
 $VectorBorrowIntegrationDevelopmentExpectedSeconds = [long]900
 $VectorBorrowIntegrationDevelopmentMaximumSeconds = [long]3600
-$VectorBorrowIntegrationDevelopmentCaseCount = 519
+$VectorBorrowIntegrationDevelopmentCaseCount = 537
 if ($UseVectorBorrowIntegrationDevelopment) {
     $VectorBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'

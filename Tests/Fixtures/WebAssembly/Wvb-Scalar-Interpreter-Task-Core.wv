@@ -1041,3 +1041,18 @@ export fn Retainedˉroots(State: bytes) -> bytes {
     }
     return Roots;
 }
+
+export fn Retainedˉbudgetˉroots(State: bytes) -> bytes {
+    let Emptyˉvalue: bytes = Empty(State);
+    if !Stateˉisˉvalid(State) { return Emptyˉvalue; }
+    var Roots: bytes = Emptyˉvalue;
+    var Index: u32 = 0u32;
+    while Index < TASK_SCOPE_CAPACITY {
+        let Offset: u32 = Scopeˉoffset(Index);
+        if Bytesˉreadˉu32ˉlittle(State, Offset + 4u32) == 1u32 {
+            Roots = Bytesˉconcat(Roots, Bytesˉslice(State, Offset + 68u32, 8u32));
+        }
+        Index = Index + 1u32;
+    }
+    return Roots;
+}

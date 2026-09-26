@@ -1,0 +1,27 @@
+#!wv/1 en@1
+module Scalarˉcollectionˉhelperˉexecutable;
+profile core;
+platform linux, windows;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+
+fn Build(Budget: Memory.Memoryˉbudget) -> Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> {
+    return Collections.Vectorˉconstructˉreserved::<i32>(Budget, 2u64);
+}
+
+fn Observe(Values: Collections.Vector<i32>) -> i32 {
+    let Owned: Collections.Vector<i32> = Values;
+    if Collections.Vectorˉlength(borrow Owned) != 0u64 { return 1; }
+    return 42;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Created: Result.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> = Build(Budget);
+    return match Created {
+        case Result.Result.Valid { Value: Values } { Observe(Values) }
+        case Result.Result.Failure { Error: Failure } { 2 }
+    };
+}

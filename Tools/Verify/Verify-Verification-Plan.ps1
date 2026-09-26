@@ -5324,7 +5324,7 @@ $QualificationPipelineExpected = @{
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|98'
+    'Run-Split-Compiler' = '3|99'
     'Run-Authenticated-Source-Admission' = '2|32'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
@@ -5921,6 +5921,9 @@ $VectorBorrowIntegrationPaths = @(
     'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
     'Tests/Fixtures/Language-1.0/Foundation-Vector-Payload-Borrow-Executable.wv',
     'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Record-Vector-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Memory-Budget-Helper-Lifetime-Executable.wv',
+    'Tests/Fixtures/Language-1.0/Scalar-Collection-Helper-Executable.wv',
     'Tools/Native/Foundation-Borrow-Test-Products-Core.mjs'
 )
 foreach ($Path in $VectorBorrowIntegrationPaths) {
@@ -5950,7 +5953,7 @@ foreach ($Path in $VectorBorrowIntegrationPaths) {
         $IntegrationPlan.MaximumSeconds -ne (3600 + $CacheOwnerPlan.MaximumSeconds) -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentExpectedSeconds -ne 900 -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentMaximumSeconds -ne 3600 -or
-        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 519 -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 537 -or
         $IntegrationPlan.UseFoundationBorrowPlanDevelopment -or
         $IntegrationPlan.UseFoundationBorrowDirectoryDevelopment -or
         $IntegrationPlan.UseFoundationBorrowOwnerDevelopment -or
@@ -5987,7 +5990,7 @@ foreach ($Boundary in @(
 foreach ($Fragment in @(
     '$NativePlan.UseVectorBorrowIntegrationDevelopment',
     "@('--vector-borrow-integration', '--maximum-seconds', '3600')",
-    'mode=vector-borrow-integration cases=519 expected-seconds=900 maximum-seconds=3600',
+    'mode=vector-borrow-integration cases=537 expected-seconds=900 maximum-seconds=3600',
     'cold-duration-measured=false',
     'No cold product acquisition was started and no passing evidence was recorded.'
 )) {

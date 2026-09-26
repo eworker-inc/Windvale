@@ -1,0 +1,44 @@
+#!wv/1 en@1
+module Memoryˉbudgetˉhelperˉlifetimeˉexecutable;
+profile core;
+platform linux, windows;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+
+fn Ignore(Value: Memory.Memoryˉbudget) -> i32 { return 42; }
+
+fn Observe(Value: borrow Memory.Memoryˉbudget) -> i32 { return 42; }
+
+export fn Pulse() -> i32 { return 42; }
+
+fn Transfer(Value: Memory.Memoryˉbudget) -> Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> {
+    var Parent: Memory.Memoryˉbudget = Value;
+    let Check: i32 = Pulse();
+    return Memory.Split(borrow mut Parent, 16u64, 0u32);
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Root: Memory.Memoryˉbudget = Budget;
+    var Iteration: u32 = 0u32;
+    while Iteration < 256u32 {
+        let Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+            Memory.Split(borrow mut Root, 32u64, 1u32);
+        match Split {
+            case Result.Result.Failure { Error: Failure } { return 1; }
+            case Result.Result.Valid { Value: Child } {
+                let Returned: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> = Transfer(Child);
+                match Returned {
+                    case Result.Result.Failure { Error: Unexpected } { return 2; }
+                    case Result.Result.Valid { Value: Owner } {
+                        if Observe(borrow Root) != 42 { return 3; }
+                        if Ignore(Owner) != 42 { return 4; }
+                    }
+                }
+            }
+        }
+        Iteration = Iteration + 1u32;
+    }
+    return 42;
+}

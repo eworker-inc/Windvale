@@ -58,7 +58,8 @@ fn Moduleˉheaderˉisˉvalid(Module: bytes, Requestˉmajor: u32) -> bool {
     if Moduleˉminor < 11u32 || Moduleˉminor > 42u32 { return false; }
     // Authenticate loan identity and lifetime before exposing candidate cells.
     if Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || (Moduleˉminor == 41u32 || Moduleˉminor == 42u32) {
-        if Requestˉmajor != 1u32 ||
+        if (Requestˉmajor != 1u32 &&
+                !(Moduleˉminor == 42u32 && Requestˉmajor == 6u32)) ||
             Compilerˉverifier.Compilerˉwvbˉverifyˉmetadata(Module) != 0u32 {
             return false;
         }
