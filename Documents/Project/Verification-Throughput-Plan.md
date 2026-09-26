@@ -89,8 +89,8 @@ cleanup. Product milestones remain in the existing completion matrix.
 | 2. CI preparation and reuse | One preparation per exact input closure; completed products survive a later failure; focused Windows/Linux jobs complete with cache-hit and cache-miss behavior measured. | In progress |
 | 3. Targeted refactoring | Extract cohesive responsibilities from a changed large function; measure slot headroom and build/runtime cost; preserve behavior and output contracts. | Open |
 | 4. Verification consolidation | Audit overlapping wrappers and construction; merge/remove duplicated execution where no unique coverage is lost; retain named cases and required host boundaries. | Open |
-| 5. Active documentation | Remove completed chronology and duplicate current status from active guidance; preserve indexed history and passing links/catalogs. | In progress |
-| 6. Obsolete-code audit | Identify consumers, generators and recovery dependencies before deletion; remove proven-unused entries or record why candidates must remain; retain useful caches. | In progress |
+| 5. Active documentation | Throughput and library checkpoint history archived and indexed; Progress and the matrix point to the completion plan's current blockers; active links/catalogs verified. | Complete |
+| 6. Obsolete-code audit | Named cleanup candidates audited against consumers, generators and recovery dependencies; retained candidates and reasons recorded; no unsupported deletion or cache purge. | Complete |
 
 Do not mark an item complete from recommendations alone. Record each implemented
 batch, its exact evidence and remaining limitations here. A justified audit may
@@ -128,8 +128,16 @@ The first dependency audit retains the generated compiler artifact readers:
 `Tools/Native/Generate-Compiler-Artifact-Readers.mjs` owns their generation.
 They are a bounded emission closure, not unused copies. No tracked C# projects
 or source remain. Preserve the [Stage 0 recovery provenance](../../Bootstrap/Stage0/README.md)
-and valid development caches. This scoped audit does not establish that every
-old wrapper is still needed; the wrapper/construction audit remains open.
+and valid development caches. The [scoped audit](../Evidence/2026-09-26-Simplification-Documentation-And-Retention.json)
+also identifies consumers for the historical source predecessor, paired host
+launchers, build wrappers and full front-door owner. They cannot be removed as
+unused code. Item 4 still owns consolidation of their duplicated implementation;
+the audit does not claim whole-repository reachability or current qualification.
+
+The [library checkpoint history](Library-Development-History-2026-09-26.md)
+preserves the old borrowing and delivered-consumer detail. Progress no longer
+lists completed record-vector work as a next step or repeats the obsolete
+pre-delivery consumer status. Its active text is below 2,000 words.
 
 CI already requests cache saving after failure. Its remaining preparation work
 must finish or checkpoint before the enclosing 15-minute job is cancelled.

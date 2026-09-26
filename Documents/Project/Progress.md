@@ -65,61 +65,20 @@ materially misleading.
 
 ## WVB version scopes
 
-Two active tracks intentionally use different bytecode generations:
+Name the track when a bytecode version matters:
 
-- Windvale Seed and its frozen bootstrap/recovery path emit and consume their
-  qualified WVB 1.11 contract.
-- The evolving Language 1.0 compiler uses later versioned WVB contracts, with
-  the executable structured-task slice at WVB 1.32 and the contained unsafe
-  memory operations at WVB 1.37. The qualified source compiler publishes the
-  authenticated call as WVB 1.38, the complete verifier admits its
-  exact registered binding, the scalar provider executes it against private
-  logical heap state, and the native x64 lowerer executes the same exact binding
-  through its typed SysV ABI provider on Windows and Linux. WebAssembly and
-  other native targets retain narrower declared boundaries.
-- The Libraries 1.0 track has a source-publication candidate at WVB 1.39 for
-  immutable Option/Result payload borrowing. Its source writer and bounded
-  independent reader pass on Windows. The complete verifier now applies semantic,
-  typed-stack, and lifetime checks to 1.39. The source-built host scalar runner
-  executes the published fixture on both hosts; installed tools and other targets
-  remain narrower. The verifier's small typed-directory component now
-  preserves distinct borrowed payload identities and bounds-checks shape and
-  instruction decoding. The control-phase component also checks that each
-  payload owner is initialized on every path and cannot be overwritten or
-  consumed after borrowing, including loops. Its isolated call checker now
-  matches exact borrowed parameters and permits by-value reads only for payloads
-  proved safe to copy or share. The typed-stack pass preserves borrowed identity
-  through the published record/u32 fixture's locals, projections, and helpers.
-  Its loan pass tracks origins through branches and loops, including values
-  waiting on the operand stack. Owner changes invalidate later borrowed reads;
-  changes after the last use and fresh reborrows remain valid. Array, Sequence,
-  and callable composition now has focused evidence. Source read-through also
-  classifies only exact WVFT-backed callable shapes as owned and rejects absent,
-  truncated, or out-of-range callable evidence. The candidate bytecode checker
-  now rejects borrowed callable copies while preserving exact invocation,
-  including array and Option projections; its existing 217-group selector passes
-  on Windows in the [callable reconciliation checkpoint](../Evidence/2026-09-07-Foundation-Borrow-Callable-Reconciliation.json).
-  Runtime leases connect dispatch, locals, calls, collector roots, and cleanup.
-  The [owned-payload checkpoint](../Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json)
-  passes 305 component groups on Windows and Debian with identical bytecode.
-  It permits borrowed forwarding of an array containing owned Vectors while
-  rejecting copying, consuming calls, and Vector extraction. Wider payload
-  execution and real-consumer integration remain pending. The subsequent
-  [complete-verifier checkpoint](../Evidence/2026-09-08-Foundation-Complete-Verifier.json)
-  removes the blanket version rejection and checks phase results through the
-  existing metadata and typed-stack matrices: 305 groups pass on both hosts.
-  The [runtime checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json)
-  now returns 42 from the published three-projection fixture on Windows and
-  Debian, rejects nine unsafe or malformed variants before execution, and
-  passes three earlier-version aggregate Sequence lifetime workloads per host.
-  The [paired fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json)
-  passes 371 selected groups on each host: record/u32 and allocated-text borrows
-  compile identically and return 42. Seven existing call-site cases also pass
-  on both hosts after correcting the owned-builder rejection fixture. A
-  maintained real consumer remains pending.
+- Seed and its frozen bootstrap/recovery path retain qualified WVB 1.11.
+- The qualified Language 1.0 source compiler includes authenticated Foreign
+  calls through WVB 1.38. Other execution targets retain their declared subsets.
+- Libraries 1.0 development extends immutable borrowing and owned collections
+  through candidate WVB 1.42. Focused compiler, verifier and interpreter evidence
+  does not establish native lowering or installed-toolchain promotion for those
+  later versions. The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+  owns the exact current boundary and next consumer.
 
-The Language 1.0 track does not silently redefine the frozen Seed recovery
-contract. A current document must name the track when a WVB version matters.
+The [dated library history](Library-Development-History-2026-09-26.md) preserves
+the earlier 1.39 checkpoint details and delivery measurements. Later development
+does not silently redefine frozen Seed or Language 1.0 qualification identities.
 
 ## What is not complete
 
@@ -139,44 +98,18 @@ claim.
 
 ## Immediate next results
 
-Ordinary front-end verification now shares exact build products and selects
-affected test-project inputs while executing the behaviors afresh. The Windows
-checkpoint passed all 329 development claims in 29.94 seconds warm, versus
-225.71 seconds while creating its project/package checkpoints. A changed parser
-defect was rebuilt and rejected in 14.63 seconds; restoring it passed the focused
-254-claim selection in 2.10 seconds. These are development observations, not a
-clean-machine or paired-host qualification claim. See the
-[focused evidence](../Evidence/2026-09-04-Front-End-Development-Product-Reuse.json).
+The [six-item simplification goal](Verification-Throughput-Plan.md#six-item-simplification-goal)
+is improving diagnostics, preparation reuse, code structure and maintenance.
+Use that plan for its implementation status and the [native test runbook](../Runbooks/Native-Tests.md)
+for current verification commands. Earlier feedback timings and component case
+inventories are preserved in the [dated history](Library-Development-History-2026-09-26.md#earlier-development-feedback-checkpoints).
 
-Foundation component development uses small current-source WV packages through
-one existing owner. The
-[planner's 16 cases](../Evidence/2026-09-04-Foundation-Borrow-Plan-Development.json)
-and [typed directory's 24 cases](../Evidence/2026-09-04-Wvb-Typed-Directory-Development.json)
-have separate focused selectors and changed-source rejection evidence.
-
-The [cross-call publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json)
-records 39 passing Windows cases and the separate cold-construction cost; it is
-not clean-machine or cross-host qualification.
-
-The `--foundation-borrow-owners` selector combines
-[18 owner-flow groups](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json),
-[18 direct-call groups](../Evidence/2026-09-04-Foundation-Borrow-Call-Development.json),
-[37 semantic metadata groups](../Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json),
-[15 typed-stack groups](../Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json),
-[28 lifetime groups](../Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json),
-and [34 composition groups](../Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
-They consume the actual published signatures and projections, check exact
-nominal identities, reject every truncated fixture prefix, and preserve an
-earlier-bytecode regression. Type and local directories avoid repeated scans;
-cached products keep fresh execution separate from construction. Bounded host
-minor-39 execution now has paired-host evidence. Full-verifier source
-changes retain broader routing.
-
-1. Advance the owned-resource consumer after the completed parser gate. Extend
-   indexed Vector observation to record elements with exact storage, tracing,
-   and ownership. Then migrate Package-Lock's private part directory while
-   preserving lock bytes and failure order. Automatic CI, independent
-   reconstruction, native lowering, and installed promotion remain open.
+1. Complete the typed Package-Lock consumer after the delivered parser gate.
+   Record-vector observation and owned-budget helpers have focused evidence;
+   the [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+   owns the remaining emission blocker and integration work. Preserve lock
+   bytes, failure order and resource bounds. Native lowering, installed
+   promotion and independent qualification remain separate gates.
 2. Continue required Libraries 1.0 through primitive ordering, collection
    mutation and slicing, bounded byte construction, and real consumers.
 3. Advance the remaining WVDB 1.0 specifications and reconcile its useful

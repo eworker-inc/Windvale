@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-simplification-documentation-and-retention",
+  "date": "2026-09-26",
+  "subject": "Concise current guidance and dependency-audited cleanup candidates",
+  "claim": "Four active guidance files decreased from 15193 to 11193 whitespace-delimited words relative to 31dc02a2. Progress decreased from 2496 to 1917 words and no longer treats delivered record-vector support or the delivered package parser as pending. Detailed checkpoint prose remains in indexed dated history. The named code-cleanup candidates below have required consumers or recovery roles; no deletion is justified by this scoped audit. The existing retirement verifier confirms zero tracked managed files and zero direct managed entry points.",
+  "source": {
+    "kind": "Other",
+    "value": "Documentation worktree based on 934d612b; before-count source is 31dc02a2. Exact current inputs are recorded below. Dependency conclusions are AI source review, not whole-repository execution or a static reachability proof."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Active-context counts and tracked managed-file inventory",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Audit-Active-Documentation.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Audit-Active-Documentation.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Audit-Active-Documentation.mjs",
+          "size": 1283,
+          "sha256": "4906b4f6d705ebb4ae9d564bbd62c6b3e0e37fa1543949806f830b8d7cc8d3ed"
+        },
+        {
+          "path": "Documents/Project/Progress.md",
+          "size": 15540,
+          "sha256": "5ae48265b22ab860724c6524587f5f47562af546e0bfcb3994ed9df5ff5fb33e"
+        },
+        {
+          "path": "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+          "size": 26419,
+          "sha256": "3578c2adc1d44cca5c71d1af6d8395095e03a6791e3ed238b9106fbfb6cb49a9"
+        },
+        {
+          "path": "Documents/Project/Compiler-Tools-And-Libraries-1.0-Matrix.md",
+          "size": 27114,
+          "sha256": "bc7781305c415df8d0b70a3b33e2e352a7f4ef4c0c72066a1b61997e9db2985c"
+        },
+        {
+          "path": "Documents/Project/Verification-Throughput-Plan.md",
+          "size": 20458,
+          "sha256": "85701c7d38d09e993172624a9ac7428563a5d7b8889388259f81305321d3682f"
+        },
+        {
+          "path": "Documents/Project/Library-Development-History-2026-09-26.md",
+          "size": 8897,
+          "sha256": "0ec465f493f77657ae6cc2678f9e4f7cc55f0b061f27506df21609d899fe2e7c"
+        },
+        {
+          "path": "Documents/Project/Verification-Throughput-History-2026-09-26.md",
+          "size": 32696,
+          "sha256": "affc296509bd7f4813f126d0426a284bf9d7734c3119c368a32e7a3fcef07e51"
+        },
+        {
+          "path": "Documents/Evidence/Evidence-Sources.json",
+          "size": 3203,
+          "sha256": "78daaf944c93e83442940af2e7319904beabb2d57a205e5ab60a8dfbe6e94314"
+        },
+        {
+          "path": "Documents/Project/Dotnet-Retirement-Inventory.json",
+          "size": 675,
+          "sha256": "a0711b9f7ae2b822554a25a359953d605149804d064376a7aaad7fa53bf87807"
+        },
+        {
+          "path": "Bootstrap/Stage0/README.md",
+          "size": 1967,
+          "sha256": "cafdb2be37ed4571d29f30254ecba29563720278aeb2e723f67c17ab2a3e2dff"
+        },
+        {
+          "path": "Tools/Native/Generate-Compiler-Artifact-Readers.mjs",
+          "size": 14033,
+          "sha256": "7e91e47f729c04c62dff7280950af66b4071d2f73c388e6d22cf312826c8de68"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260262,
+          "sha256": "a50d1602ca18f0ce8267e52f13052fa8b363b689104152995b8611b6e6cb717f"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 18103,
+          "sha256": "1c2cdcefe7db7dcbb3bc34dc8b01905b6c7b50e1d5c4782e723c18f274c6d95d"
+        },
+        {
+          "path": "Tools/Native/Source-Edition-Predecessor-Core.mjs",
+          "size": 12448,
+          "sha256": "03f9c838d98de0b57f90beed8f0625d2763ca137198502864441857f49260fcd"
+        },
+        {
+          "path": "Tools/Verify/Invoke-WindvaleTests.ps1",
+          "size": 31143,
+          "sha256": "0d1eccbf68f0b760891905f658fe4ef09a254ede27e6e0b02782cd4df6db1d8c"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24234,
+          "sha256": "142d6dd5d10a99b6b56cab7604236dfb9b9db08ffbea1b0a4c0da66a491b2c04"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 18842,
+          "sha256": "3fc5f08ce5a4f3525ce18f401ac57264818a4faa9c05eca7513d0081899eb7e0"
+        },
+        {
+          "path": "Tools/Native/Build-Current-Wvb.cmd",
+          "size": 2426,
+          "sha256": "e532678e001420335d7c14c940bdbcb61501a854d0cf58f4705a1f2027fe5a12"
+        },
+        {
+          "path": "Tools/Native/Build-Current-Wvb.sh",
+          "size": 2475,
+          "sha256": "ba59dfc3903072b8db0404d978732979782848b2e1a93470cc88647ae5b19c3c"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.cmd",
+          "size": 6693,
+          "sha256": "7a71ab8bc38775a6f71c32d1253d59870b28b2219ccbfb6a3ced492fb3aebe63"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Project-Wvb.sh",
+          "size": 4616,
+          "sha256": "1b9ccf0f352d1d81e4f54a345eb06759fceedf16bba4a0c0a9a5d06d83d4dab4"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+          "size": 129933,
+          "sha256": "5464a6fad73a480fee55be45a1ea6e51c6a3ae684bd5a73abd0476140cb61a2d"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Front-Door.sh",
+          "size": 108544,
+          "sha256": "56914c89c88bed035ac6f61b62676165cbb269a419cbdaa42dd0ae849c74ea09"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Active-Documentation-Audit.json",
+          "size": 1790,
+          "sha256": "c0f1c15de04bf7b0766840ffa6feb703b36b610ad727c689ae5b2dd8ee3afbae"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Existing managed retirement inventory and direct-entrypoint boundary",
+      "tool": "Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1",
+          "size": 4211,
+          "sha256": "96b1e26fda9cabee3d08ae7087ecf25d8f998a4502a248bdf63e2d440bd66413"
+        },
+        {
+          "path": "Documents/Project/Dotnet-Retirement-Inventory.json",
+          "size": 675,
+          "sha256": "a0711b9f7ae2b822554a25a359953d605149804d064376a7aaad7fa53bf87807"
+        },
+        {
+          "path": "Bootstrap/Stage0/README.md",
+          "size": 1967,
+          "sha256": "cafdb2be37ed4571d29f30254ecba29563720278aeb2e723f67c17ab2a3e2dff"
+        }
+      ],
+      "outputs": []
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Retain generated Compiler/Windvale/*-Artifact-* readers. The emitter project consumes them and Generate-Compiler-Artifact-Readers.mjs owns their bounded generation. The prior diagnostic correction records a passing 14-file generation check; this unchanged generation boundary was not rebuilt for prose edits.",
+    "Retain immutable Stage 0 recovery metadata. Managed source is already absent from main; Bootstrap/Stage0/README.md and the retirement inventory name the exact required recovery release. Archival provenance is not an obsolete production compiler.",
+    "Retain Source-Edition-Predecessor-Core.mjs and its pinned source identity. Current-Split-Compiler-Cache-Core.mjs invokes it to construct modern Project 4 tools through the accepted historical predecessor. The active native preparation run actually consumes this path. Removing it would break current construction.",
+    "Retain paired host launchers for registered owners, including Test-Compiler-Split-Development.cmd/.sh and Test-Language-1.0-Front-Door.cmd/.sh. Invoke-WindvaleTests.ps1 deliberately selects .cmd on Windows and .sh on Linux, with executable validation. Their host roles are distinct even when thin wrappers share a Node implementation.",
+    "Retain Build-Current-Wvb and Build-Cached-Project-Wvb host entry points. The former owns the pinned build driver and normal Project 4 publication dispatch; the latter owns reusable development construction and Project 4 current split dispatch. Development-Owner-Dependencies.txt records reconstruction, database, generic and front-door consumers. Similar names do not make their contracts interchangeable.",
+    "Retain the full legacy front-door owner and its 495 registered cases. Its development subset and later supplied-product selectors do not subsume every frozen-input, source-profile or descriptor boundary. The known old emission-rejection expectation needs reconciliation against its selected product, not wholesale test deletion. Verification consolidation remains item 4.",
+    "Preserve valid caches, ignored diagnostic products and in-use temporary checkouts. They contain measured evidence or active construction dependencies. This audit did not purge them or assert that all ignored files are disposable.",
+    "The scope is the named candidates raised by this simplification program, not every file in the repository. No unused-code conclusion is inferred from the absence of a text search hit. Historical qualification and support contracts are unchanged. No broad compiler/runtime verification was run for this editorial and retention audit."
+  ],
+  "related": [
+    "Documents/Project/Progress.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-1.0-Matrix.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Project/Library-Development-History-2026-09-26.md",
+    "Documents/Project/Verification-Throughput-History-2026-09-26.md",
+    "Documents/Evidence/Evidence-Sources.json",
+    "Documents/Project/Dotnet-Retirement-Inventory.json",
+    "Bootstrap/Stage0/README.md",
+    "Tools/Native/Generate-Compiler-Artifact-Readers.mjs",
+    "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+    "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+    "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+    "Tools/Native/Source-Edition-Predecessor-Core.mjs",
+    "Tools/Verify/Invoke-WindvaleTests.ps1",
+    "Tests/Native/Verification-Owners.txt",
+    "Tests/Native/Development-Owner-Dependencies.txt",
+    "Tools/Native/Build-Current-Wvb.cmd",
+    "Tools/Native/Build-Current-Wvb.sh",
+    "Tools/Native/Build-Cached-Project-Wvb.cmd",
+    "Tools/Native/Build-Cached-Project-Wvb.sh",
+    "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+    "Tools/Native/Test-Language-1.0-Front-Door.sh",
+    "Documents/Evidence/2026-09-26-Emission-Diagnostic-Correction.json"
+  ]
+}

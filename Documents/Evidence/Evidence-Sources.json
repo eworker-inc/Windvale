@@ -42,6 +42,14 @@
       "indexLevels": [2, 3]
     },
     {
+      "key": "library-development-history-2026-09-26",
+      "path": "Documents/Project/Library-Development-History-2026-09-26.md",
+      "kind": "historical-snapshot",
+      "use": "Earlier borrowing, verifier, runtime, feedback and delivered package-consumer checkpoints preserved during the September 26 simplification program.",
+      "limits": "Dated checkpoint prose; Progress and the compiler/tools/libraries completion plan own present standing and consumer blockers.",
+      "indexLevels": [2]
+    },
+    {
       "key": "verification-throughput-history-2026-09-26",
       "path": "Documents/Project/Verification-Throughput-History-2026-09-26.md",
       "kind": "historical-snapshot",

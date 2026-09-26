@@ -71,33 +71,10 @@ coordinator or replay unrelated suites. This milestone does not wait for every
 Option/Result operation or installed-toolchain qualification. It does not claim
 arbitrary payload or target support when only its declared subset passes.
 
-The 15 September implementation connects Project 4 to the current-source native
-publisher. Nine focused Windows cases pass, including replacement, deterministic
-bytes, bad source-lock rejection, malformed WVB, and resource aliases. Five
-native publisher cases also pass on Debian using a Windows-constructed Linux
-executable. This is not independent Linux construction or fault-injection
-qualification; exact inputs and exclusions are in the
-[publication evidence](../Evidence/2026-09-15-Project4-Native-Publication.json).
-
-The earlier native-lowering blocker was resolved for the selected current
-product. The approved current-lowerer rebuild
-completed in 2 minutes 10 seconds; 43 focused Windows cases passed. Both the
-canonical parser and package-lock tests now return 42 on Windows and Debian
-using explicitly selected native lowering and image-mode packaging. The earlier
-package-lock rejection came from the older lowerer. See the
-[current-lowerer execution evidence](../Evidence/2026-09-15-Current-Lowerer-Package-Execution.json)
-for exact identities, runtime profiles, cache reuse, and host limits.
-
-The package-lock borrow rejection is resolved in the delivered source batch.
-Its large scanner exceeded the documented per-function borrow-proof bounds:
-281 blocks and 87 slots versus the 64/64 limits. The repeated digest-and-size
-validation now belongs to one private lock-content reader, whose borrowed match
-uses seven blocks and six slots. The canonical decimal parser still returns
-`Option<u64>`; that private extraction changes no compiler limit, public API,
-or wire format. Forty-two
-new content cases plus the existing lock tests pass on Windows and Debian, and
-ordinary Project 4 build/replacement produces identical WVB bytes. See the
-[borrowed lock-reader evidence](../Evidence/2026-09-15-Package-Lock-Borrowed-Content.json).
+The [dated delivery history](Library-Development-History-2026-09-26.md#delivered-package-consumer-checkpoints)
+preserves publication timings, the resolved older-lowerer mismatch and the
+private lock-content extraction that kept borrowing within its proof bounds.
+The table above and linked evidence own the delivered consumer's exact scope.
 
 The maintainer approved the expanded source-edition rollout after the dependency
 audit connected the package sources to shared compiler and verifier projects.
