@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { lstat, mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
+import { lstat, mkdtemp, readFile, readdir, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,9 +47,55 @@ const SELECTORS = FIXTURES.flatMap(Fixture =>
 );
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
+let Ownerˉdeadline = null;
 
-function Reject(Message) {
-    throw new Error(Message);
+function Reject(Message, Code = 1) {
+    throw Object.assign(new Error(Message), { exitCode: Code });
+}
+
+function Parseˉphase(Arguments) {
+    if (Arguments.length === 0) return { Mode: 'complete', Seconds: null };
+    if (Arguments.length === 1 && Arguments[0] === '--termination-probe') {
+        return { Mode: 'probe', Seconds: null };
+    }
+    if (Arguments.length !== 3 ||
+        !['--prepare-only', '--prepared-products-only'].includes(Arguments[0]) ||
+        Arguments[1] !== '--maximum-seconds' ||
+        !/^[1-9][0-9]{0,3}$/u.test(Arguments[2])) {
+        Reject('Usage: authenticated foreign binding [--prepare-only | --prepared-products-only] --maximum-seconds <30-5400; prepared maximum 600>', 64);
+    }
+    const Seconds = Number(Arguments[2]);
+    if (Seconds < 30 || Seconds > 5400 ||
+        (Arguments[0] === '--prepared-products-only' && Seconds > 600)) {
+        Reject('The authenticated foreign-binding phase budget is outside its bounds.', 64);
+    }
+    return { Mode: Arguments[0] === '--prepare-only' ? 'prepare' : 'prepared', Seconds };
+}
+
+function Verifyˉphaseˉarguments() {
+    for (const [Arguments, Mode, Seconds] of [
+        [[], 'complete', null], [['--termination-probe'], 'probe', null],
+        [['--prepare-only', '--maximum-seconds', '4500'], 'prepare', 4500],
+        [['--prepared-products-only', '--maximum-seconds', '600'], 'prepared', 600],
+    ]) {
+        const Result = Parseˉphase(Arguments);
+        if (Result.Mode !== Mode || Result.Seconds !== Seconds) Reject('Foreign-binding phase selection differs.');
+    }
+    for (const Arguments of [
+        ['--prepare-only'], ['--prepared-products-only'], ['--unknown'],
+        ['--prepare-only', '--maximum-seconds', '0'],
+        ['--prepare-only', '--maximum-seconds', '29'],
+        ['--prepare-only', '--maximum-seconds', '5401'],
+        ['--prepare-only', '--maximum-seconds', '1e3'],
+        ['--prepare-only', '--maximum-seconds', '030'],
+        ['--prepared-products-only', '--maximum-seconds', '601'],
+        ['--prepare-only', '--prepared-products-only', '--maximum-seconds', '600'],
+    ]) {
+        let Rejected = false;
+        try { Parseˉphase(Arguments); }
+        catch (Errorˉvalue) { if (Errorˉvalue.exitCode !== 64) throw Errorˉvalue; Rejected = true; }
+        if (!Rejected) Reject('An invalid foreign-binding phase or budget was accepted.');
+    }
 }
 
 function Processˉisˉlive(Child) {
@@ -122,6 +168,10 @@ function Runˉcommand(
     Relayˉstdout = false,
     Activity = 'command'
 ) {
+    if (Ownerˉdeadline !== null) {
+        Timeoutˉmilliseconds = Math.min(Timeoutˉmilliseconds, Ownerˉdeadline - Date.now() - 10_000);
+        if (Timeoutˉmilliseconds <= 0) Reject('The foreign-binding phase deadline expired before launch.', 124);
+    }
     return new Promise((Resolveˉresult, Rejectˉpromise) => {
         const Isˉcommand = WINDOWS && Tool.toLowerCase().endsWith('.cmd');
         if (Isˉcommand && [Tool, ...Argumentsˉvalue].some(
@@ -274,15 +324,17 @@ function Runˉcommand(
 }
 
 function Requireˉcleanˉresult(Result, Label, Expectedˉcode) {
-    if (Result.Cleanupˉfailure !== null) {
-        Reject(`${Label} cleanup failed: ${Result.Cleanupˉfailure}.`);
+    if (Result.Cleanupˉfailure !== null || Result.Forced) {
+        throw Object.assign(new Error(`${Label} cleanup failed: ${Result.Cleanupˉfailure}.`),
+            { exitCode: 2, cleanupUncertain: true });
     }
-    if (Result.Timedˉout) Reject(`${Label} exceeded its time bound.`);
+    if (Result.Timedˉout) Reject(`${Label} exceeded its time bound.`, 124);
     if (Result.Exceeded) Reject(`${Label} exceeded its output bound.`);
     if (Result.Code !== Expectedˉcode) {
         Reject(
             `${Label} returned ${Result.Code}; expected ${Expectedˉcode}.\n` +
-            Result.Error.toString('utf8') + Result.Output.toString('utf8')
+            Result.Error.toString('utf8') + Result.Output.toString('utf8'),
+            Expectedˉcode === 0 && [64, 124].includes(Result.Code) ? Result.Code : 1
         );
     }
 }
@@ -381,14 +433,59 @@ async function Removeˉwork(Work, Temporaryˉroot) {
     await rm(Work, { recursive: true, force: false, maxRetries: 2 });
 }
 
-async function Main() {
-    const Probeˉonly = process.argv.length === 3 &&
-        process.argv[2] === '--termination-probe';
-    if (!Probeˉonly && process.argv.length !== 2) {
-        Reject('The authenticated foreign-binding owner accepts no arguments.');
+async function Verifyˉpreparedˉphaseˉrejection() {
+    const Temporaryˉroot = resolve(tmpdir());
+    const Work = await realpath(await mkdtemp(join(Temporaryˉroot, 'windvale-authenticated-foreign-binding-')));
+    const Previousˉroot = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Previousˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    let Preserve = false;
+    try {
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Work;
+        delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        const Missing = await Runˉcommand(process.execPath, [fileURLToPath(import.meta.url),
+            '--prepared-products-only', '--maximum-seconds', '600'], 30_000, false, 'prepared-miss');
+        Requireˉcleanˉresult(Missing, 'prepared foreign-binding miss', 64);
+        if (!Missing.Error.toString('utf8').includes('Current compiler checkpoint missing') ||
+            Missing.Output.toString('utf8').includes('phase=execute') ||
+            Missing.Output.toString('utf8').includes('START current split project')) {
+            Reject('Prepared foreign-binding execution did not stop before construction.');
+        }
+        const Entries = await readdir(join(Work, 'current-split-compiler-v2', `${process.platform}-${process.arch}`));
+        if (Entries.length !== 0) Reject('Prepared foreign-binding miss retained a construction candidate.');
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+        const Conflict = await Runˉcommand(process.execPath, [fileURLToPath(import.meta.url),
+            '--prepare-only', '--maximum-seconds', '600'], 10_000, false, 'phase-conflict');
+        Requireˉcleanˉresult(Conflict, 'conflicting foreign-binding preparation', 64);
+        if (!Conflict.Error.toString('utf8').includes('Preparation cannot use a prepared-only environment.')) {
+            Reject('Conflicting preparation policy was not rejected.');
+        }
+        process.stdout.write('authenticated foreign binding phase probe status=Passed selections=14 miss=NoConstruction conflict=Rejected\n');
+    } catch (Error) {
+        Preserve = Error.cleanupUncertain === true;
+        throw Error;
+    } finally {
+        if (Previousˉroot === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Previousˉroot;
+        if (Previousˉmode === undefined) delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        else process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = Previousˉmode;
+        if (Preserve) process.stderr.write(`Preserved phase-probe work after uncertain cleanup: ${Work}\n`);
+        else await Removeˉwork(Work, Temporaryˉroot);
     }
-    await Runˉterminationˉprobe();
-    if (Probeˉonly) return;
+}
+
+async function Main() {
+    const Phase = Parseˉphase(process.argv.slice(2));
+    Verifyˉphaseˉarguments();
+    if (Phase.Mode === 'prepare' &&
+        (process.env.WINDVALE_PREPARED_PRODUCTS_ONLY !== undefined ||
+            process.env.WINDVALE_PREPARED_COMPILER_ONLY !== undefined)) {
+        Reject('Preparation cannot use a prepared-only environment.', 64);
+    }
+    if (Phase.Seconds !== null) Ownerˉdeadline = Date.now() + Phase.Seconds * 1000;
+    if (Phase.Mode === 'prepared') process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+    if (Phase.Mode !== 'prepare') await Runˉterminationˉprobe();
+    if (Phase.Mode === 'probe') { await Verifyˉpreparedˉphaseˉrejection(); return; }
+    const Phaseˉcount = Phase.Mode === 'prepare' ? 2 : 3;
     const Selectorˉvalues = SELECTORS.map(Item => Item.Selector);
     if (FIXTURES.length !== 5 || SELECTORS.length !== 27 ||
         new Set(Selectorˉvalues).size !== SELECTORS.length ||
@@ -402,6 +499,7 @@ async function Main() {
         'windvale-authenticated-foreign-binding-'
     )));
     var Passed = false;
+    var Preserveˉwork = false;
     try {
         const Build = join(
             SCRIPT_DIRECTORY,
@@ -457,10 +555,12 @@ async function Main() {
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=build item=1/3 fixtures=5 products=2\n'
+            `phase=build item=1/${Phaseˉcount} fixtures=5 products=2\n`
         );
         const Buildˉstarted = Date.now();
         const Buildˉarguments = [Build];
+        if (Ownerˉdeadline !== null) Buildˉarguments.push('--deadline-ms', String(
+            Math.min(Ownerˉdeadline - 10_000, Date.now() + BUILD_TIMEOUT_MILLISECONDS - 30_000)));
         for (const Item of Buildˉproducts) {
             Buildˉarguments.push(Item.Project, Item.Product);
         }
@@ -497,19 +597,21 @@ async function Main() {
         }
         process.stdout.write(
             `PASS  language 1 authenticated foreign binding phase=build ` +
-            `item=1/3 elapsed-ms=${Date.now() - Buildˉstarted} ` +
+            `item=1/${Phaseˉcount} elapsed-ms=${Date.now() - Buildˉstarted} ` +
             `fixtures=5 products=2\n`
         );
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=package item=2/3 fixtures=5 applications=2\n'
+            `phase=package item=2/${Phaseˉcount} fixtures=5 applications=2\n`
         );
         const Packageˉstarted = Date.now();
-        const Packageˉresults = await Promise.all(Packageˉproducts.map(async Item => {
+        const Packageˉoutcomes = await Promise.allSettled(Packageˉproducts.map(async Item => {
             const Packageˉresult = await Runˉcommand(
                 process.execPath,
-                [Package, '7', Item.Product, Item.Application],
+                [Package, ...(Ownerˉdeadline === null ? [] :
+                    ['--deadline-ms', String(Math.min(Ownerˉdeadline - 10_000,
+                        Date.now() + PACKAGE_TIMEOUT_MILLISECONDS - 30_000))]), '7', Item.Product, Item.Application],
                 PACKAGE_TIMEOUT_MILLISECONDS,
                 true,
                 `package-${Item.name}`
@@ -536,15 +638,26 @@ async function Main() {
             }
             return Applicationˉinformation.size;
         }));
+        const Packageˉfailures = Packageˉoutcomes.filter(Outcome => Outcome.status === 'rejected');
+        if (Packageˉfailures.length !== 0) {
+            Preserveˉwork = Packageˉfailures.some(Outcome => Outcome.reason.cleanupUncertain === true);
+            throw Packageˉfailures[0].reason;
+        }
+        const Packageˉresults = Packageˉoutcomes.map(Outcome => Outcome.value);
         const Applicationˉbytes = Packageˉresults.reduce(
             (Total, Bytes) => Total + Bytes,
             0
         );
         process.stdout.write(
             'PASS  language 1 authenticated foreign binding ' +
-            `phase=package item=2/3 elapsed-ms=${Date.now() - Packageˉstarted} ` +
+            `phase=package item=2/${Phaseˉcount} elapsed-ms=${Date.now() - Packageˉstarted} ` +
             `fixtures=5 applications=2 application-bytes=${Applicationˉbytes}\n`
         );
+
+        if (Phase.Mode === 'prepare') {
+            process.stdout.write('native language 1 authenticated foreign binding preparation status=Complete fixtures=5 products=2 applications=2\n');
+            return;
+        }
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
@@ -602,8 +715,12 @@ async function Main() {
             }
         }
         Passed = true;
+    } catch (Errorˉvalue) {
+        Preserveˉwork ||= Errorˉvalue.cleanupUncertain === true;
+        throw Errorˉvalue;
     } finally {
-        await Removeˉwork(Work, Temporaryˉroot);
+        if (Preserveˉwork) process.stderr.write(`Preserved foreign-binding work after uncertain cleanup: ${Work}\n`);
+        else await Removeˉwork(Work, Temporaryˉroot);
     }
 
     if (Passed) {
@@ -615,4 +732,8 @@ async function Main() {
     }
 }
 
-await Main();
+try { await Main(); }
+catch (Errorˉvalue) {
+    process.stderr.write(`${Errorˉvalue.message}\n`);
+    process.exitCode = Errorˉvalue.exitCode ?? 1;
+}

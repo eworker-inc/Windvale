@@ -70,6 +70,40 @@ reserved for the final grouped gate, not used as changed-file fallback.
 
 ## Persistent development resume
 
+### Separate preparation and behavior phases
+
+Automatic development classification requests preparation when the selected
+owners include `language-1-authenticated-foreign-binding`. The matrix contains
+Linux and the already-selected Windows host; unrelated changes do not acquire
+that preparation dependency. `Verify-Changed.ps1 -PreparationOnly -AllowLongRun
+-PreparationMaximumSeconds 4500` delegates to the existing owner with
+`--prepare-only --maximum-seconds 4500`. It constructs or validates one exact
+current compiler set, two project WVBs and two Profile 7 applications through
+their existing input-bound caches. Preparation does not execute the 27 behavior
+cases or publish passing owner evidence. Qualification retains its original path.
+
+Preparation has a 75-minute command deadline in a 95-minute CI job, leaving room
+for checkout, cache transport and failure cleanup. Completed caches are saved
+before dependent behavior starts, using a host/run/attempt-scoped immutable key.
+The save step also runs after preparation failure. Both preparation and cache
+publication are required; a failure prevents dependent behavior and fails the
+aggregate gate. Cancelled work may still lack a published checkpoint.
+
+`-UsePreparedProducts` selects the same owner's 27 cases with
+`--prepared-products-only --maximum-seconds 600`. A miss fails this selected
+owner and the gate even with `-AllowIncompleteInfrastructure`; it does not begin
+construction or record a pass. Corrupt entries fail closed. The behavior job
+retains its 15-minute wall-clock bound and a separately keyed final cache save.
+Other owners retain their existing execution and incomplete-result policy. This
+first phase separation does not claim that every native owner has been migrated.
+
+The owner's explicit phases accept 30–5,400 seconds for preparation and 30–600
+seconds for prepared execution. Child builders inherit deadlines shorter than
+their parent process bounds. Both independent packagers settle before the owner
+cleans its private directory; uncertain process cleanup preserves that directory.
+
+### Passing owner results
+
 The front door first reuses a passing owner automatically when its complete
 version-1 result state and exact version-2 action match. Preparation measures
 the complete non-ignored Git source tree plus the local host, boot, environment,

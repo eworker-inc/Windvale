@@ -83,6 +83,7 @@ $ExpectedJobs = @(
     'linux-documentation',
     'lightweight-verifier',
     'website-verifier',
+    'native-development-preparation',
     'windows-development',
     'linux-development',
     'windows-native-suite',
@@ -122,18 +123,39 @@ foreach ($Job in $DocumentationJobs) {
 }
 
 $DevelopmentConditions = @{
-    'windows-development' = "    if: `${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}"
-    'linux-development' = "    if: `${{ needs.classify-changes.outputs.scope == 'development' }}"
+    'windows-development' = "    if: `${{ !cancelled() && (needs.native-development-preparation.result == 'success' || needs.native-development-preparation.result == 'skipped') && needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}"
+    'linux-development' = "    if: `${{ !cancelled() && (needs.native-development-preparation.result == 'success' || needs.native-development-preparation.result == 'skipped') && needs.classify-changes.outputs.scope == 'development' }}"
+}
+$Preparation = Get-JobBlock 'native-development-preparation'
+foreach ($Fragment in @(
+    "    if: `${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.preparation_required == 'true' }}",
+    '        host: ${{ fromJSON(needs.classify-changes.outputs.preparation_hosts) }}',
+    '      fail-fast: false',
+    '    timeout-minutes: 95',
+    '-PreparationOnly -AllowLongRun -PreparationMaximumSeconds 4500',
+    '      - name: Save completed products before behavior execution',
+    '        if: ${{ always() }}',
+    '          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-prepared'
+)) {
+    Assert-Workflow ($Preparation.Contains($Fragment)) "Native preparation lacks '$Fragment'."
+}
+Assert-Workflow (!$Preparation.Contains('continue-on-error: true')) 'Required preparation and cache publication must fail closed.'
+foreach ($Fragment in @(
+    'preparation_required: ${{ steps.native-plan.outputs.preparation_required }}',
+    'preparation_hosts: ${{ steps.native-plan.outputs.preparation_hosts }}',
+    "`$PreparationRequired = `$NativePlan.Suites -contains 'language-1-authenticated-foreign-binding'"
+)) {
+    Assert-Workflow ($ClassificationBlock.Contains($Fragment)) "Preparation selection lacks '$Fragment'."
 }
 $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
     $Block = Get-JobBlock $Job
     $ExpectedTimingInvocation = if ($Job -eq 'windows-development') {
-        '-AllowIncompleteInfrastructure -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+        '-AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
     } else {
-        '-AllowIncompleteInfrastructure -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+        '-AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
     }
-    Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
+    Assert-Workflow ($Block.Contains('    needs: [classify-changes, native-development-preparation]')) `
         "Development job '$Job' does not depend on classification."
     Assert-Workflow (
         $Block.Contains($DevelopmentConditions[$Job], [StringComparison]::Ordinal)
@@ -185,7 +207,7 @@ foreach ($Job in $DevelopmentJobs) {
         $Block.Contains(
             'uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5') -and
         $Block.Contains(
-            "if: `${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}")
+            "if: `${{ always() }}")
     ) "Development job '$Job' does not pin the accepted restore/save checkpoint actions."
     Assert-Workflow (
         $Block.Contains('id: native-development-cache') -and
@@ -194,7 +216,7 @@ foreach ($Job in $DevelopmentJobs) {
         $Block.Contains(
             'windvale-native-development-v1-${{ runner.os }}-') -and
         $Block.Contains(
-            'key: ${{ steps.native-development-cache.outputs.cache-primary-key }}') -and
+            'key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior') -and
         $Block.Contains(
             'WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache')
     ) "Development job '$Job' does not bind the isolated versioned checkpoint cache."
@@ -305,6 +327,16 @@ foreach ($Line in $Lines | Where-Object { $_ -match '^\s+uses:\s+' }) {
 }
 
 $Gate = Get-JobBlock 'verification-gate'
+foreach ($Fragment in @(
+    '      - native-development-preparation',
+    '          PREPARATION_REQUIRED: ${{ needs.classify-changes.outputs.preparation_required }}',
+    '          PREPARATION_RESULT: ${{ needs.native-development-preparation.result }}',
+    '          if [ "$PREPARATION_REQUIRED" = true ]; then',
+    '            test "$PREPARATION_RESULT" = success',
+    '            test "$PREPARATION_RESULT" = skipped'
+)) {
+    Assert-Workflow ($Gate.Contains($Fragment)) "The gate does not enforce preparation: '$Fragment'."
+}
 foreach ($Job in @($DocumentationJobs; $DevelopmentJobs; $QualificationJobs)) {
     Assert-Workflow ($Gate -match "(?m)^      - $([regex]::Escape($Job))$") `
         "The verification gate does not depend on '$Job'."

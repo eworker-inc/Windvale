@@ -56,7 +56,12 @@ handbook.
 - GitHub runs affected focused native owners on Linux for ordinary implementation
   and specification pushes and pull requests. It adds the Windows development
   host only for Windows command, PowerShell, platform, or binary changes. Each
-  automatic development job has a 15-minute wall-clock bound.
+  automatic behavior job has a 15-minute wall-clock bound. Selected authenticated
+  foreign-binding work first prepares its exact compiler and two applications
+  in a separate 75-minute command inside a 95-minute preparation job. Save
+  completed checkpoints before behavior execution, including after preparation
+  failure. Prepared behavior must fail closed on a cache miss and must not
+  reconstruct tools. Other owners retain their existing routing and budgets.
 - Run platform-neutral routing-plan verification once in the mandatory
   classification job. Automatic development jobs may consume that passed
   predecessor but must retain all selected host-owner execution. Run conditional

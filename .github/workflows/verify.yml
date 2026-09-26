@@ -40,6 +40,8 @@ jobs:
       editor: ${{ steps.classify.outputs.editor }}
       documentation: ${{ steps.classify.outputs.documentation }}
       windows_required: ${{ steps.host-scope.outputs.windows_required }}
+      preparation_required: ${{ steps.native-plan.outputs.preparation_required }}
+      preparation_hosts: ${{ steps.native-plan.outputs.preparation_hosts }}
       qualification_shard: ${{ steps.qualification-selection.outputs.shard }}
       qualification_start_owner: ${{ steps.qualification-selection.outputs.start_owner }}
       qualification_shards: ${{ steps.qualification-selection.outputs.shards }}
@@ -145,6 +147,12 @@ jobs:
           node-version: 24
 
       - name: Verify change classification rules
+        id: native-plan
+        env:
+          SCOPE: ${{ steps.classify.outputs.scope }}
+          BASE_SHA: ${{ steps.classify.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.classify.outputs.head_sha }}
+          WINDOWS_REQUIRED: ${{ steps.host-scope.outputs.windows_required }}
         shell: pwsh
         run: |
           if ('${{ steps.classify.outputs.scope }}' -notin @('lightweight', 'website', 'development', 'qualification')) {
@@ -158,6 +166,16 @@ jobs:
           }
           ./Tools/Verify/Verify-Change-Classification.ps1
           ./Tools/Verify/Verify-Verification-Plan.ps1
+          $PreparationRequired = $false
+          if ($env:SCOPE -eq 'development') {
+            $Paths = @(git diff --name-only --no-renames --diff-filter=ACDMRTUXB $env:BASE_SHA $env:HEAD_SHA --)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot enumerate preparation inputs.' }
+            $NativePlan = ./Tools/Verify/Get-Native-Changed-Verification-Plan.ps1 -ChangedPath $Paths -PassThru -Quiet
+            $PreparationRequired = $NativePlan.Suites -contains 'language-1-authenticated-foreign-binding'
+          }
+          "preparation_required=$($PreparationRequired.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          $Hosts = if ($env:WINDOWS_REQUIRED -eq 'true') { '["ubuntu-latest","windows-latest"]' } else { '["ubuntu-latest"]' }
+          "preparation_hosts=$Hosts" >> $env:GITHUB_OUTPUT
 
   linux-documentation:
     name: Linux documentation verification
@@ -243,10 +261,55 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
 
+  native-development-preparation:
+    name: Native development preparation (${{ matrix.host }})
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.preparation_required == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host: ${{ fromJSON(needs.classify-changes.outputs.preparation_hosts) }}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 95
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Restore completed native checkpoints
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ runner.temp }}/windvale-native-development-cache
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-prepared
+          restore-keys: |
+            windvale-native-development-v1-${{ runner.os }}-
+
+      - name: Prepare affected native products
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+          WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -PreparationOnly -AllowLongRun -PreparationMaximumSeconds 4500
+
+      - name: Save completed products before behavior execution
+        if: ${{ always() }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ runner.temp }}/windvale-native-development-cache
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-prepared
+
   windows-development:
     name: Windows focused development verification
-    needs: classify-changes
-    if: ${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}
+    needs: [classify-changes, native-development-preparation]
+    if: ${{ !cancelled() && (needs.native-development-preparation.result == 'success' || needs.native-development-preparation.result == 'skipped') && needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -268,7 +331,7 @@ jobs:
         continue-on-error: true
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
-          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-prepared
           restore-keys: |
             windvale-native-development-v1-${{ runner.os }}-
 
@@ -279,7 +342,7 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}
@@ -295,12 +358,12 @@ jobs:
           pwsh -NoProfile -File Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS
 
       - name: Save native development checkpoints
-        if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() }}
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         continue-on-error: true
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
-          key: ${{ steps.native-development-cache.outputs.cache-primary-key }}
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior
 
       - name: Upload development verification timing
         if: ${{ always() }}
@@ -316,8 +379,8 @@ jobs:
 
   linux-development:
     name: Linux focused development verification
-    needs: classify-changes
-    if: ${{ needs.classify-changes.outputs.scope == 'development' }}
+    needs: [classify-changes, native-development-preparation]
+    if: ${{ !cancelled() && (needs.native-development-preparation.result == 'success' || needs.native-development-preparation.result == 'skipped') && needs.classify-changes.outputs.scope == 'development' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -339,7 +402,7 @@ jobs:
         continue-on-error: true
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
-          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-prepared
           restore-keys: |
             windvale-native-development-v1-${{ runner.os }}-
 
@@ -350,7 +413,7 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}
@@ -366,12 +429,12 @@ jobs:
           pwsh -NoProfile -File Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS
 
       - name: Save native development checkpoints
-        if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() }}
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         continue-on-error: true
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
-          key: ${{ steps.native-development-cache.outputs.cache-primary-key }}
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior
 
       - name: Upload development verification timing
         if: ${{ always() }}
@@ -633,6 +696,7 @@ jobs:
       - linux-documentation
       - lightweight-verifier
       - website-verifier
+      - native-development-preparation
       - windows-development
       - linux-development
       - windows-native-suite
@@ -653,6 +717,8 @@ jobs:
           WINDOWS_REQUIRED: ${{ needs.classify-changes.outputs.windows_required }}
           QUALIFICATION_FULL: ${{ needs.classify-changes.outputs.qualification_full }}
           CLASSIFY_RESULT: ${{ needs.classify-changes.result }}
+          PREPARATION_REQUIRED: ${{ needs.classify-changes.outputs.preparation_required }}
+          PREPARATION_RESULT: ${{ needs.native-development-preparation.result }}
           LINUX_DOCUMENTATION_RESULT: ${{ needs.linux-documentation.result }}
           LIGHTWEIGHT_RESULT: ${{ needs.lightweight-verifier.result }}
           WEBSITE_RESULT: ${{ needs.website-verifier.result }}
@@ -666,6 +732,11 @@ jobs:
           LINUX_BOOTSTRAP_RESULT: ${{ needs.linux-bootstrap.result }}
         run: |
           test "$CLASSIFY_RESULT" = success
+          if [ "$PREPARATION_REQUIRED" = true ]; then
+            test "$PREPARATION_RESULT" = success
+          else
+            test "$PREPARATION_RESULT" = skipped
+          fi
           if [ "$DOCUMENTATION" = true ]; then
             test "$LINUX_DOCUMENTATION_RESULT" = success
           else

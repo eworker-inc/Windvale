@@ -67,9 +67,12 @@ misses before construction. Both hosts pass the focused cache checks. A real
 binder application took 161/163 seconds to package on Windows/Debian, then
 0.29/2.69 seconds to validate and reuse. A later profile miss preserved that
 completed product. The [cache enforcement evidence](../Evidence/2026-09-26-Prepared-Product-Cache-Enforcement.json)
-records the bounds and failed preliminary probes. CI preparation/execution
-integration remains open, including reconciliation of the older console-packager
-reconstruction expectations after its Project 4 migration.
+records the bounds and failed preliminary probes. CI now has separate preparation
+and prepared-execution phases for the authenticated foreign-binding owner, with
+its 27 behavior cases retained. Local phase rejection and process-cleanup probes
+pass on Windows and Debian; complete CI execution is still awaiting measurement.
+Other owners and the older console-packager reconstruction expectations after
+its Project 4 migration remain part of the open CI work.
 
 Use prepared-only mode during ordinary Foundation implementation:
 

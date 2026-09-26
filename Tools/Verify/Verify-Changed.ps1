@@ -5,6 +5,10 @@ param(
     [AllowEmptyCollection()]
     [string[]]$ChangedPath,
     [switch]$PlanOnly,
+    [switch]$PreparationOnly,
+    [switch]$UsePreparedProducts,
+    [ValidateRange(30, 5400)]
+    [int]$PreparationMaximumSeconds = 4500,
     [switch]$AllowLongRun,
     [switch]$NoFailFast,
     [string]$TimingReportPath,
@@ -158,7 +162,34 @@ if ($GitHubVerificationOnLinux -and
         '-GitHubVerificationOnLinux is reserved for automatic Windows ' +
         'development jobs whose Linux peer runs the GitHub verifier.')
 }
+if ($PreparationOnly -and $UsePreparedProducts) {
+    throw 'Preparation and prepared-product execution are separate phases.'
+}
+if (($PreparationOnly -or $UsePreparedProducts) -and $Plan.Scope -ne 'development') {
+    throw 'Prepared development phases require development scope.'
+}
+if (($PreparationOnly -or $UsePreparedProducts) -and
+    $NativePlan.Suites -contains 'language-1-authenticated-foreign-binding') {
+    if ($PreparationOnly) {
+        Write-Host "Native phase=preparation owner=language-1-authenticated-foreign-binding maximum-seconds=$PreparationMaximumSeconds behavior-cases=0"
+    } else {
+        Write-Host 'Native phase=prepared-execution owner=language-1-authenticated-foreign-binding maximum-seconds=600 behavior-cases=27 construction=Forbidden'
+    }
+}
 if ($PlanOnly) {
+    return
+}
+if ($PreparationOnly) {
+    if (!$AllowLongRun) { throw 'Preparation requires an explicitly bounded -AllowLongRun selection.' }
+    if ($NativePlan.Gaps.Count -ne 0) { throw 'Preparation cannot proceed with native coverage gaps.' }
+    if ($NativePlan.Suites -contains 'language-1-authenticated-foreign-binding') {
+        Write-Host "Preparation owner=language-1-authenticated-foreign-binding maximum-seconds=$PreparationMaximumSeconds"
+        & node (Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs') `
+            --prepare-only --maximum-seconds $PreparationMaximumSeconds
+        if ($LASTEXITCODE -ne 0) { throw "Native preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
+    } else {
+        Write-Host 'Native preparation status=NotRequired selected-preparation-owners=0'
+    }
     return
 }
 if ($AllowIncompleteInfrastructure -and $Plan.Scope -ne 'development') {
@@ -331,7 +362,13 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerArguments += '-AllowLongRun'
             }
             $OwnerMessage = $null
-            if ($Suite -eq 'compiler-reconstruction' -and
+            if ($Suite -eq 'language-1-authenticated-foreign-binding' -and $UsePreparedProducts) {
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.$OwnerExtension")
+                $OwnerArguments = @('--prepared-products-only', '--maximum-seconds', '600')
+                $OwnerMessage = 'Native owner language-1-authenticated-foreign-binding mode=prepared-products cases=27 maximum-seconds=600'
+            } elseif ($Suite -eq 'compiler-reconstruction' -and
                 $Plan.Scope -eq 'development') {
                 $OwnerCommand = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.cmd'
@@ -751,6 +788,7 @@ if ($Plan.Scope -eq 'website') {
             $OwnerSucceeded = $OwnerExitCode -eq 0
             if (!$OwnerSucceeded -and
                 ($OwnerCommand -ceq $Coordinator -or $Suite -eq 'language-1-front-door' -or
+                    ($UsePreparedProducts -and $Suite -eq 'language-1-authenticated-foreign-binding') -or
                     ($Suite -eq 'language-1-memory-budget-split-execution' -and
                         $NativePlan.UseVectorBorrowIntegrationDevelopment)) -and
                 $OwnerExitCode -ne 1) {
@@ -764,7 +802,8 @@ if ($Plan.Scope -eq 'website') {
                     "Native owner '$Suite' is verification-incomplete " +
                     "outcome=$TimingOutcome exit=$OwnerExitCode. " +
                     'No passing evidence was recorded.')
-                if (!$AllowIncompleteInfrastructure) {
+                if (!$AllowIncompleteInfrastructure -or
+                    ($UsePreparedProducts -and $Suite -eq 'language-1-authenticated-foreign-binding')) {
                     $StopAfterOwner = $true
                 }
             } elseif (!$OwnerSucceeded) {
@@ -880,7 +919,8 @@ if ($Plan.Scope -eq 'website') {
         $Message = (
             'Native changed-file verification is incomplete: ' +
             ($Incomplete -join ', ') + '.')
-        if (!$AllowIncompleteInfrastructure) {
+        if (!$AllowIncompleteInfrastructure -or
+            ($UsePreparedProducts -and $Incomplete.Contains('language-1-authenticated-foreign-binding'))) {
             throw $Message
         }
         Write-Warning "$Message Automatic development feedback remains nonblocking."
