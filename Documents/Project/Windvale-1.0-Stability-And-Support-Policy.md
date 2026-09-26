@@ -1,19 +1,21 @@
 # Windvale 1.0 stability and support policy
 
-> Status: Proposed for maintainer acceptance; no 1.0 support promise is active
-> Authority: Informative until accepted by a numbered decision
-> Last reviewed: 2026-09-22
+> Status: Accepted policy for official 1.x releases; no 1.0 release is yet supported
+> Authority: Normative under Decision 0966; release qualification remains separate
+> Last reviewed: 2026-09-25
 
 ## Outcome
 
-This proposal gives a 1.0 user a concrete answer to three questions: which
+This policy gives a 1.0 user a concrete answer to three questions: which
 artifact combinations may run, which changes require migration, and where a
-supported defect or security report goes. Acceptance is part of the
-[Windvale 1.0 product gate](Windvale-1.0-Product-Plan.md#windvale-10-release-gate),
-not evidence that implementation or qualification has passed. The signed
+supported defect or security report goes. The maintainer accepted it in the
+[1.x support decision](../Decisions/0966-Accept-Windvale-1.x-Stability-And-Support-Policy.md)
+on 2026-09-25. Acceptance closes the policy portion of the
+[Windvale 1.0 product gate](Windvale-1.0-Product-Plan.md#windvale-10-release-gate).
+Implementation and qualification remain separate. The signed
 `v0.1.0` preview and development artifacts keep their existing, narrower terms.
 
-## Proposed compatibility boundary
+## Compatibility boundary
 
 An official release identifies a product version and a tested compatibility
 matrix. The matrix names the source edition, Foundation API major versions,
@@ -24,7 +26,7 @@ those independent identities. A supported combination must be listed and
 qualified on its claimed Windows and Linux hosts. Unknown required versions,
 capabilities, targets, or format features fail explicitly before use.
 
-The following promises are proposed only for combinations in that matrix:
+The following promises apply only to combinations in that matrix:
 
 | Surface | 1.x promise | Incompatible change |
 | --- | --- | --- |
@@ -41,7 +43,7 @@ mutation completion meaning, add ambient authority, or reinterpret stored data.
 Security fixes that must restrict previously admitted behavior require a named
 advisory, an affected-version statement, and a migration or mitigation path.
 
-## Proposed support and deprecation practice
+## Support and deprecation practice
 
 - Only official, signed release artifacts in the published compatibility matrix
   receive a release support claim. Source checkouts, local builds, candidate
@@ -67,13 +69,15 @@ advisory, an affected-version statement, and a migration or mitigation path.
   offline verification instructions. A release is never described as supported
   solely because its tag exists.
 
-The 12-month window is a **proposal**, not a commitment for `v0.1.0` or an
-accepted 1.0 policy. Before acceptance, the maintainer must confirm the window
-and ownership of fixes on overlapping minor lines. State each line's actual
-support-end date in release notes and [SUPPORT.md](../../SUPPORT.md). Do not
+E-Worker Inc owns fixes on overlapping supported minor lines under the
+[governance roles](../../GOVERNANCE.md#roles). Review this policy before the
+first 1.0 release candidate and no later than 2027-09-25, then at least
+annually; review does not shorten a published support window. State each
+line's actual support-end date in release notes and [SUPPORT.md](../../SUPPORT.md).
+The window does not apply to `v0.1.0` or current development builds. Do not
 promise a response-time service level without a staffed commitment.
 
-## Proposed upgrade and data rule
+## Upgrade and data rule
 
 An installer or service first verifies the signed immutable release and the
 declared artifact matrix. It checks authority, storage format, resource limits,
@@ -91,13 +95,13 @@ known or indeterminate state; uncertain mutations are not retried without an
 idempotency rule. The 1.0 gate needs clean-install, update, rollback, migration,
 restore, offline verification, and removal evidence on both supported hosts.
 
-## Acceptance checklist
+## Release checklist
 
-1. Accept or revise the proposed 12-month minor-line window and latest-patch
-   rule, with an owner and a dated review trigger.
+1. Policy accepted on 2026-09-25: 12-month minor-line window, latest-patch
+   rule, E-Worker Inc ownership, and the dated review trigger above.
 2. List exact shipped component/format/host combinations and implement
    preflight rejection for unsupported combinations.
 3. Define every shipped durable-format migration and rollback limit, including
    WVDB backup/restore qualification.
-4. Confirm the release, security, and support pages state the same promises;
-   accept them in a numbered decision before the `v1.0.0` tag.
+4. Before the `v1.0.0` tag, confirm the release, security, and support pages
+   state these accepted promises and the actual matrix and support-end date.

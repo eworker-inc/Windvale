@@ -1,5 +1,9 @@
 # Windvale 1.0 product plan
 
+> Status: Current product target; implementation and qualification incomplete
+> Authority: Informative; accepted decisions and specifications own contracts
+> Last reviewed: 2026-09-25
+
 - Date: 2026-08-20
 - Status: Active product target; implementation and qualification incomplete
 - Direction: [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -179,5 +183,6 @@ an explicit release or format decision rather than renaming immutable bytes.
    decisions through storage, durability, service, operations, and conformance.
 4. Reframe connected package, networking, and service work as reusable 1.0
    foundations; remove the external-model gateway as an automatic release gate.
-5. Define the 1.0 stability/support and exact integrated qualification policies
-   before selecting a release candidate.
+5. Apply the accepted [1.x stability and support policy](Windvale-1.0-Stability-And-Support-Policy.md)
+   and finish the exact compatibility matrix, migration evidence, support-end
+   dates, and integrated qualification policy before selecting a release candidate.

@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 22 September 2026
+> Status: Current project snapshot as of 25 September 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-09-22
+> Last reviewed: 2026-09-25
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -124,9 +124,12 @@ contract. A current document must name the track when a WVB version matters.
 ## What is not complete
 
 Windvale 1.0 is not released. The required Libraries profiles, WVDB 1.0,
-integrated services, support policy, and final whole-product Windows/Linux
+integrated services, and final whole-product Windows/Linux
 qualification remain open. The completed Language 1.0 compiler qualification
 does not substitute for those product gates.
+
+[Support policy accepted](Windvale-1.0-Stability-And-Support-Policy.md): each
+official minor line receives 12 months of fixes through its latest patch.
 
 Windvale OS does not yet provide arbitrary application launch, a live general
 filesystem provider, a complete network stack, a general scheduler, broad

@@ -6,6 +6,12 @@ Windvale treats source modules, bytecode, object files, assembly, linked inputs,
 
 Windvale has no stable release or compatibility-support window yet. Security work targets the current `main` branch. Historical commits, development formats, generated artifacts, and unqualified forks are unsupported unless a release notice explicitly says otherwise.
 
+For future official qualified 1.x releases, the accepted
+[stability and support policy](Documents/Project/Windvale-1.0-Stability-And-Support-Policy.md)
+provides 12 months of security and correctness fixes from each minor line's
+first release, delivered through its latest patch. Each line's support-end
+date will be published with its release. No such window has started.
+
 ## Reporting a vulnerability
 
 Use GitHub's **Report a vulnerability** form under the repository's Security tab. Private vulnerability reporting is enabled for the public repository; the form creates a private repository security advisory visible to the project security maintainers.

@@ -16,9 +16,12 @@ diagnostics, and the smallest safe reproducer. Do not attach secrets, private
 source, credentials, or unnecessarily large generated artifacts. The retired
 managed Stage 0 SDK is not a prerequisite for current Windvale development.
 
-The proposed [Windvale 1.0 stability and support policy](Documents/Project/Windvale-1.0-Stability-And-Support-Policy.md)
-sets out the decisions required before `v1.0.0` can make a support promise. It
-does not apply to `v0.1.0` or current development builds.
+The accepted [Windvale 1.0 stability and support policy](Documents/Project/Windvale-1.0-Stability-And-Support-Policy.md)
+provides 12 months of correctness and security fixes from each official 1.x
+minor line's first release, through its latest patch. E-Worker Inc owns those
+obligations, including overlapping supported lines. Each release must publish
+its qualified compatibility matrix and support-end date. No 1.0 support window
+has started; this policy does not apply to `v0.1.0` or development builds.
 
 Use [SECURITY.md](SECURITY.md) for vulnerabilities and
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for conduct concerns. Do not put
