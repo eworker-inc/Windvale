@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-compiler-preparation-boundary",
+  "date": "2026-09-26",
+  "subject": "Separate compiler preparation from prepared-only product execution",
+  "claim": "The existing current split-project builder prepares an exact compiler checkpoint without a throwaway target, under an explicit deadline. Prepared-only target builds reject absent or stale checkpoints before construction and preserve existing output. CLI and cache regression checks pass on Windows and real Debian, including corrupt products, environment enforcement and reuse after a later failed invocation.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 03951668510d6ff51618fd3694c2b65e04f8bde0; changed builder and verifier identities are recorded as inputs."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Current compiler preparation CLI and existing split-cache behavior",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 22282,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 18824,
+          "sha256": "f6b44a2105e287d75d1f6e2c7ed3fca5b2762eec2cca14b1f0272525686d14de"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 18103,
+          "sha256": "1c2cdcefe7db7dcbb3bc34dc8b01905b6c7b50e1d5c4782e723c18f274c6d95d"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 90839,
+          "sha256": "f8f80f39f3a975b13e6011e257466b69f8fa0defe55bee9bd11b69215ea5112e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Windows-Compiler-Preparation.log",
+          "size": 599,
+          "sha256": "5202f955aa41eb61bd12c72dcda9e0d4c3281cc6ebeb3edab8b405dfd181bb1f"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Current compiler preparation CLI and existing split-cache behavior",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "wsl -d Debian --cd /mnt/d/windvale/dev01 -- node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 102488,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 18824,
+          "sha256": "f6b44a2105e287d75d1f6e2c7ed3fca5b2762eec2cca14b1f0272525686d14de"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 18103,
+          "sha256": "1c2cdcefe7db7dcbb3bc34dc8b01905b6c7b50e1d5c4782e723c18f274c6d95d"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 90839,
+          "sha256": "f8f80f39f3a975b13e6011e257466b69f8fa0defe55bee9bd11b69215ea5112e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Compiler-Preparation.log",
+          "size": 599,
+          "sha256": "0af1c3f2d41bbd4f2cc2f5044cf2e0cdf70d880d942463ab1f4dcbf0747212b7"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The private cache fixtures contain bounded fake products to test identity handling and phase selection. They are never executed and are deleted by the existing owner cleanup. These runs do not measure real cold compiler construction or establish compiler conformance.",
+    "The Windows owner reports 110 cases and Debian 112 because Unix process-group lifecycle checks are host-specific. Both include 11 compiler-preparation CLI cases and 15 deadline admission cases.",
+    "Each child command has a finite bound and the paired final run shares a two-minute deadline. Elapsed times include all existing split-cache owner cases and host startup; they are not per-cache-hit timings. Peak working-set memory was not measured.",
+    "CI workflow integration and native exact-checkpoint miss/hit measurements remain open. A prepared checkpoint does not make a cold duration profile cheap and does not change release qualification requirements.",
+    "The broad authenticated foreign-binding owner was not run: foreign catalogs, target binding and publication semantics did not change. The existing cache owner directly covers the changed orchestration boundary.",
+    "The planner static inventory was corrected from two owners/32 admission call sites to three/33 after the preceding diagnostic fixture reused authenticated admission. No default qualification cases were added or removed by that inventory correction."
+  ],
+  "related": [
+    "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+    "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+    "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+    "Tools/Verify/Verify-Verification-Plan.ps1",
+    "Documents/Runbooks/Native-Tests.md",
+    "Documents/Project/Verification-Throughput-Plan.md"
+  ]
+}

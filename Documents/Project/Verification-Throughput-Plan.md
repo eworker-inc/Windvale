@@ -86,7 +86,7 @@ cleanup. Product milestones remain in the existing completion matrix.
 | Item | Completion evidence | Status |
 | --- | --- | --- |
 | 1. Emission diagnostics | Maintained source reproducer and original Package-Lock snapshots pass seven cases each on Windows/Debian; exact rule, canonical type name, function location, malformed evidence and unchanged successful output covered. | Complete |
-| 2. CI preparation and reuse | One preparation per exact input closure; completed products survive a later failure; focused Windows/Linux jobs complete with cache-hit and cache-miss behavior measured. | Open |
+| 2. CI preparation and reuse | One preparation per exact input closure; completed products survive a later failure; focused Windows/Linux jobs complete with cache-hit and cache-miss behavior measured. | In progress |
 | 3. Targeted refactoring | Extract cohesive responsibilities from a changed large function; measure slot headroom and build/runtime cost; preserve behavior and output contracts. | Open |
 | 4. Verification consolidation | Audit overlapping wrappers and construction; merge/remove duplicated execution where no unique coverage is lost; retain named cases and required host boundaries. | Open |
 | 5. Active documentation | Remove completed chronology and duplicate current status from active guidance; preserve indexed history and passing links/catalogs. | In progress |
@@ -136,6 +136,17 @@ must finish or checkpoint before the enclosing 15-minute job is cancelled.
 The next CI batch will separate exact tool preparation from behavior execution
 and measure cache-miss and cache-hit runs; adding a second cache wrapper alone
 would not resolve this boundary.
+
+The existing builder now accepts `--prepare-only` with an explicit deadline
+and `--prepared-compiler-only` for later product builds. The latter refuses a
+missing exact checkpoint before construction and preserves existing output.
+The existing split-cache owner covers phase selection, stale keys, corrupt
+products, inherited prepared-only mode and reuse after a later failure; the
+[boundary evidence](../Evidence/2026-09-26-Compiler-Preparation-Boundary.json)
+records the paired-host checks. See the
+[preparation procedure](../Runbooks/Native-Tests.md#separate-current-compiler-preparation).
+This is the command boundary needed by CI; workflow integration and native
+checkpoint-miss/hit measurements remain open.
 
 The wrapper audit must also distinguish old rejection checkpoints from current
 behavior. The full legacy front-door script expects

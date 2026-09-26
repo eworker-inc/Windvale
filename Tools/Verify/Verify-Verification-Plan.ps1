@@ -5325,7 +5325,9 @@ $QualificationPipelineExpected = @{
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
     'Run-Split-Compiler' = '3|99'
-    'Run-Authenticated-Source-Admission' = '2|32'
+    # The split owner's optional maintained diagnostic fixture reuses admission.
+    # These are static call sites, not additional default qualification cases.
+    'Run-Authenticated-Source-Admission' = '3|33'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
     $ActualPipelineUse = "$($PipelineUse.Owners)|$($PipelineUse.ScriptCallSites)"

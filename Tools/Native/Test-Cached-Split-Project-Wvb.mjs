@@ -9,7 +9,12 @@ import {
     Requireˉwindowsˉterminationˉresult,
     Runˉdevelopmentˉcommand,
 } from './Development-Command-Core.mjs';
-import { Acquireˉcurrentˉsplitˉcompiler, Constructˉcurrentˉsplitˉcompiler, CURRENT_ADMISSION_PROJECTS } from './Current-Split-Compiler-Cache-Core.mjs';
+import {
+    Acquireˉcurrentˉsplitˉcompiler,
+    Constructˉcurrentˉsplitˉcompiler,
+    Getˉcurrentˉsplitˉcompilerˉkey,
+    CURRENT_ADMISSION_PROJECTS,
+} from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -541,10 +546,11 @@ try {
     await Verifyˉcompilerˉconstructionˉbranches(Testˉroot);
     const Foundationˉcases = await Verifyˉfoundationˉtestˉproducts(Testˉroot);
     const Deadlineˉcases = await Verifyˉconstructionˉdeadlineˉadmission();
+    const Preparationˉcases = await Verifyˉcompilerˉpreparationˉcli(Testˉroot);
     const Processˉcases = await Verifyˉconstructionˉprocessˉstatuses(Testˉroot);
     const Inspectionˉcases = await Verifyˉfunctionˉlimitˉdiagnostics(Testˉroot);
     console.log(
-        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Processˉcases + Inspectionˉcases} status=Passed current-compiler-pair=Verified ` +
+        `split project cache test cases=${39 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -552,7 +558,7 @@ try {
         'raw-project2-route=Passed symbol-resume=Passed ' +
         'symbol-corruption=Rejected final-product-reuse=Passed ' +
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
-        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases}`,
+        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases}`,
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -947,6 +953,12 @@ async function Verifyˉconstructionˉdeadlineˉadmission() {
         [[...Pair, '--deadline-ms'], 64, /Usage:/u],
         [['--deadline-ms', '1', ...Pair], 124, /deadline expired before construction/u],
         [['--deadline-ms', String(Date.now() + 1_000), ...Pair], 124, /deadline expired before construction/u],
+        [['--prepare-only'], 64, /Usage:/u],
+        [['--prepare-only', '--prepare-only', '--deadline-ms', Future], 64, /Usage:/u],
+        [['--prepare-only', '--deadline-ms', Future, ...Pair], 64, /Usage:/u],
+        [['--prepared-compiler-only'], 64, /Usage:/u],
+        [['--prepared-compiler-only', '--prepared-compiler-only', ...Pair], 64, /Usage:/u],
+        [['--prepare-only', '--deadline-ms', '1'], 124, /deadline expired before construction/u],
     ];
     for (const [Arguments, Status, Diagnostic] of Cases) {
         const Result = spawnSync(process.execPath, [Builder, ...Arguments], {
@@ -1351,6 +1363,73 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
     return Cases;
 }
 
+async function Writeˉcompilerˉcheckpointˉfixture(Place) {
+    const Suffix = process.platform === 'win32' ? 'exe' : 'elf';
+    for (const [Name, Role] of [['Analyzer', 'analyzer'], ['Emitter', 'emitter']]) {
+        const Bytes = Buffer.from(`bounded ${Role} fixture`);
+        const Digest = createHash('sha256').update(Bytes).digest('hex');
+        await writeFile(path.join(Place, `${Name}.${Suffix}`), Bytes, { mode: 0o755 });
+        await writeFile(path.join(Place, `${Name}.identity`), Identity(Role, Bytes.length, Digest));
+    }
+    for (const [Name] of CURRENT_ADMISSION_PROJECTS) {
+        await writeFile(path.join(Place, `${Name}.${Suffix}`), Buffer.from(Name), { mode: 0o755 });
+    }
+}
+
+async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
+    const Root = path.join(Testˉroot, 'preparation-cli');
+    const Family = path.join(Root, 'current-split-compiler-v2', HOST);
+    await mkdir(Family, { recursive: true });
+    const Builder = path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs');
+    const Key = await Getˉcurrentˉsplitˉcompilerˉkey();
+    const Wrongˉkey = Key === '0'.repeat(64) ? '1'.repeat(64) : '0'.repeat(64);
+    await Acquireˉcurrentˉsplitˉcompiler(Family, Wrongˉkey,
+        Writeˉcompilerˉcheckpointˉfixture, async () => {});
+    let Cases = 0;
+    const Probe = (Mode, Status, Diagnostic, Arguments = [], Prepare = true) => {
+        const Environment = { ...process.env, WINDVALE_NATIVE_CACHE_ROOT: Root };
+        delete Environment.WINDVALE_PREPARED_COMPILER_ONLY;
+        if (Mode !== 'flag' && Mode !== 'normal') Environment.WINDVALE_PREPARED_COMPILER_ONLY = Mode;
+        const Result = spawnSync(process.execPath, [Builder,
+            ...(Prepare ? ['--prepare-only'] : []), '--deadline-ms', String(Date.now() + 60_000),
+            ...(Mode === 'flag' ? ['--prepared-compiler-only'] : []), ...Arguments], {
+            cwd: REPOSITORY_ROOT, env: Environment, encoding: 'utf8', windowsHide: true,
+            timeout: 15_000, maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        });
+        Assert.equal(Result.error, undefined);
+        Assert.equal(Result.status, Status, Childˉdiagnostic(Result));
+        Assert.match(Result.stdout + Result.stderr, Diagnostic);
+        Assert.doesNotMatch(Result.stdout, /START current split project/u);
+        if (Status !== 0) Assert.doesNotMatch(Result.stdout, /status=Complete/u);
+        else Assert.equal(Result.stderr, '');
+        Cases += 1;
+    };
+    // No native product may execute: fixtures only exercise cache identity and
+    // CLI phase selection. A different input key is not a prepared checkpoint.
+    Probe('flag', 64, /Current compiler checkpoint missing/u);
+    Probe('1', 64, /Current compiler checkpoint missing/u);
+    const Output = path.join(Testˉroot, 'Prepared-only.wvb');
+    const Sentinel = Buffer.from('preserve the previous output');
+    await writeFile(Output, Sentinel);
+    Probe('flag', 64, /Current compiler checkpoint missing/u, [PROJECT, Output], false);
+    Probe('1', 64, /Current compiler checkpoint missing/u, [PROJECT, Output], false);
+    Assert.deepEqual(await readFile(Output), Sentinel);
+    Assert.deepEqual((await readdir(Family)).sort(), [Wrongˉkey]);
+    Probe('0', 1, /must be absent or 1/u);
+    const Ready = await Acquireˉcurrentˉsplitˉcompiler(Family, Key,
+        Writeˉcompilerˉcheckpointˉfixture, async () => {});
+    Probe('flag', 0, /preparation status=Complete steps=0 key=[a-f0-9]{64}/u);
+    Probe('1', 0, /cache status=Hit/u);
+    Probe('normal', 0, /cache status=Hit/u);
+    // A later invocation failure must leave the completed checkpoint reusable.
+    Probe('flag', 64, /Usage:/u, ['unexpected.wvproj', 'unexpected.wvb']);
+    Probe('flag', 0, /cache status=Hit/u);
+    const Product = path.join(Ready.directory, `Emitter.${process.platform === 'win32' ? 'exe' : 'elf'}`);
+    await writeFile(Product, Buffer.from('corrupt emitter'));
+    Probe('flag', 1, /emitter identity differs/u);
+    return Cases;
+}
+
 async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
     const Family = path.join(Testˉroot, 'current-compiler-pair');
     await mkdir(Family);
@@ -1361,15 +1440,7 @@ async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
     const Unchanged = async () => { Inputˉchecks += 1; };
     const Produce = async Place => {
         Constructions += 1;
-        for (const [Name, Role] of [['Analyzer', 'analyzer'], ['Emitter', 'emitter']]) {
-            const Bytes = Buffer.from(`bounded ${Role} fixture`);
-            const Digest = createHash('sha256').update(Bytes).digest('hex');
-            await writeFile(path.join(Place, `${Name}.${Suffix}`), Bytes, { mode: 0o755 });
-            await writeFile(path.join(Place, `${Name}.identity`), Identity(Role, Bytes.length, Digest));
-        }
-        for (const [Name] of CURRENT_ADMISSION_PROJECTS) {
-            await writeFile(path.join(Place, `${Name}.${Suffix}`), Buffer.from(Name), { mode: 0o755 });
-        }
+        await Writeˉcompilerˉcheckpointˉfixture(Place);
     };
     const Neverˉproduce = async () => Reject('Unexpected current compiler reconstruction.');
     const Cold = await Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, Unchanged);

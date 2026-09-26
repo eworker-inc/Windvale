@@ -2,7 +2,7 @@
 
 > Status: Current native verification procedure
 > Authority: Informative procedure; verification specifications own exact contracts
-> Last reviewed: 2026-09-22
+> Last reviewed: 2026-09-26
 
 This runbook owns the first .NET-free repository test slice accepted by
 [Decision 0218](../Decisions/0218-First-Native-Test-Orchestration.md). Its exact
@@ -95,6 +95,38 @@ GitHub-workflow verifier; Windows delegates only that check to Linux. The
 aggregate gate requires classification and every selected development job.
 `-PlanVerificationInClassification` and `-GitHubVerificationOnLinux` are
 reserved for that workflow and reject in an ordinary local command.
+
+### Separate current compiler preparation
+
+The current split-project builder can prepare its identity-bound compiler and
+admission products without building a throwaway application. Select a finite
+deadline that includes construction and cleanup:
+
+```powershell
+$CompilerDeadline = [DateTimeOffset]::UtcNow.AddMinutes(30).ToUnixTimeMilliseconds()
+node Tools/Native/Build-Current-Split-Project-Wvb.mjs --prepare-only --deadline-ms $CompilerDeadline
+```
+
+The 30-minute value is an example selected budget, not a measured cold estimate.
+Preparation requires an explicit deadline. It uses the existing validated
+compiler cache and preserves a completed checkpoint if a later invocation fails.
+To build a test product without allowing an implicit compiler reconstruction:
+
+```powershell
+node Tools/Native/Build-Current-Split-Project-Wvb.mjs --prepared-compiler-only --deadline-ms $CompilerDeadline <project.wvproj> <output.wvb>
+```
+
+An exact checkpoint miss exits `64` with preparation instructions. Corrupt
+products remain errors; neither case starts compiler construction. The same
+restriction can be inherited by nested builder invocations through
+`WINDVALE_PREPARED_COMPILER_ONLY=1`. Any other defined value is rejected. Keep
+that environment setting scoped to behavior execution, after preparation.
+This mode still permits building the requested product from a valid compiler.
+It does not make a cold owner profile cheap or qualify a restored compiler.
+
+CI has not yet adopted the separate preparation phase. Its integration must
+save completed products before behavior execution, select preparation only for
+owners that need it, and report incomplete owners without claiming a full pass.
 
 ### Focused Vector borrow integration
 

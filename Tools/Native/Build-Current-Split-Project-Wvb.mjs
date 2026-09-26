@@ -36,6 +36,8 @@ const PINNED_EMITTER_SHA256 =
 async function Buildˉcurrentˉsplitˉprojects() {
     const Targetˉarguments = [];
     let Deadline = null;
+    let Prepareˉonly = false;
+    let Preparedˉonly = false;
     for (let Index = 2; Index < process.argv.length; Index += 1) {
         if (process.argv[Index] === '--deadline-ms') {
             if (Deadline !== null || Index + 1 >= process.argv.length) Usage();
@@ -44,12 +46,24 @@ async function Buildˉcurrentˉsplitˉprojects() {
                 Reject('Invalid current split-project deadline.');
             }
             Deadline = Number(Value);
+        } else if (process.argv[Index] === '--prepare-only') {
+            if (Prepareˉonly) Usage();
+            Prepareˉonly = true;
+        } else if (process.argv[Index] === '--prepared-compiler-only') {
+            if (Preparedˉonly) Usage();
+            Preparedˉonly = true;
         } else {
             Targetˉarguments.push(process.argv[Index]);
         }
     }
+    const Environmentˉmode = process.env.WINDVALE_PREPARED_COMPILER_ONLY;
+    if (Environmentˉmode !== undefined && Environmentˉmode !== '1') {
+        Reject('WINDVALE_PREPARED_COMPILER_ONLY must be absent or 1.');
+    }
+    Preparedˉonly ||= Environmentˉmode === '1';
     const Argumentˉcount = Targetˉarguments.length;
-    if (Argumentˉcount < 2 || Argumentˉcount % 2 !== 0 ||
+    if ((Prepareˉonly ? Argumentˉcount !== 0 || Deadline === null : Argumentˉcount < 2) ||
+        Argumentˉcount % 2 !== 0 ||
         Argumentˉcount / 2 > MAXIMUM_TARGET_PROJECTS) {
         Usage();
     }
@@ -126,19 +140,28 @@ async function Buildˉcurrentˉsplitˉprojects() {
         const Compilerˉcheckpoint = await Acquireˉcurrentˉsplitˉcompiler(
             await Getˉcurrentˉsplitˉcompilerˉfamily(),
             Compilerˉkey,
-            Candidate => Constructˉcurrentˉsplitˉcompiler(
-                Work, Candidate, Runˉnative, Runˉnode,
-                async Place => {
-                    try {
-                        return await Constructˉsourceˉeditionˉpredecessor(Place, Workˉdeadline);
-                    } catch (Error) {
-                        // Keep a failed bounded worktree release recoverable; deleting
-                        // its parent would leave an orphaned Git registration.
-                        if (Error.predecessorCheckout !== undefined) Preserveˉwork = true;
-                        throw Error;
-                    }
-                },
-            ),
+            Candidate => {
+                if (Preparedˉonly) {
+                    throw Object.assign(new Error(
+                        'Current compiler checkpoint missing. Prepared-only execution does not construct it. ' +
+                        'Run Build-Current-Split-Project-Wvb.mjs --prepare-only --deadline-ms <absolute-unix-ms> ' +
+                        'in a separately budgeted preparation phase.'
+                    ), { exitCode: 64 });
+                }
+                return Constructˉcurrentˉsplitˉcompiler(
+                    Work, Candidate, Runˉnative, Runˉnode,
+                    async Place => {
+                        try {
+                            return await Constructˉsourceˉeditionˉpredecessor(Place, Workˉdeadline);
+                        } catch (Error) {
+                            // Keep a failed bounded worktree release recoverable; deleting
+                            // its parent would leave an orphaned Git registration.
+                            if (Error.predecessorCheckout !== undefined) Preserveˉwork = true;
+                            throw Error;
+                        }
+                    },
+                );
+            },
             async () => {
                 Requireˉtime(Workˉdeadline, 'compiler identity check');
                 if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
@@ -187,7 +210,11 @@ async function Buildˉcurrentˉsplitˉprojects() {
                 );
             }
         }
-        if (Targets.length === 1) {
+        if (Prepareˉonly) {
+            process.stdout.write(
+                `current split compiler preparation status=Complete steps=${Step} key=${Compilerˉkey}\n`,
+            );
+        } else if (Targets.length === 1) {
             process.stdout.write(
                 `current split project status=Complete steps=${Step} ` +
                 `wvb-bytes=${Evidence[0].bytes} ` +
@@ -333,8 +360,9 @@ function Usage() {
     throw Object.assign(new Error(
         'Usage: node Tools/Native/Build-Current-Split-Project-Wvb.mjs ' +
         '[--deadline-ms <absolute-unix-ms>] ' +
-        '<project.wvproj> <output.wvb> ' +
-        '[<project.wvproj> <output.wvb> ...]\n',
+        '[--prepared-compiler-only] <project.wvproj> <output.wvb> ' +
+        '[<project.wvproj> <output.wvb> ...] or ' +
+        '--prepare-only --deadline-ms <absolute-unix-ms> [--prepared-compiler-only]\n',
     ), { exitCode: 64 });
 }
 
