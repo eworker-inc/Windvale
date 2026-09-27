@@ -4117,15 +4117,16 @@ fn Executeˉlocal(
                 Releasedˉdescriptors = Previous;
             }
         }
+        // Build the changed tail first to avoid a full prefix intermediate.
         Locals = Bytesˉconcat(
+            Bytesˉslice(Locals, 0u32, Storedˉlocalˉoffset),
             Bytesˉconcat(
-                Bytesˉslice(Locals, 0u32, Storedˉlocalˉoffset),
-                Storedˉvalue
-            ),
-            Bytesˉslice(
-                Locals,
-                Storedˉlocalˉoffset + 8u32,
-                Localˉframeˉlength - 8u32 - Storedˉlocalˉoffset
+                Storedˉvalue,
+                Bytesˉslice(
+                    Locals,
+                    Storedˉlocalˉoffset + 8u32,
+                    Localˉframeˉlength - 8u32 - Storedˉlocalˉoffset
+                )
             )
         );
         return Localˉexecution(

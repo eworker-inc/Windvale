@@ -225,14 +225,17 @@ harness flow with explicit owned child budgets rather than inferring new support
 
 Resolve execution resource use before changing the maintained package API.
 The saved parser probes reach the eight-call-depth limit or exhaust the hosted
-runner's 128 MiB byte arena. A bounded native trace observes arena exhaustion
-while `Executeˉlocal` rebuilds a 136-byte frame for a local store; this locates
-the failing allocation but does not yet attribute total allocation by call site.
-Native byte append already supports reuse. No runtime rewrite,
-temporary-allocation policy or resource-limit change is adopted. The existing
+runner's 128 MiB byte arena. A bounded native trace located the original
+failure while `Executeˉlocal` rebuilt a local frame. Building the changed tail
+before the frame prefix reduces intermediate allocation: a verified short
+parser probe returns on both hosts, and sequential Debian runs reduced its
+peak RSS from about 111 MiB to 82 MiB. The full five-part lock still exhausts
+the arena on both hosts. Native byte append already supports reuse; no
+temporary-slot policy or resource-limit change is adopted. The existing
 component fixtures now use the current collection signature, valid typed
 backings and minor-42 expectations. The next execution gate is to measure and
-reduce frame-replacement allocation before adopting the typed scanner.
+reduce the remaining loop-state and frame allocation before adopting the typed
+scanner.
 The maintained scanner and fixture remain unchanged. Preserve lock
 bytes, failure order, explicit allocation failures and resource bounds when
 the migration resumes; emission alone does not establish consumer delivery.
