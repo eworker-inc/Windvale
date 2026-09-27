@@ -55,3 +55,18 @@ runtime verification evidence.
 | Documents/Project/GitHub-Publication-Runbook.md | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Documents/Project/GitHub-Publication-Runbook.md) |
 | Tools/Verify/Probe-WebAssembly-Guest-Heap.mjs | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Tools/Verify/Probe-WebAssembly-Guest-Heap.mjs) |
 | Tools/Verify/Probe-WebAssembly-Scalar-Dispatcher.mjs | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Tools/Verify/Probe-WebAssembly-Scalar-Dispatcher.mjs) |
+
+## Superseded browser and verification notes
+
+These originals are retained at revision 52606f0a. The browser page and
+verification architecture keep current boundaries and open proposals; retired
+Blazor instructions and incremental implementation/timing diaries are removed.
+The unreferenced build-driver launchers hard-coded an earlier source closure;
+current builds use the maintained project manifest and build entry points.
+
+| Original file | Historical copy |
+| --- | --- |
+| Documents/Project/WebAssembly-Playground-Exploration.md | [Read in Git](https://github.com/eworker-inc/Windvale/blob/52606f0aef7167e1280edb6146c5ded8fd16b81d/Documents/Project/WebAssembly-Playground-Exploration.md) |
+| Documents/Architecture/Seed-Verification-Throughput.md | [Read in Git](https://github.com/eworker-inc/Windvale/blob/52606f0aef7167e1280edb6146c5ded8fd16b81d/Documents/Architecture/Seed-Verification-Throughput.md) |
+| Tools/Native/Compile-Compiler-Build-Driver-Source-Set.cmd | [Read in Git](https://github.com/eworker-inc/Windvale/blob/52606f0aef7167e1280edb6146c5ded8fd16b81d/Tools/Native/Compile-Compiler-Build-Driver-Source-Set.cmd) |
+| Tools/Native/Compile-Compiler-Build-Driver-Source-Set.sh | [Read in Git](https://github.com/eworker-inc/Windvale/blob/52606f0aef7167e1280edb6146c5ded8fd16b81d/Tools/Native/Compile-Compiler-Build-Driver-Source-Set.sh) |

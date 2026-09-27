@@ -1348,7 +1348,8 @@ function Add-Native-Tool-Suite {
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
     if ($Stem -in @(
         'Test-Seed-Native-Front-Door-Reconstruction',
-        'Test-Retirement-Suite'
+        'Test-Retirement-Suite',
+        'Compile-Compiler-Build-Driver-Source-Set'
     )) {
         # Deletion tombstones: these redundant aggregate entry points are retired.
         $script:RunPlanVerification = $true

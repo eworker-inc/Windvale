@@ -2,29 +2,13 @@
 
 > Status: Current post-retirement verification architecture
 > Authority: Informative
-> Last reviewed: 2026-09-06
+> Last reviewed: 2026-09-26
 
-It incorporates
-[Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md),
-[Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md),
-[Decisions 0553 through 0555](../Decisions/0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md),
-[Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md),
-and
-[Decisions 0559 and 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md),
-with exact database target-set selection under
-[Decision 0944](../Decisions/0944-Select-Exact-Database-Development-Target-Sets.md)
-and portable database packaging ownership under
-[Decisions 0945 and 0946](../Decisions/0946-Delegate-Portable-Database-Reproducibility-To-Toolchain-Owners.md),
-then extends the same evidence-graph direction to complete qualification under
-[Decision 0947](../Decisions/0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md)
-and planner-proved development-result reuse under
-[Decision 0948](../Decisions/0948-Reuse-Development-Owner-Results-Across-Unrelated-Source-Trees.md),
-with the existing qualification runners balanced under
-[Decision 0949](../Decisions/0949-Balance-Qualification-Shards-By-Declared-Cost.md).
-
-Historical managed-suite optimization measurements remain in the dated
-decisions, qualification evidence, and Git history. They do not define the
-normal development path after .NET retirement.
+The [agent handbook](../../AGENTS.md#testing-and-verification) and
+[verifier guidance](../../Tools/Verify/AGENTS.md) own current execution policy.
+This page explains ownership, caching and qualification boundaries. Completed
+optimization reports and their dated inventories are retained in
+[Git history](../Git-History.md#superseded-browser-and-verification-notes); they are not current timing guarantees.
 
 ## Purpose
 
@@ -87,8 +71,10 @@ The `Verify` workflow classifies the exact base/head comparison.
 
 - Pull requests and pushes to `main` use lightweight, website, or development
   scope according to changed paths.
-- Development scope runs the affected native owners on Windows and Linux. These
-  jobs do not create a conformance or qualification claim.
+- Development scope runs affected native owners on Linux and adds Windows for
+  Windows command, PowerShell, platform or binary changes. Mixed website changes
+  retain website verification alongside native owners. These jobs do not create
+  a conformance or qualification claim.
 - Development jobs may restore a versioned host-specific checkpoint directory.
   Each run attempt writes a new immutable cache key and may restore an earlier
   key by prefix. Restore and save are separate steps, so a late development
@@ -142,10 +128,7 @@ The current split-compiler coordinator now acquires the complete analyzer/emitte
 pair before building requested projects. Its key binds both complete compiler
 source closures and every construction producer; its two applications and two
 identities are validated together. A hit needs no pinned or intermediate
-construction. The [compiler-pair evidence](../Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json)
-records all 27 foreign-binding cases at 4,492 ms warm on Windows, versus 7,324 ms
-with the prior coordinator and equally warm caches. The 59.5-minute genuinely
-cold baseline remains separate. The
+construction. The
 [split-cache contract](../../Specifications/Compiler-Split-Development-Cache.md#reusable-current-compiler-pair)
 defines bounds, invalidation and failure handling; cache correctness cases run
 inside the existing split-development owner on both hosts.
@@ -208,16 +191,6 @@ fail closed to `all`. Hosted selections retain their dependency closure rather
 than reusing passing scenario output. Every progress record names its step,
 current item, requested target set, elapsed time, and checkpoint outcome.
 
-On the measured Windows host, the warm two-case database path fell from the
-1,111-second clean fourteen-case owner to about 71 seconds. The complete
-change-aware front door, including planner contracts, fell to about 74 seconds.
-These are diagnostic host measurements, not portable pass thresholds.
-
-After the owner grew to fifteen targets, the measured all-hit Windows lifecycle
-selection runs the `engine` closure in 85,390 ms: tool validation, host storage,
-host tree reader, and engine. An independent logical-record selection completes
-in 11,860 ms. Qualification remains cold and ignores this selection.
-
 ## Qualification sharding
 
 The native verification-owner manifest assigns every owner exactly once to one
@@ -232,10 +205,10 @@ shard. Its structured mode records the shard and start owner. This preserves
 the cold qualification behavior for the selected tail while avoiding replay of
 unaffected shards after a late deterministic failure.
 
-Decision 0550 qualified 52 suites and 3,287 cases per host. Four shards reduced
-the observed complete workflow from about 40 minutes to about 15 minutes without
-dropping a case or consulting a cache. WebAssembly and compiler convergence
-remain separate independent qualification jobs.
+WebAssembly and compiler convergence remain separate independent qualification
+jobs. Current owner and case counts come from the
+[owner registry](../../Tests/Native/Verification-Owners.txt), not an old timing
+snapshot.
 
 Sharding reduces wall-clock time, not total evidence or necessarily total hosted
 compute. Rebalance only from repeated dual-host measurements.
@@ -250,300 +223,23 @@ investigation restores that exact release in a separate workspace.
 
 ## Next measured optimizations
 
-The former measured 733,980 ms Seed front-door reconstruction mixed immutable
-Seed admission with exact hashes for mutable current source. It is retired, not
-repinned. The remaining `seed-native-front-door` owner validates the pinned
-manifest and inventory, hashes all 18 immutable artifacts, and admits all six
-WVB modules in 13,900 ms on the same Windows host. The separate
-`seed-native-console-aot` owner reconstructs the canonical source-to-WVB,
-WVB-to-WVO, link, package, and execution chain. Current compiler fixed points
-belong to split compiler convergence. This removes the redundant 105-artifact,
-185-assertion hash farm from every complete qualification without reducing an
-owned current or immutable boundary.
+Current development work uses exact affected-owner selection and declared
+checkpoint dependencies. The [throughput plan](../Project/Verification-Throughput-Plan.md)
+owns remaining priorities. Keep these boundaries while optimizing:
 
-The checked-in WebAssembly playground package binds its direct compiler and
-scalar interpreter WVB/Wasm identities plus the referenced native compiler,
-backend, and segmented-backend packages. Its package-and-core engine checkpoint
-passes in 29,674 ms on Windows without regenerating a product. It is the
-independent blanket qualification contract on both hosts. The old 1,619,500 ms
-cold command attempted to compile current Language 1.0 fixtures through frozen
-Seed and regenerate an untracked historical compiler workload; it is not a
-valid general qualification boundary. Full current-source WebAssembly
-reconstruction remains an explicit WebAssembly promotion task and must migrate
-to the current split compiler before it can make that stronger claim.
+- Behavior owners validate retained tool identities and construct their own
+  products; dedicated reconstruction owners own compiler reconstruction.
+- Database and library selectors preserve affected dependency unions and
+  independently owned cases. Do not widen to unrelated regression suites.
+- Construction may be shared only where the declared product and evidence
+  contracts agree. Preserve distinct logical cases and failure attribution.
+- Cache hits preserve malformed-input, publication, host execution, restart,
+  denial and cleanup checks owned by the changed boundary.
+- Qualification scheduling uses measured per-host costs. Projected shard
+  improvements remain projections until a paired run measures them.
 
-The database development owner now checkpoints the six portable tree projects,
-their linked images, and their current-host applications. It reports live
-target/phase progress and does not repeat project-object admission already
-performed by the checkpoint. The direct all-hit Windows owner takes 87,800 ms:
-9,190 ms for tools, 24,290 ms for the six portable behaviors, 28,570 ms for
-host storage, and 25,660 ms for the host tree reader. That is a 78.19% reduction
-from 402,638 ms and crosses the two-minute working target without removing any
-of the eight selected behaviors. A subsequent complete changed-file invocation
-reported 89,530 ms for the same owner after also passing planner and workflow
-policy checks. The complete owner remains cold, reconstructs both target
-containers, and retains independent reproducibility and admission evidence.
-
-After the database development owner expanded to 50 cases, a complete all-hit
-Windows run still took 708,690 ms. Project-object version 1 was a false hit at
-the trust boundary: it rehashed and byte-compared an immutable admitted WVO,
-then ran the complete structural WVO inspector again. For the fifteen-module
-`TransactionParentGroups` project, the wrapper averaged 10,339.75 ms and the
-redundant admission alone averaged 9,164.48 ms. Version 2 binds the exact cache
-driver and its digest-pinned inspector policy into the project key, retains
-admission before immutable publication, and proves hits through the complete
-record plus rehashed private copies. Its first fresh creation took 23,257.74 ms;
-the next two hits took 264.10 and 250.11 ms, a 97.51 percent boundary reduction
-and 40.2-fold speedup. The complete all-hit 50-case owner falls from 708,690 ms
-to 500,610 ms, saving 208,080 ms or 29.36 percent for a 1.42-fold speedup;
-portable-case time falls from 345,980 ms to 198,870 ms. Even the first coherent
-version-2 population gate falls from the preceding 1,495,600 ms cold reference
-to 950,050 ms because each new WVO is admitted once rather than again after
-materialization. Qualification remains cache-independent.
-
-The remaining database segmented path is checkpointed at its measured stable
-boundary. A representative project spent 11,230 ms compiling, 15,588 ms in
-segmented WVO staging, 338 ms linking, and 194 ms in canonical transport;
-compile plus staging therefore owned 97.9 percent of construction time.
-`segmented-project-v1` binds the complete project closure, build driver, all
-three digest-pinned segmented producers, and checkpoint driver, then stores the
-exact WVB plus the structurally admitted canonical manifest and fragments.
-Hits rehash the immutable entry and every private materialization. The two-case
-tree-completion section fell from 64,680 ms during population to 7,170 ms on
-hits, an 88.9 percent reduction. The composed host-tree-writer step fell from
-55,640 ms during population to 16,020 ms on hits, and the persistent writer
-from 46,390 ms to 2,520 ms. All current-host executions, provider overlays,
-restart checks, and interruption cases still run. Cold duplicate compilation
-and both-host packaging remain qualification-only evidence. The final all-hit
-50-case owner takes 323,820 ms, down from 500,610 ms: 176,790 ms or 35.31
-percent less wall time for a 1.55-fold speedup. Its portable section falls from
-198,870 ms to 115,980 ms, a 41.68 percent reduction.
-
-Hosted-application hits now reuse producer trust within the same bounded
-database-owner invocation. Before this change, one unchanged 5.65 MiB hit took
-1,573 through 2,393 ms, including 447 through 930 ms to reopen and revalidate
-the same 72-artifact, 21.7 MiB producer closure. The owner-session service
-validates that closure once, retains its exact buffers, and reconstructs the
-unchanged version-1 key for each independently hashed WVB and fragment set.
-The same hit takes 129 through 165 ms through the session. Misses still use the
-standalone full-validation publisher; corruption never falls back. The all-hit
-change-aware 50-case owner falls from 323,820 ms to 281,240 ms, saving another
-42,580 ms or 13.15 percent. Its portable section falls from 115,980 ms to
-81,940 ms, a 29.35 percent reduction. Relative to the earlier 500,610 ms
-project-object-v2 result, the two subsequent changes save 219,370 ms or 43.82
-percent and make the owner 1.78 times faster.
-
-The next profile separated host-root execution from preparation. Twelve fresh
-publication, replay, interruption, and recovery processes took 980 ms in the
-main case, while its direct three-WVO link took 16,460 ms; project admission
-took 310 ms and application materialization 190 ms. The related root-fill,
-root-split, and read links took 15,180, 15,650, and 10,370 ms, versus 210 through
-260 ms for project hits and 140 through 170 ms for application hits. Fresh
-process semantics were therefore not the bottleneck and remain unchanged.
-
-Ordered `linked-image-v2` checkpoints now hash one through 64 exact WVO buffers
-in command order, snapshot them before cold linking, include all current-host
-producer bytes, and publish an immutable image/map/record directory. Current-
-host database development initially used this path for every eligible multi-
-object link; direct qualification paths stay unchanged. The final change-aware
-all-hit Windows owner falls from 281,240 ms to
-101,370 ms, saving 179,870 ms or 63.96 percent for a 2.77-fold speedup in this
-slice. Host-root-writer falls from 61,810 ms to 3,560 ms, host storage from
-24,620 ms to 8,140 ms, and host-local-service from 29,010 ms to 1,450 ms.
-Relative to the earlier 500,610 ms project-object-v2 result, the combined
-development loop saves 399,240 ms or 79.75 percent and is 4.94 times faster.
-
-The remaining portable single-input path repeated a batch front door, Node key
-process, several `certutil` hashes, and copy comparisons on every hit. A
-controlled identical-input comparison measured a 641.6 ms version-1 mean and
-a 107.0 ms version-2 mean. A live TreeNode case separated 220 through 240 ms
-of project materialization, 580 through 630 ms of version-1 linking, 80 ms of
-map/copy work, 160 through 170 ms of hosted-application materialization, and
-340 through 350 ms of fresh execution. Database development now uses the
-single version-2 producer for all 38 ordinary portable single-object links and
-every eligible host multi-object link; three segmented portable cases retain
-their separate transport checkpoint. The obsolete version-1 wrappers and key
-helper have no consumer and are removed.
-The coherent population run retained 37 real new links and all 50 executions
-in 411,770 ms. The final change-aware all-hit owner takes 85,010 ms, down
-16,360 ms or 16.14 percent from 101,370 ms; the portable section falls from
-74,110 ms to 58,410 ms, saving 15,700 ms or 21.18 percent. Relative to the
-earlier 500,610 ms project-object-v2 result, the combined loop is 5.89 times
-faster.
-
-The remaining project-object hit still started Node and rehashed the same build
-driver, lowerer, checkpoint driver, and workspace for every project. Ten empty
-Node invocations averaged 54.4 ms and the old project-key command averaged
-124.9 ms. Project-key format 2 places that common producer closure before each
-project closure, streams it once into a clonable hash context, and lets the
-existing bounded owner session serve read-only project-object hits. Eight
-controlled standalone hits averaged 149.0 ms; eight session hits averaged 98.0
-ms. The representative TreeNode case fell from 940 through 960 ms to 810 ms
-without removing fresh application execution. The same context is reused across
-all selected OS x64 project-WVB keys. Cold publishers recheck their complete
-keyed input evidence before immutable publication, and a miss retains the
-standalone publisher.
-
-The accepted session design retains no producer file buffers. On the measured
-Windows host it used 73.78 MiB working set and 83.14 MiB private memory, versus
-69.84 MiB and 80.32 MiB for the hosted-only session. A rejected whole-buffer
-prototype used 107.45 MiB and 117.61 MiB. Producer count, producer aggregate,
-project-input count, and project aggregate are explicitly bounded. The format
-change makes older project-key entries inert and caused one deliberate cold
-migration; it does not change checkpoint products, application execution, or
-qualification boundaries. The final change-aware warm database owner takes
-81,910 ms, down 3,100 ms or 3.65 percent from 85,010 ms; its portable section
-takes 55,340 ms, down 3,070 ms or 5.26 percent from 58,410 ms.
-
-`Tests/Native/Development-Owner-Dependencies.txt` now declares the source,
-producer, and artifact closures for the measured front-door, WebAssembly, and
-database owners plus all six database checkpoint families. Its verifier
-requires canonical ordering, ordinary repository files, complete closure kinds,
-the exact checkpoint-family set, no planner gaps, and selection of the declared
-owner.
-
-GitHub Verify run 31852544894 first populated separate host caches, then exact
-attempt 2 restored both. The complete development jobs passed in 1m42s on
-Windows and 1m15s on Linux, including checkout, runtime setup, restore, planner
-and workflow checks, all eight database behaviors, and cleanup. The selected
-scope skipped qualification. This closes the five-minute ordinary-feedback
-target without turning a cached development result into qualification evidence.
-
-The OS x64 code-emission development path is target-aware as well. Its canonical
-manifest maps 56 independent project closures. One leaf source, fixture, or
-project selects one six-check target; shared inputs, multiple targets, owner
-changes, and qualification retain the complete 56-project, 336-case owner. On
-the measured Windows host, first, middle, and final targets completed in 3,476
-ms, 3,622 ms, and 3,041 ms, and the complete changed-file front door for the
-middle target completed in 4,866 ms. Linux target execution remains independent
-host evidence rather than an inference from Windows; the paired shell passed
-syntax validation. The complete Windows owner passed all 56 projects and 336
-cases in 115,333 ms, making the measured 3,622 ms middle-target owner 31.84
-times faster without changing the complete route.
-
-That owner is also manifest-driven. The versioned row for each target owns its
-project closure, artifact stem, local result, and exact WVB, WVO, linked-image,
-Windows-container, and Linux-container identities. The paired host scripts each
-contain one generic pipeline instead of 56 copied pipelines. This reduces the
-two scripts from 2,411 lines to 263 lines and makes target additions single-row
-changes while retaining the complete owner. The generic Linux path also executes
-all 56 local containers; it closes four copied-body omissions that had packaged
-and hashed an ELF without performing the declared current-host execution.
-
-One owner invocation now treats those tools as a bounded verified session. It
-stages and checks seven private native tool snapshots and verifies workspace
-containment once, then gives every target independent compiler, lowerer, linker,
-packager, and publisher processes plus separate candidate paths. This retains
-immutable publication and per-target exact hashes without repeating 504 Windows
-tool hashes and 56 workspace scans. The measured complete Windows owner fell
-from 129,638 ms to 82,557 ms, a 36.32 percent reduction and 1.57-fold speedup.
-The development path now also reuses deterministic compiler products through
-the existing Project 2 content identity. One batch process derives and validates
-all selected keys, while a miss retains a separate native compiler process and
-all later phases remain fresh. The complete all-hit Windows development owner
-takes 74,729 ms, saving another 7,828 ms or 9.48 percent from the session-only
-result. The focused `code` target takes 4,076 ms instead of 4,524 ms. A rejected
-per-project wrapper design took 94,799 ms because 56 Node and command-shell
-hashing lifecycles outweighed compilation; batching the cache boundary is what
-makes reuse beneficial. No-argument and qualification execution remain cold.
-
-The library development owner now selects one of seven dependency clusters from
-a canonical 29-project manifest. The planner derives each cluster's source
-closure from its Project 2 declarations; shared, multi-cluster, owner, and
-otherwise ambiguous changes retain the complete route. On the measured Windows
-host, the three-case `models` target completed in 4,320 ms and the largest
-nine-case `page-storage` target completed in 5,878 ms, compared with 26,348 ms
-for the unchanged complete owner. That is a 6.10-fold speedup for the model
-cluster and 4.48-fold for the page/storage cluster without removing the full
-29-case qualification route.
-
-Library ownership is inventory-bounded as well as target-aware. Modern database,
-network, and other library projects outside those 29 cases remain with their
-actual focused owners instead of also invoking an unrelated library regression
-set. Replaying the 112 commits from 2026-08-16 reduced library-owner selection
-from 31 commits to four, avoiding about 711 seconds of measured Windows work
-while retaining two focused selections and two legitimate complete selections.
-
-Qualification owners follow the same ownership boundary even though they run
-cold. An ordinary application, library, or provider owner verifies the exact
-retained compiler and lowerer candidates, then reconstructs and exercises its
-own product. It does not rebuild compiler tooling unless compiler construction
-is the behavior it owns. Dedicated convergence and reconstruction owners retain
-that independent evidence, and a historical recovery owner remains bound to its
-exact restored commit. Applying this rule to model-provider qualification cut
-the measured owner from roughly 24 to 29 minutes to 13 seconds on Linux and 21
-seconds on Windows while preserving all 11 cases. Five other ordinary owners
-now use the same retained-tool boundary while preserving duplicate compilation,
-byte comparison, lowering, linking, cross-target packaging, and current-host
-execution of their actual products. The fifth is the durable-database behavior
-owner, which no longer rebuilds a lowerer before exercising its 12 cases.
-
-Qualification scheduling now retains the complete paired-host owner timings from
-the accepted Language 1.0 run. The 126-owner baseline showed that equal sums of
-coarse duration profiles still projected a 6,547,869 ms critical shard. Moving
-six independent owners without changing their commands, cases, profiles, or
-timeouts produces historical projections of 4,655,707 ms on Windows and
-4,521,081 ms on Linux. The planner validates all 252 timing values and reports
-declared timeout policy separately from observed scheduling work; a new paired
-run is still required before the projection becomes a measurement.
-
-Database target selection now preserves independent unions instead of turning
-every multi-closure change into the complete development owner. The current
-planner selects three cases for `Local-Database-Put.wv`, four for
-`Durable-Tree-Reader.wv`, and 34 for the broadly shared `Durable-Page.wv`.
-Publication, recovery, and single-writer commit are now included in the 53-case
-development inventory; cold qualification remains a separate 57-case route.
-The version-3 development inventory identifies seven qualification bundle
-memberships: six pairs and the three-case branch-page bundle. A complete bundle
-is one physical development execution while its logical cases remain visible;
-a partial selection stays on the original one-case projects. The all-development
-plan therefore contains 53 behaviors in 45 executions. On Windows the publication/recovery bundle took
-44,850 ms while creating its content-addressed checkpoints and 2,130 ms on an
-unchanged warm run with project, link, and application hits. Independent warm
-publication and recovery selections took 2,100 and 1,980 ms, confirming that a
-partial selection does not consume the combined product.
-On the measured Windows host, three portable cases with two fresh products
-passed in 77,030 ms, and the portable plus hosted local-service closure passed
-its exact three cases in 193,520 ms. The latter plan reports 245 expected
-seconds and a 570-second safety bound rather than the qualification owner's
-2,700/3,600-second profile.
-
-The branch-page group calls its three existing portable tests in order, with
-a distinct nonzero result for each failing member. It shares 15 library inputs
-and uses the existing segmented-image owner path because its native image
-exceeds the ordinary lowerer bound. The WVB has 278,725 bytes and the native
-image uses two fragments. No input or execution bound was increased.
-
-Cold database qualification now reads one versioned inventory on both hosts.
-It preserves 57 logical cases while seven compatible groups share products, so
-the current graph contains 52 execution steps, 56 project references, 644
-declared root/source references, and 147 unique source paths. Pairing every
-construction would produce 1,288 source visits per host. The 40 portable
-construction steps use one admitted construction and delegate 356 duplicate
-visits to focused reproducibility owners; their remaining 4.38-fold cross-project
-manifest overlap
-is the next construction target. Portable and hosted steps execute the
-current-host image and delegate generic opposite-host packaging to focused
-packager owners; paired Windows/Linux database behavior remains mandatory for
-complete qualification. Five ordinary hosted construction functions also share
-one fresh source-build, lowering, and admission routine per host. The paired
-`StorageLowering` case and common host-adapter assembly comparisons retain their
-focused reproducibility claims. See the
-[hosted construction evidence](../Evidence/2026-09-06-Hosted-Database-Current-Host-Packaging.json)
-for the measured improvement and remaining qualification limits.
-The first two-case bundle reduced direct clean Windows work from 71,830 to
-40,608 ms. Its focused node fell from 46,150 to 38,310 ms after both portable
-delegations. Two further bundles preserve the ancestor-groups/depth-four and
-ancestor-pages/intermediate case labels; their focused Windows nodes passed in
-51,640 and 61,150 ms respectively. A source-overlap planner now ranks
-non-identical portable pairs without treating them as safe automatically. Its
-first retained trial combines transaction leaf groups and leaf pages, sharing
-10 of 23 declared inputs; the focused Windows node passed in 56,140 ms without
-raising any compiler or lowerer limit. Its development path took 59,540 ms while
-creating checkpoints and 2,990 ms with project, link, and application hits.
-The next retained overlap trial combines root split and depth two; its focused
-Windows qualification node passed in 59,990 ms, and its development path took
-58,470 ms while creating checkpoints and 2,860 ms on the unchanged warm path.
+The detailed before/after timing diary is in [Git history](../Git-History.md#superseded-browser-and-verification-notes).
+The remaining optimization directions are:
 
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained

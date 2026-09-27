@@ -2275,6 +2275,16 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'retired build-driver source-list launchers are deletion tombstones'
+        Paths = @(
+            'Tools/Native/Compile-Compiler-Build-Driver-Source-Set.cmd',
+            'Tools/Native/Compile-Compiler-Build-Driver-Source-Set.sh'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'retired standalone WebAssembly probes are deletion tombstones'
         Paths = @(
             'Tools/Verify/Probe-WebAssembly-Guest-Heap.mjs',
