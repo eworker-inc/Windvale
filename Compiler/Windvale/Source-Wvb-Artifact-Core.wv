@@ -7530,6 +7530,14 @@ Wirˉsummary.Operations
 );
 }
 if Optimize {
+let Validationˉfoundationˉborrows: bool =
+Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
+Wirˉsummary.Directory, Symbols, Bindings, Orders
+) || Compilerˉsourceˉwvbˉmoduleˉhasˉcollectionˉhelper(
+Input, Scan, Wirˉsummary.Directory, Symbols, Bindings, Orders
+) || Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
+Wirˉsummary.Directory, Orders
+);
 var Validationˉrank: u32 = 0u32;
 while Validationˉrank < Concreteˉfunctions {
 let Validationˉfunction: u32 =
@@ -7568,7 +7576,7 @@ Validationˉview.Source, Validationˉheader,
 Symbols, Bindings, Orders, Textˉplan,
 Wirˉsummary.Directory,
 Validationˉfunction,
-0u32, false, false
+0u32, false, Validationˉfoundationˉborrows
 );
 if Validationˉencoding.Status !=
 Compilerˉsourceˉwvbˉstatus.Valid {

@@ -395,6 +395,9 @@ async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emit
                 path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', 'Values', 'Option.wv')]],
             ['Bound', [Boundˉsource,
                 path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', 'Values', 'Option.wv')]],
+            ['Unused', [path.join(Fixtures, 'Emission-Unused-Borrow.wv'),
+                ...['Collections/Collections.wv', 'Memory/Memory.wv', 'Values/Option.wv', 'Values/Result.wv']
+                    .map(Name => path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', Name))]],
         ]) {
             console.log(`compiler split diagnostics step=prepare case=${Prefix}`);
             const Admitted = path.join(Work, `${Prefix}-Admitted.wvss`);
@@ -434,6 +437,26 @@ async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emit
             Reject(`Ownership bound rejection lost its diagnostic or output: ${Result.Output}${Result.Error}`);
         }
         console.log('compiler split diagnostics case=ownership-bound status=Passed output=Preserved');
+        const Unusedˉoutput = path.join(Work, 'Unused.wvb');
+        let Previousˉunused = null;
+        for (let Attempt = 0; Attempt < 2; Attempt += 1) {
+            await Run(path.resolve(Emitter),
+                [...['Source.wvss', 'Analysis.wvam', 'Bindings.wvlb', 'Wir.wvir']
+                    .map(Name => path.join(Work, `Unused-${Name}`)), Unusedˉoutput]);
+            const Bytes = await readFile(Unusedˉoutput);
+            if (Previousˉunused !== null && !Bytes.equals(Previousˉunused)) {
+                Reject('Unused borrowed-reader emission is not deterministic.');
+            }
+            Previousˉunused = Bytes;
+        }
+        if (Runner !== null) {
+            const Executed = await Runˉdevelopmentˉcommand(path.resolve(Runner),
+                [Unusedˉoutput], Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Executed.Code !== 0 || Executed.Error !== '' || Executed.Output.trim() !== 'Result: 42') {
+                Reject(`Unused borrowed-reader execution failed: ${Executed.Output}${Executed.Error}`);
+            }
+        }
+        console.log('compiler split diagnostics case=unused-borrowed-reader status=Passed deterministic=true');
     } finally {
         if (!Sameˉpath(path.dirname(path.resolve(Work)), Temporaryˉroot) ||
             !path.basename(Work).startsWith(TEMPORARY_PREFIX)) {

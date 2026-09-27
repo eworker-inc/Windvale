@@ -7873,6 +7873,17 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
         );
     }
     if Optimize {
+        // Unreachable functions still obey their declared borrow contracts.
+        // Use the complete source graph for validation; emitted feature flags
+        // continue to come only from the reachable graph below.
+        let Validationˉfoundationˉborrows: bool =
+            Compilerˉsourceˉwvbˉmoduleˉhasˉrecordˉcollection(
+                Wirˉsummary.Directory, Symbols, Bindings, Orders
+            ) || Compilerˉsourceˉwvbˉmoduleˉhasˉcollectionˉhelper(
+                Input, Scan, Wirˉsummary.Directory, Symbols, Bindings, Orders
+            ) || Compilerˉsourceˉwvbˉmoduleˉhasˉfoundationˉborrow(
+                Wirˉsummary.Directory, Orders
+            );
         var Validationˉrank: u32 = 0u32;
         while Validationˉrank < Concreteˉfunctions {
             let Validationˉfunction: u32 =
@@ -7911,7 +7922,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
                         Symbols, Bindings, Orders, Textˉplan,
                         Wirˉsummary.Directory,
                         Validationˉfunction,
-                        0u32, false, false
+                        0u32, false, Validationˉfoundationˉborrows
                     );
                 if Validationˉencoding.Status !=
                     Compilerˉsourceˉwvbˉstatus.Valid {

@@ -319,6 +319,10 @@ order from the reachability map, remaps every retained direct call through that
 order, and emits every root export at its retained rank. Unreachable functions
 still undergo operation, shape, temporary-slot, parameter, local, return, and
 metadata validation, but contribute no Functions metadata or Code bytes.
+Their Foundation borrow plans use the complete validated source graph, so an
+unused immutable reader has the same parameter admission as a called reader.
+This validation context does not add unreachable borrowing operations to the
+emitted module's feature selection.
 
 One text-planning traversal decodes and validates literals over the complete source
 closure while retaining synthetic values only for reachable functions. The

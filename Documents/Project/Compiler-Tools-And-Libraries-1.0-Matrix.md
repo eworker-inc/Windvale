@@ -2,7 +2,7 @@
 
 > Status: Current delivery inventory; candidate API choices remain unaccepted
 > Authority: Informative; linked contracts and decisions own requirements
-> Last reviewed: 2026-09-26
+> Last reviewed: 2026-09-27
 
 This is the finite tracking surface for the compiler, toolchain, and required
 Libraries 1.0 goal. The frozen Language 1.0 compiler and selected immutable
@@ -215,7 +215,7 @@ database-side owner.
    This is not an implemented consumer. Copy-record collections and owned-budget
    helpers have focused Windows/Debian evidence under candidate WVB 1.42.
    The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
-   owns the current implementation boundary and emission blocker. Avoid copying
+   owns the current implementation boundary and execution blockers. Avoid copying
    that changing prerequisite list into each overview. More isolated fixtures
    do not satisfy the maintained-consumer gate.
    Preserve lock bytes, validation/failure ordering, bounded resource use and

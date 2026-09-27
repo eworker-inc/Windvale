@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-26
+> Last reviewed: 2026-09-27
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -214,14 +214,23 @@ constructor counts from the recursive child budget. The maintained Copy-record
 regression executes on Windows and Debian, and the original parser-state
 snapshot now emits deterministic bytes on both hosts. Excessive ownership
 graphs still reject with the exact rule and source declaration.
-The saved typed streaming consumer passes source and WIR validation but still
-rejects during emission at function 17, operation 3280, with
-`Unsupportedˉshape` and unavailable source context. Localize that remaining
-rejection before changing the maintained package API; the scan fix alone does
-not establish consumer execution or resource cleanup.
-The candidate changes were retained locally for diagnosis; the maintained
-scanner and its fixture remain unchanged. Preserve lock bytes, failure order,
-explicit allocation failures and resource bounds when the migration resumes.
+The unused-reader emission rejection is fixed: optimized emission now validates
+unreachable functions with their Foundation borrow context. The maintained
+[`Emission-Unused-Borrow.wv`](../../Tests/Fixtures/Language-1.0/Emission-Unused-Borrow.wv)
+regression compiles deterministically and executes on Windows and Debian.
+The saved typed scanner emits with an owned-budget harness, but its execution
+is not delivered. The old harness also forwards mutable budget borrows through
+helpers, outside the current owned/immutable helper boundary; replace that
+harness flow with explicit owned child budgets rather than inferring new support.
+
+Resolve execution resource use before changing the maintained package API.
+The local interpreter probes reach the eight-call-depth limit or exhaust the
+hosted runner's 128 MiB byte arena. A diagnostic application of existing
+temporary-slot reuse reduced one parser frame from 872 to 220 slots but did not
+remove arena exhaustion; no allocation-policy or resource-limit change was
+adopted. The maintained scanner and fixture remain unchanged. Preserve lock
+bytes, failure order, explicit allocation failures and resource bounds when
+the migration resumes; emission alone does not establish consumer delivery.
 
 These immutable bridges do not enable consuming extraction or arbitrary payload
 composition. Native lowering for minors 40 through 42, installed promotion,
