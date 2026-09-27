@@ -235,6 +235,13 @@ saved variants can still reach the call-depth limit; the maintained scanner's
 owned-budget harness is not yet executable. Migrate the candidate through the
 maintained package API, preserve exact lock bytes, failure order, allocation
 failures and resource bounds, then run the maintained consumer on both hosts.
+With the corrected prepared emitter, the candidate reproduces the saved WVB
+byte for byte. A realistic five-part lock returns `42` in 722,721 instructions,
+an invalid digest reports the expected line and column in 180,120 instructions,
+and a helper receiving an owned child budget returns `42` in 722,755
+instructions. Each WVB has matching results and instruction counts on Windows
+and Debian. These are candidate checks; the existing package consumers still
+use the byte-directory API and need budget-aware migration.
 The existing component fixtures use the current collection signature, valid
 typed backings and minor-42 expectations. Emission alone does not establish
 consumer delivery.
