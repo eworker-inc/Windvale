@@ -4030,6 +4030,8 @@ fn Mayˉdeferˉlocalˉwrites(
         Opcode == 48u32 || Opcode == 49u32 { return true; }
     if (Opcode >= 16u32 && Opcode <= 22u32) ||
         (Opcode >= 32u32 && Opcode <= 40u32) ||
+        (Opcode >= 96u32 && Opcode <= 103u32) ||
+        Opcode == 118u32 ||
         (Opcode >= 159u32 && Opcode <= 162u32) ||
         (Opcode >= 173u32 && Opcode <= 178u32) { return true; }
     return false;
