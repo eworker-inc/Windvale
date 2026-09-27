@@ -2,7 +2,7 @@
 
 - Date: 2026-08-16
 - Status: Implemented candidate with focused Windows native evidence
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 - Defines: [database JSON protocol envelope](../../Specifications/Windvale-Database-Json-Protocol.md)
 - Builds on: [strict database JSON value](../../Specifications/Windvale-Database-Json-Value.md)
 - Informed by: EWDB request contexts, response headers, strict unmapped-member rejection, and mutation ambiguity separation

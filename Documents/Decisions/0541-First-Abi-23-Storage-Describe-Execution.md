@@ -3,7 +3,7 @@
 - Date: 2026-08-13
 - Status: Implemented candidate with focused Windows execution and Linux image evidence
 - Requires: [Decision 0540](0540-First-Abi-23-Storage-Call-Lowering.md)
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 - Defines: First execution of [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md) through [`WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md)
 - Retains: Every ABI-22 startup, package, service, and generated object unchanged
 

@@ -13,12 +13,12 @@ not an undeclared requirement for the Windows and Linux 1.0 product.
 
 This page answers three questions: what works now, what is still missing, and
 what result comes next. The [roadmap](Roadmap.md) owns forward gates. The
-[verification evidence](Seed-Verification-Evidence.md) and
-[Language 1.0 migration evidence](Windvale-Language-1.0-Migration-Evidence.md)
+[verification evidence](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Seed-Verification-Evidence.md) and
+[Language 1.0 migration evidence](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Language-1.0-Migration-Evidence.md)
 retain exact runs, hosts, artifact sizes, and hashes. The
 [Language 1.0 Slice 8 qualification record](../Evidence/2026-09-04-Language-1.0-Slice-8-Qualification.json)
 owns the final paired-host compiler result. The
-[historical progress snapshot](Progress-History-2026-08-31.md) retains the
+[historical progress snapshot](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Progress-History-2026-08-31.md) retains the
 earlier detailed implementation diary.
 
 The image is an editorial snapshot, not a generated status report. Update this
@@ -76,7 +76,7 @@ Name the track when a bytecode version matters:
   later versions. The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
   owns the exact current boundary and next consumer.
 
-The [dated library history](Library-Development-History-2026-09-26.md) preserves
+The [dated library history](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Library-Development-History-2026-09-26.md) preserves
 the earlier 1.39 checkpoint details and delivery measurements. Later development
 does not silently redefine frozen Seed or Language 1.0 qualification identities.
 
@@ -102,7 +102,7 @@ The [six-item simplification goal](Verification-Throughput-Plan.md#six-item-simp
 is improving diagnostics, preparation reuse, code structure and maintenance.
 Use that plan for its implementation status and the [native test runbook](../Runbooks/Native-Tests.md)
 for current verification commands. Earlier feedback timings and component case
-inventories are preserved in the [dated history](Library-Development-History-2026-09-26.md#earlier-development-feedback-checkpoints).
+inventories are preserved in the [dated history](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Library-Development-History-2026-09-26.md#earlier-development-feedback-checkpoints).
 
 1. Complete the typed Package-Lock consumer after the delivered parser gate.
    Record-vector observation and owned-budget helpers have focused evidence;
@@ -171,8 +171,8 @@ and complete qualification as a ladder against the same unchanged source.
 
 ## Evidence and history
 
-- [Exact Seed and release evidence](Seed-Verification-Evidence.md)
-- [Language 1.0 migration evidence](Windvale-Language-1.0-Migration-Evidence.md)
-- [Detailed progress history through this reorganization](Progress-History-2026-08-31.md)
+- [Exact Seed and release evidence](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Seed-Verification-Evidence.md)
+- [Language 1.0 migration evidence](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Language-1.0-Migration-Evidence.md)
+- [Detailed progress history through this reorganization](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Progress-History-2026-08-31.md)
 - [Release naming and recovery policy](Release-Names-And-Tags.md)
 - [Windvale 1.0 product gate](Windvale-1.0-Product-Plan.md)

@@ -3,7 +3,7 @@
 - Date: 2026-08-13
 - Status: Implemented candidate with focused Windows execution and Linux image evidence
 - Requires: [native-only forward development](0527-Native-Only-Forward-Development-Boundary.md)
-- Advances: [first pre-opened random-access storage](0212-First-Preopened-Random-Access-Storage.md) and the [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [first pre-opened random-access storage](0212-First-Preopened-Random-Access-Storage.md) and the [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 - Defines: [`WVPQ 1`, `WVPR 1`, and `WVPT 1`](../../Specifications/Windvale-Native-Capability-Provider-Table.md)
 - Retains: Native ABI 22, execution-context version 7, service-table version 5, WVB 1.11, WVO 1.0, and every accepted hosted-tool container
 

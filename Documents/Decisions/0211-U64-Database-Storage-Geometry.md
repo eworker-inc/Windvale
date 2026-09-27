@@ -2,7 +2,7 @@
 
 - Date: 2026-08-04
 - Status: Implemented candidate with focused Windows evidence; independent Linux qualification pending
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md), [database storage geometry](../../Specifications/Database-Storage-Geometry.md), and [single current WVB 1.11](0209-Single-Current-Wvb-1-11-Format.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md), [database storage geometry](../../Specifications/Database-Storage-Geometry.md), and [single current WVB 1.11](0209-Single-Current-Wvb-1-11-Format.md)
 - Retains: experimental `WVDB 1` bytes and `u32` fields, no durable-format selection, no storage authority, and no writes
 
 ## Context

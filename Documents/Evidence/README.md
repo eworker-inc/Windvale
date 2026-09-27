@@ -10,10 +10,10 @@ second progress dashboard and they do not redefine specifications.
 
 ## Find existing evidence
 
-Use the generated [historical evidence index](Index.md) to search the older
-append-oriented archives by section. It tells you which source owns the claim,
-what that source is useful for, and what it cannot prove. Open only the linked
-section unless the surrounding history is needed.
+Use the [historical evidence index](Index.md) for pinned Git locations of older
+archives. The [history retrieval guide](../Git-History.md) shows how to search
+and read them without restoring the full text. Open only what a specific
+historical question requires.
 
 ## When to create a record
 
@@ -88,6 +88,6 @@ identities needed to interpret the run. This is an editorial change, not a new
 verification result. Do not apply it to signed release manifests, bootstrap
 trust records, or qualification records.
 
-The large historical evidence pages under `Documents/Project/` remain valid
-archives. New work should prefer small records and generated summaries so a
-developer or AI agent can load only the evidence relevant to the current task.
+The former large historical evidence pages remain retrievable in Git. Keep
+their bodies and full heading catalogs out of the working tree. New durable
+claims use compact records; ordinary development uses verification summaries.

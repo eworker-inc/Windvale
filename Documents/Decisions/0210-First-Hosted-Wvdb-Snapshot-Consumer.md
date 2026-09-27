@@ -2,7 +2,7 @@
 
 - Date: 2026-08-04
 - Status: Implemented candidate with focused Windows evidence; independent Linux qualification pending
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md), [WVDB reader experiment](../../Specifications/Windvale-Database-Reader.md), and [read-only directory capability](../../Specifications/Read-Only-Directory-Capability.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md), [WVDB reader experiment](../../Specifications/Windvale-Database-Reader.md), and [read-only directory capability](../../Specifications/Read-Only-Directory-Capability.md)
 - Retains: experimental `WVDB 1` bytes, its `u32` fields and 16,416-byte bound, one explicitly granted immutable directory instance, and no durable or mutable storage claim
 
 ## Context

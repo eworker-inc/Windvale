@@ -3,7 +3,7 @@
 - Date: 2026-08-13
 - Status: Implemented candidate with focused Windows execution and Linux image evidence
 - Requires: [Decision 0537](0537-Bounded-Native-Capability-Provider-Table.md)
-- Advances: [first pre-opened random-access storage](0212-First-Preopened-Random-Access-Storage.md) and the [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [first pre-opened random-access storage](0212-First-Preopened-Random-Access-Storage.md) and the [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 - Defines: [first native capability-provider call](../../Specifications/Windvale-Native-Provider-Call.md)
 - Retains: Native ABI 22, execution-context version 7, service-table version 5, WVB 1.11, WVO 1.0, and every accepted hosted container
 - Plans: Native ABI 23 with append-only execution-context version 9

@@ -2,7 +2,7 @@
 
 - Status: Implemented
 - Date: 2026-08-16
-- Advances: [post-.NET-retirement language and library stage](../Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
+- Advances: [post-.NET-retirement language and library stage](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
 - Contracts: [Seed language](../../Specifications/Seed-Language.md), [typed source IR](../../Specifications/Compiler-Source-Wir.md), and [source-to-WVB backend](../../Specifications/Compiler-Source-Wvb.md)
 
 ## Context

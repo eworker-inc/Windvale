@@ -57,29 +57,27 @@
     },
     {
       "id": "seed-linker-evidence-section",
-      "question": "Where is the WVB 1.6 linker-prerequisite qualification record?",
+      "question": "Where can I retrieve the archived Seed qualification history?",
       "startPath": "Documents/Evidence/Indexes/seed-verification.md",
-      "expectedPath": "Documents/Project/Seed-Verification-Evidence.md",
-      "expectedAnchor": "wvb-16-linker-prerequisite-qualification",
       "catalogPath": "Documents/Evidence/Evidence-Catalog.json",
-      "catalogCollection": "sections",
+      "catalogCollection": "sources",
       "catalogMatch": {
-        "sourceKey": "seed-verification",
-        "anchor": "wvb-16-linker-prerequisite-qualification"
-      }
+        "key": "seed-verification",
+        "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27"
+      },
+      "expectedUrl": "https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Seed-Verification-Evidence.md"
     },
     {
       "id": "language-migration-evidence-section",
-      "question": "Where is the generic nominal type-identity migration checkpoint?",
+      "question": "Where can I retrieve the archived Language 1.0 migration history?",
       "startPath": "Documents/Evidence/Indexes/language-1-0-migration.md",
-      "expectedPath": "Documents/Project/Windvale-Language-1.0-Migration-Evidence.md",
-      "expectedAnchor": "slice-4-generic-nominal-type-identity-checkpoint",
       "catalogPath": "Documents/Evidence/Evidence-Catalog.json",
-      "catalogCollection": "sections",
+      "catalogCollection": "sources",
       "catalogMatch": {
-        "sourceKey": "language-1-0-migration",
-        "anchor": "slice-4-generic-nominal-type-identity-checkpoint"
-      }
+        "key": "language-1-0-migration",
+        "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27"
+      },
+      "expectedUrl": "https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Language-1.0-Migration-Evidence.md"
     },
     {
       "id": "duplicated-decision-key",
@@ -105,6 +103,12 @@
       "question": "Which Seed component owns each source-to-execution stage?",
       "startPath": "Documents/README.md",
       "expectedPath": "Documents/Architecture/Seed-Implementation.md"
+    },
+    {
+      "id": "git-history-recovery",
+      "question": "How do I recover removed historical text without restoring it to the checkout?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Git-History.md"
     }
   ]
 }

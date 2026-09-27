@@ -34,7 +34,7 @@ This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Do
 
 The current compiler still uses `portable`, `hosted`, and `system` as a coarse compatibility and authority boundary. The first typed capability-reference slice represents one required root singleton binding as a shared, copyable, non-owned value and is used by the read-only directory facade. Independent platform scope, optional acquisition, instance-bearing references, provider binding metadata, scoped ownership, and runtime module linking are not implemented.
 
-The [post-retirement language and library stage](../Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
+The [post-retirement language and library stage](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
 now has a native foundation: Project 2 manifests build each current library,
 capability-bearing dependencies compose under an explicit root approval rule, and
 the changed-file planner has a focused native library owner. The first exact

@@ -4,7 +4,7 @@
 - Status: Implemented candidate with focused Windows native evidence
 - Defines: [durable range scan](../../Specifications/Windvale-Database-Durable-Range-Scan.md)
 - Extends: [physical leaf scan](../../Specifications/Windvale-Database-Tree-Leaf-Operations.md)
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 
 ## Context
 

@@ -145,7 +145,7 @@ budget. The all-function limit inspection rejects oversized functions before
 native packaging; it does not replace bytecode verification.
 
 Earlier optimization trials, per-owner measurements and completed checkpoint
-narratives are in the [dated history](Verification-Throughput-History-2026-09-26.md).
+narratives are in the [dated history](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Verification-Throughput-History-2026-09-26.md).
 
 ## Six-item simplification goal
 
@@ -208,7 +208,7 @@ launchers, build wrappers and full front-door owner. They cannot be removed as
 unused code. Item 4 owns consolidation of their duplicated implementation;
 the audit does not claim whole-repository reachability or current qualification.
 
-The [library checkpoint history](Library-Development-History-2026-09-26.md)
+The [library checkpoint history](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Library-Development-History-2026-09-26.md)
 preserves the old borrowing and delivered-consumer detail. Progress no longer
 lists completed record-vector work as a next step or repeats the obsolete
 pre-delivery consumer status. Its active text is below 2,000 words.
@@ -288,7 +288,7 @@ under item 2.
 
 ## Earlier baseline
 
-The [dated review](Verification-Throughput-History-2026-09-26.md#earlier-qualification-baseline-and-migration-review) preserves qualification timings, owner rankings and the database construction inventory. Those measurements describe their recorded source states. Use the active six-item goal for the current work order.
+The [dated review](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Verification-Throughput-History-2026-09-26.md#earlier-qualification-baseline-and-migration-review) preserves qualification timings, owner rankings and the database construction inventory. Those measurements describe their recorded source states. Use the active six-item goal for the current work order.
 
 ## Target evidence model
 

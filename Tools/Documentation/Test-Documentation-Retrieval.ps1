@@ -41,6 +41,10 @@ function Test-DirectMarkdownLink {
         (Get-Content -Raw -LiteralPath $StartPath),
         '!?\[[^\]]*\]\((?<target><[^>]+>|[^\s)]+)')) {
         $Target = $Match.Groups['target'].Value.Trim('<', '>')
+        if ($ExpectedPath.StartsWith('https://', [StringComparison]::Ordinal) -and
+            $Target -ceq $ExpectedPath) {
+            return $true
+        }
         if ($Target -match '^[A-Za-z][A-Za-z0-9+.-]*:' -or
             $Target.StartsWith('/', [StringComparison]::Ordinal)) {
             continue
@@ -95,9 +99,16 @@ foreach ($Case in $Document.cases) {
         $StartPath = Resolve-RepositoryPath `
             -RelativePath ([string]$Case.startPath) `
             -Description "Retrieval case '$Id' start"
-        $ExpectedPath = Resolve-RepositoryPath `
-            -RelativePath ([string]$Case.expectedPath) `
-            -Description "Retrieval case '$Id' target"
+        if ($Case.PSObject.Properties.Name -contains 'expectedUrl') {
+            $ExpectedPath = [string]$Case.expectedUrl
+            if ($ExpectedPath -notmatch '^https://github\.com/eworker-inc/Windvale/blob/[0-9a-f]{40}/Documents/[^?#]+\.md$') {
+                throw 'Historical retrieval requires an exact Git revision and document path.'
+            }
+        } else {
+            $ExpectedPath = Resolve-RepositoryPath `
+                -RelativePath ([string]$Case.expectedPath) `
+                -Description "Retrieval case '$Id' target"
+        }
         $ExpectedAnchor = if ($Case.PSObject.Properties.Name -contains
             'expectedAnchor') {
             [string]$Case.expectedAnchor

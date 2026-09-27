@@ -2,7 +2,7 @@
 
 > Status: Current documentation map
 > Authority: Informative routing guide
-> Last reviewed: 2026-09-08
+> Last reviewed: 2026-09-26
 
 Start with the smallest document that owns your question. Do not load the full
 decision or evidence history for ordinary development.
@@ -155,14 +155,14 @@ in machine-readable manifests, signed release checksums, launchers, fixtures,
 or named evidence records. See the
 [hash ownership policy](Documentation-Policy.md#hash-ownership).
 
-The generated [historical evidence index](Evidence/Index.md) points to exact
-sections inside the large append-oriented records. Open a complete archive only
-when a task needs broader reproduction, qualification, or provenance context.
+The [historical evidence index](Evidence/Index.md) locates old runs in Git.
+Use the [history retrieval guide](Git-History.md) to read one old document or
+search a specific subject without restoring historical text to the checkout.
 
 ## Historical catalogs and snapshots
 
-- [Previous detailed documentation catalog](Documentation-Guide-History-2026-08-31.md)
-- [Previous detailed progress snapshot](Project/Progress-History-2026-08-31.md)
-- [Previous detailed roadmap and milestone audits](Project/Roadmap-History-2026-08-31.md)
+- [Previous detailed documentation catalog](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Documentation-Guide-History-2026-08-31.md)
+- [Previous detailed progress snapshot](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Progress-History-2026-08-31.md)
+- [Previous detailed roadmap and milestone audits](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Roadmap-History-2026-08-31.md)
 
-These records remain searchable but are not default current context.
+These records are archived in Git and absent from the working tree.

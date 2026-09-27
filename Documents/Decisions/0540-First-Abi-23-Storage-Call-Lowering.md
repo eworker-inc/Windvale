@@ -3,7 +3,7 @@
 - Date: 2026-08-13
 - Status: Implemented candidate with focused Windows lowering evidence
 - Requires: [bounded provider table](0537-Bounded-Native-Capability-Provider-Table.md), [provider-call emission](0538-First-Native-Capability-Provider-Call-Emission.md), and [execution-context 9 construction](0539-Bounded-Execution-Context-9-Construction.md)
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 - Defines: [`storage.random_access_v1` native lowering](../../Specifications/Windvale-Native-Provider-Call.md)
 - Retains: Native ABI 22 for every module that does not execute a provider call, WVB 1.11, and WVO 1.0
 

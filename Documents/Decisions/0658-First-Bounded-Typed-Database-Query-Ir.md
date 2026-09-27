@@ -2,7 +2,7 @@
 
 - Date: 2026-08-16
 - Status: Implemented candidate with focused Windows native evidence
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md)
 - Defines: [typed database query IR](../../Specifications/Windvale-Database-Query-Ir.md)
 - Builds on: [typed rows and schemas](../../Specifications/Windvale-Database-Typed-Rows-And-Schemas.md)
 - Informed by: EWDB bounded projections, typed index bounds, paging limits, and query-normalization limits

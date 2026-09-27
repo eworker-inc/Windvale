@@ -2,7 +2,7 @@
 
 - Date: 2026-08-04
 - Status: Implemented candidate with focused Windows evidence; independent Linux and crash-recovery qualification pending
-- Advances: [Windvale Database proposal](../Project/Windvale-Database-Proposal.md), [Decision 0140](0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md), and [Decision 0211](0211-U64-Database-Storage-Geometry.md)
+- Advances: [Windvale Database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md), [Decision 0140](0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md), and [Decision 0211](0211-U64-Database-Storage-Geometry.md)
 - Defines: [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md)
 - Retains: experimental `WVDB 1` bytes, no database writer, no accepted durable format, no ambient filesystem authority, and no publication/rename guarantee
 

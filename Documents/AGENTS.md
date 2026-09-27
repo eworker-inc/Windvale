@@ -26,12 +26,13 @@ handbook.
   a title, filename, opening status, evidence heading, or routing sidecar that
   they expose.
 - Never turn a proposal into implemented behavior through wording alone.
-- Preserve historical evidence and superseded decisions. Correct broken facts or
-  links, but use a current owner document to explain later standing.
+- Preserve historical evidence in Git. Remove obsolete diaries, snapshots and
+  superseded plans from the working tree after verifying an immutable archival
+  revision and redirecting references. Keep current requirements and manifests;
+  do not turn archived rationale into present standing.
 - Refer to a duplicated legacy decision with its linked title, never by the
   number alone. Do not create a new decision-number collision.
-- Use the generated evidence index to locate one historical claim. Do not load
-  a complete append-only evidence archive when an indexed section answers the
-  question.
+- Use `Git-History.md` and the evidence index to retrieve one historical claim
+  only when needed. Do not restore full archives to ordinary working context.
 - Run `pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1` after a
   coherent documentation edit.

@@ -11,7 +11,7 @@ completed public foundation.
 
 This roadmap shows dependencies and completion gates. It is not an activity
 diary. Current implementation standing lives in [Progress](Progress.md), and
-the [historical roadmap](Roadmap-History-2026-08-31.md) retains the detailed
+the [historical roadmap](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Roadmap-History-2026-08-31.md) retains the detailed
 milestone audits and measurements that preceded this concise plan.
 
 The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
@@ -211,7 +211,7 @@ or conformance state.
 
 ## Completed foundations and detailed history
 
-The [historical roadmap](Roadmap-History-2026-08-31.md) preserves the full
+The [historical roadmap](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Roadmap-History-2026-08-31.md) preserves the full
 completion gates and audits for predictable development feedback, the
 package-backed host application, the signed `v0.1.0` preview, the offline
 package lifecycle, OS-1 foundations, and earlier proposed product lanes.

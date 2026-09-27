@@ -40,8 +40,12 @@ snapshots preserve context. These records remain searchable and linkable, but
 they are not default current-state guidance.
 
 Historical records must not be silently rewritten to describe current behavior.
-Correct a factual or link error in place when needed, and use current documents
-to explain what later work superseded.
+Keep obsolete diaries, dated dashboards and superseded plans in Git history,
+not in the working tree. Before removal, identify a retained immutable revision,
+check that it contains the complete text, and route surviving links there.
+Keep only a short retrieval guide; do not copy the old text into another archive
+folder or retain a full section catalog for removed documents. Current contracts,
+active plans and machine-consumed manifests remain with their owners.
 
 ## Required metadata
 
@@ -219,12 +223,12 @@ evidence record merely to document an editorial cleanup of existing evidence.
 New exact run and artifact evidence belongs under
 [`Documents/Evidence/`](Evidence/README.md). Prefer one small record per claim
 or coherent verification run, with links to the specification and decision it
-supports. Keep large append-only historical evidence where it is; migrate it
-only when a task needs to change its ownership.
+supports. Older append-only diaries belong in Git history and must not be
+reintroduced as routine context. See [history retrieval](Git-History.md).
 
-The generated [historical evidence index](Evidence/Index.md) catalogs selected
-level-two and level-three headings from the existing archives. Search the index
-or its machine-readable catalog first and open only the linked section. The
+The generated [historical evidence index](Evidence/Index.md) records pinned Git
+locations for removed archives and selected headings for any retained source.
+Read only the document or section needed for a named historical question. The
 source registry states what each archive is useful for and what it cannot prove.
 
 The evidence schema records the subject, claim, exact source state, host and

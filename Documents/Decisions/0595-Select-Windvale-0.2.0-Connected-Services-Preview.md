@@ -4,7 +4,7 @@
 - Status: Accepted; release gate open; database rewrite and external parity
   direction superseded by [Decision 0790](0790-Define-WVDB-1.0-As-A-Windvale-Owned-Database.md)
 - Selects: Product Milestone 5 and the future `v0.2.0` product release
-- Plan: [Windvale 0.2.0 connected-services release plan](../Project/Windvale-0.2.0-Connected-Services-Release-Plan.md)
+- Plan: [Windvale 0.2.0 connected-services release plan](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-0.2.0-Connected-Services-Release-Plan.md)
 - Builds on: [Decision 0590](0590-Offline-Package-Lifecycle-And-Generation-Activation-1.md)
 
 ## Context

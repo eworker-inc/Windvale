@@ -226,6 +226,9 @@ gates, recovery-only managed checks, and cross-host qualification rules live in
   manifests. Keep hashes that enforce release, bootstrap, cache integrity or
   exact-byte contracts; avoid duplicating them in routine documentation.
 - Work under `Documents/` also follows `Documents/AGENTS.md`.
+- Obsolete narrative history belongs in Git, not working-tree archives. Keep
+  current contracts and active plans concise; retrieve a specific old record
+  through `Documents/Git-History.md` only when the task needs it.
 - Update documentation when semantics, formats, architecture, bootstrap stages,
   security boundaries, or durable workflows change. Never describe a proposal
   or aspiration as implemented behavior.

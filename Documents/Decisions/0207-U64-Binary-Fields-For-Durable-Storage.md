@@ -6,7 +6,7 @@
 - Retains: Exact lower-minor WVB output when neither operation is used, `u32`
   module counts and byte-value indices, and the bounded experimental `WVDB 1`
   reader
-- Advances: [Windvale database proposal](../Project/Windvale-Database-Proposal.md),
+- Advances: [Windvale database proposal](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Windvale-Database-Proposal.md),
   [Seed bytecode](../../Specifications/Seed-Bytecode.md), and
   [Foundation binary primitives](../../Specifications/Foundation-Bytes.md)
 

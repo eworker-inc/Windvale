@@ -338,7 +338,7 @@ Classes, inheritance, implicit null, implicit conversions, general exceptions, o
 
 The completed native-retirement and package/application work made the Windvale
 toolchain normal before broader language design. The earlier
-[post-.NET-retirement language and library stage](../Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
+[post-.NET-retirement language and library stage](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
 supplied important evidence through a package-backed useful application and
 compact library model. Decision 0751 replaces its feature-by-feature
 implementation-first sequencing with complete Language 1.0 specification and

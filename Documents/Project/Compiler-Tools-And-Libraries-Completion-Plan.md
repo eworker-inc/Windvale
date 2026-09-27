@@ -71,7 +71,7 @@ coordinator or replay unrelated suites. This milestone does not wait for every
 Option/Result operation or installed-toolchain qualification. It does not claim
 arbitrary payload or target support when only its declared subset passes.
 
-The [dated delivery history](Library-Development-History-2026-09-26.md#delivered-package-consumer-checkpoints)
+The [dated delivery history](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Library-Development-History-2026-09-26.md#delivered-package-consumer-checkpoints)
 preserves publication timings, the resolved older-lowerer mismatch and the
 private lock-content extraction that kept borrowing within its proof bounds.
 The table above and linked evidence own the delivered consumer's exact scope.

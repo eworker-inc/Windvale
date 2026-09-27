@@ -6,16 +6,24 @@
       "path": "Documents/Project/Seed-Verification-Evidence.md",
       "kind": "verification-history",
       "use": "Exact Seed qualification runs, host results, artifact identities, and bounded implementation checkpoints.",
-      "limits": "Append-only historical evidence; use Progress for current standing and specifications for contracts.",
-      "indexLevels": [2]
+      "limits": "Historical source archived in Git; use current plans and specifications for active work.",
+      "indexLevels": [
+        2
+      ],
+      "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27",
+      "title": "Windvale Seed verification evidence"
     },
     {
       "key": "language-1-0-migration",
       "path": "Documents/Project/Windvale-Language-1.0-Migration-Evidence.md",
       "kind": "migration-history",
       "use": "Language 1.0 implementation slices, measurements, qualification checkpoints, and stated limitations.",
-      "limits": "Migration evidence does not claim that the complete Language 1.0 product is implemented or released.",
-      "indexLevels": [2]
+      "limits": "Historical source archived in Git; use current plans and specifications for active work.",
+      "indexLevels": [
+        2
+      ],
+      "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27",
+      "title": "Windvale Language 1.0 migration evidence"
     },
     {
       "key": "earliest-known-claim",
@@ -23,39 +31,60 @@
       "kind": "research-record",
       "use": "The dated search method and boundaries behind Windvale's qualified earliest-known combined-scope statement.",
       "limits": "Not an exhaustive priority claim; private, deleted, unpublished, or differently described projects may exist.",
-      "indexLevels": [2]
+      "indexLevels": [
+        2
+      ]
     },
     {
       "key": "progress-history-2026-08-31",
       "path": "Documents/Project/Progress-History-2026-08-31.md",
       "kind": "historical-snapshot",
       "use": "Detailed implementation, qualification, and milestone standing preserved during the August 2026 documentation reorganization.",
-      "limits": "Dated snapshot; use Documents/Project/Progress.md for current standing.",
-      "indexLevels": [2, 3]
+      "limits": "Historical source archived in Git; use current plans and specifications for active work.",
+      "indexLevels": [
+        2,
+        3
+      ],
+      "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27",
+      "title": "Windvale progress history through 31 August 2026"
     },
     {
       "key": "roadmap-history-2026-08-31",
       "path": "Documents/Project/Roadmap-History-2026-08-31.md",
       "kind": "historical-plan",
       "use": "Detailed historical gates, milestone audits, measurements, and proposed lanes from the pre-reorganization roadmap.",
-      "limits": "Dated plan; use Documents/Project/Roadmap.md for current dependencies and gates.",
-      "indexLevels": [2, 3]
+      "limits": "Historical source archived in Git; use current plans and specifications for active work.",
+      "indexLevels": [
+        2,
+        3
+      ],
+      "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27",
+      "title": "Windvale roadmap history through 31 August 2026"
     },
     {
       "key": "library-development-history-2026-09-26",
       "path": "Documents/Project/Library-Development-History-2026-09-26.md",
       "kind": "historical-snapshot",
       "use": "Earlier borrowing, verifier, runtime, feedback and delivered package-consumer checkpoints preserved during the September 26 simplification program.",
-      "limits": "Dated checkpoint prose; Progress and the compiler/tools/libraries completion plan own present standing and consumer blockers.",
-      "indexLevels": [2]
+      "limits": "Historical source archived in Git; use current plans and specifications for active work.",
+      "indexLevels": [
+        2
+      ],
+      "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27",
+      "title": "Library development history through September 26, 2026"
     },
     {
       "key": "verification-throughput-history-2026-09-26",
       "path": "Documents/Project/Verification-Throughput-History-2026-09-26.md",
       "kind": "historical-snapshot",
       "use": "Earlier development verification checkpoints, qualification timings, and construction inventories preserved during the September 26 simplification program.",
-      "limits": "Dated implementation history; use the active Verification-Throughput-Plan.md for present standing and the current work order.",
-      "indexLevels": [2, 3]
+      "limits": "Historical source archived in Git; use current plans and specifications for active work.",
+      "indexLevels": [
+        2,
+        3
+      ],
+      "archiveRevision": "928f772e9e65c1840f263cf6ac099ab1bae0df27",
+      "title": "Verification throughput history through September 26, 2026"
     }
   ]
 }
