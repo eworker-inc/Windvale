@@ -39,3 +39,19 @@ These are historical records, not current requirements or new verification.
 Retrieve them only for a specific question; do not restore them to normal
 development context. Current contracts, recovery manifests and active plans
 remain with their existing owners.
+
+## Retired migration notes and diagnostic probes
+
+The following originals are retained at revision bcd9f517. Current architecture
+and publication guidance remain in the working tree; completed chronology and
+private-publication steps have been removed. The two standalone diagnostic
+probes had no maintained callers or registered verification owners. Their
+historical measurements remain recoverable; deleting them does not add new
+runtime verification evidence.
+
+| Original file | Historical copy |
+| --- | --- |
+| Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Documents/Architecture/Native-Execution-And-Dotnet-Retirement.md) |
+| Documents/Project/GitHub-Publication-Runbook.md | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Documents/Project/GitHub-Publication-Runbook.md) |
+| Tools/Verify/Probe-WebAssembly-Guest-Heap.mjs | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Tools/Verify/Probe-WebAssembly-Guest-Heap.mjs) |
+| Tools/Verify/Probe-WebAssembly-Scalar-Dispatcher.mjs | [Read in Git](https://github.com/eworker-inc/Windvale/blob/bcd9f5172890d0eac0241b965c154915ca9f73d1/Tools/Verify/Probe-WebAssembly-Scalar-Dispatcher.mjs) |

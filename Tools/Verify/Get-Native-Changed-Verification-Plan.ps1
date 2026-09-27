@@ -2621,7 +2621,9 @@ foreach ($Path in $Paths) {
             Add-Suite 'seed-native-console-aot'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Front-Door-Reconstruction.ps1',
-            'Verify-Seed-Native-Front-Door-Reconstruction.sh'
+            'Verify-Seed-Native-Front-Door-Reconstruction.sh',
+            'Probe-WebAssembly-Guest-Heap.mjs',
+            'Probe-WebAssembly-Scalar-Dispatcher.mjs'
         )) {
             # Deletion tombstone: only planner policy remains affected.
             $RunPlanVerification = $true

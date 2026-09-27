@@ -2245,6 +2245,16 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'retired standalone WebAssembly probes are deletion tombstones'
+        Paths = @(
+            'Tools/Verify/Probe-WebAssembly-Guest-Heap.mjs',
+            'Tools/Verify/Probe-WebAssembly-Scalar-Dispatcher.mjs'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'hosted WVB packaging excludes unrelated database owners'
         Paths = @(
             'Tools/Native/Package-Hosted-Wvb.cmd',
