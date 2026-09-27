@@ -225,17 +225,19 @@ harness flow with explicit owned child budgets rather than inferring new support
 
 Resolve execution resource use before changing the maintained package API.
 The saved parser probes reach the eight-call-depth limit or exhaust the hosted
-runner's 128 MiB byte arena. A bounded native trace located the original
-failure while `Executeˉlocal` rebuilt a local frame. Building the changed tail
-before the frame prefix reduces intermediate allocation: a verified short
-parser probe returns on both hosts, and sequential Debian runs reduced its
-peak RSS from about 111 MiB to 82 MiB. The full five-part lock still exhausts
-the arena on both hosts. Native byte append already supports reuse; no
-temporary-slot policy or resource-limit change is adopted. The existing
-component fixtures now use the current collection signature, valid typed
-backings and minor-42 expectations. The next execution gate is to measure and
-reduce the remaining loop-state and frame allocation before adopting the typed
-scanner.
+runner's 128 MiB byte arena. The bounded local-write log now lets a
+412,520-instruction parser probe return on both hosts at about 50 MiB peak
+Debian RSS, down from about 111 MiB before the frame-copy changes. The full
+typed probe still exhausts the unchanged arena. A Debian diagnostic run shows
+its arena cursor rising steadily through interpreter execution to the 128 MiB
+limit; address samples include the interpreter's main loop and extended
+instruction handler, but do not isolate one allocation site. The next gate is
+to account for live and temporary byte ownership in those paths, then replace
+cumulative temporary allocation with bounded reclamation while preserving
+immutable guest values and the arena limit. Recheck both probes on Windows and
+Debian before adopting the typed scanner. The existing component fixtures use
+the current collection signature, valid typed backings and minor-42
+expectations.
 The maintained scanner and fixture remain unchanged. Preserve lock
 bytes, failure order, explicit allocation failures and resource bounds when
 the migration resumes; emission alone does not establish consumer delivery.
