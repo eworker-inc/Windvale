@@ -40,18 +40,25 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
-Cold compiler and packaging performance is the immediate priority. A native
-CPU sample found 23 of 50 instruction pointers in unrolled stack initialization.
-A private analyzer copy using compact clearing analyzed the same 1.7 MB source
-set in 59.4 seconds instead of 100.5 seconds, with all four output files
-byte-identical. This is one Windows diagnostic comparison during concurrent
-preparation, not a shipped optimization or an overall build speedup. The
-[performance diagnosis](../Evidence/2026-09-26-Compiler-Preparation-Diagnosis.json)
-also records repeated byte-identical analyzer construction and costly native
-packaging. Next, implement compact initialization in the backend's emission,
-size and relocation calculations, verify calling conventions and hidden return
-storage on both hosts, then measure the affected cold construction. Do not
-substitute longer timeouts or warm-cache results for that work.
+Compact frame initialization is implemented in the current native backend.
+A source-built analyzer processes the same 1.7 MB admitted source set in
+60.4 seconds instead of 100.3 seconds on Windows, and 63.7 instead of 106.3
+seconds on Debian: about 40% less analysis time, with all four outputs
+byte-identical. The existing lowering owner passes 53 cases on each host,
+including frame reentry, arguments, hidden returns and fuel/depth failures.
+Prepared execution takes 21.5/40.9 seconds; tool construction still takes
+minutes. The specification now routes to that current-source owner instead
+of unrelated frozen-product and database checks. See the
+[source-built measurements](../Evidence/2026-09-26-Compact-Native-Frame-Initialization.json)
+and the earlier [diagnosis](../Evidence/2026-09-26-Compiler-Preparation-Diagnosis.json).
+
+Cold preparation remains unresolved. The retained bootstrap executables have
+not yet been refreshed, so normal preparation does not automatically receive
+this optimization. The original Debian preparation stopped at its deadline
+after 59 minutes 30 seconds with completed caches preserved. Next, roll the
+source-built improvement into the retained tool path with reconstruction
+evidence, then address repeated authenticated analysis and native packaging
+costs. The measured analysis improvement is not an overall build-speed claim.
 
 Focused runtime execution takes seconds with prepared tools, while changed tool
 construction still takes minutes. The latest runner rebuild took 276 seconds,

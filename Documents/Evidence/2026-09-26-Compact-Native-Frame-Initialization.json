@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-compact-native-frame-initialization",
+  "date": "2026-09-26",
+  "subject": "Source-built compact native frame initialization and focused verifier routing",
+  "claim": "The current native backend emits bounded REP STOSD clearing for frame spans above 16 bytes, preserving hidden return storage and calling convention state. All 53 focused owner cases pass on Windows and Debian. Source-built analyzers process identical admitted input with byte-identical source-set, manifest, binding and WIR outputs. Windows: 100290 ms to 60364 ms (39.8% less elapsed time); Debian: 106331 ms to 63702 ms (40.1% less elapsed time). This implements the earlier binary-patch diagnosis in source; default retained bootstrap executables are not yet promoted.",
+  "source": {
+    "kind": "Other",
+    "value": "bed8211b01437102c08587586eca9494dcc73ed9 plus exact source/tool inputs recorded below; unchanged analyzer WVB is lowered by the newly source-built stager"
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "53 current-source lowering cases: 28 valid, 25 malformed, 13 native executions; 12 additional Foundation borrow assertions; ten frame cases compare retained reference and current output behavior",
+      "tool": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows D:\\windvale\\dev01 --lowerer Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer.exe 3781a913b4b30be29c03e3206e67e7868721ac44b30b2f78b640ca8fad2aa007 --borrow-probe Artifacts/Work/Simplification-2026-09-26/Compact-Borrow-Probe.wvb 60d000acc16375104d7a26d7b3c2b56f36103b7ef43d4ab094312f5239cedc1d",
+      "result": "Passed",
+      "elapsedMilliseconds": 21489,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "size": 369841,
+          "sha256": "f43f7fe4176921313e0c410859b2ae96687b5987129cb2033d4a1039282b3cb4"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+          "size": 41268,
+          "sha256": "8866761751247f033883b373fc0a609c06a8ac3fae0bb61121e608db25dc6d17"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer.exe",
+          "size": 15722496,
+          "sha256": "3781a913b4b30be29c03e3206e67e7868721ac44b30b2f78b640ca8fad2aa007"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer.wvb",
+          "size": 1334969,
+          "sha256": "8228b644b98dc774eac36d6cfba4df65bda1476700efea01fce74a6a5d300d3e"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Borrow-Probe.wvb",
+          "size": 139624,
+          "sha256": "60d000acc16375104d7a26d7b3c2b56f36103b7ef43d4ab094312f5239cedc1d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer-Windows-Tests.log",
+          "size": 3441,
+          "sha256": "26d725bd389d425f031e70d9bdfb0c0f267266e4394a653f525cf2b26f9eb056"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Stage identical analyzer WVB using source-built compact stager; link, transport and package hosted profile 8; two small segmented/monolithic WVO comparisons",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Build-Compact-Analyzer.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Build-Compact-Analyzer.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 431164,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Build-Compact-Analyzer.mjs",
+          "size": 3167,
+          "sha256": "ece1092a585c99bde288a6d285d68b3e337bb45c1f82a49227a85129d4275952"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Comparison.wvb",
+          "size": 1694926,
+          "sha256": "5b8820e988d63fa4fd3fa14483e601d257550ca8f303549bbfb0522b0d25e1ec"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.exe",
+          "size": 15974912,
+          "sha256": "7f5033c851125d798e5b79f8239359e554fb2263aa53579c97c3a236aecbb52b"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe",
+          "size": 49886720,
+          "sha256": "99add4e720704d5a43eee752dcf592e27da3fafd7fbfeb1d71055d9392438f13"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer-Windows/Build.json",
+          "size": 3504,
+          "sha256": "0a8786bdf2abf4c3636c039646407689bd14ea69d09325a2d166874e9a0282c1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, AMD Ryzen 9 3900X host; Debian under WSL2",
+      "target": "Baseline analyzer; same 1715676-byte admitted source set; all four outputs compared to recorded baseline",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline.exe",
+      "command": "D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Compact-Frame-Probe\\Baseline.exe --internal-source-set D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Compact-Frame-Probe\\Admitted.wvss D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Baseline-Source.wvss D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Baseline-Manifest.wvca D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Baseline-Bindings.wvcb D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Baseline-Wir.wvir",
+      "result": "Passed",
+      "elapsedMilliseconds": 100290,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Baseline.exe",
+          "size": 54966272,
+          "sha256": "3149d54f22aeb750d78721103f4b877870b213e6a11c8ff613c40c3fce1fabfb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Baseline-Source.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Baseline-Manifest.wvca",
+          "size": 104,
+          "sha256": "73c612f7c505ead9362f2ab128ef301c2408a8293b34d93fb1bfea40f732afbb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Baseline-Bindings.wvcb",
+          "size": 301972,
+          "sha256": "a2e076b595828574641d177d72916ac539aa8f99375c7afa05a75b2f1c18fd2c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Baseline-Wir.wvir",
+          "size": 3982268,
+          "sha256": "be37d2c3d5d36bee5803474de0506c738fd6788398ed9afc357182d597b59c56"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, AMD Ryzen 9 3900X host; Debian under WSL2",
+      "target": "Compact analyzer; same 1715676-byte admitted source set; all four outputs compared to recorded baseline",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe",
+      "command": "D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Compact-Analyzer.exe --internal-source-set D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Compact-Frame-Probe\\Admitted.wvss D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Compact-Source.wvss D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Compact-Manifest.wvca D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Compact-Bindings.wvcb D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analyzer-Measurement-Windows\\Compact-Wir.wvir",
+      "result": "Passed",
+      "elapsedMilliseconds": 60364,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe",
+          "size": 49886720,
+          "sha256": "99add4e720704d5a43eee752dcf592e27da3fafd7fbfeb1d71055d9392438f13"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Compact-Source.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Compact-Manifest.wvca",
+          "size": 104,
+          "sha256": "73c612f7c505ead9362f2ab128ef301c2408a8293b34d93fb1bfea40f732afbb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Compact-Bindings.wvcb",
+          "size": 301972,
+          "sha256": "a2e076b595828574641d177d72916ac539aa8f99375c7afa05a75b2f1c18fd2c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Windows/Compact-Wir.wvir",
+          "size": 3982268,
+          "sha256": "be37d2c3d5d36bee5803474de0506c738fd6788398ed9afc357182d597b59c56"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "53 current-source lowering cases: 28 valid, 25 malformed, 13 native executions; 12 additional Foundation borrow assertions; ten frame cases compare retained reference and current output behavior",
+      "tool": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+      "command": "/usr/bin/node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs linux /mnt/d/windvale/dev01 --lowerer Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer.elf 3f4877268313ad2f326ee4ca53086ead35700f7401a6a72f27c0086110643c18 --borrow-probe Artifacts/Work/Simplification-2026-09-26/Compact-Borrow-Probe.wvb 60d000acc16375104d7a26d7b3c2b56f36103b7ef43d4ab094312f5239cedc1d",
+      "result": "Passed",
+      "elapsedMilliseconds": 40929,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "size": 369841,
+          "sha256": "f43f7fe4176921313e0c410859b2ae96687b5987129cb2033d4a1039282b3cb4"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+          "size": 41268,
+          "sha256": "8866761751247f033883b373fc0a609c06a8ac3fae0bb61121e608db25dc6d17"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer.elf",
+          "size": 15724544,
+          "sha256": "3f4877268313ad2f326ee4ca53086ead35700f7401a6a72f27c0086110643c18"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer.wvb",
+          "size": 1334969,
+          "sha256": "8228b644b98dc774eac36d6cfba4df65bda1476700efea01fce74a6a5d300d3e"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Borrow-Probe.wvb",
+          "size": 139624,
+          "sha256": "60d000acc16375104d7a26d7b3c2b56f36103b7ef43d4ab094312f5239cedc1d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Lowerer-Debian-Tests.log",
+          "size": 3439,
+          "sha256": "6863695ba38eeea3df21d0b0b8751b523e7af85eb66f6866a05ff73e6b6a2639"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Stage identical analyzer WVB using source-built compact stager; link, transport and package hosted profile 8; two small segmented/monolithic WVO comparisons",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Build-Compact-Analyzer.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Build-Compact-Analyzer.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 460569,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Build-Compact-Analyzer.mjs",
+          "size": 3167,
+          "sha256": "ece1092a585c99bde288a6d285d68b3e337bb45c1f82a49227a85129d4275952"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Comparison.wvb",
+          "size": 1694926,
+          "sha256": "5b8820e988d63fa4fd3fa14483e601d257550ca8f303549bbfb0522b0d25e1ec"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.elf",
+          "size": 15974400,
+          "sha256": "c119fcb862981ce1b19bac33092c435638e8756d0fb4cc07c1e0d95f7acf43ef"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf",
+          "size": 49885184,
+          "sha256": "893ae8c6f8ea82d564376ca7080753f5d4901993b8a5657a06697f529a0f55a9"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer-Debian/Build.json",
+          "size": 3470,
+          "sha256": "15101b286793eba043ea3aee3e0324c8b663be779ef18c6c6a4c5789f9d3f0c0"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, AMD Ryzen 9 3900X host; Debian under WSL2",
+      "target": "Baseline analyzer; same 1715676-byte admitted source set; all four outputs compared to recorded baseline",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Baseline-Analyzer.elf",
+      "command": "/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Baseline-Analyzer.elf --internal-source-set /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Source.wvss /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Manifest.wvca /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Bindings.wvcb /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Wir.wvir",
+      "result": "Passed",
+      "elapsedMilliseconds": 106331,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Baseline-Analyzer.elf",
+          "size": 54968320,
+          "sha256": "55941050f5c7dd42a611ff352a0376cfd9324fccf3b5e06103c21e72f61f61c4"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Source.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Manifest.wvca",
+          "size": 104,
+          "sha256": "73c612f7c505ead9362f2ab128ef301c2408a8293b34d93fb1bfea40f732afbb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Bindings.wvcb",
+          "size": 301972,
+          "sha256": "a2e076b595828574641d177d72916ac539aa8f99375c7afa05a75b2f1c18fd2c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Baseline-Wir.wvir",
+          "size": 3982268,
+          "sha256": "be37d2c3d5d36bee5803474de0506c738fd6788398ed9afc357182d597b59c56"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64, AMD Ryzen 9 3900X host; Debian under WSL2",
+      "target": "Compact analyzer; same 1715676-byte admitted source set; all four outputs compared to recorded baseline",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf",
+      "command": "/mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf --internal-source-set /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Source.wvss /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Manifest.wvca /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Bindings.wvcb /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Wir.wvir",
+      "result": "Passed",
+      "elapsedMilliseconds": 63702,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf",
+          "size": 49885184,
+          "sha256": "893ae8c6f8ea82d564376ca7080753f5d4901993b8a5657a06697f529a0f55a9"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Frame-Probe/Admitted.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Source.wvss",
+          "size": 1715676,
+          "sha256": "a56519fbefa4780527250a1c08d6d6d6bf2b9e64eb4e34e891d493cdb8057768"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Manifest.wvca",
+          "size": 104,
+          "sha256": "73c612f7c505ead9362f2ab128ef301c2408a8293b34d93fb1bfea40f732afbb"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Bindings.wvcb",
+          "size": 301972,
+          "sha256": "a2e076b595828574641d177d72916ac539aa8f99375c7afa05a75b2f1c18fd2c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analyzer-Measurement-Debian/Compact-Wir.wvir",
+          "size": 3982268,
+          "sha256": "be37d2c3d5d36bee5803474de0506c738fd6788398ed9afc357182d597b59c56"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 and Debian x64",
+      "target": "Byte-identical staged object, linked image and transported image manifests and chunks",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Record-Compact-Frames.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Record-Compact-Frames.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer-Portable-Identity.json",
+          "size": 16494,
+          "sha256": "29ffba8ed82e836d0ce71ff2410d3eaa7571cc5ae3fb3d403516ac847a04299c"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "335 routing cases; current-source specification selects current-source lowering owner without unrelated frozen-artifact and database owners",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 294800,
+          "sha256": "226655bd7b79445ef18e609270c6e283e1ea8e69a4a068401a72c9469ec9c365"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 364020,
+          "sha256": "7cc4e996b0f12162e89021becaa9943165213649440372b31269e9ed98c29b37"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24260,
+          "sha256": "c4546061a6e4120b2d36f67097138d341230f2e6e9d6f2f920d4f22aebfe80df"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL2, Node v20.19.2",
+      "target": "Original current compiler preparation with unmodified retained bootstrap products; stopped at selected deadline during current-Admitter packaging; completed products preserved",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "/usr/bin/node Tools/Native/Build-Current-Split-Project-Wvb.mjs --prepare-only --deadline-ms 1790467412136",
+      "result": "Incomplete",
+      "elapsedMilliseconds": 3570260,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Current-CI-Compiler-Prepare.json",
+          "size": 321,
+          "sha256": "87636d78957c090b68fa6ba65085cf64d18c527f7da8f3c7242e39ed0ec85e3d"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Debian-Current-CI-Compiler-Prepare.log",
+          "size": 45362,
+          "sha256": "858e9c5cc374ca27630a149d2dee6bc39741e7b2a81998407a4ce22f996034c4"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "One baseline-then-current measurement per host, with the two hosts running concurrently on the same machine; not an isolated statistical benchmark. Old preparation was active during the start of baseline measurement. No overall-build percentage or peak-memory improvement is claimed. Peak working set was not measured.",
+    "The analyzer WVB is unchanged. The stager and ordinary lowerer were compiled from the changed source and packaged through retained authenticated tools. Compact analyzers were rebuilt through native staging, linking, transport and packaging, not edited as executables. Packaged binaries differ by host; portable object/image chunks and manifests are identical.",
+    "Both old and new frame contents remain fully initialized except the intentionally preserved 16-byte hidden-result cell. Large ranges preserve RCX/RDI with 16 transient stack bytes, restore RSP before parameters, and clear the direction flag. Existing validation, fuel and call-depth limits remain unchanged. The 1024-local workload enforces compact output under 8192 bytes; repeated output bytes are checked.",
+    "Retained bootstrap lowerer/stager identities, default tool wrappers and release products have not been replaced. Applying the optimization to every normal compiler preparation requires a coherent retained-tool rollout and its reconstruction evidence. Native hashing/packaging and repeated authenticated analysis remain additional costs. Debian full preparation is incomplete, not a pass.",
+    "An initial test setup used a 4 MB fixture bound for a 10 MB reference tool and was corrected to its exact role bound. A generated fixture initially used unsupported POP and was corrected to a supported local store. These setup rejections are not passing product evidence.",
+    "The first Debian focused run started duplicate cold compiler preparation for its borrow fixture. That owned test tree was stopped while the original preparation and caches were retained. The final tests reuse a hash-checked 139624-byte borrow probe produced by the prepared compiler; the same twelve assertions still execute on each host.",
+    "No Standard, Qualification, bootstrap promotion, database or frozen-product reconstruction gate was run. These do not test the changed source emitter without product refresh; no release qualification claim is made. The selected current-source owner, routing contracts, editor check and documentation validation form the focused final plan.",
+    "Generated tools, benchmark scripts and outputs remain in ignored Artifacts/Work. Their identities and exact commands are recorded; a clean checkout must construct them from the recorded projects and inputs. Host/source-built construction itself cost minutes and is not excluded from the build records."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-26-Compiler-Preparation-Diagnosis.json",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Windvale-Native-X64-Lowering.md",
+    "Compiler/Windvale/Native-X64-Lowering-Core.wv"
+  ]
+}

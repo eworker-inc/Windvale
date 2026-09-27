@@ -12,13 +12,16 @@ const COMMAND_TIMEOUT_MILLISECONDS = 120_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 15 * 60_000;
 const PROGRESS_INTERVAL_MILLISECONDS = 30_000;
 
-if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7) ||
+if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7 && process.argv.length !== 10) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
 const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
 if (process.argv.length === 5 && !Borrowˉonly) Usage();
-const Suppliedˉlowerer = process.argv.length === 7;
+const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10;
+const Suppliedˉborrowˉprobe = process.argv.length === 10;
 if (Suppliedˉlowerer && (process.argv[4] !== '--lowerer' ||
     !/^[0-9a-f]{64}$/u.test(process.argv[6]))) Usage();
+if (Suppliedˉborrowˉprobe && (process.argv[7] !== '--borrow-probe' ||
+    !/^[0-9a-f]{64}$/u.test(process.argv[9]))) Usage();
 const Target = process.argv[2];
 if ((WINDOWS && Target !== 'windows') || (!WINDOWS && Target !== 'linux')) {
     Reject('The native unsafe write-pointer target does not match this host.');
@@ -115,48 +118,45 @@ try {
     if (!existsSync(Lowerer)) Reject('The current native lowerer was not published.');
 
     await Runˉoptionˉu64(Lowerer);
+    await Runˉframeˉinitialization(Lowerer);
 
-    await Lowerˉexact(
+    await Lowerˉidentity(
         Lowerer,
         await Readˉbinary(
             join(Candidateˉdirectory, 'Return-42.wvb'), 174,
             '7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31',
         ),
-        await Readˉbinary(
-            join(Candidateˉdirectory, 'Return-42.wvo'), 479,
-            '0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5',
-        ),
         join(Work, 'Return-42'),
         'baseline-return-42',
+        342, 415,
+        '53f3218e2a9e19ce8e2d470267a3d73af569a3a918d2949042b6c926564ae5b3',
     );
-    await Lowerˉexact(
+    await Lowerˉidentity(
         Lowerer,
         await Readˉbinary(
             join(Candidateˉdirectory, 'Metadata.wvb'), 369,
             '94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa',
         ),
-        await Readˉbinary(
-            join(Candidateˉdirectory, 'Metadata.wvo'), 1151,
-            '6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d',
-        ),
         join(Work, 'Metadata'),
         'metadata',
+        734, 807,
+        'f8264e4b56fea680d3456adc84b4a12b217a6001accf57ac1edb03133b097144',
     );
 
     const Foreignˉspecifications = [
         {
             Name: 'foreign-success',
             Input: Foreignˉsuccess,
-            Codeˉbytes: 11_195,
-            Objectˉbytes: 11_372,
-            Sha256: 'dc0fccf525916d882dee3c6e000870c3d625ef36964c6cd0c69247385b3b89ef',
+            Codeˉbytes: 8_211,
+            Objectˉbytes: 8_388,
+            Sha256: '22f0ffe6b57d9fe84f2360b2802aab1aa3cf3622b8d4c417e84ceefcbc9d3013',
         },
         {
             Name: 'foreign-stale',
             Input: Foreignˉstale,
-            Codeˉbytes: 11_366,
-            Objectˉbytes: 11_543,
-            Sha256: '8615a902c01f019460a3276b58ccff16f5fcbc329d6792dc5850eb30542dfa9b',
+            Codeˉbytes: 8_298,
+            Objectˉbytes: 8_475,
+            Sha256: '3d94acc000169d18827a6f6a7e5f29f65bed58825ec00773192f375a1e4bc92b',
         },
     ];
     const Foreignˉobjects = [];
@@ -374,14 +374,144 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     process.stdout.write(
-        'native unsafe write pointer lowering status=Passed cases=43 ' +
-        'valid=18 malformed=25 native-execution=3 foundation-borrow-cases=12 ' +
+        'native unsafe write pointer lowering status=Passed cases=53 ' +
+        'valid=28 malformed=25 native-execution=13 foundation-borrow-cases=12 ' +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
     }
 } finally {
     await Removeˉwork(Work);
+}
+
+async function Runˉframeˉinitialization(Lowerer) {
+    const Baseline = join(Candidateˉdirectory, `Wvb-To-Wvo.${Nativeˉextension}`);
+    await Readˉbinary(Baseline, 10_661_888, WINDOWS
+        ? 'a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd'
+        : '9c331308e5afe852d4c0441e22c1ff68a0ac0c86793c2e403f38556302c90fd3',
+    10_661_888);
+    const Template = await Readˉbinary(join(Candidateˉdirectory, 'Return-42.wvb'),
+        174, '7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31');
+    function U32(Value) {
+        const Result = Buffer.alloc(4);
+        Result.writeUInt32LE(Value);
+        return Result;
+    }
+    function Op(Code, Operand) {
+        return Operand === undefined ? Buffer.from([Code]) :
+            Buffer.concat([Buffer.from([Code]), U32(Operand)]);
+    }
+    function Functionˉentry(Name, Parameters, Locals, Instructions, Stack) {
+        return { Name, Parameters, Locals, Code: Buffer.concat(Instructions), Stack };
+    }
+    function String(Value) {
+        const Encoded = Buffer.from(Value);
+        return Buffer.concat([U32(Encoded.length), Encoded]);
+    }
+    function Module(Functions, Sections = new Map()) {
+        let Offset = 0;
+        const Directory = [U32(Functions.length)];
+        for (const Entry of Functions) {
+            const Name = Buffer.from(Entry.Name);
+            Directory.push(U32(Name.length), Name, U32(Entry.Parameters),
+                Buffer.alloc(Entry.Parameters, 1), Entry.Return ?? Buffer.from([1]), U32(Entry.Locals),
+                Buffer.alloc(Entry.Locals, 1), U32(Offset), U32(Entry.Code.length),
+                U32(Entry.Stack));
+            Offset += Entry.Code.length;
+        }
+        const Result = [Template.subarray(0, 12)];
+        for (let Cursor = 12; Cursor < Template.length;) {
+            const Kind = Template[Cursor];
+            const Length = Template.readUInt32LE(Cursor + 4);
+            const Payload = Kind === 4 ? Buffer.concat(Directory) :
+                Kind === 5 ? Buffer.concat(Functions.map(Entry => Entry.Code)) :
+                    Sections.get(Kind) ?? Template.subarray(Cursor + 8, Cursor + 8 + Length);
+            const Header = Buffer.from(Template.subarray(Cursor, Cursor + 8));
+            Header.writeUInt32LE(Payload.length, 4);
+            Result.push(Header, Payload);
+            Cursor += 8 + Length;
+        }
+        return Buffer.concat(Result);
+    }
+    const Cases = [{ Name: 'one-value-cell', Expected: 42, Input: Module([
+        Functionˉentry('Main', 0, 0, [Op(1, 42), Op(0x51)], 1),
+    ]) }];
+    for (const Locals of [1, 16, 63, 1024]) {
+        // The first call poisons the last local; the same callee frame must
+        // read zero on its second entry. Both sides of the branch are used.
+        Cases.push({ Name: `reentry-zero-${Locals}`, Expected: 42, Input: Module([
+            Functionˉentry('Main', 0, 1, [Op(1, 1), Op(0x40, 1), Op(5, 0),
+                Op(1, 0), Op(0x40, 1), Op(1, 42), Op(0x10), Op(0x51)], 2),
+            Functionˉentry('Value', 1, Locals, [Op(4, 0), Op(1, 0), Op(0x20),
+                Op(0x31, 22), Op(4, Locals), Op(0x51), Op(1, 99),
+                Op(5, Locals), Op(1, 0), Op(0x51)], 2),
+        ]) });
+    }
+    const Sum = [];
+    for (let Index = 0; Index < 8; Index += 1) {
+        Sum.push(Op(4, Index));
+        if (Index > 0) Sum.push(Op(0x10));
+    }
+    Cases.push({ Name: 'register-and-stack-parameters', Expected: 42, Input: Module([
+        Functionˉentry('Main', 0, 0, [...Array.from({ length: 8 }, (_, Index) =>
+            Op(1, Index + 1)), Op(0x40, 1), Op(1, 6), Op(0x10), Op(0x51)], 8),
+        Functionˉentry('Value', 8, 64, [...Sum, Op(0x51)], 2),
+    ]) });
+    Cases.push({ Name: 'fuel-exhaustion', Expected: null, Input: Module([
+        Functionˉentry('Main', 0, 64, [Op(1, 0), Op(5, 0), Op(0x30, 0)], 1),
+    ]) });
+    Cases.push({ Name: 'depth-exhaustion', Expected: null, Input: Module([
+        Functionˉentry('Main', 0, 0, [Op(0x40, 1), Op(0x51)], 1),
+        Functionˉentry('Value', 0, 64, [Op(0x40, 1), Op(0x51)], 1),
+    ]) });
+    Cases.push({ Name: 'hidden-record-return', Expected: 42, Input: Module([
+        Functionˉentry('Main', 0, 0, [Op(0x40, 1), Op(0x69, 0),
+            Op(0x40, 1), Op(0x69, 1), Op(0x10), Op(0x51)], 2),
+        { ...Functionˉentry('Value', 0, 64, [Op(1, 20), Op(1, 22), Op(0x68, 0), Op(0x51)], 2),
+            Return: Buffer.concat([Buffer.from([7]), U32(0)]) },
+    ], new Map([[7, Buffer.concat([U32(1), Buffer.from([1]), String('Pair'),
+        U32(2), String('Left'), Buffer.from([1]), String('Right'), Buffer.from([1])])]])) });
+    Cases.push({ Name: 'hidden-descriptor-return', Expected: 42, Input: Module([
+        Functionˉentry('Main', 0, 0, [Op(0x40, 1), Op(9, 0), Op(0x72), Op(0x51)], 2),
+        { ...Functionˉentry('Value', 0, 64, [Op(0x0a, 0), Op(0x51)], 1), Return: Buffer.from([6]) },
+    ], new Map([[3, Buffer.concat([U32(1), String('Answer'), Buffer.from([5]), U32(4), U32(42)])]])) });
+    for (const [Index, Case] of Cases.entries()) {
+        process.stdout.write(`native frame initialization item=${Index + 1}/${Cases.length} case=${Case.Name} status=Started\n`);
+        const Source = join(Work, `Frame-${Case.Name}.wvb`);
+        await writeFile(Source, Case.Input, { flag: 'wx' });
+        const Results = [];
+        for (const [Role, Producer] of [['reference', Baseline], ['current', Lowerer]]) {
+            const Prefix = join(Work, `Frame-${Case.Name}-${Role}`);
+            const Object = Prefix + '.wvo';
+            await Requireˉsuccess(Producer, [Source, Object], `frame-${Case.Name}-${Role}-lower`);
+            if (Role === 'current') {
+                const Repeated = Prefix + '-repeat.wvo';
+                await Requireˉsuccess(Producer, [Source, Repeated], `frame-${Case.Name}-repeat`);
+                const Bytes = await readFile(Object);
+                if (!Bytes.equals(await readFile(Repeated))) Reject('Frame lowering is not deterministic.');
+                if (Case.Name === 'reentry-zero-1024' &&
+                    (Bytes.length >= 8192 || !Bytes.includes(Buffer.from('fcf3ab595f', 'hex')))) {
+                    Reject('Large-frame initialization is not compact.');
+                }
+            }
+            await Requireˉsuccess(Check, [Object], `frame-${Case.Name}-${Role}-check`);
+            const Image = Prefix + '.bin';
+            const Linked = await Requireˉsuccess(Link, ['0', 'Main', Image, Object], `frame-${Case.Name}-${Role}-link`);
+            const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
+            if (Entry === null) Reject('Frame test entry point is missing.');
+            const Application = Prefix + '.' + Nativeˉextension;
+            await Requireˉsuccess(Packageˉconsole,
+                [`${Target}-x64-console-v1`, Image, Entry[1], Application], `frame-${Case.Name}-${Role}-package`);
+            const Result = await Runˉprocess(Application, [], COMMAND_TIMEOUT_MILLISECONDS, `frame-${Case.Name}-${Role}-execute`);
+            if (Result.Exceeded || Result.Timedˉout ||
+                (Case.Expected !== null && Result.Code !== Case.Expected)) Reject(`Frame execution failed: ${Case.Name}, ${Role}.`);
+            Results.push(Result);
+        }
+        if (Results[0].Code !== Results[1].Code || Results[0].Output !== Results[1].Output ||
+            (Case.Expected === null && Results[0].Code === 0)) {
+            Reject(`Frame initialization changed runtime behavior: ${Case.Name}.`);
+        }
+    }
 }
 
 async function Runˉoptionˉu64(Lowerer) {
@@ -444,9 +574,20 @@ async function Runˉfoundationˉborrowˉemission() {
     const Probe = join(Work, `Borrow-Probe.${Nativeˉextension}`);
     const Binary = join(Work, 'Borrow-Code.bin');
     const Executable = join(Work, `Borrow-Code.${Nativeˉextension}`);
-    await Requireˉsuccess(join(Repositoryˉroot, 'Tools', 'Native',
-        `Build-Cached-Project-Wvb.${Extension}`), [Probeˉproject, Probeˉwvb],
-    'foundation-borrow-probe-build', CONSTRUCTION_TIMEOUT_MILLISECONDS);
+    if (Suppliedˉborrowˉprobe) {
+        const Source = resolve(process.argv[8]);
+        const Information = await stat(Source);
+        if (!Information.isFile() || Information.size < 1 || Information.size > FIXTURE_LIMIT) {
+            Reject('The supplied borrow probe exceeds its file bound.');
+        }
+        const Bytes = await Readˉbinary(Source, Information.size, process.argv[9]);
+        await writeFile(Probeˉwvb, Bytes, { flag: 'wx' });
+        process.stdout.write(`native foundation borrow step=probe-reuse sha256=${process.argv[9]}\n`);
+    } else {
+        await Requireˉsuccess(join(Repositoryˉroot, 'Tools', 'Native',
+            `Build-Cached-Project-Wvb.${Extension}`), [Probeˉproject, Probeˉwvb],
+        'foundation-borrow-probe-build', CONSTRUCTION_TIMEOUT_MILLISECONDS);
+    }
     await Requireˉsuccess(Packageˉlowerer,
         ['6', Probeˉwvb, Probe, '--development-cache'],
         'foundation-borrow-probe-package', CONSTRUCTION_TIMEOUT_MILLISECONDS);
@@ -468,35 +609,17 @@ async function Runˉfoundationˉborrowˉemission() {
         createHash('sha256').update(Code).digest('hex') + '\n');
 }
 
-async function Readˉbinary(Path, Expectedˉsize, Expectedˉsha256) {
+async function Readˉbinary(Path, Expectedˉsize, Expectedˉsha256, Maximum = FIXTURE_LIMIT) {
+    const Information = await stat(Path);
+    if (!Information.isFile() || Information.size !== Expectedˉsize ||
+        Information.size > Maximum) Reject(`The fixture ${basename(Path)} size differs.`);
     const Result = await readFile(Path);
     const Digest = createHash('sha256').update(Result).digest('hex');
-    if (Result.length !== Expectedˉsize || Result.length > FIXTURE_LIMIT ||
+    if (Result.length !== Expectedˉsize || Result.length > Maximum ||
         Digest !== Expectedˉsha256) {
         Reject(`The fixture ${basename(Path)} identity differs.`);
     }
     return Result;
-}
-
-async function Lowerˉexact(Lowerer, Input, Expected, Prefix, Label) {
-    process.stdout.write(
-        `native unsafe write pointer lowering case=${Label} status=Started\n`,
-    );
-    const Source = `${Prefix}.wvb`;
-    const Destination = `${Prefix}.wvo`;
-    await writeFile(Source, Input, { flag: 'wx' });
-    const Lowered = await Runˉprocess(
-        Lowerer, [Source, Destination], COMMAND_TIMEOUT_MILLISECONDS, Label,
-    );
-    if (!Passed(Lowered) || !existsSync(Destination) ||
-        !/^native x64 status=Valid abi=22 code-bytes=[0-9]+ object-bytes=[0-9]+\r?\n$/u
-            .test(Lowered.Output)) {
-        Reject(`The ${Label} lowering differed.\n${Lowered.Output}`);
-    }
-    const Actual = await readFile(Destination);
-    if (!Actual.equals(Expected)) {
-        Reject(`The ${Label} WVO bytes differed.`);
-    }
 }
 
 async function Lowerˉidentity(
@@ -773,7 +896,8 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
-        '<windows|linux> <repository-root> [--foundation-borrow-emission|--lowerer <application> <sha256>]\n',
+        '<windows|linux> <repository-root> [--foundation-borrow-emission|' +
+        '--lowerer <application> <sha256> [--borrow-probe <wvb> <sha256>]]\n',
     );
     process.exit(64);
 }

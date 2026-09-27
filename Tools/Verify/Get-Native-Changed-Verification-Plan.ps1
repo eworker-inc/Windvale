@@ -4512,9 +4512,7 @@ foreach ($Path in $Paths) {
             Add-Hosted-Publisher-Suites
             Add-Suite 'publisher-rejections'
         } elseif ($Path -eq 'Specifications/Windvale-Native-X64-Lowering.md') {
-            Add-Compiler-Suites
-            $null = $SelectedDatabaseDevelopmentTargets.Add('host-storage')
-            Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
+            Add-Suite 'native-x64-lowering-development'
         } elseif ($Path -eq
             'Specifications/Compiler-Source-Foreign-Lowering-Carrier.md') {
             Add-Suite @(

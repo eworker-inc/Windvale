@@ -1898,23 +1898,12 @@ $NativeCases = @(
         DatabaseDevelopment = $false
     },
     @{
-        Name = 'native x64 lowering specification selects focused database host boundary'
+        Name = 'native x64 lowering specification selects current-source development owner'
         Paths = @('Specifications/Windvale-Native-X64-Lowering.md')
-        Suites = @(
-            'seed',
-            'wvb-to-wvo-reconstruction',
-            'unsafe-wvb',
-            'source-containment',
-            'lowerer-rejections',
-            'console-packager-source-reconstruction',
-            'native-u64-lowering',
-            'model-provider',
-            'database-storage'
-        )
+        Suites = @('native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
-        DatabaseDevelopment = $true
-        DatabaseTarget = 'host-storage'
+        DatabaseDevelopment = $false
     },
     @{
         Name = 'rights-reduced WVDB query host owner'

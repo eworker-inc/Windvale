@@ -16,6 +16,17 @@ evidence.
 
 ## Public result
 
+Current-source lowering clears frame spans larger than one 16-byte ABI cell
+with a bounded `rep stosd` sequence; zero or one-cell spans retain direct
+stores. A hidden return-storage cell is excluded from both clearing ranges.
+The sequence preserves `RCX` and `RDI`, uses 16 transient stack bytes, restores
+the stack pointer before parameter materialization, and leaves instruction
+and call-depth accounting unchanged. Emission, function sizing, branch targets
+and relocation positions share the same prologue-size calculation. Native
+machine bytes change; WVB, WVO, ABI and zero-initialization semantics do not.
+Retained bootstrap executable identities remain separate from current-source
+lowering and are not refreshed by changing this source.
+
 ```text
 Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
     -> Compilerˉnativeˉx64ˉsummary
