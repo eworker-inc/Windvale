@@ -713,6 +713,7 @@ export fn Prepareˉborrowˉstep(
     Initialˉstate: Borrowˉframes.State, Module: bytes, Requestˉmajor: u32,
     Payload: u32, Payloadˉlength: u32, Typeˉoffsets: bytes,
     Localˉshapes: bytes, Shapeˉoffset: u32, Locals: bytes,
+    Localˉframeˉlength: u32,
     Recordˉmetadata: bytes, Records: bytes, Initialˉstack: bytes,
     Initialˉallocations: bytes, Heapˉallocationˉcount: u32,
     Borrowˉstack: bytes, Initialˉconsumed: u32
@@ -732,8 +733,6 @@ export fn Prepareˉborrowˉstep(
     var Handled: bool = false;
     let Typeˉcount: u32 = Bytesˉlength(Typeˉoffsets) / 4u32;
     let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
-    let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
-    let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
     var Topˉisˉview: bool = false;
     if Bytesˉlength(Borrowˉstack) != Stackˉdescriptorˉcount { return Invalid; }
     if Stackˉdescriptorˉcount > 0u32 {
@@ -761,6 +760,8 @@ export fn Prepareˉborrowˉstep(
         Advance = Advance + 13u32;
         Handled = true;
     } else if Topˉisˉview && (Payloadˉlength == 152u32 || Payloadˉlength == 153u32 || Payloadˉlength == 196u32) {
+        let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+        let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
         let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
         let Selected: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
         let Handle: bytes = Bytesˉslice(Stack, Bytesˉlength(Stack) - 8u32, 8u32);
@@ -810,7 +811,7 @@ export fn Prepareˉborrowˉstep(
         }
         if Payloadˉlength == 4u32 || Payloadˉlength == 5u32 {
             let Local: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
-            if Local >= Bytesˉlength(Locals) / 8u32 { return Invalid; }
+            if Local >= Localˉframeˉlength / 8u32 { return Invalid; }
             let Viewˉlocalˉshape: u32 = Shapeˉoffset + Local * 8u32;
             let Isˉview: bool = Bytesˉreadˉu32ˉlittle(Localˉshapes, Viewˉlocalˉshape) == 93u32;
             if Payloadˉlength == 5u32 && Isˉview != Topˉisˉview { return Invalid; }
