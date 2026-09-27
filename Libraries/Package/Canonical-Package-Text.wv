@@ -158,30 +158,44 @@ export fn Windvaleˉpackageˉtokenˉat(
     Line: Windvaleˉpackageˉline,
     Index: u32
 ) -> Windvaleˉpackageˉtoken {
-    let Tokens: Windvaleˉpackageˉtokens = Windvaleˉpackageˉscanˉtokens(Input, Line);
-    if !Tokens.Valid || Index >= Tokens.Count {
+    let Span: Windvaleˉpackageˉspan = Windvaleˉpackageˉspan(Line.Offset, Line.Length);
+    if !Line.Valid || Line.Length == 0u32 ||
+        !Windvaleˉpackageˉspanˉvalid(Input, Span) {
         return Windvaleˉpackageˉtoken(false, 0u32, 0u32);
     }
-
     let End: u32 = Line.Offset + Line.Length;
+    if Bytesˉreadˉu8(Input, Line.Offset) == 32u8 ||
+        Bytesˉreadˉu8(Input, End - 1u32) == 32u8 {
+        return Windvaleˉpackageˉtoken(false, 0u32, 0u32);
+    }
     var Current: u32 = 0u32;
     var Start: u32 = Line.Offset;
     var Cursor: u32 = Line.Offset;
+    var Previousˉspace: bool = false;
+    var Found: bool = false;
+    var Foundˉoffset: u32 = 0u32;
+    var Foundˉlength: u32 = 0u32;
     while Cursor <= End {
         var Boundary: bool = Cursor == End;
         if !Boundary {
             Boundary = Bytesˉreadˉu8(Input, Cursor) == 32u8;
         }
         if Boundary {
+            if Previousˉspace {
+                return Windvaleˉpackageˉtoken(false, 0u32, 0u32);
+            }
             if Current == Index {
-                return Windvaleˉpackageˉtoken(true, Start, Cursor - Start);
+                Found = true;
+                Foundˉoffset = Start;
+                Foundˉlength = Cursor - Start;
             }
             Current = Current + 1u32;
             Start = Cursor + 1u32;
         }
+        Previousˉspace = Boundary;
         Cursor = Cursor + 1u32;
     }
-    return Windvaleˉpackageˉtoken(false, 0u32, 0u32);
+    return Windvaleˉpackageˉtoken(Found, Foundˉoffset, Foundˉlength);
 }
 
 export fn Windvaleˉpackageˉtokenˉspan(

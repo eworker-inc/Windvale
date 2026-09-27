@@ -57,12 +57,26 @@ fn Tokenˉcases() -> bool {
         Packageˉtext.Windvaleˉpackageˉtokenˉspan(Third),
         "hosted"
     ) { return false; }
+    let Last: Packageˉtext.Windvaleˉpackageˉtoken =
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, 3u32);
+    if !Last.Found || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+        Input, Packageˉtext.Windvaleˉpackageˉtokenˉspan(Last),
+        "Application/Main.wv"
+    ) { return false; }
+    let Missing: Packageˉtext.Windvaleˉpackageˉtoken =
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, 4u32);
+    if Missing.Found { return false; }
 
     let Repeated: bytes = Textˉtoˉutf8("part  application hosted Application/Main.wv\n");
+    let Repeatedˉline: Packageˉtext.Windvaleˉpackageˉline =
+        Packageˉtext.Windvaleˉpackageˉreadˉline(Repeated, 0u32);
+    let Repeatedˉfirst: Packageˉtext.Windvaleˉpackageˉtoken =
+        Packageˉtext.Windvaleˉpackageˉtokenˉat(Repeated, Repeatedˉline, 0u32);
+    if Repeatedˉfirst.Found { return false; }
     let Repeatedˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
         Packageˉtext.Windvaleˉpackageˉscanˉtokens(
         Repeated,
-        Packageˉtext.Windvaleˉpackageˉreadˉline(Repeated, 0u32)
+        Repeatedˉline
     );
     if Repeatedˉtokens.Valid { return false; }
     let Leading: bytes = Textˉtoˉutf8(" part application hosted Application/Main.wv\n");
