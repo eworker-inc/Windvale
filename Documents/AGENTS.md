@@ -17,6 +17,11 @@ handbook.
   Link to those records from current narrative pages.
 - Use the evidence-record schema for new durable run or artifact claims. Do not
   expand the old append-only evidence pages for ordinary new work.
+- Ordinary checks belong in the commit or pull-request summary; do not create
+  a JSON hash inventory for every change. Use exact source revisions and
+  existing immutable artifact manifests, recording new digests only where
+  exact artifact bytes matter. Follow the compact-record guide in
+  `Evidence/README.md`.
 - Regenerate the specification, decision, and evidence catalogs after changing
   a title, filename, opening status, evidence heading, or routing sidecar that
   they expose.

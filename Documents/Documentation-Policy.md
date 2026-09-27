@@ -2,7 +2,7 @@
 
 > Status: Current repository documentation policy
 > Authority: Normative for repository-maintained documentation
-> Last reviewed: 2026-08-31
+> Last reviewed: 2026-09-26
 
 Windvale keeps detailed technical history without making every historical fact
 part of the normal development context. A document should answer one kind of
@@ -145,7 +145,22 @@ Keep complete hashes in:
 - launchers that enforce a pinned tool identity;
 - signed release checksums and release envelopes;
 - deterministic golden fixtures and conformance vectors; and
-- evidence records that identify an exact completed run.
+- artifact-specific evidence where identities are not already available in an
+  immutable manifest or source revision.
+
+An ordinary source change does not require a new hash inventory. Identify
+tracked source with its exact Git commit; do not also list a digest for each
+source file. For tests run before committing, identify the base commit and a
+retained patch or source snapshot until the tested changes have an immutable
+revision. Do not describe a dirty checkout as its unchanged base commit.
+
+Record an untracked compiler, runtime, input or output by its existing immutable
+manifest when exact bytes affect the claim. If there is no such identity, keep
+one required digest at its owner. Reference shared identities across runs;
+avoid copying a whole toolchain inventory into each result. Ordinary local logs
+and cache inventories stay local unless their bytes are themselves evidence for
+the claim. This does not change cache keys, cache validation, bootstrap trust,
+release signing or exact-byte conformance checks.
 
 Current overview, Progress, Roadmap, architecture introduction, and development
 runbook pages should name and link the evidence record instead of copying a
@@ -194,6 +209,12 @@ particular, `Documented`, `Implemented`, `Verified`, `Qualified`, `Accepted`, an
 `Released` are not interchangeable claims.
 
 ## Evidence records
+
+For ordinary development, put the source revision, checks and results, relevant
+timings, and limitations in the commit or pull-request description. A durable
+performance or correctness claim may need a compact record, but a passing local
+check alone does not require a new committed JSON file. Do not create another
+evidence record merely to document an editorial cleanup of existing evidence.
 
 New exact run and artifact evidence belongs under
 [`Documents/Evidence/`](Evidence/README.md). Prefer one small record per claim

@@ -220,6 +220,11 @@ gates, recovery-only managed checks, and cross-host qualification rules live in
 - Follow `Documents/Documentation-Policy.md` for document ownership, status
   metadata, plain-language structure, hash placement, decision identifiers, and
   active-context budgets.
+- Ordinary changes record verification in the commit or pull-request summary;
+  they do not require a new evidence JSON or per-file hash inventory. Identify
+  tracked source by its exact tested revision and reference existing artifact
+  manifests. Keep hashes that enforce release, bootstrap, cache integrity or
+  exact-byte contracts; avoid duplicating them in routine documentation.
 - Work under `Documents/` also follows `Documents/AGENTS.md`.
 - Update documentation when semantics, formats, architecture, bootstrap stages,
   security boundaries, or durable workflows change. Never describe a proposal

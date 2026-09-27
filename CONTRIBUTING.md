@@ -32,6 +32,12 @@ Every contribution must state:
 - The exact machine, AI, human, reproduction, or external review evidence relied
   upon, without implying a broader review class than occurred.
 
+For ordinary changes, include this information in the commit or pull-request
+description. A new evidence JSON and per-file hash inventory are not required.
+Use the exact tested source revision and existing immutable tool or artifact
+manifests. Reserve detailed inventories for claims that depend on exact artifact
+bytes, following the [compact evidence guide](Documents/Evidence/README.md#compact-development-records).
+
 Documentation-only changes normally require `git diff --check`, Markdown link inspection, and direct review of the rendered text. Windvale Seed code changes normally require one proportional local verifier. For focused work, inspect the plan first:
 
 ```powershell
