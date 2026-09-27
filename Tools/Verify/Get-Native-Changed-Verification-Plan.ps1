@@ -1793,6 +1793,11 @@ if ($Paths.Count -eq 0) {
     Add-Gap 'empty-changed-path-set'
 }
 
+$WebsiteClassification = & (Join-Path $PSScriptRoot 'Classify-Verification-Changes.ps1') `
+    -ChangedPath $Paths -PassThru -Quiet
+$WebsitePaths = [System.Collections.Generic.HashSet[string]]::new(
+    [string[]]$WebsiteClassification.WebsitePaths, [StringComparer]::Ordinal)
+
 $PublisherCurrentObjectInputs = @(
     'Tools/Native/Build-Current-Publisher-Object-Tools.mjs',
     'Linker/Windvale/Native-Current-Publisher-Object-Admission.wv',
@@ -1804,6 +1809,16 @@ $PublisherCurrentObjectInputs = @(
 )
 foreach ($Path in $Paths) {
     $script:CurrentChangedPath = $Path
+    # Website checks run alongside native owners for mixed changes. These four
+    # shared boundaries also retain their specific native execution evidence.
+    if ($WebsitePaths.Contains($Path) -and $Path -cnotin @(
+        'Tools/Website/Verify-WebAssembly-Playground-Package.mjs',
+        'Tools/Website/Verify-WebAssembly-Compiler-Core.mjs',
+        'Tools/Windvale.Playground/wwwroot/js/windvale-compiler-core.js',
+        'Tools/Website/Verify-Shell-1-Parser-WebAssembly.mjs'
+    )) {
+        continue
+    }
     if ($Path -cin $PublisherCurrentObjectInputs) {
         Add-Suite 'hosted-verifier-publisher-files'
         continue
@@ -2365,6 +2380,7 @@ foreach ($Path in $Paths) {
         # compiler, runtime and fixtures retain their execution coverage.
         Add-Suite 'compiler-split-development'
     } elseif ($Path -eq 'Tools/Native/Development-Command-Core.mjs') {
+        Add-Suite 'assembler-golden'
         Add-Suite 'compiler-split-development'
         Add-Suite 'language-1-authenticated-foreign-binding'
         Add-Suite 'language-1-front-door'

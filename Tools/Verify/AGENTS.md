@@ -28,6 +28,9 @@ handbook.
   Cloudflare function, and website-tool changes, and development scope for
   implementation and specification changes with mapped native owners.
 - Website scope runs `Verify-Website.ps1`.
+- Mixed website and implementation changes run website verification alongside
+  the affected native owners. Website paths must neither become native mapping
+  gaps nor suppress native checks for shared compiler and runtime boundaries.
 - Development scope maps maintained boundaries to focused native owners in
   canonical order. Refuse uncovered gaps; do not hide them with an unfiltered
   or managed fallback.
@@ -88,6 +91,11 @@ handbook.
   add another `.cmd`/`.sh` coordinator pair. Existing paired owner scripts are
   transitional leaf implementations and remain behind the PowerShell runner
   until they can move without changing their evidence contract.
+- The assembler golden owner shares its four cases in
+  `Tools/Native/Test-Assembler-Golden.mjs`; its `.cmd` and `.sh` files only launch
+  that implementation. Preserve exact-byte, diagnostic, validation and repeat
+  checks when consolidating another paired owner. This is host test tooling;
+  assembly and object semantics remain in Windvale.
 - Preserve the structured distinction between `test-failed`, `timed-out`, and
   `framework-error`. Retry only a stream failure explicitly classified as
   retryable infrastructure; never retry an assertion, owner exit, malformed

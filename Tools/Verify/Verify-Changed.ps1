@@ -244,16 +244,18 @@ if ($Plan.Editor) {
     & $EditorVerifier
 }
 
-if ($Plan.Scope -eq 'website') {
+if ($Plan.Scope -in @('development', 'qualification') -and
+    $NativePlan.Gaps.Count -ne 0) {
+    throw (
+        'Changed-file verification has uncovered native evidence gaps: ' +
+        ($NativePlan.Gaps -join ', ') +
+        '. Add or select a native owner; no managed fallback was invoked.'
+    )
+}
+if ($Plan.Website) {
     & $WebsiteVerifier
-} elseif ($Plan.Scope -in @('development', 'qualification')) {
-    if ($NativePlan.Gaps.Count -ne 0) {
-        throw (
-            'Changed-file verification has uncovered native evidence gaps: ' +
-            ($NativePlan.Gaps -join ', ') +
-            '. Add or select a native owner; no managed fallback was invoked.'
-        )
-    }
+}
+if ($Plan.Scope -in @('development', 'qualification')) {
 
     Write-Warning 'Changed-file verification is native development feedback, not conformance or qualification evidence.'
     $Failures = [System.Collections.Generic.List[string]]::new()

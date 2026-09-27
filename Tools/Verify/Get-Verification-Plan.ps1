@@ -252,6 +252,7 @@ $SelectedAreas = @($AllAreas | Where-Object { $Areas.Contains($_) })
 $Plan = [pscustomobject]@{
     Scope = $Classification.Scope
     Editor = $Classification.Editor
+    Website = $Classification.WebsitePaths.Count -ne 0
     Areas = $SelectedAreas
     ChangedCount = $Paths.Count
 }
@@ -259,6 +260,7 @@ if (!$Quiet) {
     Write-Host "Changed paths: $($Plan.ChangedCount)"
     Write-Host "Verification scope: $($Plan.Scope)"
     Write-Host "Editor verification: $($Plan.Editor.ToString().ToLowerInvariant())"
+    Write-Host "Website verification: $($Plan.Website.ToString().ToLowerInvariant())"
     Write-Host "Seed test areas: [$($Plan.Areas -join ', ')]"
 }
 if ($PassThru) {

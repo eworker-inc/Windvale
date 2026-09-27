@@ -42,6 +42,35 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
+        Name = 'mixed website pages and shared assembler golden owner'
+        Paths = @(
+            'Website/index.html',
+            'Website/code/index.html',
+            'Website/docs/index.html',
+            'Website/progress/index.html',
+            'Website/support/index.html',
+            'Tools/Windvale.Playground/wwwroot/index.html',
+            'Tools/Native/Test-Assembler-Golden.mjs'
+        )
+        Suites = @('assembler-golden')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'website verification policy is not a native gap'
+        Paths = @('Tools/Verify/Verify-Website.ps1', 'Specifications/Browser-Playground.md')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'website changes do not hide unknown native boundaries'
+        Paths = @('Website/site.js', 'Unknown/Boundary.bin')
+        Suites = @()
+        Gaps = @('unmapped:Unknown/Boundary.bin')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'current segmented package integration'
         Paths = @('Tools/Native/Package-Current-Segmented-Wvb.mjs')
         Suites = @('installation-command-dispatch', 'package-bundle', 'offline-package-stage')
@@ -199,6 +228,7 @@ $NativeCases = @(
         Name = 'Shared bounded development command lifecycle'
         Paths = @('Tools/Native/Development-Command-Core.mjs')
         Suites = @(
+            'assembler-golden',
             'language-1-front-door',
             'language-1-authenticated-foreign-binding',
             'language-1-memory-budget-split-execution',
@@ -5332,7 +5362,7 @@ $QualificationPipelineExpected = @{
     'Package-Console' = '20|78'
     'Package-Segmented-Compiler-Wvb' = '21|53'
     'Verify-Wvb' = '5|16'
-    'Verify-Wvo' = '10|34'
+    'Verify-Wvo' = '10|33'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
     'Run-Split-Compiler' = '3|99'
@@ -5743,6 +5773,31 @@ $GenericNominalDevelopmentRoot = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tests/Fixtures/Language-1.0/Generic-Nominal-Development-Bundle-Self-Test.wv')
 $ChangedVerification = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1')
+& {
+    # Exercise the actual website dispatch without building an unrelated site.
+    $Tokens = $null
+    $Errors = $null
+    $Ast = [Management.Automation.Language.Parser]::ParseInput(
+        $ChangedVerification, [ref]$Tokens, [ref]$Errors)
+    if ($Errors.Count -ne 0) { throw 'Changed verification dispatcher did not parse.' }
+    $WebsiteDispatch = @($Ast.EndBlock.Statements | Where-Object {
+        $_ -is [Management.Automation.Language.IfStatementAst] -and
+        $_.Clauses[0].Item1.Extent.Text -ceq '$Plan.Website'
+    })
+    if ($WebsiteDispatch.Count -ne 1 -or $null -ne $WebsiteDispatch[0].ElseClause) {
+        throw 'Website verification must dispatch independently of native owners.'
+    }
+    $Dispatch = [scriptblock]::Create($WebsiteDispatch[0].Extent.Text)
+    $Calls = [System.Collections.Generic.List[string]]::new()
+    $WebsiteVerifier = { $Calls.Add('website') }.GetNewClosure()
+    foreach ($Scope in @('website', 'development', 'qualification')) {
+        $Plan = [pscustomobject]@{ Scope = $Scope; Website = $true }
+        & $Dispatch
+    }
+    $Plan = [pscustomobject]@{ Scope = 'development'; Website = $false }
+    & $Dispatch
+    if ($Calls.Count -ne 3) { throw 'Mixed website dispatch did not execute exactly once per selection.' }
+}
 $ResultCacheImplementation = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Verification-Owner-Result-Cache.mjs')
 foreach ($Fragment in @(
@@ -7352,6 +7407,20 @@ foreach ($Case in $Cases) {
     }
 }
 Write-Host "PASS  verification plan phase=general-routing item=$($Cases.Count)/$($Cases.Count)"
+
+
+# Website dispatch must survive a mixed change without replacing native checks.
+foreach ($Case in @(
+    @{ Paths = @('Website/index.html'); Scope = 'website'; Website = $true },
+    @{ Paths = @('Website/index.html', 'Tools/Native/Test-Assembler-Golden.mjs'); Scope = 'development'; Website = $true },
+    @{ Paths = @('Tools/Native/Test-Assembler-Golden.mjs'); Scope = 'development'; Website = $false },
+    @{ Paths = @('Website/README.md'); Scope = 'lightweight'; Website = $false }
+)) {
+    $MixedPlan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet
+    if ($MixedPlan.Scope -ne $Case.Scope -or $MixedPlan.Website -ne $Case.Website) {
+        throw 'Website verification was lost or widened across a mixed change.'
+    }
+}
 
 $NativeCaseIndex = 0
 $NativePlannerCommand = Get-Command -Name $NativePlanner

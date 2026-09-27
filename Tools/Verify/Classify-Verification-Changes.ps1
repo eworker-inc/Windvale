@@ -315,6 +315,9 @@ if (!$ForceQualification) {
 }
 
 $EditorValue = $RunEditorVerification.ToString().ToLowerInvariant()
+$WebsitePaths = @($Paths | Where-Object {
+    !(Test-LightweightPath $_) -and (Test-WebsitePath $_)
+})
 $DocumentationValue = $RunDocumentationVerification.ToString().ToLowerInvariant()
 $OutputLines = @(
     "scope=$Scope",
@@ -342,6 +345,7 @@ if ($PassThru) {
         Scope = $Scope
         Editor = $RunEditorVerification
         Documentation = $RunDocumentationVerification
+        WebsitePaths = $WebsitePaths
         BaseSha = $ResolvedBase
         HeadSha = $ResolvedHead
         ChangedCount = $Paths.Count

@@ -172,6 +172,17 @@ foreach ($Case in $Cases) {
 }
 
 $Empty = & $Classifier -ChangedPath @() -PassThru -Quiet
+foreach ($Case in @(
+    @{ Paths = @('Website/index.html', 'Tools/Native/Test-Assembler-Golden.mjs'); Websites = @('Website/index.html') },
+    @{ Paths = @('Tools/Windvale.Playground/wwwroot/index.html', 'README.md'); Websites = @('Tools/Windvale.Playground/wwwroot/index.html') },
+    @{ Paths = @('Website/README.md', 'Tools/Native/Test-Assembler-Golden.mjs'); Websites = @() }
+)) {
+    $Result = & $Classifier -ChangedPath $Case.Paths -PassThru -Quiet
+    if (![System.Linq.Enumerable]::SequenceEqual(
+        [string[]]$Result.WebsitePaths, [string[]]$Case.Websites)) {
+        throw 'Mixed classification lost website paths or widened documentation-only work.'
+    }
+}
 if ($Empty.Scope -ne 'qualification' -or !$Empty.Editor -or !$Empty.Documentation) {
     throw 'An empty changed-path set did not select qualification and editor verification.'
 }
@@ -192,4 +203,4 @@ if ($Forced.Scope -ne 'qualification' -or !$Forced.Editor -or
     throw 'A forced run did not select qualification and editor verification.'
 }
 
-Write-Host "Verification change classification passed ($($Cases.Count + 3) cases)."
+Write-Host "Verification change classification passed ($($Cases.Count + 6) cases)."
