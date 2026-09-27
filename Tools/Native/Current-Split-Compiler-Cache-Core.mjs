@@ -101,6 +101,8 @@ export async function Getˉcurrentˉsplitˉcompilerˉkey() {
         'Write-Split-Compiler-Producer-Identity.mjs',
         'Source-Edition-Predecessor-Core.mjs',
         'Run-Split-Compiler.mjs',
+        'Authenticated-Analysis-Cache-Core.mjs',
+        'Native-Hosted-Application-Cache-Core.mjs',
     ].map(Name => path.join(REPOSITORY_ROOT, 'Tools', 'Native', Name)));
     for (const Name of ['Windvale-Compiler-Analysis-Driver.wvproj',
         'Windvale-Compiler-Emission-Driver.wvproj', ...CURRENT_ADMISSION_PROJECTS.map(([, Project]) => Project)]) {

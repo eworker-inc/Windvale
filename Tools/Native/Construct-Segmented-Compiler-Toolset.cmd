@@ -1,6 +1,11 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+if "%~1"=="--staging-only" (
+    node "%~dp0Construct-Segmented-Staging.mjs" "%~2"
+    exit /b
+)
+
 if "%~1"=="" goto :usage
 if not "%~2"=="" goto :usage
 if not exist "%~f1\." goto :usage
@@ -67,11 +72,11 @@ call :construct_pair 6 Transport "%TransportWvb%" ^
 if errorlevel 1 goto :cleanup
 echo PASS  segmented compiler toolset construction phase=package item=3/3 family=canonical-transport
 
-call :verify_file "%WvoStagingWvb%" 774524 427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f "WVO staging producer WVB"
+call :verify_file "%WvoStagingWvb%" 1349262 616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436 "WVO staging producer WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 11184128 f289d608d6545dfeece35dfd325bf0a62ef862aeae0b069b47157fb97652820e "Windows WVO staging producer"
+call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 12629504 494dd6002be0420da63842f9b3ce256496f8b65e7cc3d34528dc8cf336915b0c "Windows WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 11186176 cafd9627383fdbd681bdcc5906a6fe0aedcb423ba0b7f380b39f43e7fd5aa0b8 "Linux WVO staging producer"
+call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 12632064 44885be2f9759f7058263f675e7a8a43c64f40b64f14145f1bfafa336e0575c1 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ImageStagingWvb%" 81530 03a928f036a188fc943d3d197d45114cbb327d5edffae62ee3cc842186267bbc "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup

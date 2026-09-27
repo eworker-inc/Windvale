@@ -1469,6 +1469,7 @@ function Add-Native-Tool-Suite {
     if ($Stem -in @(
         'Build-Cached-Project-Wvb',
         'Build-Cached-Split-Project-Wvb',
+        'Authenticated-Analysis-Cache-Core',
         'Source-Edition-Predecessor-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development'
@@ -1588,6 +1589,7 @@ function Add-Native-Tool-Suite {
         )
     } elseif ($Stem -in @(
         'Construct-Segmented-Compiler-Toolset',
+        'Construct-Segmented-Staging',
         'Test-Segmented-Compiler-Packaging',
         'Package-Segmented-Compiler-Wvb',
         'Measure-Segmented-Compiler-Packaging'

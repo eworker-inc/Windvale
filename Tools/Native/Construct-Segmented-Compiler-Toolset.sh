@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+if [[ ${1:-} == --staging-only ]]; then
+    shift
+    exec node "$(dirname -- "$0")/Construct-Segmented-Staging.mjs" "$@"
+fi
+
 if [[ $# -ne 1 || ! -d $1 ]]; then
     echo 'Usage: ./Tools/Native/Construct-Segmented-Compiler-Toolset.sh <existing-separate-output-directory>' >&2
     exit 64
@@ -137,14 +142,14 @@ verify_file() {
     fi
 }
 
-verify_file "$wvo_staging_wvb" 774524 \
-    427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f \
+verify_file "$wvo_staging_wvb" 1349262 \
+    616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436 \
     'WVO staging producer WVB' || exit 1
-verify_file "$output_root/windows-x64-wvstage.exe" 11184128 \
-    f289d608d6545dfeece35dfd325bf0a62ef862aeae0b069b47157fb97652820e \
+verify_file "$output_root/windows-x64-wvstage.exe" 12629504 \
+    494dd6002be0420da63842f9b3ce256496f8b65e7cc3d34528dc8cf336915b0c \
     'Windows WVO staging producer' || exit 1
-verify_file "$output_root/linux-x64-wvstage.elf" 11186176 \
-    cafd9627383fdbd681bdcc5906a6fe0aedcb423ba0b7f380b39f43e7fd5aa0b8 \
+verify_file "$output_root/linux-x64-wvstage.elf" 12632064 \
+    44885be2f9759f7058263f675e7a8a43c64f40b64f14145f1bfafa336e0575c1 \
     'Linux WVO staging producer' || exit 1
 verify_file "$image_staging_wvb" 81530 \
     03a928f036a188fc943d3d197d45114cbb327d5edffae62ee3cc842186267bbc \

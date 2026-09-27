@@ -54,6 +54,17 @@ Tools\Native\Construct-Segmented-Compiler-Toolset.cmd <existing-separate-output-
 pwsh -NoProfile -File Tools/Native/Measure-Segmented-Compiler-Packaging.ps1 -InputWvb <input.wvb> [-Profile <1-through-8>]
 ```
 
+For a staging-executable refresh, both construction wrappers accept
+`--staging-only <existing-separate-output-directory>`. The existing
+`Test-Segmented-Compiler-Toolset-Reconstruction` wrappers accept the same
+selection. It reconstructs the current host's Profile-8 staging executable from
+the exact retained WVB, compares its digest, requires byte-identical self-staging,
+checks two segmented/monolithic WVO fixtures, and rejects truncated input.
+The six focused checks have a ten-minute total bound and retain output and phase
+logs in the supplied directory. They do not rebuild unchanged linker tools or
+claim source-to-WVB reconstruction; that evidence is recorded separately when
+the retained WVB changes. The default full toolset construction remains separate.
+
 Omitting the optional target preserves the original current-host behavior.
 Supplying `windows` or `linux` selects that target's startup object and fixed
 service leaves while the invoking host's native Windvale tools still construct

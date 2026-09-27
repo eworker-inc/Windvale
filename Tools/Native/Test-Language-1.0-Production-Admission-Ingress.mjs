@@ -60,8 +60,8 @@ const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
 const COLD_DOUBLE_BUILD_ENVIRONMENT =
     'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
 const EXPECTED_COORDINATOR = Object.freeze({
-    bytes: 63_497,
-    sha256: '7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5',
+    bytes: 65218,
+    sha256: '5c9da9a1f5a558a769bd8dba9ca394827f3fe22472ba5857d1b5675f5c3daf4e',
 });
 
 const PINNED_COMPILER = Object.freeze({

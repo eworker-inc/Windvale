@@ -1,0 +1,613 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-staging-and-analysis-reuse",
+  "date": "2026-09-26",
+  "subject": "Normal compact staging tools and resumable authenticated analysis",
+  "claim": "Normal Stage-Compiler-Wvb and segmented-cache producer pins use source-built compact staging executables. Both host executables reconstruct exactly from the retained WVB and self-stage byte-identical native output. Real source compilation on each host reproduces that same 1349262-byte WVB. Authenticated compilation reuses analysis while repeating admission and authentication. Windows: 86911 ms cold, 47526 ms with retained analysis (45.3% less elapsed time); Debian: 95971 ms cold, 54774 ms with retained analysis (42.9% less elapsed time). New cache cases and existing admission/cache coverage pass on both hosts.",
+  "source": {
+    "kind": "Other",
+    "value": "14554f3bc30df1aaa5a362be2341a140d2e600a7 plus the exact changed source/tool and candidate identities recorded below"
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Build a Profile-8 stager with compact initialization; restage its own WVB and compare every native object chunk and manifest",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Build-Fast-Stager.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Build-Fast-Stager.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 137407,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.exe",
+          "size": 15974912,
+          "sha256": "7f5033c851125d798e5b79f8239359e554fb2263aa53579c97c3a236aecbb52b"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Build-Fast-Stager.mjs",
+          "size": 2994,
+          "sha256": "b59f913d269aa8484d5e52e2a429b6ad0d717857a5850d050b8008a949399b14"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Fast-Stager.exe",
+          "size": 12629504,
+          "sha256": "494dd6002be0420da63842f9b3ce256496f8b65e7cc3d34528dc8cf336915b0c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Fast-Stager-Windows/Build.json",
+          "size": 2941,
+          "sha256": "dd4c9d2cef31974e29c825ca8f9d7977b5ef5d6ced7c82a93ca10a09e33c56f1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Six existing-owner staging-only cases: retained WVB identity, exact host executable reconstruction, exact self-staging, Return-42, Metadata, truncated-WVB rejection without publication",
+      "tool": "Tools/Native/Test-Segmented-Compiler-Toolset-Reconstruction.cmd",
+      "command": "cmd /c Tools/Native/Test-Segmented-Compiler-Toolset-Reconstruction.cmd --staging-only Artifacts/Work/Simplification-2026-09-26/Staging-Reconstruction-Windows",
+      "result": "Passed",
+      "elapsedMilliseconds": 134561,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Wvo-Staging-Producer.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/windows-x64-wvstage.exe",
+          "size": 12629504,
+          "sha256": "494dd6002be0420da63842f9b3ce256496f8b65e7cc3d34528dc8cf336915b0c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Reconstruction-Windows/windows-x64-wvstage.exe",
+          "size": 12629504,
+          "sha256": "494dd6002be0420da63842f9b3ce256496f8b65e7cc3d34528dc8cf336915b0c"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Reconstruction-Windows/Construction.json",
+          "size": 4456,
+          "sha256": "c8452c66d4c0331d808dfe11febf8dd9a0f256ad930524418104728c7e9b4237"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; AMD Ryzen 9 3900X host, Debian under WSL2",
+      "target": "Cold authenticated Project 4 build of staging-tool source (1417977 admitted bytes, 864 emitted functions); exact retained WVB reproduced",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Run-Split-Compiler.mjs C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Admitter.exe C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Authenticator.exe D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Compact-Analyzer.exe C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Emitter.exe --foreign-binder C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Binder.exe --workspace D:\\windvale\\dev01\\Windvale.wvws --project D:\\windvale\\dev01\\Projects\\Compiler\\Windvale-Native-X64-Lowering-Staging-Tool.wvproj --manifest-reader C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Reader.exe D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analysis-Reuse-Final-Windows\\Cold.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 86911,
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 65218,
+          "sha256": "5c9da9a1f5a558a769bd8dba9ca394827f3fe22472ba5857d1b5675f5c3daf4e"
+        },
+        {
+          "path": "Tools/Native/Authenticated-Analysis-Cache-Core.mjs",
+          "size": 9279,
+          "sha256": "a3904246f98f2fe86762dbe0835c6038c35a12f4bb9edf97b38a1eb6c5960a41"
+        },
+        {
+          "path": "Tools/Native/Native-Hosted-Application-Cache-Core.mjs",
+          "size": 12408,
+          "sha256": "023762dded3fe39f216512127a8241f91602422a0d12b787ba084f3035801fab"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Reader.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Binder.exe",
+          "size": 18405888,
+          "sha256": "c3c871cc87b98558712f30c31289b168b22bc8711f787823f5e09154838beb54"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Emitter.exe",
+          "size": 33406976,
+          "sha256": "99046a8b89535026d8428d0616077c96797b82bde99fa3ad33ddb77ee85f1c99"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe",
+          "size": 49886720,
+          "sha256": "99add4e720704d5a43eee752dcf592e27da3fafd7fbfeb1d71055d9392438f13"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Windows/Cold.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Windows/Cold.log",
+          "size": 1149,
+          "sha256": "566addd31e8c2c331791e1f7f2f4d707009011dce244bfcd2337c0fc49f6afc1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; AMD Ryzen 9 3900X host, Debian under WSL2",
+      "target": "Reuse authenticated Project 4 build of staging-tool source (1417977 admitted bytes, 864 emitted functions); exact retained WVB reproduced",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Run-Split-Compiler.mjs C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Admitter.exe C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Authenticator.exe D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Compact-Analyzer.exe C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Emitter.exe --foreign-binder C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Binder.exe --workspace D:\\windvale\\dev01\\Windvale.wvws --project D:\\windvale\\dev01\\Projects\\Compiler\\Windvale-Native-X64-Lowering-Staging-Tool.wvproj --manifest-reader C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd\\Reader.exe D:\\windvale\\dev01\\Artifacts\\Work\\Simplification-2026-09-26\\Analysis-Reuse-Final-Windows\\Reuse.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 47526,
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 65218,
+          "sha256": "5c9da9a1f5a558a769bd8dba9ca394827f3fe22472ba5857d1b5675f5c3daf4e"
+        },
+        {
+          "path": "Tools/Native/Authenticated-Analysis-Cache-Core.mjs",
+          "size": 9279,
+          "sha256": "a3904246f98f2fe86762dbe0835c6038c35a12f4bb9edf97b38a1eb6c5960a41"
+        },
+        {
+          "path": "Tools/Native/Native-Hosted-Application-Cache-Core.mjs",
+          "size": 12408,
+          "sha256": "023762dded3fe39f216512127a8241f91602422a0d12b787ba084f3035801fab"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Reader.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Binder.exe",
+          "size": 18405888,
+          "sha256": "c3c871cc87b98558712f30c31289b168b22bc8711f787823f5e09154838beb54"
+        },
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Emitter.exe",
+          "size": 33406976,
+          "sha256": "99046a8b89535026d8428d0616077c96797b82bde99fa3ad33ddb77ee85f1c99"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe",
+          "size": 49886720,
+          "sha256": "99add4e720704d5a43eee752dcf592e27da3fafd7fbfeb1d71055d9392438f13"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Windows/Reuse.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Windows/Reuse.log",
+          "size": 1013,
+          "sha256": "54b2361168ccd2e0b9055819fa74f1322df8dde6dded7c1a564ff222c3ab55e4"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Existing split/project cache suite: 130 cases; initial 23 analysis cases",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Cache-Windows-Tests.log",
+          "size": 5719,
+          "sha256": "967888479273815ba18fde30ecb42870817a77adddae5fa75b21512434f08149"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "24 final authenticated-analysis cache cases, including failure resume, all six input changes, producer/mode/coordinator invalidation, corruption, concurrency, prepared-only misses, changed producer and mismatched source",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs --analysis-cache",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Cache-Windows-Final.log",
+          "size": 4019,
+          "sha256": "b074542d32eae672a7b2e14c47a29acf269dc15c2b3a5509221bfe7ba8744303"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "13 existing production admission sentinel cases, including phase rejection, input mutation and bounded process cleanup",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "WINDVALE_PRODUCTION_ADMISSION_INGRESS_SENTINELS_ONLY=1 node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Ingress-Windows.log",
+          "size": 235,
+          "sha256": "a7cf023d3b04b0b0c78b823f92df1683bbd29f4e04e54d3b500ad469d9a5ea7f"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Normal pinned staging wrappers: SHA private-helper fixture and 1552090-byte retained compiler analyzer; current geometry and 52 cross-host portable files are byte-identical",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Measure-Staging-Goldens.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Staging-Goldens.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 190407,
+      "inputs": [
+        {
+          "path": "Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb",
+          "size": 1552090,
+          "sha256": "5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77"
+        },
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/windows-x64-wvstage.exe",
+          "size": 12629504,
+          "sha256": "494dd6002be0420da63842f9b3ce256496f8b65e7cc3d34528dc8cf336915b0c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Goldens-Windows/Results.json",
+          "size": 2733,
+          "sha256": "38a34dc1b0398c75e04bfe22e88b45a7dfe44527e8905c3168475802b673ec37"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Goldens-Windows/Compiler.wvop",
+          "size": 564,
+          "sha256": "0e5460b019b3979bfeb63697953051eca62711a16336bca9dd369174fd07e06e"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Portable-Identity.json",
+          "size": 10756,
+          "sha256": "bda0ddd19931ad140adc57af8e39861e0ed8ba8f61286dde5cf317ff5d1d8420"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Build a Profile-8 stager with compact initialization; restage its own WVB and compare every native object chunk and manifest",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Build-Fast-Stager.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Build-Fast-Stager.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 143261,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Stager.elf",
+          "size": 15974400,
+          "sha256": "c119fcb862981ce1b19bac33092c435638e8756d0fb4cc07c1e0d95f7acf43ef"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Build-Fast-Stager.mjs",
+          "size": 2994,
+          "sha256": "b59f913d269aa8484d5e52e2a429b6ad0d717857a5850d050b8008a949399b14"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Fast-Stager.elf",
+          "size": 12632064,
+          "sha256": "44885be2f9759f7058263f675e7a8a43c64f40b64f14145f1bfafa336e0575c1"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Fast-Stager-Debian/Build.json",
+          "size": 2917,
+          "sha256": "a6c0addd78e6db2e16f1a11ef05cd552ab291287c912c8e19135d06d076d4a64"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Six existing-owner staging-only cases: retained WVB identity, exact host executable reconstruction, exact self-staging, Return-42, Metadata, truncated-WVB rejection without publication",
+      "tool": "Tools/Native/Test-Segmented-Compiler-Toolset-Reconstruction.sh",
+      "command": "bash Tools/Native/Test-Segmented-Compiler-Toolset-Reconstruction.sh --staging-only Artifacts/Work/Simplification-2026-09-26/Staging-Reconstruction-Debian",
+      "result": "Passed",
+      "elapsedMilliseconds": 142833,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Wvo-Staging-Producer.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/linux-x64-wvstage.elf",
+          "size": 12632064,
+          "sha256": "44885be2f9759f7058263f675e7a8a43c64f40b64f14145f1bfafa336e0575c1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Reconstruction-Debian/linux-x64-wvstage.elf",
+          "size": 12632064,
+          "sha256": "44885be2f9759f7058263f675e7a8a43c64f40b64f14145f1bfafa336e0575c1"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Reconstruction-Debian/Construction.json",
+          "size": 4406,
+          "sha256": "899e9f400b423d59451bc7c00e260f65d2a537ce25c4b743d45b081532ef6b3b"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; AMD Ryzen 9 3900X host, Debian under WSL2",
+      "target": "Cold authenticated Project 4 build of staging-tool source (1417977 admitted bytes, 864 emitted functions); exact retained WVB reproduced",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "/usr/bin/node Tools/Native/Run-Split-Compiler.mjs /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/dd3625ef4e5d915c2095a7d074f38e143e3bdca6bbb17c46551177de27e621dd/Product.elf /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/368f7ab7d006a88c4897c4dfedcb475e7ab4b725a1a5a0290172ec242a81fef4/Product.elf /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/6abdbce6da5671b867c9f3de5ed4d65864f2085f61bb75719138bce7e1620afd/Product.elf --foreign-binder /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/a583f96a298a06b57551c4644138a2997e2f5ef972ea48b4d0ec9676672729cc/Product.elf --workspace /mnt/d/windvale/dev01/Windvale.wvws --project /mnt/d/windvale/dev01/Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj --manifest-reader /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/82aa1a8b8be87304389b6df3d3229a8b0ae4d55385e7dda339ff511c0d7281d9/Product.elf /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Debian/Cold.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 95971,
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 65218,
+          "sha256": "5c9da9a1f5a558a769bd8dba9ca394827f3fe22472ba5857d1b5675f5c3daf4e"
+        },
+        {
+          "path": "Tools/Native/Authenticated-Analysis-Cache-Core.mjs",
+          "size": 9279,
+          "sha256": "a3904246f98f2fe86762dbe0835c6038c35a12f4bb9edf97b38a1eb6c5960a41"
+        },
+        {
+          "path": "Tools/Native/Native-Hosted-Application-Cache-Core.mjs",
+          "size": 12408,
+          "sha256": "023762dded3fe39f216512127a8241f91602422a0d12b787ba084f3035801fab"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/82aa1a8b8be87304389b6df3d3229a8b0ae4d55385e7dda339ff511c0d7281d9/Product.elf",
+          "size": 544768,
+          "sha256": "82953f700fbfe309c21d5fea155306adc6ce65cb4dc5f4d6e27e5f982f339267"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/dd3625ef4e5d915c2095a7d074f38e143e3bdca6bbb17c46551177de27e621dd/Product.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/368f7ab7d006a88c4897c4dfedcb475e7ab4b725a1a5a0290172ec242a81fef4/Product.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/a583f96a298a06b57551c4644138a2997e2f5ef972ea48b4d0ec9676672729cc/Product.elf",
+          "size": 18407424,
+          "sha256": "a1e1b1f59e4f6460049ebf5f178cf0f77c49d9cec873a01ea4604fec074b5581"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/6abdbce6da5671b867c9f3de5ed4d65864f2085f61bb75719138bce7e1620afd/Product.elf",
+          "size": 33406976,
+          "sha256": "11906cc2d584a8294217382f3d429578dffe86df0f9331c0fb4410bf58099c78"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf",
+          "size": 49885184,
+          "sha256": "893ae8c6f8ea82d564376ca7080753f5d4901993b8a5657a06697f529a0f55a9"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Debian/Cold.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Debian/Cold.log",
+          "size": 1219,
+          "sha256": "7e8245d80007ba7ad1d792982e95f077e39aca43982f44eeb469f7864afd5ec4"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; AMD Ryzen 9 3900X host, Debian under WSL2",
+      "target": "Reuse authenticated Project 4 build of staging-tool source (1417977 admitted bytes, 864 emitted functions); exact retained WVB reproduced",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "/usr/bin/node Tools/Native/Run-Split-Compiler.mjs /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/dd3625ef4e5d915c2095a7d074f38e143e3bdca6bbb17c46551177de27e621dd/Product.elf /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/368f7ab7d006a88c4897c4dfedcb475e7ab4b725a1a5a0290172ec242a81fef4/Product.elf /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/6abdbce6da5671b867c9f3de5ed4d65864f2085f61bb75719138bce7e1620afd/Product.elf --foreign-binder /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/a583f96a298a06b57551c4644138a2997e2f5ef972ea48b4d0ec9676672729cc/Product.elf --workspace /mnt/d/windvale/dev01/Windvale.wvws --project /mnt/d/windvale/dev01/Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj --manifest-reader /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/82aa1a8b8be87304389b6df3d3229a8b0ae4d55385e7dda339ff511c0d7281d9/Product.elf /mnt/d/windvale/dev01/Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Debian/Reuse.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 54774,
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 65218,
+          "sha256": "5c9da9a1f5a558a769bd8dba9ca394827f3fe22472ba5857d1b5675f5c3daf4e"
+        },
+        {
+          "path": "Tools/Native/Authenticated-Analysis-Cache-Core.mjs",
+          "size": 9279,
+          "sha256": "a3904246f98f2fe86762dbe0835c6038c35a12f4bb9edf97b38a1eb6c5960a41"
+        },
+        {
+          "path": "Tools/Native/Native-Hosted-Application-Cache-Core.mjs",
+          "size": 12408,
+          "sha256": "023762dded3fe39f216512127a8241f91602422a0d12b787ba084f3035801fab"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/82aa1a8b8be87304389b6df3d3229a8b0ae4d55385e7dda339ff511c0d7281d9/Product.elf",
+          "size": 544768,
+          "sha256": "82953f700fbfe309c21d5fea155306adc6ce65cb4dc5f4d6e27e5f982f339267"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/dd3625ef4e5d915c2095a7d074f38e143e3bdca6bbb17c46551177de27e621dd/Product.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/368f7ab7d006a88c4897c4dfedcb475e7ab4b725a1a5a0290172ec242a81fef4/Product.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/a583f96a298a06b57551c4644138a2997e2f5ef972ea48b4d0ec9676672729cc/Product.elf",
+          "size": 18407424,
+          "sha256": "a1e1b1f59e4f6460049ebf5f178cf0f77c49d9cec873a01ea4604fec074b5581"
+        },
+        {
+          "path": "/home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/6abdbce6da5671b867c9f3de5ed4d65864f2085f61bb75719138bce7e1620afd/Product.elf",
+          "size": 33406976,
+          "sha256": "11906cc2d584a8294217382f3d429578dffe86df0f9331c0fb4410bf58099c78"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.elf",
+          "size": 49885184,
+          "sha256": "893ae8c6f8ea82d564376ca7080753f5d4901993b8a5657a06697f529a0f55a9"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Debian/Reuse.wvb",
+          "size": 1349262,
+          "sha256": "616602ebae6c77234b8886d66381a1e13c3e3c186fd8531424aa733d636a7436"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Reuse-Final-Debian/Reuse.log",
+          "size": 1017,
+          "sha256": "c1a0cb4d2686241f68b2db9628bd61d5fbd81caade7d09173ea75b7a8f2c14e1"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Existing split/project cache suite: 133 cases; initial 23 analysis cases",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Cache-Debian-Tests.log",
+          "size": 5733,
+          "sha256": "d29e0206eb599afcb7c4e6d27e41b7445afe74b89a776088616a7f1c98da5056"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "24 final authenticated-analysis cache cases, including failure resume, all six input changes, producer/mode/coordinator invalidation, corruption, concurrency, prepared-only misses, changed producer and mismatched source",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs --analysis-cache",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Cache-Debian-Final.log",
+          "size": 3978,
+          "sha256": "3129bd3fa4ee9890b0db9498471888a7ed67696de2d68cb817a1bf667f67026c"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "13 existing production admission sentinel cases, including phase rejection, input mutation and bounded process cleanup",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "WINDVALE_PRODUCTION_ADMISSION_INGRESS_SENTINELS_ONLY=1 node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Analysis-Ingress-Debian.log",
+          "size": 232,
+          "sha256": "7b59d9eedc13cb9b17bb35d467ba0cd91f91bb8a0a3037ec6d7a629a57eb1c72"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64",
+      "target": "Normal pinned staging wrappers: SHA private-helper fixture and 1552090-byte retained compiler analyzer; current geometry and 52 cross-host portable files are byte-identical",
+      "tool": "Artifacts/Work/Simplification-2026-09-26/Measure-Staging-Goldens.mjs",
+      "command": "node Artifacts/Work/Simplification-2026-09-26/Measure-Staging-Goldens.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 221588,
+      "inputs": [
+        {
+          "path": "Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb",
+          "size": 1552090,
+          "sha256": "5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77"
+        },
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/linux-x64-wvstage.elf",
+          "size": 12632064,
+          "sha256": "44885be2f9759f7058263f675e7a8a43c64f40b64f14145f1bfafa336e0575c1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Goldens-Debian/Results.json",
+          "size": 2746,
+          "sha256": "da1c38fb601e3f976ff99b58c66b6aabbe752728d3c4fc3c2b3ea55b3356627e"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Goldens-Debian/Compiler.wvop",
+          "size": 564,
+          "sha256": "0e5460b019b3979bfeb63697953051eca62711a16336bca9dd369174fd07e06e"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Staging-Portable-Identity.json",
+          "size": 10756,
+          "sha256": "bda0ddd19931ad140adc57af8e39861e0ed8ba8f61286dde5cf317ff5d1d8420"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "335 routing cases including both new maintained modules; no owner mapping gaps",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Speed-Routing-Final.log",
+          "size": 4309,
+          "sha256": "28fd1d2ebe16dbd85d659798e2c26d795a349aebcefcba00f7d2336dff086ee0"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Measurements are one cold/reuse pair per host on the same physical machine, with Windows/Debian and some verification processes overlapping. They are named-workload measurements, not isolated statistical benchmarks or complete cold compiler-preparation timings. Peak working set was not measured.",
+    "The retained stager WVB was compiled from current source in the earlier compact-frame batch and independently reproduced on each host here. Its Profile-8 applications were built with the source-built compact stager, then rebuilt via the normal refreshed wrappers. The earlier Profile-7 stager used to start this cycle remains an ignored diagnostic artifact, not another normal tool path.",
+    "The staging-only selection proves retained-WVB-to-native reconstruction and behavior; it does not silently compile source or reconstruct unchanged linker/transport applications. The real Project 4 source-compilation runs provide the separate source-to-WVB evidence. The usage-only empty-path rejection was tightened after the valid reconstruction run and checked separately.",
+    "Final analysis cache tests add rejection of mismatched republished source before cache publication. The earlier real timing pair preceded that additional guard and is not used for the final performance claim. Initial unit verification rejected an unexpected seventh cache file correctly; the test was corrected to accept the bounded-inventory diagnostic.",
+    "Analyzer, Node, mode, implementation and all six authenticated input identities bind analysis reuse. Fresh admission and authentication occur before lookup; Foreign binding/pairing and emission remain later phases. Cached products are bounded, hash-validated and copied into private files. Existing complete WVB caches still bind their full producing graph.",
+    "Focused verification comprises staging reconstruction, compiler-scale staging, the existing cache suite, final analysis-cache cases, production ingress sentinels, real paired-host compilation, routing and documentation validation. The automatic broad routing plan was not run locally: it expands to historical full-product reconstruction and library/database owners. Complete dual-host qualification is separate pending evidence and the prior exact-artifact qualification is not claimed for the refreshed bytes.",
+    "No entire cold compiler preparation or packaging-tool source refresh was repeated. Existing successful caches were retained. Updating producer pins deliberately invalidates dependent product keys; current-source compiler and publisher preparation can still be expensive on their first miss. Native packaging and broader frozen-product reconstruction remain performance and qualification work.",
+    "Generated diagnostics and intermediate outputs remain locally under ignored Artifacts/Work; retained staging WVB and host executables are repository artifacts. Exact commands, producer identities, result records and workload sizes are recorded for reproduction."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-26-Compact-Native-Frame-Initialization.json",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Specifications/Windvale-Native-Hosted-Container-Packaging.md"
+  ]
+}

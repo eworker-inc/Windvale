@@ -1,4 +1,5 @@
 import Assert from 'node:assert/strict';
+import { Acquireˉauthenticatedˉanalysis } from './Authenticated-Analysis-Cache-Core.mjs';
 import { Buildˉcachedˉprojectˉwvb } from './Build-Cached-Project-Wvb.mjs';
 import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
 import {
@@ -83,6 +84,9 @@ await mkdir(Projectˉparentˉpath, { recursive: true });
 const Projectˉparent = realpathSync.native(Projectˉparentˉpath);
 const Projectˉroot = await mkdtemp(path.join(Projectˉparent, TEMPORARY_PREFIX));
 try {
+    await Verifyˉauthenticatedˉanalysisˉcache(Testˉroot);
+    if (process.argv[2] === '--analysis-cache') process.exitCode = 0;
+    else {
     PROJECT = path.join(Projectˉroot, 'Legacy.wvproj');
     const Legacyˉsource = path.join(Projectˉroot, 'Legacy.wv');
     await writeFile(Legacyˉsource, 'module Legacy profile portable;\nexport fn Main() -> i32 { return 42; }\n');
@@ -562,6 +566,7 @@ try {
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
         `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases} legacy-project-cache=${Legacyˉcases}`,
     );
+    }
 } finally {
     const Resolved = path.resolve(Testˉroot);
     if (!Sameˉpath(path.dirname(Resolved), Temporaryˉroot) ||
@@ -797,6 +802,114 @@ async function Writeˉtestˉproducer(Directory, Stem, Program) {
         await chmod(Producer, 0o755);
     }
     return Producer;
+}
+
+async function Verifyˉauthenticatedˉanalysisˉcache(Testˉroot) {
+    const Previousˉroot = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Previousˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    const Root = path.join(Testˉroot, 'authenticated-analysis');
+    await mkdir(Root);
+    const Analyzer = path.join(Root, 'Analyzer');
+    await writeFile(Analyzer, 'analyzer-v1');
+    const Inputs = Array.from({ length: 6 }, (_, Index) => Index === 0 ? Buffer.alloc(37, 1) : Buffer.from('input-' + Index));
+    const Values = [Buffer.alloc(37, 1), Buffer.alloc(104, 2), Buffer.from('bindings'), Buffer.from('wir')];
+    let Calls = 0, Requests = 0, Cases = 0;
+    process.env.WINDVALE_NATIVE_CACHE_ROOT = path.join(Root, 'cache');
+    delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    async function Request(Overrides = {}) {
+        const Output = path.join(Root, 'output-' + Requests++);
+        await mkdir(Output);
+        const Outputs = Values.map((_, Index) => path.join(Output, String(Index)));
+        const Options = { Analyzer, Mode: '--internal-source-set', Inputs, Outputs,
+            Coordinator: Buffer.from('coordinator-v1'),
+            Writeˉprivate: (Name, Bytes) => writeFile(Name, Bytes, { flag: 'wx' }),
+            Produce: async () => {
+                Calls += 1;
+                for (let Index = 0; Index < Values.length; Index += 1) await writeFile(Outputs[Index], Index === 0 ? Options.Inputs[0] : Values[Index], { flag: 'wx' });
+                return Buffer.from('source analysis status=Published\n');
+            }, ...Overrides };
+        const Report = await Acquireˉauthenticatedˉanalysis(Options);
+        Assert.equal(Report.toString(), 'source analysis status=Published\n');
+        for (let Index = 0; Index < 4; Index += 1) Assert.deepEqual(await readFile(Outputs[Index]), Index === 0 ? Options.Inputs[0] : Values[Index]);
+    }
+    function Pass(Name) { Cases += 1; console.log(`authenticated analysis cache item=${Cases} case=${Name} status=Passed`); }
+    try {
+        await Request(); Assert.equal(Calls, 1); Pass('cold-analysis');
+        await Request(); Assert.equal(Calls, 1); Pass('warm-private-copy');
+        // Simulate an emission failure after a completed analysis: its retry
+        // must retain the analyzer product without retaining emitter state.
+        await Assert.rejects(async () => { await Request(); throw new Error('later-emission-failure'); }, /later-emission-failure/);
+        await Request(); Assert.equal(Calls, 1); Pass('later-failure-reuses-analysis');
+        for (let Index = 0; Index < Inputs.length; Index += 1) {
+            const Changed = Inputs.map(Bytes => Buffer.from(Bytes)); Changed[Index][0] ^= 1;
+            const Before = Calls; await Request({ Inputs: Changed }); Assert.equal(Calls, Before + 1);
+            Pass('changed-authenticated-input-' + Index);
+        }
+        const Beforeˉmode = Calls;
+        await Request({ Mode: '--internal-foreign-source-set' }); Assert.equal(Calls, Beforeˉmode + 1); Pass('foreign-mode-separated');
+        await Request({ Coordinator: Buffer.from('coordinator-v2') }); Assert.equal(Calls, Beforeˉmode + 2); Pass('coordinator-invalidates');
+        await writeFile(Analyzer, 'analyzer-v2'); await Request(); Assert.equal(Calls, Beforeˉmode + 3); Pass('analyzer-invalidates');
+        await writeFile(Analyzer, 'analyzer-v1');
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+        const Beforeˉprepared = Calls;
+        await Request(); Assert.equal(Calls, Beforeˉprepared); Pass('prepared-hit');
+        await Assert.rejects(Request({ Coordinator: Buffer.from('missing') }), /not prepared/);
+        Assert.equal(Calls, Beforeˉprepared); Pass('prepared-miss-stops');
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = 'invalid';
+        await Assert.rejects(Request(), /absent or 1/); Pass('invalid-mode-rejected');
+        delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        await Assert.rejects(Request({ Coordinator: Buffer.from('failure'), Produce: async () => { throw new Error('producer-failed'); } }), /producer-failed/);
+        Pass('failed-analysis-not-published');
+        await Assert.rejects(Request({ Inputs: [Buffer.alloc(4_194_305), ...Inputs.slice(1)] }), /Invalid authenticated/); Pass('oversized-input-rejected');
+        const Family = path.join(Root, 'cache', 'authenticated-analysis-v1', HOST);
+        const Directories = await readdir(Family);
+        Assert.equal(Directories.some(Name => Name.startsWith('.new-')), false);
+        // Locate the original request by its output record and test every
+        // retained result under the same request instead of relying on order.
+        const Changedˉfiles = [];
+        for (const Name of Directories) {
+            const File = path.join(Family, Name, 'Wir.wvir');
+            const Original = await readFile(File);
+            await writeFile(File, Buffer.from('corrupt'));
+            Changedˉfiles.push([File, Original]);
+        }
+        const Beforeˉcorrupt = Calls;
+        await Assert.rejects(Request(), /checkpoint record differs/); Assert.equal(Calls, Beforeˉcorrupt); Pass('corrupt-output-rejected');
+        for (const [File, Original] of Changedˉfiles) await writeFile(File, Original);
+        for (const Name of Directories) await writeFile(path.join(Family, Name, 'Extra'), 'unexpected');
+        await Assert.rejects(Request(), /inventory (differs|exceeds)/); Assert.equal(Calls, Beforeˉcorrupt); Pass('unexpected-inventory-rejected');
+        for (const Name of Directories) await rm(path.join(Family, Name, 'Extra'));
+        const Beforeˉrace = Calls;
+        await Promise.all([Request({ Coordinator: Buffer.from('concurrent') }), Request({ Coordinator: Buffer.from('concurrent') })]);
+        Assert.ok(Calls >= Beforeˉrace + 1 && Calls <= Beforeˉrace + 2); Pass('concurrent-publication');
+        Assert.equal((await readdir(Family)).some(Name => Name.startsWith('.new-')), false); Pass('temporary-cleanup');
+        const Mutationˉoutput = path.join(Root, 'mutated-output');
+        await mkdir(Mutationˉoutput);
+        const Mutationˉpaths = Values.map((_, Index) => path.join(Mutationˉoutput, String(Index)));
+        await Assert.rejects(Request({ Coordinator: Buffer.from('mutation'), Outputs: Mutationˉpaths,
+            Produce: async () => {
+                for (let Index = 0; Index < 4; Index += 1) await writeFile(Mutationˉpaths[Index], Values[Index]);
+                await writeFile(Analyzer, 'changed-during-analysis');
+                return Buffer.from('source analysis status=Published\n');
+            } }), /producer or cache implementation changed/);
+        await writeFile(Analyzer, 'analyzer-v1'); Pass('producer-mutation-rejected');
+        const Invalidˉsource = path.join(Root, 'invalid-source'); await mkdir(Invalidˉsource);
+        const Invalidˉpaths = Values.map((_, Index) => path.join(Invalidˉsource, String(Index)));
+        await Assert.rejects(Request({ Coordinator: Buffer.from('source-mismatch'), Outputs: Invalidˉpaths,
+            Produce: async () => {
+                for (let Index = 0; Index < 4; Index += 1) await writeFile(Invalidˉpaths[Index], Index === 0 ? Buffer.alloc(37, 9) : Values[Index]);
+                return Buffer.from('source analysis status=Published\n');
+            } }), /different admitted source set/);
+        Pass('source-mismatch-not-cached');
+        for (const Name of await readdir(Family)) await writeFile(path.join(Family, Name, 'Checkpoint.json'), '{');
+        await Assert.rejects(Request(), /checkpoint record differs/); Pass('truncated-record-rejected');
+        console.log(`authenticated analysis cache status=Passed cases=${Cases}`);
+    } finally {
+        if (Previousˉroot === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Previousˉroot;
+        if (Previousˉmode === undefined) delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        else process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = Previousˉmode;
+    }
 }
 
 async function Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot) {

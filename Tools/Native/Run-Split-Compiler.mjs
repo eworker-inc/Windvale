@@ -13,7 +13,9 @@ import {
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Orderˉsplitˉprojectˉsourceˉpayloads } from './Split-Project-Source-Ordering-Core.mjs';
+import { Acquireˉauthenticatedˉanalysis } from './Authenticated-Analysis-Cache-Core.mjs';
 
 const WINDOWS = process.platform === 'win32';
 const TEMPORARY_PREFIX = 'windvale-split-compiler-';
@@ -40,6 +42,9 @@ const TEST_HOOKS = Readˉtestˉhooks();
 const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
 const TASKKILL_TIMEOUT_MILLISECONDS = 2_000;
 const TERMINATION_SETTLE_MILLISECONDS = 5_000;
+const COORDINATOR_SOURCE = fileURLToPath(import.meta.url);
+const COORDINATOR_BYTES = (await Readˉordinaryˉsnapshot(
+    COORDINATOR_SOURCE, 1, 1_048_576, 'split compiler coordinator')).bytes;
 
 if (process.argv.length < 7) Usage();
 
@@ -321,10 +326,30 @@ try {
                 '--internal-foreign-source-set', Sourceˉset,
                 Analyzedˉsourceˉset, Manifest, Bindings, Wir,
             ];
-        Reports.push(await Runˉrequired(
-            Analyzer, Analysisˉarguments,
-            'source-analysis',
-        ));
+        Reports.push(await Acquireˉauthenticatedˉanalysis({
+            Analyzer, Mode: Analysisˉarguments[0],
+            Inputs: [Retained.sourceSet.bytes, Retained.target.bytes,
+                Retained.catalog.bytes, Retained.evidence.bytes,
+                Retainedˉinputs.lock.bytes, Retainedˉinputs.profile.bytes],
+            Outputs: [Analyzedˉsourceˉset, Manifest, Bindings, Wir],
+            Coordinator: COORDINATOR_BYTES,
+            Writeˉprivate: (Name, Bytes) => Writeˉprivateˉsnapshot(Name, Bytes, Temporary),
+            Produce: async () => {
+                const Report = await Runˉrequired(Analyzer, Analysisˉarguments, 'source-analysis');
+                for (const [Name, Minimum, Maximum] of [
+                    [Analyzedˉsourceˉset, 37, MAXIMUM_PHASE_VALUE_BYTES],
+                    [Manifest, 104, 104], [Bindings, 1, MAXIMUM_PHASE_VALUE_BYTES],
+                    [Wir, 1, MAXIMUM_PHASE_VALUE_BYTES],
+                ]) await Requireˉprivateˉphaseˉfile(Name, Minimum, Maximum, Temporary, 'analysis output');
+                await Requireˉretainedˉsnapshot(Sourceˉset, Retained.sourceSet,
+                    37, MAXIMUM_PHASE_VALUE_BYTES, 'admitted source set');
+                return Report;
+            },
+        }));
+        if (!(await Readˉordinaryˉsnapshot(COORDINATOR_SOURCE, 1, 1_048_576,
+            'split compiler coordinator')).bytes.equals(COORDINATOR_BYTES)) {
+            Reject('The split compiler coordinator changed during analysis.');
+        }
         await Requireˉprivateˉphaseˉfile(
             Analyzedˉsourceˉset, 37, MAXIMUM_PHASE_VALUE_BYTES,
             Temporary, 'analyzed source set'

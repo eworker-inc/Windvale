@@ -1,6 +1,11 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+if "%~1"=="--staging-only" (
+    node "%~dp0Construct-Segmented-Staging.mjs" --verify "%~2"
+    exit /b
+)
+
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Segmented-Compiler-Toolset-Candidate"
@@ -56,7 +61,7 @@ set "FailureStep=SHA WVO native staging"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Sha-Stage.err") do if not "%%~zF"=="0" goto :failed
 for %%F in ("%TestDirectory%\Sha-Stage.out") do if not "%%~zF"=="80" goto :failed
-findstr /b /c:"native x64 staging status=Complete object-bytes=2860 chunks=6 manifest-bytes=96" "%TestDirectory%\Sha-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=2588 chunks=5 manifest-bytes=84" "%TestDirectory%\Sha-Stage.out" >nul
 if errorlevel 1 goto :failed
 set "FailureStep=SHA compiler-image staging"
 "%TestDirectory%\windows-x64-wvlinkstage.exe" ^
@@ -66,7 +71,7 @@ set "FailureStep=SHA compiler-image staging"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Sha-Link.err") do if not "%%~zF"=="0" goto :failed
 for %%F in ("%TestDirectory%\Sha-Link.out") do if not "%%~zF"=="108" goto :failed
-findstr /b /c:"segmented compiler image staging status=Complete image-bytes=2672 entry-offset=0 chunks=2 manifest-bytes=52" "%TestDirectory%\Sha-Link.out" >nul
+findstr /b /c:"segmented compiler image staging status=Complete image-bytes=2400 entry-offset=0 chunks=1 manifest-bytes=40" "%TestDirectory%\Sha-Link.out" >nul
 if errorlevel 1 goto :failed
 call :pass "SHA WVB staging and private-helper image linking"
 
@@ -86,7 +91,7 @@ set "FailureStep=empty-relocation WVO native staging"
     >"%TestDirectory%\Empty-Relocation-Stage.out" 2>"%TestDirectory%\Empty-Relocation-Stage.err"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Empty-Relocation-Stage.err") do if not "%%~zF"=="0" goto :failed
-findstr /b /c:"native x64 staging status=Complete object-bytes=479 chunks=3 manifest-bytes=60" "%TestDirectory%\Empty-Relocation-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=415 chunks=3 manifest-bytes=60" "%TestDirectory%\Empty-Relocation-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "empty-relocation WVB staging completion"
 
@@ -106,7 +111,7 @@ if errorlevel 1 goto :failed
 set "FailureStep=compiler-scale native staging diagnostic"
 for %%F in ("%TestDirectory%\Compiler-Stage.err") do if not "%%~zF"=="0" goto :failed
 set "FailureStep=compiler-scale native staging report"
-findstr /b /c:"native x64 staging status=Complete object-bytes=50761605 chunks=50 manifest-bytes=624" "%TestDirectory%\Compiler-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=46061093 chunks=45 manifest-bytes=564" "%TestDirectory%\Compiler-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "compiler-scale WVB staging"
 

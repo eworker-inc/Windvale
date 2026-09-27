@@ -90,6 +90,7 @@ $NativeCases = @(
     @{
         Name = 'native staging adapter inputs'
         Paths = @(
+            'Tools/Native/Construct-Segmented-Staging.mjs',
             'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
             'Tests/Fixtures/Native-X64/Wvo-Staging-Envelope-Adapter.wv',
             'Tests/Fixtures/Native-X64/Wvo-Staging-Envelope-Native-Adapter.wv',
@@ -2301,7 +2302,8 @@ $NativeCases = @(
     },
     @{
         Name = 'cached split builder excludes compiler reconstruction and admission semantics'
-        Paths = @('Tools/Native/Build-Cached-Split-Project-Wvb.mjs')
+        Paths = @('Tools/Native/Build-Cached-Split-Project-Wvb.mjs',
+            'Tools/Native/Authenticated-Analysis-Cache-Core.mjs')
         Suites = @('compiler-split-development')
         Gaps = @()
         VerifyPlan = $false

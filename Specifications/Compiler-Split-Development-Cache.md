@@ -145,9 +145,28 @@ A miss invokes the existing authenticated coordinator with its native manifest
 reader and explicit workspace. The resulting WVB is a private cache candidate,
 not application output publication. Its checkpoint uses the existing emission
 record shape, with the complete authenticated request key also occupying the
-analysis-key field. It does not claim a separately reusable analysis checkpoint.
+analysis-key field.
 The outer sequence has a fifteen-minute bound; individual native phases retain
 the existing five-minute ceiling. Diagnostics remain bounded to 64 KiB.
+
+After fresh admission and authentication, `Run-Split-Compiler.mjs` can reuse
+an `authenticated-analysis-v1` checkpoint. Its key binds the six exact admitted
+source-set, target, catalog, evidence, lock and profile byte sequences, analyzer
+content identity, normal or Foreign analysis mode, host, Node identity, and
+loaded coordinator/cache/reader implementations. Emitter identity is excluded
+from this phase key because emission occurs after analysis. Binding and pairing
+still execute after analysis for a Foreign catalog. Authentication is never
+replaced by an analysis-cache hit.
+
+The checkpoint has exactly four analysis products and the bounded successful
+phase report, plus its digest record. Each phase value is at most 4 MiB; the
+manifest is exactly 104 bytes and the report is at most 64 KiB. The analyzed
+source must equal the admitted source before checkpoint publication. Temporary
+publication is atomic, concurrent results must agree, and hits copy validated
+bytes into newly owned private files. Corruption, unexpected inventory, links,
+oversized input and changed producers fail closed. An emission failure keeps
+completed analysis available. Prepared-product mode permits hits and rejects
+misses before analysis. This cache owns no admission or emission result.
 
 Both hits and misses remeasure all producer bytes and project inputs before
 copying a completed WVB to the caller's private output. Wrong digests, changed

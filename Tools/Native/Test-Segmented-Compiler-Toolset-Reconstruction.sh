@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+if [[ ${1:-} == --staging-only ]]; then
+    shift
+    exec node "$(dirname -- "$0")/Construct-Segmented-Staging.mjs" --verify "$@"
+fi
+
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 candidate="$repository_root/Artifacts/Native-Segmented-Compiler-Toolset-Candidate"
@@ -104,7 +109,7 @@ failure_step='SHA WVO native staging'
 [[ ! -s $test_directory/Sha-Stage.err ]] || fail
 [[ $(stat -c %s -- "$test_directory/Sha-Stage.out") == 80 ]] || fail
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=2860 chunks=6 manifest-bytes=96' \
+    'native x64 staging status=Complete object-bytes=2588 chunks=5 manifest-bytes=84' \
     "$test_directory/Sha-Stage.out" >/dev/null || fail
 failure_step='SHA compiler-image staging'
 "$test_directory/linux-x64-wvlinkstage.elf" \
@@ -115,7 +120,7 @@ failure_step='SHA compiler-image staging'
 [[ ! -s $test_directory/Sha-Link.err ]] || fail
 [[ $(stat -c %s -- "$test_directory/Sha-Link.out") == 108 ]] || fail
 grep -Fx \
-    'segmented compiler image staging status=Complete image-bytes=2672 entry-offset=0 chunks=2 manifest-bytes=52' \
+    'segmented compiler image staging status=Complete image-bytes=2400 entry-offset=0 chunks=1 manifest-bytes=40' \
     "$test_directory/Sha-Link.out" >/dev/null || fail
 pass 'SHA WVB staging and private-helper image linking'
 
@@ -138,7 +143,7 @@ failure_step='empty-relocation WVO native staging'
     2>"$test_directory/Empty-Relocation-Stage.err" || fail
 [[ ! -s $test_directory/Empty-Relocation-Stage.err ]] || fail
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=479 chunks=3 manifest-bytes=60' \
+    'native x64 staging status=Complete object-bytes=415 chunks=3 manifest-bytes=60' \
     "$test_directory/Empty-Relocation-Stage.out" >/dev/null || fail
 pass 'empty-relocation WVB staging completion'
 
@@ -161,7 +166,7 @@ failure_step='compiler-scale native staging diagnostic'
 [[ ! -s $test_directory/Compiler-Stage.err ]] || fail
 failure_step='compiler-scale native staging report'
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=50761605 chunks=50 manifest-bytes=624' \
+    'native x64 staging status=Complete object-bytes=46061093 chunks=45 manifest-bytes=564' \
     "$test_directory/Compiler-Stage.out" >/dev/null || fail
 pass 'compiler-scale WVB staging'
 

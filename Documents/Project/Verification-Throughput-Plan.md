@@ -52,13 +52,26 @@ of unrelated frozen-product and database checks. See the
 [source-built measurements](../Evidence/2026-09-26-Compact-Native-Frame-Initialization.json)
 and the earlier [diagnosis](../Evidence/2026-09-26-Compiler-Preparation-Diagnosis.json).
 
-Cold preparation remains unresolved. The retained bootstrap executables have
-not yet been refreshed, so normal preparation does not automatically receive
-this optimization. The original Debian preparation stopped at its deadline
-after 59 minutes 30 seconds with completed caches preserved. Next, roll the
-source-built improvement into the retained tool path with reconstruction
-evidence, then address repeated authenticated analysis and native packaging
-costs. The measured analysis improvement is not an overall build-speed claim.
+Normal staging now uses the refreshed compact backend on both hosts. Its
+Profile-8 executables reproduce their own native output exactly and pass the
+existing toolset owner's six focused reconstruction checks in 134.6 seconds
+on Windows and 142.9 seconds on Debian. Source compilation independently
+reproduces the retained staging WVB on both hosts.
+
+Authenticated Project 4 compilation now retains analysis across later emission
+changes or failures. Admission and authentication still execute before reuse.
+For the 1.4 MB staging-tool source set, cold compilation took 86.9/96.0 seconds
+on Windows/Debian; repeating with retained analysis took 47.5/54.8 seconds and
+produced identical WVB. The new cache passes 24 cases per host, the existing
+cache suite passes 130/133 cases, and the admission failure checks pass on both
+hosts. See the [staging and analysis-reuse evidence](../Evidence/2026-09-26-Staging-And-Analysis-Reuse.json).
+
+These are focused development results, not complete cold-preparation or release
+qualification claims. Existing caches are preserved and invalidate when their
+declared producers change. The original Debian preparation stopped after
+59 minutes 30 seconds; the whole preparation graph has not been rerun for this
+batch. Native packaging and broader exact-product reconstruction remain the
+next checkpoints. Do not substitute longer timeouts for reducing their work.
 
 Focused runtime execution takes seconds with prepared tools, while changed tool
 construction still takes minutes. The latest runner rebuild took 276 seconds,

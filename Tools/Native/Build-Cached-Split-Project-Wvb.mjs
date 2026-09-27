@@ -106,7 +106,8 @@ const Authenticatedˉevidence = Authenticatedˉproject ? await Readˉauthenticat
 const Authenticatedˉcontext = Authenticatedˉproject ? await Prepareˉnativeˉprojectˉcacheˉcontext(
     'project-authenticated-split-wvb-v1',
     [Analyzerˉidentityˉpath, Emitterˉidentityˉpath, fileURLToPath(import.meta.url),
-        ...['Run-Split-Compiler.mjs', 'Split-Project-Source-Ordering-Core.mjs',
+        ...['Run-Split-Compiler.mjs', 'Authenticated-Analysis-Cache-Core.mjs',
+            'Native-Hosted-Application-Cache-Core.mjs', 'Split-Project-Source-Ordering-Core.mjs',
             'Development-Command-Core.mjs', 'Native-Project-Cache-Key-Core.mjs']
             .map(Name => path.join(REPOSITORY_ROOT, 'Tools', 'Native', Name))],
 ) : null;
