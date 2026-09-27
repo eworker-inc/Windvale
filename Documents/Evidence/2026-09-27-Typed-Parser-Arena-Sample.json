@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-27-typed-parser-arena-sample",
+  "date": "2026-09-27",
+  "subject": "Bounded native byte-arena samples of the typed Package-Lock parser probe",
+  "claim": "The cached native runner exits with code 66 on the typed-table probe after 10.386 seconds with its 128 MiB byte arena unchanged. Two bounded Debian ptrace samples of that exact runner and guest observe arena-cursor writes in different execution windows. Both samples map their largest observed writes to the interpreter's Materialize-local-writes function, including a window beginning after the cursor has passed 127 million bytes (about 122 MiB). This local diagnostic does not establish a live-set size, global allocation ranking, completed consumer, or cross-host qualification.",
+  "source": {
+    "kind": "Other",
+    "value": "Runner WVB SHA-256 edfdf5ba9cb73e57be81712c2b9158cabf1378d2ea3b061637069cb11b42f98f"
+  },
+  "runs": [
+    {
+      "host": "Debian x86-64 under WSL",
+      "target": "Typed Package-Lock probe execution",
+      "tool": "Native runner ELF",
+      "command": "timeout 45s Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb --report-steps",
+      "result": "Failed",
+      "elapsedMilliseconds": 10386,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf",
+          "size": 10084352,
+          "sha256": "af890ddc82076760789670d58ebfe975f70a66faad16446912634312ed6c9099"
+        },
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb",
+          "size": 56788,
+          "sha256": "6a1a5540c0d1a225df4afc25f272553a01249b158bbdec7062900b74e9c83fe6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x86-64 under WSL",
+      "target": "Early bounded arena-write sample",
+      "tool": "Documents/Evidence/Tools/2026-09-27-Profile-Native-Byte-Arena.py",
+      "command": "python3 Documents/Evidence/Tools/2026-09-27-Profile-Native-Byte-Arena.py Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb --attach-ms 4000 --object-manifest Artifacts/Work/Package-Lock-2026-09-27/Current-Object.wvop",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Documents/Evidence/Tools/2026-09-27-Profile-Native-Byte-Arena.py",
+          "size": 9412,
+          "sha256": "ec5809d70ac0666d40805a4cf01c62ec564228ffdea10cca5e2f1e2878a725bb"
+        },
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-27/Current-Object.wvo (reconstructed from .wvop chunks)",
+          "size": 10085829,
+          "sha256": "ecb611c13cf09b4e73c260144cf02f06c10c2c63f42a90a44c48f940a72833d3"
+        }
+      ]
+    },
+    {
+      "host": "Debian x86-64 under WSL",
+      "target": "Late bounded arena-write sample",
+      "tool": "Documents/Evidence/Tools/2026-09-27-Profile-Native-Byte-Arena.py",
+      "command": "python3 Documents/Evidence/Tools/2026-09-27-Profile-Native-Byte-Arena.py Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb --attach-ms 7500 --object-manifest Artifacts/Work/Package-Lock-2026-09-27/Current-Object.wvop",
+      "result": "Passed"
+    }
+  ],
+  "result": "Incomplete",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "The cached WVB was produced before commit d8029ee1 and was not independently rebuilt from that committed source state. The record therefore identifies the measured WVB bytes directly and does not assign the run a Git source commit.",
+    "The runner ELF was packaged from the recorded WVB. The WVO was staged from that WVB. Symbol offsets are mapped using a unique 64-byte WVO text anchor in the ELF; linker relocation patches prevent full WVO/ELF text equality.",
+    "Early sample: 3160 watchpoint events in an eight-second process window starting with a four-second attach delay; arena cursor 29977085 to 29989158 bytes, with 101 decreases. The three largest sampled sites in function_0336 contribute 7576, 3752 and 3376 positive cursor bytes. This function maps to Materialize-local-writes in the measured runner.",
+    "Late sample: 401 watchpoint events in an eight-second process window starting with a 7.5-second attach delay; arena cursor 127658203 to 127661494 bytes, with 14 decreases. The three largest sampled sites again map to function_0336 and contribute 2216, 1904 and 944 positive cursor bytes. Samples are perturbed by ptrace and do not count all writes or measure retained bytes.",
+    "The profiler always terminates its sampled guest; sample success is tool execution, not a passing guest result. The guest's direct run exits 66. Windows execution, peak working set, full ownership tracing, and the complete typed-consumer gate were not run or established here.",
+    "The profiler is retained as an exact historical replay tool beside this evidence record, not as a maintained native development verifier. The runner, guest, staged WVO and profile JSON files are ignored local diagnostic artifacts, not repository distributions. Their exact content is identified above only where needed for interpretation."
+  ],
+  "related": [
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+    "Documents/Decisions/0147-Native-Descriptor-Ownership-Plan.md",
+    "Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md"
+  ]
+}

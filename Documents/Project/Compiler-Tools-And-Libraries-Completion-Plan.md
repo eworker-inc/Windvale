@@ -228,14 +228,17 @@ The saved parser probes reach the eight-call-depth limit or exhaust the hosted
 runner's 128 MiB byte arena. The bounded local-write log now lets a
 412,520-instruction parser probe return on both hosts at about 50 MiB peak
 Debian RSS, down from about 111 MiB before the frame-copy changes. The full
-typed probe still exhausts the unchanged arena. A Debian diagnostic run shows
-its arena cursor rising steadily through interpreter execution to the 128 MiB
-limit; address samples include the interpreter's main loop and extended
-instruction handler, but do not isolate one allocation site. The next gate is
-to account for live and temporary byte ownership in those paths, then replace
-cumulative temporary allocation with bounded reclamation while preserving
-immutable guest values and the arena limit. Recheck both probes on Windows and
-Debian before adopting the typed scanner. The existing component fixtures use
+typed probe still exhausts the unchanged arena. A bounded
+[Debian arena sample](../Evidence/2026-09-27-Typed-Parser-Arena-Sample.json)
+reproduces exit code 66 in 10.4 seconds. The largest observed writes in both
+sampled windows map to local-frame materialization, including after the arena
+cursor passes 127 million bytes (about 122 MiB). These windows do not measure
+live bytes or prove a global allocation ranking. The next gate is to account
+for descriptor
+ownership across local frames, calls and returns, then reclaim dead temporary
+bytes under the same arena limit and immutable-value semantics. Recheck both
+probes on Windows and Debian before adopting the typed scanner. The existing
+component fixtures use
 the current collection signature, valid typed backings and minor-42
 expectations.
 The maintained scanner and fixture remain unchanged. Preserve lock
