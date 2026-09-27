@@ -210,9 +210,10 @@ arena and an 8 KiB name stride on both hosts. The runner's declared capability
 set and WVB verifier remain unchanged. Profile 6 includes additional
 capability-free service helpers, so this selection does not grant a new host
 capability. It is a development candidate, not a replacement for the pinned
-profile-5 products in the table above. The typed Package-Consistency probe
-completed with result `42` after 1,180,385 guest instructions on Windows and
-Debian using the source-built profile-6 runner. Full consumer integration,
+profile-5 products in the table above. An in-progress typed
+Package-Consistency probe completed with result `42` after more than one
+million guest instructions on Windows and Debian using the source-built
+profile-6 runner. Full consumer integration,
 candidate promotion, and paired-host reconstruction remain separate gates.
 
 The current source-built runner accepts the ordinary portable WVB 1.11-through-
