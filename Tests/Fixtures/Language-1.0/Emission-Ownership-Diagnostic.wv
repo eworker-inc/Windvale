@@ -14,10 +14,9 @@ fn Observe() -> i32 {
     }
 }
 
-// Repeated constructors amplify the existing bounded ownership scan.
-// The records are acyclic and Copy-only; emission currently rejects this
-// reduced Package-Lock pattern. Declaration order deliberately differs from
-// canonical name order so diagnostics must resolve type indices correctly.
+// Repeated construction must not multiply the ownership dependency graph.
+// This acyclic Copy-only graph reproduces the former Package-Lock rejection.
+// Declaration order deliberately differs from canonical name order.
 record Span { Value: i32; }
 record Lockˉstate { First: Span; Second: Span; }
 record Lockˉstep { State: Lockˉstate; }
@@ -94,4 +93,9 @@ fn Spanˉvalue(Value: i32) -> Span {
     return Item0;
 }
 
-export fn Main() -> i32 { return Observe(); }
+export fn Main() -> i32 {
+    let Value: Span = Spanˉvalue(Observe());
+    let State: Lockˉstate = Stateˉvalue(Value);
+    let Step: Lockˉstep = Stepˉfailure(State);
+    return Step.State.First.Value;
+}

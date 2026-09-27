@@ -179,10 +179,11 @@ branch. The maintained reproducer intentionally separates canonical type order
 from declaration order. It revealed a wrong type name in the first diagnostic;
 the emitter now uses the validated reverse symbol lookup.
 
-The original Package-Lock rejection is an exhausted ownership-analysis bound,
-not an unmapped nominal target. Repeated constructors trigger conservative
-rejection even for acyclic Copy-only records. Diagnostics identify that rule;
-they do not fix the underlying scan or invent an expression location. The
+The original Package-Lock rejection was an exhausted ownership-analysis bound,
+not an unmapped nominal target. Repeated constructors triggered conservative
+rejection even for acyclic Copy-only records. Diagnostics identified that rule;
+the later [ownership scan fix](../Evidence/2026-09-26-Ownership-Scan.json) removes
+duplicate child types from the recursive work while retaining its bounds. The
 [corrected evidence](../Evidence/2026-09-26-Emission-Diagnostic-Correction.json)
 supersedes the initial inferred cause while retaining the original run history.
 The maintained source preparation and seven cases take 2.5 seconds on Windows
@@ -281,8 +282,9 @@ diagnostics and preserved output match. Emission command time remains close:
 Debian. These include process startup and are not a throughput-speedup claim.
 Candidate construction and parallel packaging took about 8 minutes 13 seconds.
 The emitter WVB grows by 1,012 bytes; process peak memory was not measured.
-The independent ownership-analysis bound remains a product issue in the
-completion plan. CI preparation and reuse remain open under item 2.
+The later ownership scan fix closes the repeated-constructor rejection; consumer
+integration remains in the completion plan. CI preparation and reuse remain open
+under item 2.
 
 ## Earlier baseline
 

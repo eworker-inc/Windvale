@@ -1644,8 +1644,12 @@ including inactive variant arms, rather than only constructor operands. An
 unused generic Vector argument alone does not make a record owned. Traversal
 has a depth bound of 64 and an allocated child budget of 8,192; unresolved or
 over-budget proofs reject instead of selecting a copying load. Non-generic
-aggregates and generic arrays retain their existing constructor-evidence path;
-this correction does not establish arbitrary nominal ownership support.
+aggregates and generic arrays use constructor evidence from every matching
+operation, deduplicating child shape identities before dividing that budget.
+Repeated construction of the same types therefore does not multiply recursive
+ownership work. Each pending child list holds at most 8,191 four-byte shape
+identities; depth, cycle and unresolved-proof rejection remain unchanged. This
+does not establish arbitrary nominal ownership support.
 Consuming Option/Result Vector extraction, arbitrary projected forwarding, native
 minor-40 lowering, browser execution, and installed promotion remain separate
 work. The raw immutable bridge above does not grant ownership of the payload.

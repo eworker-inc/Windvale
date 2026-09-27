@@ -66,12 +66,12 @@ if (process.argv[2] === '--emission-equivalence') {
     process.exit(0);
 }
 if (process.argv[2] === '--emission-diagnostics') {
-    if (process.argv.length === 7) {
+    if (process.argv.length === 7 || process.argv.length === 8) {
         await Verifyˉemissionˉsources(...process.argv.slice(3));
     } else if (process.argv.length === 5) {
         await Verifyˉemissionˉdiagnostics(process.argv[3], process.argv[4]);
     } else {
-        Reject('Usage: --emission-diagnostics <admitter> <authenticator> <analyzer> <emitter> ' +
+        Reject('Usage: --emission-diagnostics <admitter> <authenticator> <analyzer> <emitter> [runner] ' +
             'or --emission-diagnostics <emitter> <snapshot-directory>');
     }
     process.exit(0);
@@ -349,12 +349,13 @@ async function Verifyˉemissionˉequivalence(Admitter, Authenticator, Analyzer, 
     }
 }
 
-async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emitter) {
+async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emitter, Runner = null) {
     const { Runˉdevelopmentˉcommand } = await import('./Development-Command-Core.mjs');
     const Deadline = Date.now() + 180_000;
     for (const Tool of [Admitter, Authenticator, Analyzer, Emitter]) {
         await Fileˉevidence(path.resolve(Tool), 134_217_728, 'prepared diagnostic tool');
     }
+    if (Runner !== null) await Fileˉevidence(path.resolve(Runner), 134_217_728, 'prepared diagnostic runner');
     const Temporaryˉroot = realpathSync.native(os.tmpdir());
     const Work = await mkdtemp(path.join(Temporaryˉroot, TEMPORARY_PREFIX));
     const Profile = path.join(REPOSITORY_ROOT, 'Documents', 'Project',
@@ -369,9 +370,30 @@ async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emit
         }
     };
     try {
+        // Exceed the unchanged recursive child budget with distinct dependencies
+        // in a Fibonacci graph. Reverse declarations exercise canonical lookup.
+        const Boundˉsource = path.join(Work, 'Ownership-Bound.wv');
+        const Name = Index => `Layer${String(Index).padStart(2, '0')}`;
+        const Lines = ['#!wv/1 en@1', 'module Ownershipˉbound;', 'profile core;',
+            'platform linux, windows, windvale;', 'authority application;',
+            'import Foundationˉoption as Option;'];
+        for (let Index = 15; Index >= 0; Index -= 1) {
+            Lines.push(`record ${Name(Index)} { Value: ${Index === 0 ? 'i32' : Name(Index - 1)};${Index < 2 ? '' : ` Other: ${Name(Index - 2)};`} }`);
+        }
+        Lines.push('export fn Main() -> i32 {');
+        for (let Index = 0; Index <= 15; Index += 1) {
+            Lines.push(`    let Item${Index}: ${Name(Index)} = ${Name(Index)}(${Index === 0 ? '42' : `Item${Index - 1}`}${Index < 2 ? '' : `, Item${Index - 2}`});`);
+        }
+        Lines.push('    let Owner: Option.Option<i32> = Option.Option.Present<i32> { Value: 42 };',
+            '    match Option.Borrow(borrow Owner) {',
+            '        case Option.Option.Present { Value: Value } { return Value; }',
+            '        case Option.Option.Absent { return 0; }', '    }', '}');
+        await writeFile(Boundˉsource, Lines.join('\n') + '\n');
         for (const [Prefix, Sources] of [
             ['Positive', [path.join(Fixtures, 'Minimum-Program.wv')]],
             ['Negative', [path.join(Fixtures, 'Emission-Ownership-Diagnostic.wv'),
+                path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', 'Values', 'Option.wv')]],
+            ['Bound', [Boundˉsource,
                 path.join(REPOSITORY_ROOT, 'Libraries', 'Foundation', 'Values', 'Option.wv')]],
         ]) {
             console.log(`compiler split diagnostics step=prepare case=${Prefix}`);
@@ -394,8 +416,24 @@ async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emit
         await Verifyˉemissionˉdiagnostics(Emitter, Work, Deadline, {
             bytes: 221,
             sha256: '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae',
-        }, (await readFile(path.join(Fixtures, 'Emission-Ownership-Diagnostic.wv'), 'utf8'))
-            .split('fn Stepˉfailure(')[0].split('\n').length);
+        }, Runner);
+        const Output = path.join(Work, 'Bound.wvb');
+        const Sentinel = Buffer.from('preserve rejected bound output\n');
+        await writeFile(Output, Sentinel);
+        const Result = await Runˉdevelopmentˉcommand(path.resolve(Emitter),
+            [...['Source.wvss', 'Analysis.wvam', 'Bindings.wvlb', 'Wir.wvir']
+                .map(Name => path.join(Work, `Bound-${Name}`)), Output],
+            Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || Result.Output !== '' ||
+            !Result.Error.includes('wvb-status=Unsupportedˉshape ') ||
+            !Result.Error.includes('function-name="Main" ') ||
+            !Result.Error.includes('declaration-line=23 ') ||
+            !Result.Error.includes('type-name="Layer13" ') ||
+            !Result.Error.trimEnd().endsWith('rule=operation-result-ownership-unknown') ||
+            !(await readFile(Output)).equals(Sentinel)) {
+            Reject(`Ownership bound rejection lost its diagnostic or output: ${Result.Output}${Result.Error}`);
+        }
+        console.log('compiler split diagnostics case=ownership-bound status=Passed output=Preserved');
     } finally {
         if (!Sameˉpath(path.dirname(path.resolve(Work)), Temporaryˉroot) ||
             !path.basename(Work).startsWith(TEMPORARY_PREFIX)) {
@@ -406,7 +444,7 @@ async function Verifyˉemissionˉsources(Admitter, Authenticator, Analyzer, Emit
 }
 
 async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath,
-    Deadline = Date.now() + 180_000, Baselineˉevidence = null, Declarationˉline = null) {
+    Deadline = Date.now() + 180_000, Baselineˉevidence = null, Runnerˉpath = null) {
     const { Runˉdevelopmentˉcommand } = await import('./Development-Command-Core.mjs');
     const Emitter = path.resolve(Emitterˉpath);
     const Snapshots = path.resolve(Snapshotˉpath);
@@ -449,7 +487,7 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath,
         Cases += 1;
         console.log('compiler split diagnostics item=1/7 case=unchanged-success status=Passed');
         const Sentinel = Buffer.from('preserve rejected output\n');
-        const Runˉrejection = async (Label, Arguments, Detailed, Providerˉlimit = false) => {
+        const Runˉrejection = async (Label, Arguments, Providerˉlimit = false) => {
             const Output = path.join(Work, `${Label}.wvb`);
             await writeFile(Output, Sentinel, { flag: 'wx' });
             const Result = await Runˉdevelopmentˉcommand(
@@ -467,22 +505,6 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath,
                 // The hosted file provider rejects over 4 MiB before the
                 // emitter receives bytes; no source context is available.
                 if (Diagnostic !== '') Reject('Oversized input reached emission diagnostics.');
-            } else if (Detailed) {
-                if (!Diagnostic.includes('wvb-status=Unsupportedˉshape ') ||
-                    !Diagnostic.includes('diagnostic-scope=function ') ||
-                    !/function-name="[^"\n]*Stepˉfailure"/u.test(Diagnostic) ||
-                    !/declaration-line=[1-9][0-9]* /u.test(Diagnostic) ||
-                    !Diagnostic.includes('operation-kind=17 ') ||
-                    !/type-name="[^"\n]*Lockˉstep"/u.test(Diagnostic) ||
-                    !Diagnostic.endsWith('rule=operation-result-ownership-unknown\n')) {
-                    Reject(`The ownership failure lacks actionable context: ${Diagnostic}`);
-                }
-                if (Declarationˉline !== null &&
-                    (!Diagnostic.includes('module-index=0 ') ||
-                     !Diagnostic.includes(`declaration-line=${Declarationˉline} `))) {
-                    Reject(`The failure identifies the wrong source declaration: ${Diagnostic}`);
-                }
-                process.stdout.write(Diagnostic);
             } else if (!Diagnostic.startsWith('source emission status=Invalidˉanalysis ') ||
                 Diagnostic.includes('function-name=')) {
                 Reject(`The ${Label} failure exposed context from unvalidated evidence.`);
@@ -490,17 +512,37 @@ async function Verifyˉemissionˉdiagnostics(Emitterˉpath, Snapshotˉpath,
             Cases += 1;
             console.log(`compiler split diagnostics item=${Cases}/7 case=${Label} status=Passed`);
         };
-        await Runˉrejection('ownership', Inputs.Negative, true);
+        const Ownership = path.join(Work, 'Ownership.wvb');
+        let Ownershipˉbytes = null;
+        for (let Attempt = 0; Attempt < 2; Attempt += 1) {
+            const Result = await Runˉdevelopmentˉcommand(Emitter,
+                [...Inputs.Negative, Ownership], Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 0 || Result.Error !== '' ||
+                !Result.Output.startsWith('source emission status=Published ')) {
+                Reject(`Repeated Copy-record construction failed: ${Result.Output}${Result.Error}`);
+            }
+            const Bytes = await readFile(Ownership);
+            if (Ownershipˉbytes !== null && !Bytes.equals(Ownershipˉbytes)) Reject('Ownership emission is not deterministic.');
+            Ownershipˉbytes = Bytes;
+        }
+        if (Runnerˉpath !== null) {
+            const Result = await Runˉdevelopmentˉcommand(path.resolve(Runnerˉpath), [Ownership], Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 0 || Result.Error !== '' || Result.Output.trim() !== 'Result: 42') {
+                Reject(`Repeated Copy-record execution failed: ${Result.Output}${Result.Error}`);
+            }
+        }
+        Cases += 1;
+        console.log(`compiler split diagnostics item=2/7 case=ownership-construction status=Passed deterministic=true sha256=${createHash('sha256').update(Ownershipˉbytes).digest('hex')}`);
         for (let Index = 0; Index < Names.length; Index += 1) {
             const Arguments = [...Inputs.Negative];
             const Truncated = path.join(Work, `Truncated-${Names[Index]}`);
             await writeFile(Truncated, (await readFile(Arguments[Index])).subarray(0, 3));
             Arguments[Index] = Truncated;
-            await Runˉrejection(`truncated-${Index}`, Arguments, false);
+            await Runˉrejection(`truncated-${Index}`, Arguments);
         }
         const Oversized = path.join(Work, 'Oversized.wvir');
         await writeFile(Oversized, Buffer.alloc(MAXIMUM_OUTPUT_BYTES + 1));
-        await Runˉrejection('oversized', [...Inputs.Negative.slice(0, 3), Oversized], false, true);
+        await Runˉrejection('oversized', [...Inputs.Negative.slice(0, 3), Oversized], true);
         console.log(`compiler split diagnostics status=Passed cases=${Cases} successful-bytes=Unchanged`);
     } finally {
         const Resolved = path.resolve(Work);

@@ -1,0 +1,656 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-ownership-scan",
+  "date": "2026-09-26",
+  "subject": "Bounded ownership analysis deduplicates repeated constructor child shapes",
+  "claim": "Repeated construction of acyclic Copy-only records no longer multiplies recursive ownership work. The maintained reproducer executes with result 42 on Windows and Debian and emits identical deterministic bytes. Eight maintained cases, seven original snapshot cases, and 32 reference/candidate comparisons pass per host. The original Package-Lock parser-state snapshot emits successfully; the full typed consumer remains blocked separately.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 928f772e; changed implementation and verifier source hashes below identify the tested state. One Windows-constructed emitter WVB was packaged and executed on Windows and real Debian."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Compile",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"Tools/Native/Build-Cached-Split-Project-Wvb.mjs\" \"Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb\" \"Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Analyzer.identity\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local\\\\Windvale\\\\Native-Tool-Cache\\\\current-split-compiler-v2\\\\win32-x64\\\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Emitter.exe\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local\\\\Windvale\\\\Native-Tool-Cache\\\\current-split-compiler-v2\\\\win32-x64\\\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Emitter.identity\" \"--authenticated-project4\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local\\\\Windvale\\\\Native-Tool-Cache\\\\current-split-compiler-v2\\\\win32-x64\\\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Admitter.exe\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local\\\\Windvale\\\\Native-Tool-Cache\\\\current-split-compiler-v2\\\\win32-x64\\\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Authenticator.exe\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local\\\\Windvale\\\\Native-Tool-Cache\\\\current-split-compiler-v2\\\\win32-x64\\\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Reader.exe\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local\\\\Windvale\\\\Native-Tool-Cache\\\\current-split-compiler-v2\\\\win32-x64\\\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Binder.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 147675,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343349,
+          "sha256": "567bfaeb8f996c2d578e95b475c45aeac5fe245b2351bf6d1c08461c075d4a2e"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260354,
+          "sha256": "7ca57402e1869e502b575f8f35658368ae8ca05f7379dcfe6b4c0239b91e8466"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Emission-Ownership-Diagnostic.wv",
+          "size": 3968,
+          "sha256": "c8fa29d78297abe812c8d26b54da508966f2d5b856bd23f2a6b0aa92af7ef5eb"
+        },
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 45647,
+          "sha256": "2fe891d2368d16b5d1c4f098231639afb6ad12babeb478fb6da1ef9d9133a121"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 2289,
+          "sha256": "fc317aade4ab0bf7ce7be8930904e090c5d4786654609fefe1c322e6dd8a5c57"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb",
+          "size": 1643308,
+          "sha256": "e06b4da805cc59753dcb5144770acb56e72010b8429dbcc840c400572e253dc1"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Compact-Analyzer.exe",
+          "size": 49886720,
+          "sha256": "99add4e720704d5a43eee752dcf592e27da3fafd7fbfeb1d71055d9392438f13"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Analyzer.identity",
+          "size": 177,
+          "sha256": "12d6bf26d9fcfc96cecb805c819c960468f7f0c72e9e78c9615f2e3e11a2a4a3"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Emitter.exe",
+          "size": 33406976,
+          "sha256": "99046a8b89535026d8428d0616077c96797b82bde99fa3ad33ddb77ee85f1c99"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Emitter.identity",
+          "size": 183,
+          "sha256": "b91fe852a2958f3c1f32568ec62bdf662d4dfa0ab1917b124fac39ab994c5131"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Admitter.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Authenticator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Reader.exe",
+          "size": 543232,
+          "sha256": "4542bef870445ef93d07d438444ab891107895095d4e38d3d75ddc3e03152ecf"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local\\Windvale\\Native-Tool-Cache\\current-split-compiler-v2\\win32-x64\\1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Binder.exe",
+          "size": 18405888,
+          "sha256": "c3c871cc87b98558712f30c31289b168b22bc8711f787823f5e09154838beb54"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Compile.log",
+          "size": 1757,
+          "sha256": "49645de5383dd83586ef892a41299d740b2684dc2816f1984598fc9085c84c10"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb",
+          "size": 1643308,
+          "sha256": "e06b4da805cc59753dcb5144770acb56e72010b8429dbcc840c400572e253dc1"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe",
+          "size": 29014016,
+          "sha256": "178f9302e72ae5b097b496474eb440661fb619b428806e8381a3bd09b667ccd3"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf",
+          "size": 29016064,
+          "sha256": "5f0ad6fc6b62b68d65ff0d13f9086334e8e6f50401ffbfcad41a30de5cd181b3"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Limits",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\" \"--inspect-function-limits\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 146,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343349,
+          "sha256": "567bfaeb8f996c2d578e95b475c45aeac5fe245b2351bf6d1c08461c075d4a2e"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260354,
+          "sha256": "7ca57402e1869e502b575f8f35658368ae8ca05f7379dcfe6b4c0239b91e8466"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Emission-Ownership-Diagnostic.wv",
+          "size": 3968,
+          "sha256": "c8fa29d78297abe812c8d26b54da508966f2d5b856bd23f2a6b0aa92af7ef5eb"
+        },
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 244194,
+          "sha256": "e607d12a8605abbd293def4f798eae2a1627a5150202dbfab2a783ad53358ca7"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb",
+          "size": 1643308,
+          "sha256": "e06b4da805cc59753dcb5144770acb56e72010b8429dbcc840c400572e253dc1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Limits.log",
+          "size": 237,
+          "sha256": "1448e2cb91246f69f08419dbc9dddee0f3f885fbfa83346b9864391b787b9392"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Windows-Package",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\" \"--deadline-ms\" \"1790472203967\" \"5\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 277185,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343349,
+          "sha256": "567bfaeb8f996c2d578e95b475c45aeac5fe245b2351bf6d1c08461c075d4a2e"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260354,
+          "sha256": "7ca57402e1869e502b575f8f35658368ae8ca05f7379dcfe6b4c0239b91e8466"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Emission-Ownership-Diagnostic.wv",
+          "size": 3968,
+          "sha256": "c8fa29d78297abe812c8d26b54da508966f2d5b856bd23f2a6b0aa92af7ef5eb"
+        },
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb",
+          "size": 1643308,
+          "sha256": "e06b4da805cc59753dcb5144770acb56e72010b8429dbcc840c400572e253dc1"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe",
+          "size": 29014016,
+          "sha256": "178f9302e72ae5b097b496474eb440661fb619b428806e8381a3bd09b667ccd3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Windows-Package.log",
+          "size": 1645,
+          "sha256": "3447e98d7a4f8b347d06bdaed939640a99fb78ab049518413b606e9d0de0c203"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; WSL",
+      "target": "Debian-Package",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "\"wsl\" \"-d\" \"Debian\" \"--cd\" \"/mnt/d/windvale/dev01\" \"--\" \"node\" \"Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs\" \"--deadline-ms\" \"1790472203967\" \"5\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 290996,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 343349,
+          "sha256": "567bfaeb8f996c2d578e95b475c45aeac5fe245b2351bf6d1c08461c075d4a2e"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 260354,
+          "sha256": "7ca57402e1869e502b575f8f35658368ae8ca05f7379dcfe6b4c0239b91e8466"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Emission-Ownership-Diagnostic.wv",
+          "size": 3968,
+          "sha256": "c8fa29d78297abe812c8d26b54da508966f2d5b856bd23f2a6b0aa92af7ef5eb"
+        },
+        {
+          "path": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+          "size": 43052,
+          "sha256": "d0cb76f3e113a2bf2bc731445507653d9ad0977716aa4df81a83ae40d98e02be"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.wvb",
+          "size": 1643308,
+          "sha256": "e06b4da805cc59753dcb5144770acb56e72010b8429dbcc840c400572e253dc1"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf",
+          "size": 29016064,
+          "sha256": "5f0ad6fc6b62b68d65ff0d13f9086334e8e6f50401ffbfcad41a30de5cd181b3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Debian-Package.log",
+          "size": 1641,
+          "sha256": "ffe6ff01919f84c11e690d084c0b20f2f89803d3bcb24988da2edc65a9a3d1c2"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Regression",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"Tools/Native/Test-Compiler-Split-Development.mjs\" \"--emission-diagnostics\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe\" \"Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe\" \"Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 5278,
+      "inputs": [
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe",
+          "size": 29014016,
+          "sha256": "178f9302e72ae5b097b496474eb440661fb619b428806e8381a3bd09b667ccd3"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.exe",
+          "size": 12620800,
+          "sha256": "3791548a73dd4db3a9a155c1dbd595c1ad784e97608c97196905c672aaa35e51"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Windows-Regression.log",
+          "size": 889,
+          "sha256": "59fe2ff79f91546be80f5066252fae81d4969eaf830eb95bf3e4c1bd787f4656"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Original-Snapshots",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"Tools/Native/Test-Compiler-Split-Development.mjs\" \"--emission-diagnostics\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe\" \"Artifacts/Work/Simplification-2026-09-26\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 8963,
+      "inputs": [
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe",
+          "size": 29014016,
+          "sha256": "178f9302e72ae5b097b496474eb440661fb619b428806e8381a3bd09b667ccd3"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Source.wvss",
+          "size": 60447,
+          "sha256": "80051e6ded14d588eec198acc5bdf7dd7f2fd06f734eab76f0e4667d0a0e7b7f"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Analysis.wvam",
+          "size": 104,
+          "sha256": "4384f543c6303b7ad0f6130172746ebbaf8e4d8feb5797bd7d6001cfa8f9ef06"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Bindings.wvlb",
+          "size": 11020,
+          "sha256": "d88838c5649364339c60445455acddbc465f1c8ba0def2ad3ae279a835e41fdf"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Wir.wvir",
+          "size": 133560,
+          "sha256": "e594486665ba2a1b692eb7efcb2c31defcf9ea87557dfe0ff1e0034e2b6d83bc"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Source.wvss",
+          "size": 64090,
+          "sha256": "72b2440c2b34cfc6cf81ce0dc842a3d8064263eb33779a1a76c4e09578bac451"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Analysis.wvam",
+          "size": 104,
+          "sha256": "9bdae826705435cd493e0e7510de60bec5dc9aaa4b66157e2510d222864f8d59"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Bindings.wvlb",
+          "size": 11424,
+          "sha256": "f7850311a007ce7a57cb01713ec2b5f3f04400c11efb4e6f6a6eb6479d1cc3c9"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Negative-Wir.wvir",
+          "size": 141772,
+          "sha256": "7ce0fd5d8ee6f7e9cc701e280256c3fd0b717cc399ad838f5b898f38292f4994"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Positive-Baseline.wvb",
+          "size": 57977,
+          "sha256": "682a2677419c12a37c47159345a4d5099c746e1ccd302a6686a9deeb265982ef"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Windows-Original-Snapshots.log",
+          "size": 651,
+          "sha256": "221bc08fe8d26a4ba32102b69f629f12521108dbc17e1ba66bc312dcbe4fc3d5"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Equivalence",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"Tools/Native/Test-Compiler-Split-Development.mjs\" \"--emission-equivalence\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe\" \"Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe\" \"Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe\" \"C:\\\\Users\\\\Dev\\\\AppData\\\\Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Binder.exe\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 19630,
+      "inputs": [
+        {
+          "path": "C:\\Program Files\\nodejs\\node.exe",
+          "size": 92534088,
+          "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de"
+        },
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.exe",
+          "size": 13605888,
+          "sha256": "aa979b429b1d3d63cb2341bec6c64c2bb7e805ba2d7a728a22fbc1ca4d4cccc4"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.exe",
+          "size": 54966272,
+          "sha256": "fbd5517eac7e3acd0cf4374ed7cc4050469f78ec5cbfcf22cfc985e342eef1c7"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.exe",
+          "size": 33406976,
+          "sha256": "a5f169497d35465bc7e31f2d62f7538c84f74ac0d5177e316c274c33b195f7b2"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.exe",
+          "size": 29014016,
+          "sha256": "178f9302e72ae5b097b496474eb440661fb619b428806e8381a3bd09b667ccd3"
+        },
+        {
+          "path": "C:\\Users\\Dev\\AppData\\Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Binder.exe",
+          "size": 18405888,
+          "sha256": "c3c871cc87b98558712f30c31289b168b22bc8711f787823f5e09154838beb54"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Windows-Equivalence.log",
+          "size": 6833,
+          "sha256": "5a6e1d963b6d52feb24d4e7b34275f67131215642c851ad946d20bb8691e0006"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; WSL; Node v20.19.2",
+      "target": "Regression",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "\"wsl\" \"-d\" \"Debian\" \"--cd\" \"/mnt/d/windvale/dev01\" \"--\" \"node\" \"Tools/Native/Test-Compiler-Split-Development.mjs\" \"--emission-diagnostics\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf\" \"Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf\" \"Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 13616,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf",
+          "size": 29016064,
+          "sha256": "5f0ad6fc6b62b68d65ff0d13f9086334e8e6f50401ffbfcad41a30de5cd181b3"
+        },
+        {
+          "path": "Artifacts/Work/Budget-Helpers-2026-09-25/Runner-Stabilized.elf",
+          "size": 12619776,
+          "sha256": "59747bc0d12f353536263308a94ed5525575996e7fc4b54a32845095d1829224"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Debian-Regression.log",
+          "size": 889,
+          "sha256": "59fe2ff79f91546be80f5066252fae81d4969eaf830eb95bf3e4c1bd787f4656"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; WSL; Node v20.19.2",
+      "target": "Original-Snapshots",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "\"wsl\" \"-d\" \"Debian\" \"--cd\" \"/mnt/d/windvale/dev01\" \"--\" \"node\" \"Tools/Native/Test-Compiler-Split-Development.mjs\" \"--emission-diagnostics\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf\" \"Artifacts/Work/Simplification-2026-09-26\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 11917,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf",
+          "size": 29016064,
+          "sha256": "5f0ad6fc6b62b68d65ff0d13f9086334e8e6f50401ffbfcad41a30de5cd181b3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Debian-Original-Snapshots.log",
+          "size": 651,
+          "sha256": "221bc08fe8d26a4ba32102b69f629f12521108dbc17e1ba66bc312dcbe4fc3d5"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; WSL; Node v20.19.2",
+      "target": "Equivalence",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "\"wsl\" \"-d\" \"Debian\" \"--cd\" \"/mnt/d/windvale/dev01\" \"--\" \"node\" \"Tools/Native/Test-Compiler-Split-Development.mjs\" \"--emission-equivalence\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf\" \"Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf\" \"Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf\" \"Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf\" \"Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf\" \"Artifacts/Work/Simplification-2026-09-26/Binder-Current.elf\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 53952,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Compiler-Split-Development.mjs",
+          "size": 35967,
+          "sha256": "5e5ccadc9aa7e01daab7b889470c65231262dfcd375d2b3e8f0dd99d4c33e5bc"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Admitter-Baseline.elf",
+          "size": 13606912,
+          "sha256": "5f857e24eaee305b6cbd897ea71a365b2b9b2ccd93dc7a98544871f7bb684ab3"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Vector-2026-09-22/Authenticator-Baseline.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        },
+        {
+          "path": "Artifacts/Work/Record-Collections-2026-09-25/Analyzer-Collections.elf",
+          "size": 54968320,
+          "sha256": "98d8f5ed704f96cd197564053c72e254220203615d5c023db3a1020cfc6d3271"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Emitter-Refactored-Validation.elf",
+          "size": 33406976,
+          "sha256": "b3c3bfd13f7b43f2a280f2453c7484903ebb66e7eeecae2a80cb510aa1f482a8"
+        },
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Emitter.elf",
+          "size": 29016064,
+          "sha256": "5f0ad6fc6b62b68d65ff0d13f9086334e8e6f50401ffbfcad41a30de5cd181b3"
+        },
+        {
+          "path": "Artifacts/Work/Simplification-2026-09-26/Binder-Current.elf",
+          "size": 18407424,
+          "sha256": "3426c136cf1d05dae3c3b48a113410b6b078d4cd82f8e9fcad91522f8a17c3d4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Ownership-Scan-2026-09-26/Debian-Equivalence.log",
+          "size": 6835,
+          "sha256": "02255bc51cd89af913d301605d07134c4fa5f97e636b41106e41f6db1f77ea31"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0",
+      "target": "Remaining typed Package-Lock consumer blocker; not a passing consumer gate",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "node Artifacts/Work/Package-Lock-2026-09-26/Probe-Ownership-Fix.mjs Artifacts/Work/Package-Lock-2026-09-26/Typed-Streaming-Test.wv Artifacts/Work/Package-Lock-2026-09-26/Typed-Streaming-Candidate.wv",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Probe-Ownership-Fix.mjs",
+          "size": 1679,
+          "sha256": "8dfdf8015146aba4a7d3f3487d363a872962093c89e15d94081eec04f15c28dd"
+        },
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Typed-Streaming-Test.wv",
+          "size": 14114,
+          "sha256": "3382c619efdf33a2a8839fc4ee849e95079053a9386ec331ccba61fe00b51c54"
+        },
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Typed-Streaming-Candidate.wv",
+          "size": 40599,
+          "sha256": "12a552bbe008b2b058d05dbabe0c8c726f38941ad737d2ab22e01b33f427d4d2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Windows-Ownership-Fix-Compile.log",
+          "size": 682,
+          "sha256": "638e6e53527db7070708c7fc6d75d0dd3a2de0fff4171ec1e203a93981dce7ed"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Focused compiler correction, not completion of typed Package-Lock, installed promotion, independent bootstrap reproduction or full 1.0 qualification. The failed typed-consumer probe is recorded explicitly; no execution or cleanup claim follows from it.",
+    "The saved typed consumer reaches Unsupported-shape at function 17, operation 3280, with diagnostic-scope=unavailable. Its cause is not inferred from the earlier ownership failure. Source analysis is cached under a809d3a6dd3964a54a9d48b99a0c852bff178432783cea201b1c0b62fdb5925e.",
+    "Depth 64, recursive budget 8192, cycle checks and fail-closed behavior remain unchanged. Every constructor remains inspected; only duplicate child shape identities are removed before recursion. Each child list is bounded to 8191 four-byte identities. This is not general graph memoization or an arbitrary linear-time guarantee.",
+    "The bounded negative fixture uses a 16-type Fibonacci dependency graph and checks the canonical Layer13 diagnostic at Main declaration line 23 plus pre-existing output preservation. It replaces the previous diagnostic expectation on a now-valid repeated-record fixture.",
+    "The source-mode runner argument is optional; these runs explicitly supplied Runner-Stabilized on both hosts. Snapshot mode verifies emission and determinism without executing a consumer whose environment is unspecified.",
+    "Compiler construction used retained prepared tools. Compile took 147675 ms; packaging took 277185 ms on Windows and 290996 ms on Debian in parallel, within one 600000 ms deadline. Including identity and function checks, the selected construction phases total 438972 ms on the critical path. Peak working-set memory was not measured.",
+    "Final focused verification had a 180000 ms maximum. The Debian critical path was 79485 ms, Windows 33871 ms. Test development before that final run corrected an obsolete runner selection and negative fixture setup; these times describe the final passing plan, not total editing time.",
+    "The 32-case command totals were reference/candidate 6837/4149 ms on Windows and 17232/13612 ms on Debian. Host tests overlapped; these single measurements include process startup and are not a general compiler speedup claim.",
+    "The changed-file plan selected nine reconstruction and language owners with a 3435-second expected cold duration. That broad plan was not run: the focused supplied-product owner exercises the changed classification, bounded rejection, owned payload emission and byte compatibility without reconstructing unrelated tools. No runtime, admission, lowerer or bytecode-format code changed.",
+    "Generated artifact readers passed all 14 freshness checks; function inspection passed 798 functions with maximum 1504 slots against 2048. Retained candidate binaries and snapshots remain ignored local artifacts, not repository distributions."
+  ],
+  "related": [
+    "Compiler/Windvale/Source-Wvb-Core.wv",
+    "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+    "Tools/Native/Test-Compiler-Split-Development.mjs",
+    "Tests/Fixtures/Language-1.0/Emission-Ownership-Diagnostic.wv",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-26-Emission-Diagnostic-Correction.json"
+  ]
+}

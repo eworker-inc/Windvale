@@ -3507,19 +3507,7 @@ let Operationˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
 let Temporaryˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
 let Operandˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
 var Operation: u32 = 0u32;
-var Children: u32 = 0u32;
-while Operation < Operations {
-let Candidate: u32 = Operationˉoffset + Operation * 28u32;
-let Candidateˉkind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Candidate + 4u32);
-if Bytesˉreadˉu32ˉlittle(Wir, Candidate + 8u32) == Shape &&
-(Candidateˉkind == 17u32 || Candidateˉkind == 65u32 || Candidateˉkind == 165u32) {
-let Candidateˉchildren: u32 = Bytesˉreadˉu16ˉlittle(Wir, Candidate + 6u32);
-if Candidateˉchildren > Budget - 1u32 - Children { return 2u32; }
-Children = Children + Candidateˉchildren;
-}
-Operation = Operation + 1u32;
-}
-Operation = 0u32;
+var Childˉshapes: bytes = Compilerˉsourceˉwvbˉempty(Wir);
 while Operation < Operations {
 let Current: u32 = Operationˉoffset + Operation * 28u32;
 let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Current + 4u32);
@@ -3564,16 +3552,24 @@ Wir,
 Temporaryˉoffset +
 (Firstˉtemporary + Temporary) * 4u32
 );
-let Constructedˉchild: u32 = Compilerˉsourceˉwvbˉshapeˉcontainsˉownedˉvectorˉat(
-Wir, Operandˉshape, Orders,
-Nextˉpath, Depth + 1u32,
-(Budget - 1u32) / Children
-);
-if Constructedˉchild != 0u32 { return Constructedˉchild; }
+if !Compilerˉsourceˉwvbˉshapeˉpathˉcontains(Childˉshapes, Operandˉshape) {
+if Bytesˉlength(Childˉshapes) / 4u32 >= Budget - 1u32 { return 2u32; }
+Childˉshapes = Bytesˉconcat(Childˉshapes, Bytesˉfromˉu32ˉlittle(Operandˉshape));
+}
 Operand = Operand + 1u32;
 }
 }
 Operation = Operation + 1u32;
+}
+let Children: u32 = Bytesˉlength(Childˉshapes) / 4u32;
+var Childˉindex: u32 = 0u32;
+while Childˉindex < Children {
+let Constructedˉchild: u32 = Compilerˉsourceˉwvbˉshapeˉcontainsˉownedˉvectorˉat(
+Wir, Bytesˉreadˉu32ˉlittle(Childˉshapes, Childˉindex * 4u32),
+Orders, Nextˉpath, Depth + 1u32, (Budget - 1u32) / Children
+);
+if Constructedˉchild != 0u32 { return Constructedˉchild; }
+Childˉindex = Childˉindex + 1u32;
 }
 return 0u32;
 }
