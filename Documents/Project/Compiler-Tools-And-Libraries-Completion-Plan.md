@@ -224,11 +224,16 @@ helpers, outside the current owned/immutable helper boundary; replace that
 harness flow with explicit owned child budgets rather than inferring new support.
 
 Resolve execution resource use before changing the maintained package API.
-The local interpreter probes reach the eight-call-depth limit or exhaust the
-hosted runner's 128 MiB byte arena. A diagnostic application of existing
-temporary-slot reuse reduced one parser frame from 872 to 220 slots but did not
-remove arena exhaustion; no allocation-policy or resource-limit change was
-adopted. The maintained scanner and fixture remain unchanged. Preserve lock
+The saved parser probes reach the eight-call-depth limit or exhaust the hosted
+runner's 128 MiB byte arena. A bounded native trace observes arena exhaustion
+while `Executeˉlocal` rebuilds a 136-byte frame for a local store; this locates
+the failing allocation but does not yet attribute total allocation by call site.
+Native byte append already supports reuse. No runtime rewrite,
+temporary-allocation policy or resource-limit change is adopted. The existing
+component fixtures now use the current collection signature, valid typed
+backings and minor-42 expectations. The next execution gate is to measure and
+reduce frame-replacement allocation before adopting the typed scanner.
+The maintained scanner and fixture remain unchanged. Preserve lock
 bytes, failure order, explicit allocation failures and resource bounds when
 the migration resumes; emission alone does not establish consumer delivery.
 

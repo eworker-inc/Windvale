@@ -9,6 +9,7 @@ import Windvaleˉfoundationˉborrowˉframes as Frames;
 import Windvaleˉfoundationˉborrowˉview as View;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Scanner;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore as Values;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore as Collections;
 
 fn Cell(Low: u32, High: u32) -> bytes {
     return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Low), Bytesˉfromˉu32ˉlittle(High));
@@ -73,7 +74,8 @@ fn Checkˉindexedˉscanner() -> i32 {
     let Indexed: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(0u32, 1u32));
     if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 1u32) != 524289u32 { return 54; }
     if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 40u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 42u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 42u32, 1u32) != 1u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 43u32, 1u32) != 0u32 ||
         Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 2u32) != 0u32 { return 55; }
     var Length: u32 = 0u32;
     while Length < 9u32 {
@@ -95,7 +97,8 @@ fn Checkˉindexedˉscanner() -> i32 {
 
 fn Checkˉprojectedˉvector() -> i32 {
     if Frames.Payloadˉkind(23u32) || Frames.Payloadˉlocalˉkind(23u32, 39u32) ||
-        Frames.Payloadˉlocalˉkind(23u32, 42u32) || !Frames.Payloadˉlocalˉkind(23u32, 40u32) ||
+        Frames.Payloadˉlocalˉkind(23u32, 43u32) || !Frames.Payloadˉlocalˉkind(23u32, 40u32) ||
+        !Frames.Payloadˉlocalˉkind(23u32, 42u32) ||
         !Frames.Payloadˉlocalˉkind(23u32, 41u32) ||
         Frames.Payloadˉlocalˉkind(26u32, 40u32) || Frames.Payloadˉlocalˉkind(27u32, 40u32) ||
         Frames.Valueˉkind(87u32) != 23u32 { return 47; }
@@ -105,7 +108,8 @@ fn Checkˉprojectedˉvector() -> i32 {
     if Values.Shapeˉwidthˉat(Bytesˉconcat(Module, Wrapped), Bytesˉlength(Module)) != 6u32 ||
         Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(39u32), Wrapped), Bytesˉlength(Module)) != 0u32 ||
         Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(41u32), Wrapped), Bytesˉlength(Module)) != 6u32 ||
-        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(42u32), Wrapped), Bytesˉlength(Module)) != 0u32 {
+        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(42u32), Wrapped), Bytesˉlength(Module)) != 6u32 ||
+        Values.Shapeˉwidthˉat(Bytesˉconcat(Vectorˉmodule(43u32), Wrapped), Bytesˉlength(Module)) != 0u32 {
         return 48;
     }
     let Zero: bytes = Cell(0u32, 0u32);
@@ -113,6 +117,7 @@ fn Checkˉprojectedˉvector() -> i32 {
     let Owner: bytes = Cell(0u32, 2147483904u32);
     let Descriptor: bytes = Cell(0u32, 32u32);
     let Allocation: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
+    let Heap: bytes = Collections.Collectionˉemptyˉbacking(3u32, 1u32, Zero);
     let Shapes: bytes = Cell(11u32, 1u32);
     let Flag: bytes = Bytesˉfromˉu8(1u8);
     var Metadata: bytes = Cell(2147483904u32, 1u32);
@@ -156,10 +161,14 @@ fn Checkˉprojectedˉvector() -> i32 {
         Observed.Root != View.Payloadˉroot.Descriptor ||
         Bytesˉreadˉu32ˉlittle(Observed.Value, 4u32) != 32u32 { return 51; }
     let Live: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Cell(8u32, 50u32), Descriptor, Metadata, Returned.Roots, Zero);
+            Module, Cell(8u32, 50u32), Bytesˉlength(Cell(8u32, 50u32)) / 4u32,
+            Descriptor, Metadata, Returned.Roots, Empty,
+            Heap, Allocation, 1u32, Zero);
     let Exited: Frames.State = Frames.Teardown(Scalarˉstate(Returned));
     let Dead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Cell(8u32, 50u32), Descriptor, Live.Metadata, Empty, Zero);
+            Module, Cell(8u32, 50u32), Bytesˉlength(Cell(8u32, 50u32)) / 4u32,
+            Descriptor, Live.Metadata, Empty, Empty,
+            Heap, Allocation, 1u32, Zero);
     if !Live.Valid || Bytesˉlength(Live.Releasedˉdescriptors) != 0u32 || !Exited.Valid ||
         Bytesˉlength(Frames.Roots(Exited)) != 1u32 || !Dead.Valid ||
         Bytesˉlength(Dead.Releasedˉdescriptors) != 8u32 ||
@@ -185,7 +194,9 @@ fn Checkˉsequenceˉcollection() -> i32 {
         Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉconcat(Textˉtoˉutf8("S"), Bytesˉfromˉu8(9u8))));
     let Module: bytes = Bytesˉconcat(Option, Sequence);
     let Offsets: bytes = Cell(0u32, Bytesˉlength(Option));
-    let Descriptor: bytes = Cell(0u32, 3u32);
+    let Descriptor: bytes = Cell(0u32, 16u32);
+    let Allocation: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
+    let Heap: bytes = Collections.Collectionˉemptyˉbacking(1u32, 1u32, Zero);
     var Metadata: bytes = Cell(2147483904u32, 1u32);
     var Index: u32 = 1u32;
     while Index < 768u32 { Metadata = Bytesˉconcat(Metadata, Zero); Index = Index + 1u32; }
@@ -193,16 +204,18 @@ fn Checkˉsequenceˉcollection() -> i32 {
         Cell(0u32, 2147483904u32), 0u32, 0u32, 24u32, Metadata, Descriptor);
     let Packet: bytes = Frames.Roots(Borrowed.State);
     let Live: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Offsets, Descriptor, Metadata, Bytesˉslice(Packet, 1u32, 8u32), Zero);
+            Module, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Descriptor, Metadata, Bytesˉslice(Packet, 1u32, 8u32), Empty,
+            Heap, Allocation, 1u32, Zero);
     let Exited: Frames.State = Frames.Leave(Borrowed.State);
     let Exitˉpacket: bytes = Frames.Roots(Exited);
     let Dead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Offsets, Descriptor, Live.Metadata,
-        Bytesˉslice(Exitˉpacket, 1u32, Bytesˉlength(Exitˉpacket) - 1u32), Zero);
+            Module, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Descriptor, Live.Metadata, Bytesˉslice(Exitˉpacket, 1u32, Bytesˉlength(Exitˉpacket) - 1u32), Empty,
+            Heap, Allocation, 1u32, Zero);
     if !Borrowed.State.Valid || !Live.Valid || !Exited.Valid || !Dead.Valid ||
         Bytesˉlength(Live.Releasedˉdescriptors) != 0u32 ||
         Bytesˉlength(Dead.Releasedˉdescriptors) != 8u32 { return 45; }
-    let Allocation: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
     let Released: bytes = Values.Releaseˉdescriptor(Allocation, 1u32, Dead.Releasedˉdescriptors);
     if Bytesˉreadˉu32ˉlittle(Released, 8u32) != 0u32 { return 45; }
     // The same descriptor selection is required for fixed-array elements.
@@ -213,9 +226,11 @@ fn Checkˉsequenceˉcollection() -> i32 {
     let Arrayˉoffsets: bytes = Cell(0u32, Bytesˉlength(Array));
     let Arrayˉmetadata: bytes = Bytesˉconcat(Cell(1u32, 1u32), Bytesˉslice(Metadata, 8u32, 6136u32));
     let Arrayˉdead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Arrayˉmodule, Arrayˉoffsets, Descriptor, Arrayˉmetadata, Empty, Zero);
+            Arrayˉmodule, Arrayˉoffsets, Bytesˉlength(Arrayˉoffsets) / 4u32,
+            Descriptor, Arrayˉmetadata, Empty, Empty,
+            Heap, Allocation, 1u32, Zero);
     if !Arrayˉdead.Valid || Bytesˉlength(Arrayˉdead.Releasedˉdescriptors) != 8u32 ||
-        Bytesˉreadˉu32ˉlittle(Arrayˉdead.Releasedˉdescriptors, 4u32) != 3u32 { return 46; }
+        Bytesˉreadˉu32ˉlittle(Arrayˉdead.Releasedˉdescriptors, 4u32) != 16u32 { return 46; }
     return Checkˉprojectedˉvector();
 }
 
@@ -251,7 +266,9 @@ fn Checkˉnestedˉcollection() -> i32 {
         Bytesˉreadˉu32ˉlittle(Observed.Value, 0u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Observed.Value, 4u32) != 2147484160u32 { return 41; }
     let Live: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Offsets, Records, Metadata, Bytesˉslice(Rootˉpacket, 1u32, 8u32), Zero);
+            Module, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Records, Metadata, Bytesˉslice(Rootˉpacket, 1u32, 8u32), Empty,
+            Empty, Empty, 0u32, Zero);
     if !Live.Valid || Bytesˉreadˉu32ˉlittle(Live.Metadata, 0u32) != 2147483904u32 ||
         Bytesˉreadˉu32ˉlittle(Live.Metadata, 8u32) != 2147484160u32 ||
         Bytesˉreadˉu32ˉlittle(Live.Metadata, 16u32) != 0u32 ||
@@ -260,15 +277,21 @@ fn Checkˉnestedˉcollection() -> i32 {
     // Once the frame exits, a separately rooted projected aggregate still owns its text.
     let Exited: Frames.State = Frames.Teardown(Returned);
     let Childˉonly: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Offsets, Records, Live.Metadata, Inner, Zero);
+            Module, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Records, Live.Metadata, Inner, Empty,
+            Empty, Empty, 0u32, Zero);
     if !Exited.Valid || Bytesˉlength(Frames.Roots(Exited)) != 1u32 || !Childˉonly.Valid ||
         Bytesˉreadˉu32ˉlittle(Childˉonly.Metadata, 0u32) != 0u32 ||
         Bytesˉreadˉu32ˉlittle(Childˉonly.Metadata, 8u32) != 2147484160u32 ||
         Bytesˉlength(Childˉonly.Releasedˉdescriptors) != 0u32 { return 43; }
     let Dead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Offsets, Records, Childˉonly.Metadata, Empty, Zero);
+            Module, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Records, Childˉonly.Metadata, Empty, Empty,
+            Empty, Empty, 0u32, Zero);
     let Again: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Module, Offsets, Records, Dead.Metadata, Empty, Zero);
+            Module, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Records, Dead.Metadata, Empty, Empty,
+            Empty, Empty, 0u32, Zero);
     if !Dead.Valid || !Again.Valid || Bytesˉreadˉu32ˉlittle(Dead.Metadata, 8u32) != 0u32 ||
         Bytesˉlength(Dead.Releasedˉdescriptors) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Dead.Releasedˉdescriptors, 0u32) != 0u32 ||
@@ -306,7 +329,9 @@ fn Checkˉcollection() -> i32 {
     Index = 0u32;
     while Index < 8u32 {
         let Collected: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-            Type, Offsets, Records, Metadata, Roots, Zero);
+            Type, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Records, Metadata, Roots, Empty,
+            Empty, Empty, 0u32, Zero);
         if !Collected.Valid || Bytesˉreadˉu32ˉlittle(Collected.Metadata, 0u32) != 2147483904u32 ||
             Bytesˉreadˉu32ˉlittle(Collected.Metadata, 8u32) != 0u32 ||
             Bytesˉlength(Collected.Releasedˉdescriptors) != 0u32 { return 36; }
@@ -324,8 +349,9 @@ fn Checkˉcollection() -> i32 {
     let Exited: Frames.State = Frames.Leave(Borrowed.State);
     let Exitˉpacket: bytes = Frames.Roots(Exited);
     let Reclaimed: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Type, Offsets, Records, Metadata,
-        Bytesˉslice(Exitˉpacket, 1u32, Bytesˉlength(Exitˉpacket) - 1u32), Zero);
+            Type, Offsets, Bytesˉlength(Offsets) / 4u32,
+            Records, Metadata, Bytesˉslice(Exitˉpacket, 1u32, Bytesˉlength(Exitˉpacket) - 1u32), Empty,
+            Empty, Empty, 0u32, Zero);
     let Replacement: Values.Aggregateˉallocation = Values.Allocateˉaggregateˉwithoutˉcollection(
         2147483904u32, Cell(100u32, 0u32), Reclaimed.Metadata, Records, Zero);
     let Stale: View.Projectionˉresult = View.Observe(Exited.Views,
@@ -340,15 +366,17 @@ fn Checkˉcollection() -> i32 {
         Owner, 0u32, 0u32, 3u32, Textˉmetadata, Descriptor);
     let Textˉroots: bytes = Frames.Roots(Textˉloan.State);
     let Textˉlive: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Optionˉtype(3u8), Offsets, Descriptor, Textˉmetadata,
-        Bytesˉslice(Textˉroots, 1u32, 8u32), Zero);
+            Optionˉtype(3u8), Offsets, Bytesˉlength(Offsets) / 4u32,
+            Descriptor, Textˉmetadata, Bytesˉslice(Textˉroots, 1u32, 8u32), Empty,
+            Empty, Empty, 0u32, Zero);
     let Allocations: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
     let Copied: bytes = Values.Retainˉdescriptor(Allocations, 1u32, Descriptor);
     let Textˉexit: Frames.State = Frames.Teardown(Textˉloan.State);
     let Textˉexitˉroots: bytes = Frames.Roots(Textˉexit);
     let Textˉdead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
-        Optionˉtype(3u8), Offsets, Descriptor, Textˉlive.Metadata,
-        Bytesˉslice(Textˉexitˉroots, 1u32, Bytesˉlength(Textˉexitˉroots) - 1u32), Zero);
+            Optionˉtype(3u8), Offsets, Bytesˉlength(Offsets) / 4u32,
+            Descriptor, Textˉlive.Metadata, Bytesˉslice(Textˉexitˉroots, 1u32, Bytesˉlength(Textˉexitˉroots) - 1u32), Empty,
+            Empty, Empty, 0u32, Zero);
     if !Textˉloan.State.Valid || !Textˉlive.Valid ||
         Bytesˉlength(Textˉlive.Releasedˉdescriptors) != 0u32 || !Textˉdead.Valid ||
         Bytesˉlength(Textˉdead.Releasedˉdescriptors) != 8u32 { return 39; }
