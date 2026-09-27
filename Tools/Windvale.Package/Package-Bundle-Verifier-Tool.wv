@@ -10,6 +10,7 @@ requires capability process.argument version 1;
 requires capability process.argument_count version 1;
 
 import Windvaleˉpackageˉbundleˉverifier as Bundleˉverifier;
+import Foundationˉmemory as Memory;
 
 
 fn Statusˉtext(
@@ -121,14 +122,14 @@ fn Report(
     );
 }
 
-export fn Main() -> i32 {
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     if process.argument_count() != 1u32 {
         diagnostic.write_line("Usage: wvbundle-verify <bundle.wvbundle>");
         return 64;
     }
     let Input: bytes = file.read_bytes(process.argument(0u32));
     let Result: Bundleˉverifier.Windvaleˉpackageˉbundleˉresult =
-        Bundleˉverifier.Windvaleˉpackageˉbundleˉverify(Input);
+        Bundleˉverifier.Windvaleˉpackageˉbundleˉverify(Input, Budget);
     let Description: text = Report(Result, Bytesˉlength(Input));
     if Result.Status != Bundleˉverifier.Windvaleˉpackageˉbundleˉstatus.Valid {
         diagnostic.write_line(Description);

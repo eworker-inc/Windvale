@@ -7,6 +7,8 @@ requires capability file.read_bytes version 1;
 requires capability process.argument version 1;
 requires capability process.argument_count version 1;
 
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
 import Windvaleˉpackageˉresourceˉadmission as Admission;
 
 fn Digest() -> text {
@@ -36,14 +38,21 @@ fn Statusˉis(
     Index: u32,
     Path: text,
     Resource: text,
-    Expected: Admission.Windvaleˉpackageˉresourceˉstatus
+    Expected: Admission.Windvaleˉpackageˉresourceˉstatus,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
 ) -> bool {
-    let Result: Admission.Windvaleˉpackageˉresourceˉresult =
-        Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
-            Lockˉinput, Kind, Index,
-            Textˉtoˉutf8(Path), Textˉtoˉutf8(Resource)
-        );
-    return Result.Status == Expected && Result.Kind == Kind && Result.Index == Index;
+    match Split {
+        case Result.Result.Valid { Value: Child } {
+            let Admitted: Admission.Windvaleˉpackageˉresourceˉresult =
+                Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
+                    Lockˉinput, Kind, Index,
+                    Textˉtoˉutf8(Path), Textˉtoˉutf8(Resource), Child
+                );
+            return Admitted.Status == Expected && Admitted.Kind == Kind &&
+                Admitted.Index == Index;
+        }
+        case Result.Result.Failure { Error: _ } { return false; }
+    }
 }
 
 fn Actualˉpath(Root: text, Relative: text) -> text {
@@ -55,14 +64,21 @@ fn Actualˉresource(
     Lockˉinput: bytes,
     Kind: Admission.Windvaleˉpackageˉresourceˉkind,
     Index: u32,
-    Relative: text
+    Relative: text,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
 ) -> bool {
-    let Resource: bytes = file.read_bytes(Actualˉpath(Root, Relative));
-    let Result: Admission.Windvaleˉpackageˉresourceˉresult =
-        Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
-            Lockˉinput, Kind, Index, Textˉtoˉutf8(Relative), Resource
-        );
-    return Result.Status == Admission.Windvaleˉpackageˉresourceˉstatus.Valid;
+    match Split {
+        case Result.Result.Valid { Value: Child } {
+            let Resource: bytes = file.read_bytes(Actualˉpath(Root, Relative));
+            let Admitted: Admission.Windvaleˉpackageˉresourceˉresult =
+                Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
+                    Lockˉinput, Kind, Index, Textˉtoˉutf8(Relative), Resource,
+                    Child
+                );
+            return Admitted.Status == Admission.Windvaleˉpackageˉresourceˉstatus.Valid;
+        }
+        case Result.Result.Failure { Error: _ } { return false; }
+    }
 }
 
 fn Actualˉresourceˉis(
@@ -71,17 +87,26 @@ fn Actualˉresourceˉis(
     Kind: Admission.Windvaleˉpackageˉresourceˉkind,
     Index: u32,
     Relative: text,
-    Expected: Admission.Windvaleˉpackageˉresourceˉstatus
+    Expected: Admission.Windvaleˉpackageˉresourceˉstatus,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
 ) -> bool {
-    let Resource: bytes = file.read_bytes(Actualˉpath(Root, Relative));
-    let Result: Admission.Windvaleˉpackageˉresourceˉresult =
-        Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
-            Lockˉinput, Kind, Index, Textˉtoˉutf8(Relative), Resource
-        );
-    return Result.Status == Expected && Result.Kind == Kind && Result.Index == Index;
+    match Split {
+        case Result.Result.Valid { Value: Child } {
+            let Resource: bytes = file.read_bytes(Actualˉpath(Root, Relative));
+            let Admitted: Admission.Windvaleˉpackageˉresourceˉresult =
+                Admission.Windvaleˉpackageˉverifyˉlockedˉresource(
+                    Lockˉinput, Kind, Index, Textˉtoˉutf8(Relative), Resource,
+                    Child
+                );
+            return Admitted.Status == Expected && Admitted.Kind == Kind &&
+                Admitted.Index == Index;
+        }
+        case Result.Result.Failure { Error: _ } { return false; }
+    }
 }
 
-fn Actualˉcases() -> bool {
+fn Actualˉcases(Budget: Memory.Memoryˉbudget) -> bool {
+    var Parent: Memory.Memoryˉbudget = Budget;
     if process.argument_count() != 1u32 { return false; }
     let Root: text = process.argument(0u32);
     let Lockˉinput: bytes = file.read_bytes(
@@ -92,47 +117,56 @@ fn Actualˉcases() -> bool {
     );
     if !Actualˉresource(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Origin,
-        0u32, "Windvale.wvws"
+        0u32, "Windvale.wvws",
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresource(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
         0u32,
-        "Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack"
+        "Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvpack",
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresource(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
         0u32,
-        "Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb"
+        "Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb",
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
         0u32, "Projects/Applications/Windvale-Wvdb-Query.wvproj",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         0u32, "Applications/Database/Wvdb-Query.wv",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         1u32, "Foundation/Decimal-Parsing.wv",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         2u32, "Libraries/Platform/Filesystem/Read-Only-Directory.wv",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         3u32, "Libraries/Platform/Database/Read-Only-Wvdb.wv",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         4u32, "Libraries/Database/Wvdb-Reader.wv",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
 
     let Inspectorˉlock: bytes = file.read_bytes(
@@ -143,100 +177,141 @@ fn Actualˉcases() -> bool {
     );
     if !Actualˉresource(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Origin,
-        0u32, "Windvale.wvws"
+        0u32, "Windvale.wvws",
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresource(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
         0u32,
-        "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack"
+        "Distribution/Applications/Wvb-Inspector/Windvale-Wvb-Inspector.wvpack",
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresource(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
-        0u32, "Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb"
+        0u32, "Artifacts/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb",
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Actualˉresourceˉis(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Project,
         0u32, "Projects/Examples/Windvale-Wvb-Inspector.wvproj",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     return Actualˉresourceˉis(
         Root, Inspectorˉlock, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         0u32, "Examples/Foundation/Wv-Dump-Core.wv",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     );
 }
 
-fn Validˉsmallˉcases() -> bool {
+fn Validˉsmallˉcases(Budget: Memory.Memoryˉbudget) -> bool {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Lockˉinput: bytes = Textˉtoˉutf8(Smallˉlock());
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Origin,
         0u32, "Windvale.wvws", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
         0u32, "Distribution/Example.wvpack", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
         0u32, "Artifacts/Compiler.wvb", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
         0u32, "Projects/Example.wvproj", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         0u32, "Applications/A.wv", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     return Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Output,
         0u32, "", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Valid
+        Admission.Windvaleˉpackageˉresourceˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     );
 }
 
-fn Rejectionˉcases() -> bool {
+fn Rejectionˉcases(Budget: Memory.Memoryˉbudget) -> bool {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Lockˉinput: bytes = Textˉtoˉutf8(Smallˉlock());
     if !Statusˉis(
         Textˉtoˉutf8(""), Admission.Windvaleˉpackageˉresourceˉkind.Origin,
         0u32, "Windvale.wvws", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉlock
+        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉlock,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Project,
         1u32, "Projects/Example.wvproj", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉindex
+        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉindex,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Part,
         1u32, "Applications/A.wv", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉindex
+        Admission.Windvaleˉpackageˉresourceˉstatus.Invalidˉindex,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Manifest,
         0u32, "Distribution/Other.wvpack", "abc",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Compiler,
         0u32, "Artifacts/Compiler.wvb", "ab",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return false; }
     return Statusˉis(
         Lockˉinput, Admission.Windvaleˉpackageˉresourceˉkind.Output,
         0u32, "", "abd",
-        Admission.Windvaleˉpackageˉresourceˉstatus.Digestˉmismatch
+        Admission.Windvaleˉpackageˉresourceˉstatus.Digestˉmismatch,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     );
 }
 
-export fn Main() -> i32 {
-    if !Actualˉcases() { return 1; }
-    if !Validˉsmallˉcases() { return 2; }
-    if !Rejectionˉcases() { return 3; }
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    let Actualˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 229376u64, 896u32);
+    match Actualˉsplit {
+        case Result.Result.Valid { Value: Actualˉchild } {
+            if !Actualˉcases(Actualˉchild) { return 1; }
+        }
+        case Result.Result.Failure { Error: _ } { return 1; }
+    }
+    let Validˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 98304u64, 384u32);
+    match Validˉsplit {
+        case Result.Result.Valid { Value: Validˉchild } {
+            if !Validˉsmallˉcases(Validˉchild) { return 2; }
+        }
+        case Result.Result.Failure { Error: _ } { return 2; }
+    }
+    let Rejectionˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 98304u64, 384u32);
+    match Rejectionˉsplit {
+        case Result.Result.Valid { Value: Rejectionˉchild } {
+            if !Rejectionˉcases(Rejectionˉchild) { return 3; }
+        }
+        case Result.Result.Failure { Error: _ } { return 3; }
+    }
     return 42;
 }

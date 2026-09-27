@@ -4,7 +4,10 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
-import Foundationˉsha256 as Sha256;
+import Foundationˉmemory as Memory;
+import Foundationˉcollections as Collections;
+import Foundationˉresult as Result;
+import Foundationˉoption as Option;
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉmanifest as Manifest;
 import Windvaleˉpackageˉtext as Packageˉtext;
@@ -26,6 +29,7 @@ export enum Windvaleˉpackageˉconsistencyˉstatus: i32 {
     Dependencyˉmismatch = 1213;
     Capabilityˉcountˉmismatch = 1214;
     Capabilityˉmismatch = 1215;
+    Allocationˉfailure = 1216;
 }
 
 export record Windvaleˉpackageˉconsistencyˉresult {
@@ -63,30 +67,56 @@ fn Consistencyˉresult(
     return Windvaleˉpackageˉconsistencyˉresult(Status, Index);
 }
 
-export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
-    Manifestˉinput: bytes,
-    Lockˉinput: bytes
-) -> Windvaleˉpackageˉconsistencyˉresult {
-    let Manifestˉscan: Manifest.Windvaleˉpackageˉscan =
-        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
-    if Manifestˉscan.Status != Manifest.Windvaleˉpackageˉstatus.Valid {
-        return Consistencyˉresult(
-            Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest, 0u32
-        );
+fn Readˉlockedˉdependency(Directory: bytes, Count: u32, Index: u32) -> Lock.Windvaleˉlockedˉdependency {
+    if Index >= Count { return Lock.Windvaleˉlockedˉdependency(false, 0u32, 0u32, 0u32, 0u32); }
+    let Offset: u32 = Index * 16u32;
+    if Offset > Bytesˉlength(Directory) || Bytesˉlength(Directory) - Offset < 16u32 {
+        return Lock.Windvaleˉlockedˉdependency(false, 0u32, 0u32, 0u32, 0u32);
     }
-    let Lockˉscan: Lock.Windvaleˉlockˉscan =
-        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput);
-    if Lockˉscan.Status != Lock.Windvaleˉlockˉstatus.Valid {
-        return Consistencyˉresult(
-            Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock, 0u32
-        );
-    }
+    return Lock.Windvaleˉlockedˉdependency(
+        true,
+        Bytesˉreadˉu32ˉlittle(Directory, Offset),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 8u32),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 12u32)
+    );
+}
 
+fn Readˉlockedˉcapability(Directory: bytes, Dependencies: u32, Count: u32, Index: u32) -> Lock.Windvaleˉlockedˉcapability {
+    if Index >= Count { return Lock.Windvaleˉlockedˉcapability(false, 0u32, 0u32); }
+    let Offset: u32 = Dependencies * 16u32 + Index * 8u32;
+    if Offset > Bytesˉlength(Directory) || Bytesˉlength(Directory) - Offset < 8u32 {
+        return Lock.Windvaleˉlockedˉcapability(false, 0u32, 0u32);
+    }
+    return Lock.Windvaleˉlockedˉcapability(
+        true,
+        Bytesˉreadˉu32ˉlittle(Directory, Offset),
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32)
+    );
+}
+
+record Lockˉprecheck {
+    Result: Windvaleˉpackageˉconsistencyˉresult;
+    Directory: bytes;
+    Dependencies: u32;
+    Capabilities: u32;
+}
+
+fn Precheckˉfailure(Status: Windvaleˉpackageˉconsistencyˉstatus, Index: u32) -> Lockˉprecheck {
+    return Lockˉprecheck(Consistencyˉresult(Status, Index), Textˉtoˉutf8(""), 0u32, 0u32);
+}
+
+fn Checkˉheaderˉandˉparts(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Manifestˉscan: Manifest.Windvaleˉpackageˉscan,
+    Lockˉscan: borrow Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >
+) -> Lockˉprecheck {
     if !Consistencyˉequal(
         Manifestˉinput, Manifestˉscan.Nameˉoffset, Manifestˉscan.Nameˉlength,
         Lockˉinput, Lockˉscan.Nameˉoffset, Lockˉscan.Nameˉlength
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Nameˉmismatch, 0u32
         );
     }
@@ -94,7 +124,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         Manifestˉinput, Manifestˉscan.Versionˉoffset, Manifestˉscan.Versionˉlength,
         Lockˉinput, Lockˉscan.Versionˉoffset, Lockˉscan.Versionˉlength
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Versionˉmismatch, 0u32
         );
     }
@@ -102,7 +132,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         Manifestˉinput, Manifestˉscan.Rootˉoffset, Manifestˉscan.Rootˉlength,
         Lockˉinput, Lockˉscan.Rootˉoffset, Lockˉscan.Rootˉlength
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Rootˉmismatch, 0u32
         );
     }
@@ -110,7 +140,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         Manifestˉinput, Manifestˉscan.Targetˉoffset, Manifestˉscan.Targetˉlength,
         Lockˉinput, Lockˉscan.Targetˉoffset, Lockˉscan.Targetˉlength
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Targetˉmismatch, 0u32
         );
     }
@@ -118,7 +148,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         Manifestˉinput, Manifestˉscan.Licenseˉoffset, Manifestˉscan.Licenseˉlength,
         Lockˉinput, Lockˉscan.Licenseˉoffset, Lockˉscan.Licenseˉlength
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Licenseˉmismatch, 0u32
         );
     }
@@ -126,17 +156,17 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         Manifestˉinput, Manifestˉscan.Projectˉoffset, Manifestˉscan.Projectˉlength,
         Lockˉinput, Lockˉscan.Projectˉpathˉoffset, Lockˉscan.Projectˉpathˉlength
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Projectˉmismatch, 0u32
         );
     }
 
     if Lockˉscan.Packageˉbytes != U64ˉfromˉu32(Bytesˉlength(Manifestˉinput)) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch, 0u32
         );
     }
-    let Manifestˉdigest: bytes = Sha256.Foundationˉsha256ˉhex(Manifestˉinput);
+    let Manifestˉdigest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Manifestˉinput));
     if !Packageˉtext.Windvaleˉpackageˉspansˉequal(
         Manifestˉdigest,
         Packageˉtext.Windvaleˉpackageˉwholeˉspan(Manifestˉdigest),
@@ -146,13 +176,13 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
             Lockˉscan.Packageˉdigestˉlength
         )
     ) {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch, 0u32
         );
     }
 
     if Manifestˉscan.Parts != Lockˉscan.Parts {
-        return Consistencyˉresult(
+        return Precheckˉfailure(
             Windvaleˉpackageˉconsistencyˉstatus.Partˉcountˉmismatch, 0u32
         );
     }
@@ -161,10 +191,10 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         let Manifestˉpart: Manifest.Windvaleˉpackageˉpart =
             Manifest.Windvaleˉpackageˉpartˉat(Manifestˉscan, Partˉindex);
         let Lockedˉpart: Lock.Windvaleˉlockedˉpart =
-            Lock.Windvaleˉlockedˉpartˉat(Lockˉscan, Partˉindex);
+            Lock.Windvaleˉlockedˉpartˉat(borrow Lockˉscan, Partˉindex);
         if !Manifestˉpart.Found || !Lockedˉpart.Found ||
             Manifestˉpart.Scope != Lockedˉpart.Scope {
-            return Consistencyˉresult(
+            return Precheckˉfailure(
                 Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch, Partˉindex
             );
         }
@@ -175,14 +205,36 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
             Manifestˉinput, Manifestˉpart.Pathˉoffset, Manifestˉpart.Pathˉlength,
             Lockˉinput, Lockedˉpart.Pathˉoffset, Lockedˉpart.Pathˉlength
         ) {
-            return Consistencyˉresult(
+            return Precheckˉfailure(
                 Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch, Partˉindex
             );
         }
         Partˉindex = Partˉindex + 1u32;
     }
 
-    if Manifestˉscan.Dependencies != Lockˉscan.Dependencies {
+    return Lockˉprecheck(
+        Consistencyˉresult(Windvaleˉpackageˉconsistencyˉstatus.Valid, 0u32),
+        Lockˉscan.Directory, Lockˉscan.Dependencies, Lockˉscan.Capabilities
+    );
+}
+
+export fn Windvaleˉpackageˉverifyˉscannedˉmanifestˉlock(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Manifestˉscan: Manifest.Windvaleˉpackageˉscan,
+    Lockˉscan: borrow Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >
+) -> Windvaleˉpackageˉconsistencyˉresult {
+    if Manifestˉscan.Status != Manifest.Windvaleˉpackageˉstatus.Valid {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest, 0u32
+        );
+    }
+    let Prechecked: Lockˉprecheck =
+        Checkˉheaderˉandˉparts(Manifestˉinput, Lockˉinput, Manifestˉscan, borrow Lockˉscan);
+    if Prechecked.Result.Status != Windvaleˉpackageˉconsistencyˉstatus.Valid {
+        return Prechecked.Result;
+    }
+    if Manifestˉscan.Dependencies != Prechecked.Dependencies {
         return Consistencyˉresult(
             Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉcountˉmismatch, 0u32
         );
@@ -192,7 +244,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         let Manifestˉdependency: Manifest.Windvaleˉpackageˉdependency =
             Manifest.Windvaleˉpackageˉdependencyˉat(Manifestˉscan, Dependencyˉindex);
         let Lockedˉdependency: Lock.Windvaleˉlockedˉdependency =
-            Lock.Windvaleˉlockedˉdependencyˉat(Lockˉscan, Dependencyˉindex);
+            Readˉlockedˉdependency(Prechecked.Directory, Prechecked.Dependencies, Dependencyˉindex);
         if !Manifestˉdependency.Found || !Lockedˉdependency.Found ||
             !Consistencyˉequal(
                 Manifestˉinput,
@@ -217,7 +269,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         Dependencyˉindex = Dependencyˉindex + 1u32;
     }
 
-    if Manifestˉscan.Capabilities != Lockˉscan.Capabilities {
+    if Manifestˉscan.Capabilities != Prechecked.Capabilities {
         return Consistencyˉresult(
             Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch, 0u32
         );
@@ -227,7 +279,7 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
         let Manifestˉcapability: Manifest.Windvaleˉpackageˉcapability =
             Manifest.Windvaleˉpackageˉcapabilityˉat(Manifestˉscan, Capabilityˉindex);
         let Lockedˉcapability: Lock.Windvaleˉlockedˉcapability =
-            Lock.Windvaleˉlockedˉcapabilityˉat(Lockˉscan, Capabilityˉindex);
+            Readˉlockedˉcapability(Prechecked.Directory, Prechecked.Dependencies, Prechecked.Capabilities, Capabilityˉindex);
         if !Manifestˉcapability.Found || !Lockedˉcapability.Found ||
             !Consistencyˉequal(
                 Manifestˉinput,
@@ -249,6 +301,52 @@ export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
     );
 }
 
+export fn Windvaleˉpackageˉverifyˉmanifestˉlock(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Budget: Memory.Memoryˉbudget
+) -> Windvaleˉpackageˉconsistencyˉresult {
+    let Manifestˉscan: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
+    if Manifestˉscan.Status != Manifest.Windvaleˉpackageˉstatus.Valid {
+        return Consistencyˉresult(
+            Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest, 0u32
+        );
+    }
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Lockˉscan } {
+            return Windvaleˉpackageˉverifyˉscannedˉmanifestˉlock(
+                Manifestˉinput, Lockˉinput, Manifestˉscan, borrow Lockˉscan
+            );
+        }
+        case Option.Option.Absent {
+            match Result.Borrowˉfailure(borrow Parsed) {
+                case Option.Option.Present { Value: Error } {
+                    match Error {
+                        case Lock.Windvaleˉlockˉfailure.Invalid { Status: _, Line: _, Column: _ } {
+                            return Consistencyˉresult(
+                                Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock, 0u32
+                            );
+                        }
+                        case Lock.Windvaleˉlockˉfailure.Allocation { Error: _ } {
+                            return Consistencyˉresult(
+                                Windvaleˉpackageˉconsistencyˉstatus.Allocationˉfailure, 0u32
+                            );
+                        }
+                    }
+                }
+                case Option.Option.Absent {
+                    return Consistencyˉresult(
+                        Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock, 0u32
+                    );
+                }
+            }
+        }
+    }
+}
+
 export fn Windvaleˉpackageˉconsistencyˉdiagnosticˉcode(
     Status: Windvaleˉpackageˉconsistencyˉstatus
 ) -> text {
@@ -267,5 +365,6 @@ export fn Windvaleˉpackageˉconsistencyˉdiagnosticˉcode(
     if Status == Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉmismatch { return "WVPK1213"; }
     if Status == Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch { return "WVPK1214"; }
     if Status == Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉmismatch { return "WVPK1215"; }
+    if Status == Windvaleˉpackageˉconsistencyˉstatus.Allocationˉfailure { return "WVPK1216"; }
     return "";
 }

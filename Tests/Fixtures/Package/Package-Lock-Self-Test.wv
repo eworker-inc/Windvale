@@ -6,6 +6,10 @@ authority application;
 
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉtext as Packageˉtext;
+import Foundationˉmemory as Memory;
+import Foundationˉcollections as Collections;
+import Foundationˉresult as Result;
+import Foundationˉoption as Option;
 
 fn Digest() -> text {
     return "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -26,29 +30,35 @@ fn Referenceˉequals(
     return Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Span, Expected);
 }
 
-fn Validˉcase() -> bool {
+fn Scanˉvalidˉcase(Budget: Memory.Memoryˉbudget) -> bool {
     let Input: bytes = Textˉtoˉutf8(Actualˉlock());
-    let Scan: Lock.Windvaleˉlockˉscan = Lock.Windvaleˉpackageˉscanˉlock(Input);
-    if Scan.Status != Lock.Windvaleˉlockˉstatus.Valid ||
-        Scan.Parts != 5u32 || Scan.Dependencies != 4u32 || Scan.Capabilities != 5u32 ||
-        Scan.Packageˉbytes != 866u64 || Scan.Outputˉbytes != 25763u64 {
-        return false;
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Input, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Scan } {
+            if Scan.Status != Lock.Windvaleˉlockˉstatus.Valid ||
+                Scan.Parts != 5u32 || Scan.Dependencies != 4u32 || Scan.Capabilities != 5u32 ||
+                Scan.Packageˉbytes != 866u64 || Scan.Outputˉbytes != 25763u64 {
+                return false;
+            }
+            if !Referenceˉequals(Input, Scan.Nameˉoffset, Scan.Nameˉlength, "windvale.wvdb-query") ||
+                !Referenceˉequals(Input, Scan.Rootˉoffset, Scan.Rootˉlength, "application") ||
+                !Referenceˉequals(
+                    Input, Scan.Projectˉpathˉoffset, Scan.Projectˉpathˉlength,
+                    "Projects/Applications/Windvale-Wvdb-Query.wvproj"
+                ) {
+                return false;
+            }
+            let Last: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(borrow Scan, 4u32);
+            if !Last.Found || Last.Scope != 1u32 || Last.Bytes != 11213u64 ||
+                !Referenceˉequals(Input, Last.Nameˉoffset, Last.Nameˉlength, "wvdb-reader") {
+                return false;
+            }
+            let Missing: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(borrow Scan, 5u32);
+            return !Missing.Found;
+        }
+        case Option.Option.Absent { return false; }
     }
-    if !Referenceˉequals(Input, Scan.Nameˉoffset, Scan.Nameˉlength, "windvale.wvdb-query") ||
-        !Referenceˉequals(Input, Scan.Rootˉoffset, Scan.Rootˉlength, "application") ||
-        !Referenceˉequals(
-            Input, Scan.Projectˉpathˉoffset, Scan.Projectˉpathˉlength,
-            "Projects/Applications/Windvale-Wvdb-Query.wvproj"
-        ) {
-        return false;
-    }
-    let Last: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(Scan, 4u32);
-    if !Last.Found || Last.Scope != 1u32 || Last.Bytes != 11213u64 ||
-        !Referenceˉequals(Input, Last.Nameˉoffset, Last.Nameˉlength, "wvdb-reader") {
-        return false;
-    }
-    let Missing: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(Scan, 5u32);
-    return !Missing.Found;
 }
 
 fn Fixed(Root: text) -> text {
@@ -69,13 +79,35 @@ fn Minimal(Partˉrecords: text, Tail: text, Root: text) -> text {
     return Textˉconcat(Textˉconcat(Fixed(Root), Partˉrecords), Tail);
 }
 
-fn Statusˉis(Inputˉtext: text, Expected: Lock.Windvaleˉlockˉstatus) -> bool {
+fn Statusˉis(
+    Inputˉtext: text,
+    Expected: Lock.Windvaleˉlockˉstatus,
+    Budget: Memory.Memoryˉbudget
+) -> bool {
     let Input: bytes = Textˉtoˉutf8(Inputˉtext);
-    let Scan: Lock.Windvaleˉlockˉscan = Lock.Windvaleˉpackageˉscanˉlock(Input);
-    return Scan.Status == Expected;
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Input, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Scan } {
+            return Expected == Lock.Windvaleˉlockˉstatus.Valid;
+        }
+        case Option.Option.Absent { }
+    }
+    match Result.Borrowˉfailure(borrow Parsed) {
+        case Option.Option.Present { Value: Failure } {
+            match Failure {
+                case Lock.Windvaleˉlockˉfailure.Invalid { Status: Status, Line: _, Column: _ } {
+                    return Status == Expected;
+                }
+                case Lock.Windvaleˉlockˉfailure.Allocation { Error: _ } { return false; }
+            }
+        }
+        case Option.Option.Absent { return false; }
+    }
 }
 
-fn Rejectionˉcases() -> bool {
+fn Rejectionˉcases(Budget: Memory.Memoryˉbudget) -> bool {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Validˉpart: text = Textˉconcat(
         "part a hosted ",
         Textˉconcat(Digest(), " 1 Applications/A.wv\n")
@@ -85,39 +117,15 @@ fn Rejectionˉcases() -> bool {
     );
     let Invalidˉdigestˉpart: text =
         "part a hosted 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeF 1 Applications/A.wv\n";
-    if !Statusˉis(
-        Minimal(Invalidˉdigestˉpart, Validˉoutput, "a"),
-        Lock.Windvaleˉlockˉstatus.Invalidˉdigest
-    ) { return false; }
     let Leadingˉzeroˉpart: text = Textˉconcat(
         "part a hosted ",
         Textˉconcat(Digest(), " 01 Applications/A.wv\n")
     );
-    if !Statusˉis(
-        Minimal(Leadingˉzeroˉpart, Validˉoutput, "a"),
-        Lock.Windvaleˉlockˉstatus.Invalidˉdecimal
-    ) { return false; }
-    if !Statusˉis(
-        Minimal(Validˉpart, Validˉoutput, "missing"),
-        Lock.Windvaleˉlockˉstatus.Unknownˉpart
-    ) { return false; }
-    if !Statusˉis(
-        Minimal(Validˉpart, "", "a"),
-        Lock.Windvaleˉlockˉstatus.Missingˉrecord
-    ) { return false; }
     let Afterˉoutput: text = Textˉconcat(Validˉoutput, "capability console.write_line\n");
-    if !Statusˉis(
-        Minimal(Validˉpart, Afterˉoutput, "a"),
-        Lock.Windvaleˉlockˉstatus.Invalidˉorder
-    ) { return false; }
     let Duplicateˉpaths: text = Textˉconcat(
         Validˉpart,
         Textˉconcat("part b hosted ", Textˉconcat(Digest(), " 1 Applications/A.wv\n"))
     );
-    if !Statusˉis(
-        Minimal(Duplicateˉpaths, Validˉoutput, "a"),
-        Lock.Windvaleˉlockˉstatus.Invalidˉrecord
-    ) { return false; }
     let Unordered: text = Textˉconcat(
         "part b hosted ",
         Textˉconcat(
@@ -128,10 +136,48 @@ fn Rejectionˉcases() -> bool {
             )
         )
     );
-    return Statusˉis(
-        Minimal(Unordered, Validˉoutput, "a"),
-        Lock.Windvaleˉlockˉstatus.Invalidˉorder
-    );
+    var Case: u32 = 0u32;
+    while Case < 7u32 {
+        var Input: text = "";
+        var Expected: Lock.Windvaleˉlockˉstatus = Lock.Windvaleˉlockˉstatus.Invalidˉdigest;
+        if Case == 0u32 {
+            Input = Minimal(Invalidˉdigestˉpart, Validˉoutput, "a");
+        }
+        if Case == 1u32 {
+            Input = Minimal(Leadingˉzeroˉpart, Validˉoutput, "a");
+            Expected = Lock.Windvaleˉlockˉstatus.Invalidˉdecimal;
+        }
+        if Case == 2u32 {
+            Input = Minimal(Validˉpart, Validˉoutput, "missing");
+            Expected = Lock.Windvaleˉlockˉstatus.Unknownˉpart;
+        }
+        if Case == 3u32 {
+            Input = Minimal(Validˉpart, "", "a");
+            Expected = Lock.Windvaleˉlockˉstatus.Missingˉrecord;
+        }
+        if Case == 4u32 {
+            Input = Minimal(Validˉpart, Afterˉoutput, "a");
+            Expected = Lock.Windvaleˉlockˉstatus.Invalidˉorder;
+        }
+        if Case == 5u32 {
+            Input = Minimal(Duplicateˉpaths, Validˉoutput, "a");
+            Expected = Lock.Windvaleˉlockˉstatus.Invalidˉrecord;
+        }
+        if Case == 6u32 {
+            Input = Minimal(Unordered, Validˉoutput, "a");
+            Expected = Lock.Windvaleˉlockˉstatus.Invalidˉorder;
+        }
+        let Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+            Memory.Split(borrow mut Parent, 8192u64, 0u32);
+        match Split {
+            case Result.Result.Valid { Value: Child } {
+                if !Statusˉis(Input, Expected, Child) { return false; }
+            }
+            case Result.Result.Failure { Error: _ } { return false; }
+        }
+        Case = Case + 1u32;
+    }
+    return true;
 }
 
 fn Contentˉlock(Changedˉline: u32, Number: text, Contentˉdigest: text) -> text {
@@ -163,60 +209,97 @@ fn Contentˉcase(
     Number: text,
     Contentˉdigest: text,
     Expected: Lock.Windvaleˉlockˉstatus,
-    Expectedˉbytes: u64
+    Expectedˉbytes: u64,
+    Budget: Memory.Memoryˉbudget
 ) -> bool {
     let Input: bytes = Textˉtoˉutf8(Contentˉlock(Line, Number, Contentˉdigest));
-    let Scan: Lock.Windvaleˉlockˉscan = Lock.Windvaleˉpackageˉscanˉlock(Input);
-    if Scan.Status != Expected { return false; }
-    if Expected != Lock.Windvaleˉlockˉstatus.Valid {
-        return Scan.Failureˉline == Line && Scan.Failureˉcolumn == 1u32;
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Input, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Scan } {
+            if Expected != Lock.Windvaleˉlockˉstatus.Valid { return false; }
+            if Line == 6u32 { return Scan.Originˉbytes == Expectedˉbytes; }
+            if Line == 7u32 { return Scan.Packageˉbytes == Expectedˉbytes; }
+            if Line == 8u32 { return Scan.Compilerˉbytes == Expectedˉbytes; }
+            if Line == 9u32 { return Scan.Projectˉbytes == Expectedˉbytes; }
+            if Line == 10u32 {
+                let Part: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(borrow Scan, 0u32);
+                return Part.Found && Part.Bytes == Expectedˉbytes;
+            }
+            return Scan.Outputˉbytes == Expectedˉbytes;
+        }
+        case Option.Option.Absent { }
     }
-    if Line == 6u32 { return Scan.Originˉbytes == Expectedˉbytes; }
-    if Line == 7u32 { return Scan.Packageˉbytes == Expectedˉbytes; }
-    if Line == 8u32 { return Scan.Compilerˉbytes == Expectedˉbytes; }
-    if Line == 9u32 { return Scan.Projectˉbytes == Expectedˉbytes; }
-    if Line == 10u32 {
-        let Part: Lock.Windvaleˉlockedˉpart = Lock.Windvaleˉlockedˉpartˉat(Scan, 0u32);
-        return Part.Found && Part.Bytes == Expectedˉbytes;
+    match Result.Borrowˉfailure(borrow Parsed) {
+        case Option.Option.Present { Value: Failure } {
+            match Failure {
+                case Lock.Windvaleˉlockˉfailure.Invalid { Status: Status, Line: Failureˉline, Column: Column } {
+                    return Status == Expected && Failureˉline == Line && Column == 1u32;
+                }
+                case Lock.Windvaleˉlockˉfailure.Allocation { Error: _ } { return false; }
+            }
+        }
+        case Option.Option.Absent { return false; }
     }
-    return Scan.Outputˉbytes == Expectedˉbytes;
 }
 
-fn Contentˉcases() -> bool {
+fn Contentˉcases(Budget: Memory.Memoryˉbudget) -> bool {
+    var Parent: Memory.Memoryˉbudget = Budget;
     var Line: u32 = 6u32;
     while Line <= 11u32 {
-        if !Contentˉcase(Line, "0", Digest(), Lock.Windvaleˉlockˉstatus.Valid, 0u64) {
-            return false;
-        }
-        if !Contentˉcase(
-            Line, "18446744073709551615", Digest(),
-            Lock.Windvaleˉlockˉstatus.Valid, 18446744073709551615u64
-        ) { return false; }
-        if !Contentˉcase(
-            Line, "18446744073709551616", Digest(),
-            Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64
-        ) { return false; }
-        if !Contentˉcase(Line, "01", Digest(), Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64) {
-            return false;
-        }
-        if !Contentˉcase(Line, "-1", Digest(), Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64) {
-            return false;
-        }
-        if !Contentˉcase(Line, "1x", Digest(), Lock.Windvaleˉlockˉstatus.Invalidˉdecimal, 0u64) {
-            return false;
-        }
-        // Digest rejection must still precede decimal rejection on every record.
-        if !Contentˉcase(Line, "01", "bad", Lock.Windvaleˉlockˉstatus.Invalidˉdigest, 0u64) {
-            return false;
+        var Case: u32 = 0u32;
+        while Case < 7u32 {
+            var Number: text = "0";
+            var Contentˉdigest: text = Digest();
+            var Expected: Lock.Windvaleˉlockˉstatus = Lock.Windvaleˉlockˉstatus.Valid;
+            var Expectedˉbytes: u64 = 0u64;
+            if Case == 1u32 {
+                Number = "18446744073709551615";
+                Expectedˉbytes = 18446744073709551615u64;
+            }
+            if Case == 2u32 {
+                Number = "18446744073709551616";
+                Expected = Lock.Windvaleˉlockˉstatus.Invalidˉdecimal;
+            }
+            if Case == 3u32 { Number = "01"; Expected = Lock.Windvaleˉlockˉstatus.Invalidˉdecimal; }
+            if Case == 4u32 { Number = "-1"; Expected = Lock.Windvaleˉlockˉstatus.Invalidˉdecimal; }
+            if Case == 5u32 { Number = "1x"; Expected = Lock.Windvaleˉlockˉstatus.Invalidˉdecimal; }
+            // Digest rejection must still precede decimal rejection on every record.
+            if Case == 6u32 { Number = "01"; Contentˉdigest = "bad"; Expected = Lock.Windvaleˉlockˉstatus.Invalidˉdigest; }
+            let Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+                Memory.Split(borrow mut Parent, 8192u64, 0u32);
+            match Split {
+                case Result.Result.Valid { Value: Child } {
+                    if !Contentˉcase(Line, Number, Contentˉdigest, Expected, Expectedˉbytes, Child) { return false; }
+                }
+                case Result.Result.Failure { Error: _ } { return false; }
+            }
+            Case = Case + 1u32;
         }
         Line = Line + 1u32;
     }
     return true;
 }
 
-export fn Main() -> i32 {
-    if !Validˉcase() { return 1; }
-    if !Rejectionˉcases() { return 2; }
-    if !Contentˉcases() { return 3; }
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    let Validˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 16384u64, 64u32);
+    match Validˉsplit {
+        case Result.Result.Valid { Value: Validˉchild } { if !Scanˉvalidˉcase(Validˉchild) { return 1; } }
+        case Result.Result.Failure { Error: _ } { return 1; }
+    }
+    let Rejectionˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 16384u64, 64u32);
+    match Rejectionˉsplit {
+        case Result.Result.Valid { Value: Rejectionˉchild } { if !Rejectionˉcases(Rejectionˉchild) { return 2; } }
+        case Result.Result.Failure { Error: _ } { return 2; }
+    }
+    let Contentˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 16384u64, 64u32);
+    match Contentˉsplit {
+        case Result.Result.Valid { Value: Contentˉchild } { if !Contentˉcases(Contentˉchild) { return 3; } }
+        case Result.Result.Failure { Error: _ } { return 3; }
+    }
     return 42;
 }

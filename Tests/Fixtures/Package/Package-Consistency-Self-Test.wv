@@ -7,6 +7,8 @@ requires capability file.read_bytes version 1;
 requires capability process.argument version 1;
 requires capability process.argument_count version 1;
 
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
 import Windvaleˉpackageˉconsistency as Consistency;
 
 fn Digest() -> text {
@@ -71,20 +73,32 @@ fn Lockˉvalue(
 
 fn Verify(
     Manifestˉtext: text,
-    Lockˉtext: text
+    Lockˉtext: text,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
 ) -> Consistency.Windvaleˉpackageˉconsistencyˉresult {
-    return Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
-        Textˉtoˉutf8(Manifestˉtext), Textˉtoˉutf8(Lockˉtext)
-    );
+    match Split {
+        case Result.Result.Valid { Value: Child } {
+            return Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
+                Textˉtoˉutf8(Manifestˉtext), Textˉtoˉutf8(Lockˉtext), Child
+            );
+        }
+        case Result.Result.Failure { Error: _ } {
+            return Consistency.Windvaleˉpackageˉconsistencyˉresult(
+                Consistency.Windvaleˉpackageˉconsistencyˉstatus.Allocationˉfailure,
+                0u32
+            );
+        }
+    }
 }
 
 fn Statusˉis(
     Manifestˉtext: text,
     Lockˉtext: text,
-    Expected: Consistency.Windvaleˉpackageˉconsistencyˉstatus
+    Expected: Consistency.Windvaleˉpackageˉconsistencyˉstatus,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
 ) -> bool {
     let Result: Consistency.Windvaleˉpackageˉconsistencyˉresult =
-        Verify(Manifestˉtext, Lockˉtext);
+        Verify(Manifestˉtext, Lockˉtext, Split);
     return Result.Status == Expected;
 }
 
@@ -97,18 +111,19 @@ fn Validˉlock() -> text {
     );
 }
 
-fn Actualˉcase() -> bool {
+fn Actualˉcase(Budget: Memory.Memoryˉbudget) -> bool {
     if process.argument_count() != 2u32 { return false; }
     let Manifestˉinput: bytes = file.read_bytes(process.argument(0u32));
     let Lockˉinput: bytes = file.read_bytes(process.argument(1u32));
     let Result: Consistency.Windvaleˉpackageˉconsistencyˉresult =
         Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
-            Manifestˉinput, Lockˉinput
+            Manifestˉinput, Lockˉinput, Budget
         );
     return Result.Status == Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid;
 }
 
-fn Rejectionˉcases() -> bool {
+fn Rejectionˉcases(Budget: Memory.Memoryˉbudget) -> bool {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Manifest: text = Manifestˉvalue();
     let Partˉa: text = Part("a", "hosted", "Applications/A.wv");
     let Capability: text = "capability console.write_line\n";
@@ -117,11 +132,13 @@ fn Rejectionˉcases() -> bool {
 
     if !Statusˉis(
         "", Validˉlock(),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉmanifest,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest, "",
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -129,7 +146,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.other", "1", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Partˉa, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Nameˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Nameˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -137,7 +155,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "2", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Partˉa, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Versionˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Versionˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     let Twoˉparts: text = Textˉconcat(
         Partˉa, Part("b", "hosted", "Applications/B.wv")
@@ -148,7 +167,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "b", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Twoˉparts, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Rootˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Rootˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -156,7 +176,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "Apache-2.0", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Partˉa, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Licenseˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Licenseˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -164,7 +185,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Other.wvproj",
             Manifestˉdigest, "185", Partˉa, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Projectˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Projectˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -172,7 +194,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
             Digest(), "185", Partˉa, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -180,7 +203,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "184", Partˉa, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Packageˉidentityˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -188,7 +212,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Twoˉparts, "", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Partˉcountˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Partˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     let Pathˉmismatch: Consistency.Windvaleˉpackageˉconsistencyˉresult = Verify(
         Manifest,
@@ -196,7 +221,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Part("a", "hosted", "Applications/B.wv"),
             "", Capability
-        )
+        ),
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     );
     if Pathˉmismatch.Status !=
         Consistency.Windvaleˉpackageˉconsistencyˉstatus.Partˉmismatch ||
@@ -207,7 +233,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Partˉa, "dependency a a\n", Capability
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉcountˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Dependencyˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     if !Statusˉis(
         Manifest,
@@ -215,7 +242,8 @@ fn Rejectionˉcases() -> bool {
             "windvale.example", "1", "a", "MIT", "Projects/Example.wvproj",
             Manifestˉdigest, "185", Partˉa, "", ""
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉcountˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     ) { return false; }
     return Statusˉis(
         Manifest,
@@ -224,16 +252,33 @@ fn Rejectionˉcases() -> bool {
             Manifestˉdigest, "185", Partˉa, "",
             "capability diagnostic.write_line\n"
         ),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉmismatch
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Capabilityˉmismatch,
+        Memory.Split(borrow mut Parent, 8192u64, 64u32)
     );
 }
 
-export fn Main() -> i32 {
-    if !Actualˉcase() { return 1; }
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    let Actualˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 16384u64, 64u32);
+    match Actualˉsplit {
+        case Result.Result.Valid { Value: Actualˉchild } {
+            if !Actualˉcase(Actualˉchild) { return 1; }
+        }
+        case Result.Result.Failure { Error: _ } { return 1; }
+    }
     if !Statusˉis(
         Manifestˉvalue(), Validˉlock(),
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid,
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     ) { return 2; }
-    if !Rejectionˉcases() { return 3; }
+    let Rejectionˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 114688u64, 896u32);
+    match Rejectionˉsplit {
+        case Result.Result.Valid { Value: Rejectionˉchild } {
+            if !Rejectionˉcases(Rejectionˉchild) { return 3; }
+        }
+        case Result.Result.Failure { Error: _ } { return 3; }
+    }
     return 42;
 }

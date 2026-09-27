@@ -11,6 +11,7 @@ requires capability process.argument version 1;
 requires capability process.argument_count version 1;
 
 import Foundationˉsha256 as Sha256;
+import Foundationˉmemory as Memory;
 import Windvaleˉpackageˉbundleˉwriter as Bundleˉwriter;
 
 
@@ -68,7 +69,7 @@ fn Report(
     return Value;
 }
 
-export fn Main() -> i32 {
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     if process.argument_count() != 6u32 {
         diagnostic.write_line(
             "Usage: wvbundle-write <manifest.wvpack> <lock.wvlock> <executable.wvb> <license> <provenance> <candidate.wvbundle>"
@@ -81,7 +82,8 @@ export fn Main() -> i32 {
             file.read_bytes(process.argument(1u32)),
             file.read_bytes(process.argument(2u32)),
             file.read_bytes(process.argument(3u32)),
-            file.read_bytes(process.argument(4u32))
+            file.read_bytes(process.argument(4u32)),
+            Budget
         );
     let Description: text = Report(Result);
     if Result.Status != Bundleˉwriter.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid {

@@ -5,6 +5,9 @@ platform linux, windows, windvale;
 authority library;
 
 import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
 
 import Windvaleˉpackageˉtext as Packageˉtext;
 
@@ -50,7 +53,12 @@ export record Windvaleˉlockedˉcapability {
     Nameˉlength: u32;
 }
 
-export record Windvaleˉlockˉscan {
+export variant Windvaleˉlockˉfailure {
+    Invalid(Status: Windvaleˉlockˉstatus, Line: u32, Column: u32);
+    Allocation(Error: Memory.Allocationˉfailure);
+}
+
+export record Windvaleˉlockˉscan<Directory> {
     Status: Windvaleˉlockˉstatus;
     Resolverˉoffset: u32;
     Resolverˉlength: u32;
@@ -87,6 +95,7 @@ export record Windvaleˉlockˉscan {
     Parts: u32;
     Dependencies: u32;
     Capabilities: u32;
+    Partˉdirectory: Directory;
     Directory: bytes;
     Outputˉdigestˉoffset: u32;
     Outputˉdigestˉlength: u32;
@@ -132,37 +141,94 @@ fn Failure(
     Status: Windvaleˉlockˉstatus,
     Line: u32,
     Column: u32
-) -> Windvaleˉlockˉscan {
-    return Windvaleˉlockˉscan(
-        Status,
-        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
-        0u32, 0u32, 0u32, 0u32,
-        0u32, 0u32, 0u64, 0u32, 0u32,
-        0u32, 0u32, 0u64, 0u32, 0u32,
-        0u32, 0u32, 0u64, 0u32, 0u32,
-        0u32, 0u32, 0u64, 0u32, 0u32,
-        0u32, 0u32, 0u32, Emptyˉbytes(),
-        0u32, 0u32, 0u64,
-        Line, Column
-    );
+) -> Result.Result<Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >, Windvaleˉlockˉfailure> {
+    return Result.Result.Failure<Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >, Windvaleˉlockˉfailure> {
+        Error: Windvaleˉlockˉfailure.Invalid { Status: Status, Line: Line, Column: Column }
+    };
+}
+
+record Lockˉtokens {
+    Valid: bool;
+    Count: u32;
+    Failureˉcolumn: u32;
+    Spans: bytes;
+}
+
+fn Scanˉtokens(
+    Input: bytes,
+    Line: Packageˉtext.Windvaleˉpackageˉline
+) -> Lockˉtokens {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Span: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(Line.Offset, Line.Length);
+    if !Line.Valid || Line.Length == 0u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉvalid(Input, Span) {
+        return Lockˉtokens(false, 0u32, 1u32, Empty);
+    }
+    let End: u32 = Line.Offset + Line.Length;
+    if Bytesˉreadˉu8(Input, Line.Offset) == 32u8 {
+        return Lockˉtokens(false, 0u32, 1u32, Empty);
+    }
+    if Bytesˉreadˉu8(Input, End - 1u32) == 32u8 {
+        return Lockˉtokens(false, 0u32, Line.Length, Empty);
+    }
+    var Spans: bytes = Empty;
+    var Count: u32 = 1u32;
+    var Start: u32 = Line.Offset;
+    var Cursor: u32 = Line.Offset;
+    var Previousˉspace: bool = false;
+    while Cursor < End {
+        let Space: bool = Bytesˉreadˉu8(Input, Cursor) == 32u8;
+        if Space {
+            if Previousˉspace {
+                return Lockˉtokens(false, 0u32, Cursor - Line.Offset + 1u32, Empty);
+            }
+            if Count <= 6u32 {
+                Spans = Bytesˉconcat(
+                    Spans,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Start),
+                        Bytesˉfromˉu32ˉlittle(Cursor - Start)
+                    )
+                );
+            }
+            Count = Count + 1u32;
+            Start = Cursor + 1u32;
+        }
+        Previousˉspace = Space;
+        Cursor = Cursor + 1u32;
+    }
+    if Count <= 6u32 {
+        Spans = Bytesˉconcat(
+            Spans,
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Start),
+                Bytesˉfromˉu32ˉlittle(End - Start)
+            )
+        );
+    }
+    return Lockˉtokens(true, Count, Line.Length + 1u32, Spans);
 }
 
 fn Tokenˉspan(
-    Input: bytes,
-    Line: Packageˉtext.Windvaleˉpackageˉline,
+    Scanned: borrow Lockˉtokens,
     Index: u32
 ) -> Packageˉtext.Windvaleˉpackageˉspan {
-    return Packageˉtext.Windvaleˉpackageˉtokenˉspan(
-        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, Index)
+    if !Scanned.Valid || Index >= Scanned.Count || Index >= 6u32 {
+        return Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    }
+    let Offset: u32 = Index * 8u32;
+    if Bytesˉlength(Scanned.Spans) < Offset + 8u32 {
+        return Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    }
+    return Packageˉtext.Windvaleˉpackageˉspan(
+        Bytesˉreadˉu32ˉlittle(Scanned.Spans, Offset),
+        Bytesˉreadˉu32ˉlittle(Scanned.Spans, Offset + 4u32)
     );
 }
 
 fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
     return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
-}
-
-fn Appendˉu64(Value: bytes, Field: u64) -> bytes {
-    return Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(Field));
 }
 
 fn Appendˉspan(
@@ -182,21 +248,6 @@ fn Readˉspan(
     return Packageˉtext.Windvaleˉpackageˉspan(Spanˉoffset, Spanˉlength);
 }
 
-fn Appendˉpart(
-    Directory: bytes,
-    Name: Packageˉtext.Windvaleˉpackageˉspan,
-    Scope: u32,
-    Digest: Packageˉtext.Windvaleˉpackageˉspan,
-    Byteˉcount: u64,
-    Path: Packageˉtext.Windvaleˉpackageˉspan
-) -> bytes {
-    var Result: bytes = Appendˉspan(Directory, Name);
-    Result = Appendˉu32(Result, Scope);
-    Result = Appendˉspan(Result, Digest);
-    Result = Appendˉu64(Result, Byteˉcount);
-    return Appendˉspan(Result, Path);
-}
-
 fn Appendˉdependency(
     Directory: bytes,
     Importer: Packageˉtext.Windvaleˉpackageˉspan,
@@ -212,8 +263,15 @@ fn Appendˉcapability(
     return Appendˉspan(Directory, Name);
 }
 
+fn Readˉpart(
+    Directory: borrow Collections.Vector<Windvaleˉlockedˉpart>,
+    Index: u64
+) -> Windvaleˉlockedˉpart {
+    return Collections.Vectorˉborrowˉat(borrow Directory, Index);
+}
+
 export fn Windvaleˉlockedˉpartˉat(
-    Scan: Windvaleˉlockˉscan,
+    Scan: borrow Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >,
     Index: u32
 ) -> Windvaleˉlockedˉpart {
     if Scan.Status != Windvaleˉlockˉstatus.Valid || Index >= Scan.Parts {
@@ -221,39 +279,17 @@ export fn Windvaleˉlockedˉpartˉat(
             false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32
         );
     }
-    let Offset: u32 = Index * 36u32;
-    if Offset > Bytesˉlength(Scan.Directory) ||
-        Bytesˉlength(Scan.Directory) - Offset < 36u32 {
-        return Windvaleˉlockedˉpart(
-            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32
-        );
-    }
-    let Name: Packageˉtext.Windvaleˉpackageˉspan = Readˉspan(Scan.Directory, Offset);
-    let Digest: Packageˉtext.Windvaleˉpackageˉspan =
-        Readˉspan(Scan.Directory, Offset + 12u32);
-    let Path: Packageˉtext.Windvaleˉpackageˉspan =
-        Readˉspan(Scan.Directory, Offset + 28u32);
-    return Windvaleˉlockedˉpart(
-        true,
-        Name.Offset,
-        Name.Length,
-        Bytesˉreadˉu32ˉlittle(Scan.Directory, Offset + 8u32),
-        Digest.Offset,
-        Digest.Length,
-        Bytesˉreadˉu64ˉlittle(Scan.Directory, Offset + 20u32),
-        Path.Offset,
-        Path.Length
-    );
+    return Readˉpart(borrow Scan.Partˉdirectory, U64ˉfromˉu32(Index));
 }
 
 export fn Windvaleˉlockedˉdependencyˉat(
-    Scan: Windvaleˉlockˉscan,
+    Scan: borrow Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >,
     Index: u32
 ) -> Windvaleˉlockedˉdependency {
     if Scan.Status != Windvaleˉlockˉstatus.Valid || Index >= Scan.Dependencies {
         return Windvaleˉlockedˉdependency(false, 0u32, 0u32, 0u32, 0u32);
     }
-    let Offset: u32 = Scan.Parts * 36u32 + Index * 16u32;
+    let Offset: u32 = Index * 16u32;
     if Offset > Bytesˉlength(Scan.Directory) ||
         Bytesˉlength(Scan.Directory) - Offset < 16u32 {
         return Windvaleˉlockedˉdependency(false, 0u32, 0u32, 0u32, 0u32);
@@ -267,13 +303,13 @@ export fn Windvaleˉlockedˉdependencyˉat(
 }
 
 export fn Windvaleˉlockedˉcapabilityˉat(
-    Scan: Windvaleˉlockˉscan,
+    Scan: borrow Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >,
     Index: u32
 ) -> Windvaleˉlockedˉcapability {
     if Scan.Status != Windvaleˉlockˉstatus.Valid || Index >= Scan.Capabilities {
         return Windvaleˉlockedˉcapability(false, 0u32, 0u32);
     }
-    let Offset: u32 = Scan.Parts * 36u32 + Scan.Dependencies * 16u32 + Index * 8u32;
+    let Offset: u32 = Scan.Dependencies * 16u32 + Index * 8u32;
     if Offset > Bytesˉlength(Scan.Directory) ||
         Bytesˉlength(Scan.Directory) - Offset < 8u32 {
         return Windvaleˉlockedˉcapability(false, 0u32, 0u32);
@@ -284,12 +320,12 @@ export fn Windvaleˉlockedˉcapabilityˉat(
 
 fn Partˉexists(
     Input: bytes,
-    Scan: Windvaleˉlockˉscan,
+    Scan: borrow Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >,
     Name: Packageˉtext.Windvaleˉpackageˉspan
 ) -> bool {
     var Index: u32 = 0u32;
     while Index < Scan.Parts {
-        let Part: Windvaleˉlockedˉpart = Windvaleˉlockedˉpartˉat(Scan, Index);
+        let Part: Windvaleˉlockedˉpart = Windvaleˉlockedˉpartˉat(borrow Scan, Index);
         if !Part.Found { return false; }
         let Partˉname: Packageˉtext.Windvaleˉpackageˉspan =
             Packageˉtext.Windvaleˉpackageˉspan(Part.Nameˉoffset, Part.Nameˉlength);
@@ -301,7 +337,10 @@ fn Partˉexists(
     return false;
 }
 
-export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
+export fn Windvaleˉpackageˉscanˉlock(
+    Input: bytes,
+    Budget: Memory.Memoryˉbudget
+) -> Result.Result<Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >, Windvaleˉlockˉfailure> {
     let Document: Packageˉtext.Windvaleˉpackageˉdocument =
         Packageˉtext.Windvaleˉpackageˉscanˉdocument(Input);
     if !Document.Valid {
@@ -314,383 +353,725 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
 
     let Header: Packageˉtext.Windvaleˉpackageˉline =
         Packageˉtext.Windvaleˉpackageˉreadˉline(Input, 0u32);
-    let Headerˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
-        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Header);
+    let Headerˉtokens: Lockˉtokens = Scanˉtokens(Input, Header);
     if !Headerˉtokens.Valid || Headerˉtokens.Count != 2u32 {
         return Failure(Windvaleˉlockˉstatus.Invalidˉheader, 1u32, 1u32);
     }
     if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-        Input, Tokenˉspan(Input, Header, 0u32), "windvale-lock"
+        Input, Tokenˉspan(borrow Headerˉtokens, 0u32), "windvale-lock"
     ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-        Input, Tokenˉspan(Input, Header, 1u32), "1"
+        Input, Tokenˉspan(borrow Headerˉtokens, 1u32), "1"
     ) {
         return Failure(Windvaleˉlockˉstatus.Invalidˉheader, 1u32, 1u32);
     }
 
-    let Empty: Packageˉtext.Windvaleˉpackageˉspan =
-        Packageˉtext.Windvaleˉpackageˉemptyˉspan();
-    var Resolver: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Name: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Version: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Root: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Target: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var License: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Originˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Originˉbytes: u64 = 0u64;
-    var Originˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Packageˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Packageˉbytes: u64 = 0u64;
-    var Packageˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Compilerˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Compilerˉbytes: u64 = 0u64;
-    var Compilerˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Projectˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Projectˉbytes: u64 = 0u64;
-    var Projectˉpath: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Outputˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Outputˉbytes: u64 = 0u64;
-    var Outputˉfound: bool = false;
-    var Parts: u32 = 0u32;
-    var Dependencies: u32 = 0u32;
-    var Capabilities: u32 = 0u32;
-    var Directory: bytes = Emptyˉbytes();
-    var Cursor: u32 = Header.Nextˉoffset;
-    var Lineˉnumber: u32 = 1u32;
-    var Phase: u32 = 0u32;
-    var Previousˉpart: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Previousˉimporter: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Previousˉrequired: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-    var Previousˉcapability: Packageˉtext.Windvaleˉpackageˉspan = Empty;
-
-    while Cursor < Bytesˉlength(Input) {
-        Lineˉnumber = Lineˉnumber + 1u32;
-        let Line: Packageˉtext.Windvaleˉpackageˉline =
-            Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
-        Cursor = Line.Nextˉoffset;
-        let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
-            Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
-        if !Tokens.Valid {
-            return Failure(
-                Windvaleˉlockˉstatus.Invalidˉrecord,
-                Lineˉnumber,
-                Tokens.Failureˉcolumn
-            );
+    let Created: Result.Result<Collections.Vector<Windvaleˉlockedˉpart>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<Windvaleˉlockedˉpart>(Budget, 64u64);
+    match Created {
+        case Result.Result.Valid { Value: Initial } {
+            return Scanˉrecords(Input, Header, Initial);
         }
-        let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 0u32);
+        case Result.Result.Failure { Error: Allocation } {
+            return Result.Result.Failure<Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >, Windvaleˉlockˉfailure> {
+                Error: Windvaleˉlockˉfailure.Allocation { Error: Allocation }
+            };
+        }
+    }
+}
 
-        if Lineˉnumber <= 9u32 {
-            if Lineˉnumber == 2u32 {
-                if Tokens.Count != 2u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                    Input, Kind, "resolver"
-                ) {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+record Lockˉstate {
+    Resolver: Packageˉtext.Windvaleˉpackageˉspan;
+    Name: Packageˉtext.Windvaleˉpackageˉspan;
+    Version: Packageˉtext.Windvaleˉpackageˉspan;
+    Root: Packageˉtext.Windvaleˉpackageˉspan;
+    Target: Packageˉtext.Windvaleˉpackageˉspan;
+    License: Packageˉtext.Windvaleˉpackageˉspan;
+    Originˉdigest: Packageˉtext.Windvaleˉpackageˉspan;
+    Originˉbytes: u64;
+    Originˉpath: Packageˉtext.Windvaleˉpackageˉspan;
+    Packageˉdigest: Packageˉtext.Windvaleˉpackageˉspan;
+    Packageˉbytes: u64;
+    Packageˉpath: Packageˉtext.Windvaleˉpackageˉspan;
+    Compilerˉdigest: Packageˉtext.Windvaleˉpackageˉspan;
+    Compilerˉbytes: u64;
+    Compilerˉpath: Packageˉtext.Windvaleˉpackageˉspan;
+    Projectˉdigest: Packageˉtext.Windvaleˉpackageˉspan;
+    Projectˉbytes: u64;
+    Projectˉpath: Packageˉtext.Windvaleˉpackageˉspan;
+    Outputˉdigest: Packageˉtext.Windvaleˉpackageˉspan;
+    Outputˉbytes: u64;
+    Outputˉfound: bool;
+    Parts: u32;
+    Dependencies: u32;
+    Capabilities: u32;
+    Directory: bytes;
+    Cursor: u32;
+    Lineˉnumber: u32;
+    Phase: u32;
+    Previousˉpart: Packageˉtext.Windvaleˉpackageˉspan;
+    Previousˉimporter: Packageˉtext.Windvaleˉpackageˉspan;
+    Previousˉrequired: Packageˉtext.Windvaleˉpackageˉspan;
+    Previousˉcapability: Packageˉtext.Windvaleˉpackageˉspan;
+}
+
+record Lockˉstep {
+    State: Lockˉstate;
+    Part: Windvaleˉlockedˉpart;
+    Status: Windvaleˉlockˉstatus;
+    Line: u32;
+    Column: u32;
+}
+
+fn Stepˉfailure(State: Lockˉstate, Status: Windvaleˉlockˉstatus, Line: u32, Column: u32) -> Lockˉstep {
+    return Lockˉstep(State, Windvaleˉlockedˉpart(false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32), Status, Line, Column);
+}
+
+fn Initialˉstate(Header: Packageˉtext.Windvaleˉpackageˉline) -> Lockˉstate {
+    let Empty: Packageˉtext.Windvaleˉpackageˉspan = Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    return Lockˉstate(
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        0u64,
+        Empty,
+        Empty,
+        0u64,
+        Empty,
+        Empty,
+        0u64,
+        Empty,
+        Empty,
+        0u64,
+        Empty,
+        Empty,
+        0u64,
+        false,
+        0u32,
+        0u32,
+        0u32,
+        Emptyˉbytes(),
+        Header.Nextˉoffset,
+        1u32,
+        0u32,
+        Empty,
+        Empty,
+        Empty,
+        Empty
+    );
+}
+
+fn Readˉfixedˉrecord(Input: bytes, State: Lockˉstate, Line: Packageˉtext.Windvaleˉpackageˉline, Tokens: Lockˉtokens) -> Lockˉstep {
+    var Resolver: Packageˉtext.Windvaleˉpackageˉspan = State.Resolver;
+    var Name: Packageˉtext.Windvaleˉpackageˉspan = State.Name;
+    var Version: Packageˉtext.Windvaleˉpackageˉspan = State.Version;
+    var Root: Packageˉtext.Windvaleˉpackageˉspan = State.Root;
+    var Target: Packageˉtext.Windvaleˉpackageˉspan = State.Target;
+    var License: Packageˉtext.Windvaleˉpackageˉspan = State.License;
+    var Originˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Originˉdigest;
+    var Originˉbytes: u64 = State.Originˉbytes;
+    var Originˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Originˉpath;
+    var Packageˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Packageˉdigest;
+    var Packageˉbytes: u64 = State.Packageˉbytes;
+    var Packageˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Packageˉpath;
+    var Compilerˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Compilerˉdigest;
+    var Compilerˉbytes: u64 = State.Compilerˉbytes;
+    var Compilerˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Compilerˉpath;
+    var Projectˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Projectˉdigest;
+    var Projectˉbytes: u64 = State.Projectˉbytes;
+    var Projectˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Projectˉpath;
+    var Outputˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Outputˉdigest;
+    var Outputˉbytes: u64 = State.Outputˉbytes;
+    var Outputˉfound: bool = State.Outputˉfound;
+    var Parts: u32 = State.Parts;
+    var Dependencies: u32 = State.Dependencies;
+    var Capabilities: u32 = State.Capabilities;
+    var Directory: bytes = State.Directory;
+    var Cursor: u32 = State.Cursor;
+    var Lineˉnumber: u32 = State.Lineˉnumber;
+    var Phase: u32 = State.Phase;
+    var Previousˉpart: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉpart;
+    var Previousˉimporter: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉimporter;
+    var Previousˉrequired: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉrequired;
+    var Previousˉcapability: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉcapability;
+    var Parsedˉpart: Windvaleˉlockedˉpart = Windvaleˉlockedˉpart(false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32);
+    Lineˉnumber = Lineˉnumber + 1u32;
+    Cursor = Line.Nextˉoffset;
+    let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 0u32);
+
+
+    if Lineˉnumber == 2u32 {
+        if Tokens.Count != 2u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Kind, "resolver"
+        ) {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+        }
+        let Resolverˉvalue: Packageˉtext.Windvaleˉpackageˉspan =
+            Tokenˉspan(borrow Tokens, 1u32);
+        if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Resolverˉvalue, "local-source-1"
+        ) {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 10u32);
+        }
+        Resolver = Resolverˉvalue;
+    } else {
+        if Lineˉnumber == 3u32 {
+            if Tokens.Count != 4u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                Input, Kind, "root"
+            ) {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+            }
+            let Rootˉname: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(borrow Tokens, 1u32);
+            let Rootˉversion: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(borrow Tokens, 2u32);
+            let Rootˉpart: Packageˉtext.Windvaleˉpackageˉspan =
+                Tokenˉspan(borrow Tokens, 3u32);
+            if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Rootˉname) ||
+                !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Rootˉversion) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Rootˉpart) {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
+            }
+            Name = Rootˉname;
+            Version = Rootˉversion;
+            Root = Rootˉpart;
+        } else {
+            if Lineˉnumber == 4u32 || Lineˉnumber == 5u32 {
+                if Tokens.Count != 2u32 {
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
                 }
-                let Resolverˉvalue: Packageˉtext.Windvaleˉpackageˉspan =
-                    Tokenˉspan(Input, Line, 1u32);
-                if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                    Input, Resolverˉvalue, "local-source-1"
-                ) {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 10u32);
-                }
-                Resolver = Resolverˉvalue;
-            } else {
-                if Lineˉnumber == 3u32 {
-                    if Tokens.Count != 4u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                        Input, Kind, "root"
+                let Fixedˉvalue: Packageˉtext.Windvaleˉpackageˉspan =
+                    Tokenˉspan(borrow Tokens, 1u32);
+                if Lineˉnumber == 4u32 {
+                    if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "target") {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                    if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                        Input, Fixedˉvalue, "hosted-wvb-v1"
                     ) {
-                        return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 8u32);
                     }
-                    let Rootˉname: Packageˉtext.Windvaleˉpackageˉspan =
-                        Tokenˉspan(Input, Line, 1u32);
-                    let Rootˉversion: Packageˉtext.Windvaleˉpackageˉspan =
-                        Tokenˉspan(Input, Line, 2u32);
-                    let Rootˉpart: Packageˉtext.Windvaleˉpackageˉspan =
-                        Tokenˉspan(Input, Line, 3u32);
-                    if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Rootˉname) ||
-                        !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Rootˉversion) ||
-                        !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Rootˉpart) {
-                        return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
-                    }
-                    Name = Rootˉname;
-                    Version = Rootˉversion;
-                    Root = Rootˉpart;
+                    Target = Fixedˉvalue;
                 } else {
-                    if Lineˉnumber == 4u32 || Lineˉnumber == 5u32 {
-                        if Tokens.Count != 2u32 {
-                            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                        }
-                        let Fixedˉvalue: Packageˉtext.Windvaleˉpackageˉspan =
-                            Tokenˉspan(Input, Line, 1u32);
-                        if Lineˉnumber == 4u32 {
-                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "target") {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                            }
-                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                                Input, Fixedˉvalue, "hosted-wvb-v1"
-                            ) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 8u32);
-                            }
-                            Target = Fixedˉvalue;
-                        } else {
-                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "license") {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                            }
-                            if !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Fixedˉvalue) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 9u32);
-                            }
-                            License = Fixedˉvalue;
-                        }
-                    } else {
-                        if Lineˉnumber == 6u32 {
-                            if Tokens.Count != 5u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                                Input, Kind, "origin"
-                            ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                                Input, Tokenˉspan(Input, Line, 1u32), "workspace"
-                            ) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                            }
-                            let Fixedˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 2u32);
-                            let Fixedˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 3u32);
-                            let Fixedˉpath: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 4u32);
-                            let Fixedˉcontent: Lockˉcontent =
-                                Readˉcontent(Input, Fixedˉdigest, Fixedˉdecimal);
-                            if Fixedˉcontent.Status != Windvaleˉlockˉstatus.Valid {
-                                return Failure(Fixedˉcontent.Status, Lineˉnumber, 1u32);
-                            }
-                            if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Fixedˉpath) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
-                            }
-                            Originˉdigest = Fixedˉcontent.Digest;
-                            Originˉbytes = Fixedˉcontent.Bytes;
-                            Originˉpath = Fixedˉpath;
-                        } else {
-                            if Tokens.Count != 4u32 {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                            }
-                            var Expectedˉkind: text = "package";
-                            if Lineˉnumber == 8u32 { Expectedˉkind = "compiler"; }
-                            if Lineˉnumber == 9u32 { Expectedˉkind = "project"; }
-                            if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                                Input, Kind, Expectedˉkind
-                            ) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                            }
-                            let Resourceˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 1u32);
-                            let Resourceˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 2u32);
-                            let Resourceˉpath: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 3u32);
-                            let Resourceˉcontent: Lockˉcontent =
-                                Readˉcontent(Input, Resourceˉdigest, Resourceˉdecimal);
-                            if Resourceˉcontent.Status != Windvaleˉlockˉstatus.Valid {
-                                return Failure(Resourceˉcontent.Status, Lineˉnumber, 1u32);
-                            }
-                            if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Resourceˉpath) {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
-                            }
-                            if Lineˉnumber == 7u32 {
-                                Packageˉdigest = Resourceˉcontent.Digest;
-                                Packageˉbytes = Resourceˉcontent.Bytes;
-                                Packageˉpath = Resourceˉpath;
-                            }
-                            if Lineˉnumber == 8u32 {
-                                Compilerˉdigest = Resourceˉcontent.Digest;
-                                Compilerˉbytes = Resourceˉcontent.Bytes;
-                                Compilerˉpath = Resourceˉpath;
-                            }
-                            if Lineˉnumber == 9u32 {
-                                Projectˉdigest = Resourceˉcontent.Digest;
-                                Projectˉbytes = Resourceˉcontent.Bytes;
-                                Projectˉpath = Resourceˉpath;
-                            }
-                        }
+                    if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "license") {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                    if !Packageˉtext.Windvaleˉpackageˉasciiˉtokenˉvalid(Input, Fixedˉvalue) {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 9u32);
+                    }
+                    License = Fixedˉvalue;
+                }
+            } else {
+                if Lineˉnumber == 6u32 {
+                    if Tokens.Count != 5u32 || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                        Input, Kind, "origin"
+                    ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                        Input, Tokenˉspan(borrow Tokens, 1u32), "workspace"
+                    ) {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                    }
+                    let Fixedˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 2u32);
+                    let Fixedˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 3u32);
+                    let Fixedˉpath: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 4u32);
+                    let Fixedˉcontent: Lockˉcontent =
+                        Readˉcontent(Input, Fixedˉdigest, Fixedˉdecimal);
+                    if Fixedˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                        return Stepˉfailure(State, Fixedˉcontent.Status, Lineˉnumber, 1u32);
+                    }
+                    if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Fixedˉpath) {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
+                    }
+                    Originˉdigest = Fixedˉcontent.Digest;
+                    Originˉbytes = Fixedˉcontent.Bytes;
+                    Originˉpath = Fixedˉpath;
+                } else {
+                    if Tokens.Count != 4u32 {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                    }
+                    var Expectedˉkind: text = "package";
+                    if Lineˉnumber == 8u32 { Expectedˉkind = "compiler"; }
+                    if Lineˉnumber == 9u32 { Expectedˉkind = "project"; }
+                    if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                        Input, Kind, Expectedˉkind
+                    ) {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                    let Resourceˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 1u32);
+                    let Resourceˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 2u32);
+                    let Resourceˉpath: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 3u32);
+                    let Resourceˉcontent: Lockˉcontent =
+                        Readˉcontent(Input, Resourceˉdigest, Resourceˉdecimal);
+                    if Resourceˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                        return Stepˉfailure(State, Resourceˉcontent.Status, Lineˉnumber, 1u32);
+                    }
+                    if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Resourceˉpath) {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
+                    }
+                    if Lineˉnumber == 7u32 {
+                        Packageˉdigest = Resourceˉcontent.Digest;
+                        Packageˉbytes = Resourceˉcontent.Bytes;
+                        Packageˉpath = Resourceˉpath;
+                    }
+                    if Lineˉnumber == 8u32 {
+                        Compilerˉdigest = Resourceˉcontent.Digest;
+                        Compilerˉbytes = Resourceˉcontent.Bytes;
+                        Compilerˉpath = Resourceˉpath;
+                    }
+                    if Lineˉnumber == 9u32 {
+                        Projectˉdigest = Resourceˉcontent.Digest;
+                        Projectˉbytes = Resourceˉcontent.Bytes;
+                        Projectˉpath = Resourceˉpath;
                     }
                 }
             }
-        } else {
-            if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "part") {
-                if Phase != 0u32 {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+        }
+    }
+
+
+    return Lockˉstep(Lockˉstate(
+        Resolver,
+        Name,
+        Version,
+        Root,
+        Target,
+        License,
+        Originˉdigest,
+        Originˉbytes,
+        Originˉpath,
+        Packageˉdigest,
+        Packageˉbytes,
+        Packageˉpath,
+        Compilerˉdigest,
+        Compilerˉbytes,
+        Compilerˉpath,
+        Projectˉdigest,
+        Projectˉbytes,
+        Projectˉpath,
+        Outputˉdigest,
+        Outputˉbytes,
+        Outputˉfound,
+        Parts,
+        Dependencies,
+        Capabilities,
+        Directory,
+        Cursor,
+        Lineˉnumber,
+        Phase,
+        Previousˉpart,
+        Previousˉimporter,
+        Previousˉrequired,
+        Previousˉcapability
+    ), Parsedˉpart, Windvaleˉlockˉstatus.Valid, Lineˉnumber, 1u32);
+}
+
+fn Readˉpartˉrecord(Input: bytes, State: Lockˉstate, Line: Packageˉtext.Windvaleˉpackageˉline, Tokens: Lockˉtokens) -> Lockˉstep {
+    var Resolver: Packageˉtext.Windvaleˉpackageˉspan = State.Resolver;
+    var Name: Packageˉtext.Windvaleˉpackageˉspan = State.Name;
+    var Version: Packageˉtext.Windvaleˉpackageˉspan = State.Version;
+    var Root: Packageˉtext.Windvaleˉpackageˉspan = State.Root;
+    var Target: Packageˉtext.Windvaleˉpackageˉspan = State.Target;
+    var License: Packageˉtext.Windvaleˉpackageˉspan = State.License;
+    var Originˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Originˉdigest;
+    var Originˉbytes: u64 = State.Originˉbytes;
+    var Originˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Originˉpath;
+    var Packageˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Packageˉdigest;
+    var Packageˉbytes: u64 = State.Packageˉbytes;
+    var Packageˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Packageˉpath;
+    var Compilerˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Compilerˉdigest;
+    var Compilerˉbytes: u64 = State.Compilerˉbytes;
+    var Compilerˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Compilerˉpath;
+    var Projectˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Projectˉdigest;
+    var Projectˉbytes: u64 = State.Projectˉbytes;
+    var Projectˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Projectˉpath;
+    var Outputˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Outputˉdigest;
+    var Outputˉbytes: u64 = State.Outputˉbytes;
+    var Outputˉfound: bool = State.Outputˉfound;
+    var Parts: u32 = State.Parts;
+    var Dependencies: u32 = State.Dependencies;
+    var Capabilities: u32 = State.Capabilities;
+    var Directory: bytes = State.Directory;
+    var Cursor: u32 = State.Cursor;
+    var Lineˉnumber: u32 = State.Lineˉnumber;
+    var Phase: u32 = State.Phase;
+    var Previousˉpart: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉpart;
+    var Previousˉimporter: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉimporter;
+    var Previousˉrequired: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉrequired;
+    var Previousˉcapability: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉcapability;
+    var Parsedˉpart: Windvaleˉlockedˉpart = Windvaleˉlockedˉpart(false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32);
+    Lineˉnumber = Lineˉnumber + 1u32;
+    Cursor = Line.Nextˉoffset;
+    let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 0u32);
+
+
+        if Phase != 0u32 {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+        }
+        if Tokens.Count != 6u32 {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+        }
+        if Parts >= 64u32 {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+        }
+        let Partˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 1u32);
+        let Scopeˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 2u32);
+        let Partˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 3u32);
+        let Partˉdecimal: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 4u32);
+        let Partˉpath: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 5u32);
+        let Scope: u32 = Packageˉtext.Windvaleˉpackageˉscope(Input, Scopeˉspan);
+        if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Partˉname) {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
+        }
+        if Scope == 0u32 {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉscope, Lineˉnumber, 1u32);
+        }
+        let Partˉcontent: Lockˉcontent =
+            Readˉcontent(Input, Partˉdigest, Partˉdecimal);
+        if Partˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+            return Stepˉfailure(State, Partˉcontent.Status, Lineˉnumber, 1u32);
+        }
+        if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Partˉpath) {
+            return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
+        }
+        if Parts > 0u32 {
+            if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                Input, Previousˉpart, Input, Partˉname
+            ) >= 0 {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+            }
+        }
+        Parsedˉpart = Windvaleˉlockedˉpart(
+                true, Partˉname.Offset, Partˉname.Length, Scope,
+                Partˉcontent.Digest.Offset, Partˉcontent.Digest.Length,
+                Partˉcontent.Bytes, Partˉpath.Offset, Partˉpath.Length
+            );
+            Previousˉpart = Partˉname;
+        Parts = Parts + 1u32;
+
+
+    return Lockˉstep(Lockˉstate(
+        Resolver,
+        Name,
+        Version,
+        Root,
+        Target,
+        License,
+        Originˉdigest,
+        Originˉbytes,
+        Originˉpath,
+        Packageˉdigest,
+        Packageˉbytes,
+        Packageˉpath,
+        Compilerˉdigest,
+        Compilerˉbytes,
+        Compilerˉpath,
+        Projectˉdigest,
+        Projectˉbytes,
+        Projectˉpath,
+        Outputˉdigest,
+        Outputˉbytes,
+        Outputˉfound,
+        Parts,
+        Dependencies,
+        Capabilities,
+        Directory,
+        Cursor,
+        Lineˉnumber,
+        Phase,
+        Previousˉpart,
+        Previousˉimporter,
+        Previousˉrequired,
+        Previousˉcapability
+    ), Parsedˉpart, Windvaleˉlockˉstatus.Valid, Lineˉnumber, 1u32);
+}
+
+fn Readˉtrailingˉrecord(Input: bytes, State: Lockˉstate, Line: Packageˉtext.Windvaleˉpackageˉline, Tokens: Lockˉtokens) -> Lockˉstep {
+    var Resolver: Packageˉtext.Windvaleˉpackageˉspan = State.Resolver;
+    var Name: Packageˉtext.Windvaleˉpackageˉspan = State.Name;
+    var Version: Packageˉtext.Windvaleˉpackageˉspan = State.Version;
+    var Root: Packageˉtext.Windvaleˉpackageˉspan = State.Root;
+    var Target: Packageˉtext.Windvaleˉpackageˉspan = State.Target;
+    var License: Packageˉtext.Windvaleˉpackageˉspan = State.License;
+    var Originˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Originˉdigest;
+    var Originˉbytes: u64 = State.Originˉbytes;
+    var Originˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Originˉpath;
+    var Packageˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Packageˉdigest;
+    var Packageˉbytes: u64 = State.Packageˉbytes;
+    var Packageˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Packageˉpath;
+    var Compilerˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Compilerˉdigest;
+    var Compilerˉbytes: u64 = State.Compilerˉbytes;
+    var Compilerˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Compilerˉpath;
+    var Projectˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Projectˉdigest;
+    var Projectˉbytes: u64 = State.Projectˉbytes;
+    var Projectˉpath: Packageˉtext.Windvaleˉpackageˉspan = State.Projectˉpath;
+    var Outputˉdigest: Packageˉtext.Windvaleˉpackageˉspan = State.Outputˉdigest;
+    var Outputˉbytes: u64 = State.Outputˉbytes;
+    var Outputˉfound: bool = State.Outputˉfound;
+    var Parts: u32 = State.Parts;
+    var Dependencies: u32 = State.Dependencies;
+    var Capabilities: u32 = State.Capabilities;
+    var Directory: bytes = State.Directory;
+    var Cursor: u32 = State.Cursor;
+    var Lineˉnumber: u32 = State.Lineˉnumber;
+    var Phase: u32 = State.Phase;
+    var Previousˉpart: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉpart;
+    var Previousˉimporter: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉimporter;
+    var Previousˉrequired: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉrequired;
+    var Previousˉcapability: Packageˉtext.Windvaleˉpackageˉspan = State.Previousˉcapability;
+    var Parsedˉpart: Windvaleˉlockedˉpart = Windvaleˉlockedˉpart(false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32);
+    Lineˉnumber = Lineˉnumber + 1u32;
+    Cursor = Line.Nextˉoffset;
+    let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 0u32);
+
+
+        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+            Input, Kind, "dependency"
+        ) {
+            if Phase > 1u32 || Parts == 0u32 {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+            }
+            Phase = 1u32;
+            if Tokens.Count != 3u32 {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+            }
+            if Dependencies >= 256u32 {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+            }
+            let Importer: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 1u32);
+            let Required: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(borrow Tokens, 2u32);
+            if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Importer) ||
+                !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Required) {
+                return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
+            }
+            if Dependencies > 0u32 {
+                let Importerˉorder: i32 = Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                    Input, Previousˉimporter, Input, Importer
+                );
+                if Importerˉorder > 0 {
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
                 }
-                if Tokens.Count != 6u32 {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                }
-                if Parts >= 64u32 {
-                    return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
-                }
-                let Partˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
-                let Scopeˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
-                let Partˉdigest: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 3u32);
-                let Partˉdecimal: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 4u32);
-                let Partˉpath: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 5u32);
-                let Scope: u32 = Packageˉtext.Windvaleˉpackageˉscope(Input, Scopeˉspan);
-                if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Partˉname) {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
-                }
-                if Scope == 0u32 {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉscope, Lineˉnumber, 1u32);
-                }
-                let Partˉcontent: Lockˉcontent =
-                    Readˉcontent(Input, Partˉdigest, Partˉdecimal);
-                if Partˉcontent.Status != Windvaleˉlockˉstatus.Valid {
-                    return Failure(Partˉcontent.Status, Lineˉnumber, 1u32);
-                }
-                if !Packageˉtext.Windvaleˉpackageˉpathˉvalid(Input, Partˉpath) {
-                    return Failure(Windvaleˉlockˉstatus.Invalidˉpath, Lineˉnumber, 1u32);
-                }
-                if Parts > 0u32 {
+                if Importerˉorder == 0 {
                     if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
-                        Input, Previousˉpart, Input, Partˉname
+                        Input, Previousˉrequired, Input, Required
                     ) >= 0 {
-                        return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
                     }
                 }
-                Directory = Appendˉpart(
-                    Directory, Partˉname, Scope, Partˉcontent.Digest,
-                    Partˉcontent.Bytes, Partˉpath
-                );
-                Previousˉpart = Partˉname;
-                Parts = Parts + 1u32;
+            }
+            Directory = Appendˉdependency(Directory, Importer, Required);
+            Previousˉimporter = Importer;
+            Previousˉrequired = Required;
+            Dependencies = Dependencies + 1u32;
+        } else {
+            if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
+                Input, Kind, "capability"
+            ) {
+                if Phase > 2u32 || Parts == 0u32 {
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                }
+                Phase = 2u32;
+                if Tokens.Count != 2u32 {
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                }
+                if Capabilities >= 64u32 {
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+                }
+                let Capability: Packageˉtext.Windvaleˉpackageˉspan =
+                    Tokenˉspan(borrow Tokens, 1u32);
+                if !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(Input, Capability) {
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
+                }
+                if Capabilities > 0u32 {
+                    if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
+                        Input, Previousˉcapability, Input, Capability
+                    ) >= 0 {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    }
+                }
+                Directory = Appendˉcapability(Directory, Capability);
+                Previousˉcapability = Capability;
+                Capabilities = Capabilities + 1u32;
             } else {
                 if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                    Input, Kind, "dependency"
+                    Input, Kind, "output"
                 ) {
-                    if Phase > 1u32 || Parts == 0u32 {
-                        return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
+                    if Phase > 2u32 || Parts == 0u32 {
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
                     }
-                    Phase = 1u32;
+                    Phase = 3u32;
                     if Tokens.Count != 3u32 {
-                        return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
+                        return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
                     }
-                    if Dependencies >= 256u32 {
-                        return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
+                    let Finalˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 1u32);
+                    let Finalˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
+                        Tokenˉspan(borrow Tokens, 2u32);
+                    let Finalˉcontent: Lockˉcontent =
+                        Readˉcontent(Input, Finalˉdigest, Finalˉdecimal);
+                    if Finalˉcontent.Status != Windvaleˉlockˉstatus.Valid {
+                        return Stepˉfailure(State, Finalˉcontent.Status, Lineˉnumber, 1u32);
                     }
-                    let Importer: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
-                    let Required: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
-                    if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Importer) ||
-                        !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Required) {
-                        return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
-                    }
-                    if Dependencies > 0u32 {
-                        let Importerˉorder: i32 = Packageˉtext.Windvaleˉpackageˉspanˉcompare(
-                            Input, Previousˉimporter, Input, Importer
-                        );
-                        if Importerˉorder > 0 {
-                            return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                        }
-                        if Importerˉorder == 0 {
-                            if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
-                                Input, Previousˉrequired, Input, Required
-                            ) >= 0 {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                            }
-                        }
-                    }
-                    Directory = Appendˉdependency(Directory, Importer, Required);
-                    Previousˉimporter = Importer;
-                    Previousˉrequired = Required;
-                    Dependencies = Dependencies + 1u32;
+                    Outputˉdigest = Finalˉcontent.Digest;
+                    Outputˉbytes = Finalˉcontent.Bytes;
+                    Outputˉfound = true;
                 } else {
-                    if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                        Input, Kind, "capability"
-                    ) {
-                        if Phase > 2u32 || Parts == 0u32 {
-                            return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                        }
-                        Phase = 2u32;
-                        if Tokens.Count != 2u32 {
-                            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                        }
-                        if Capabilities >= 64u32 {
-                            return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
-                        }
-                        let Capability: Packageˉtext.Windvaleˉpackageˉspan =
-                            Tokenˉspan(Input, Line, 1u32);
-                        if !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(Input, Capability) {
-                            return Failure(Windvaleˉlockˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
-                        }
-                        if Capabilities > 0u32 {
-                            if Packageˉtext.Windvaleˉpackageˉspanˉcompare(
-                                Input, Previousˉcapability, Input, Capability
-                            ) >= 0 {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                            }
-                        }
-                        Directory = Appendˉcapability(Directory, Capability);
-                        Previousˉcapability = Capability;
-                        Capabilities = Capabilities + 1u32;
-                    } else {
-                        if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-                            Input, Kind, "output"
-                        ) {
-                            if Phase > 2u32 || Parts == 0u32 {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
-                            }
-                            Phase = 3u32;
-                            if Tokens.Count != 3u32 {
-                                return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                            }
-                            let Finalˉdigest: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 1u32);
-                            let Finalˉdecimal: Packageˉtext.Windvaleˉpackageˉspan =
-                                Tokenˉspan(Input, Line, 2u32);
-                            let Finalˉcontent: Lockˉcontent =
-                                Readˉcontent(Input, Finalˉdigest, Finalˉdecimal);
-                            if Finalˉcontent.Status != Windvaleˉlockˉstatus.Valid {
-                                return Failure(Finalˉcontent.Status, Lineˉnumber, 1u32);
-                            }
-                            Outputˉdigest = Finalˉcontent.Digest;
-                            Outputˉbytes = Finalˉcontent.Bytes;
-                            Outputˉfound = true;
-                        } else {
-                            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
-                        }
-                    }
+                    return Stepˉfailure(State, Windvaleˉlockˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
                 }
             }
         }
+
+
+    return Lockˉstep(Lockˉstate(
+        Resolver,
+        Name,
+        Version,
+        Root,
+        Target,
+        License,
+        Originˉdigest,
+        Originˉbytes,
+        Originˉpath,
+        Packageˉdigest,
+        Packageˉbytes,
+        Packageˉpath,
+        Compilerˉdigest,
+        Compilerˉbytes,
+        Compilerˉpath,
+        Projectˉdigest,
+        Projectˉbytes,
+        Projectˉpath,
+        Outputˉdigest,
+        Outputˉbytes,
+        Outputˉfound,
+        Parts,
+        Dependencies,
+        Capabilities,
+        Directory,
+        Cursor,
+        Lineˉnumber,
+        Phase,
+        Previousˉpart,
+        Previousˉimporter,
+        Previousˉrequired,
+        Previousˉcapability
+    ), Parsedˉpart, Windvaleˉlockˉstatus.Valid, Lineˉnumber, 1u32);
+}
+
+fn Scanˉrecords(
+    Input: bytes,
+    Header: Packageˉtext.Windvaleˉpackageˉline,
+    Initial: Collections.Vector<Windvaleˉlockedˉpart>
+) -> Result.Result<Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >, Windvaleˉlockˉfailure> {
+    var Partˉdirectory: Collections.Vector<Windvaleˉlockedˉpart> = Initial;
+    var State: Lockˉstate = Initialˉstate(Header);
+    while State.Cursor < Bytesˉlength(Input) {
+        let Line: Packageˉtext.Windvaleˉpackageˉline =
+            Packageˉtext.Windvaleˉpackageˉreadˉline(Input, State.Cursor);
+        let Tokens: Lockˉtokens = Scanˉtokens(Input, Line);
+        if !Tokens.Valid {
+            return Failure(Windvaleˉlockˉstatus.Invalidˉrecord,
+                State.Lineˉnumber + 1u32, Tokens.Failureˉcolumn);
+        }
+        let Kind: Packageˉtext.Windvaleˉpackageˉspan =
+            Tokenˉspan(borrow Tokens, 0u32);
+        var Step: Lockˉstep = Lockˉstep(
+            State, Windvaleˉlockedˉpart(false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u64, 0u32, 0u32),
+            Windvaleˉlockˉstatus.Invalidˉrecord, 0u32, 0u32
+        );
+        if State.Lineˉnumber + 1u32 <= 9u32 {
+            Step = Readˉfixedˉrecord(Input, State, Line, Tokens);
+        } else {
+            if Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "part") {
+                Step = Readˉpartˉrecord(Input, State, Line, Tokens);
+            } else {
+                Step = Readˉtrailingˉrecord(Input, State, Line, Tokens);
+            }
+        }
+        if Step.Status != Windvaleˉlockˉstatus.Valid {
+            return Failure(Step.Status, Step.Line, Step.Column);
+        }
+        if Step.Part.Found {
+            let Appended: Result.Result<unit, Collections.Vectorˉappendˉfailure<Windvaleˉlockedˉpart> > =
+                Collections.Vectorˉappend(borrow mut Partˉdirectory, Step.Part);
+            match Appended {
+                case Result.Result.Valid { Value: Accepted } { }
+                case Result.Result.Failure { Error: Refused } {
+                    return Failure(Windvaleˉlockˉstatus.Collectionˉlimit, Step.Line, 1u32);
+                }
+            }
+        }
+        State = Step.State;
     }
 
-    if Lineˉnumber < 10u32 || Parts == 0u32 || !Outputˉfound {
-        return Failure(Windvaleˉlockˉstatus.Missingˉrecord, Lineˉnumber + 1u32, 1u32);
+    if State.Lineˉnumber < 10u32 || State.Parts == 0u32 || !State.Outputˉfound {
+        return Failure(Windvaleˉlockˉstatus.Missingˉrecord, State.Lineˉnumber + 1u32, 1u32);
     }
-    let Candidate: Windvaleˉlockˉscan = Windvaleˉlockˉscan(
-        Windvaleˉlockˉstatus.Valid,
-        Resolver.Offset, Resolver.Length,
-        Name.Offset, Name.Length,
-        Version.Offset, Version.Length,
-        Root.Offset, Root.Length,
-        Target.Offset, Target.Length,
-        License.Offset, License.Length,
-        Originˉdigest.Offset, Originˉdigest.Length, Originˉbytes,
-        Originˉpath.Offset, Originˉpath.Length,
-        Packageˉdigest.Offset, Packageˉdigest.Length, Packageˉbytes,
-        Packageˉpath.Offset, Packageˉpath.Length,
-        Compilerˉdigest.Offset, Compilerˉdigest.Length, Compilerˉbytes,
-        Compilerˉpath.Offset, Compilerˉpath.Length,
-        Projectˉdigest.Offset, Projectˉdigest.Length, Projectˉbytes,
-        Projectˉpath.Offset, Projectˉpath.Length,
-        Parts, Dependencies, Capabilities, Directory,
-        Outputˉdigest.Offset, Outputˉdigest.Length, Outputˉbytes,
-        Lineˉnumber, 1u32
-    );
+    let Candidate: Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> > = Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> > {
+        Status: Windvaleˉlockˉstatus.Valid,
+        Resolverˉoffset: State.Resolver.Offset,
+        Resolverˉlength: State.Resolver.Length,
+        Nameˉoffset: State.Name.Offset,
+        Nameˉlength: State.Name.Length,
+        Versionˉoffset: State.Version.Offset,
+        Versionˉlength: State.Version.Length,
+        Rootˉoffset: State.Root.Offset,
+        Rootˉlength: State.Root.Length,
+        Targetˉoffset: State.Target.Offset,
+        Targetˉlength: State.Target.Length,
+        Licenseˉoffset: State.License.Offset,
+        Licenseˉlength: State.License.Length,
+        Originˉdigestˉoffset: State.Originˉdigest.Offset,
+        Originˉdigestˉlength: State.Originˉdigest.Length,
+        Originˉbytes: State.Originˉbytes,
+        Originˉpathˉoffset: State.Originˉpath.Offset,
+        Originˉpathˉlength: State.Originˉpath.Length,
+        Packageˉdigestˉoffset: State.Packageˉdigest.Offset,
+        Packageˉdigestˉlength: State.Packageˉdigest.Length,
+        Packageˉbytes: State.Packageˉbytes,
+        Packageˉpathˉoffset: State.Packageˉpath.Offset,
+        Packageˉpathˉlength: State.Packageˉpath.Length,
+        Compilerˉdigestˉoffset: State.Compilerˉdigest.Offset,
+        Compilerˉdigestˉlength: State.Compilerˉdigest.Length,
+        Compilerˉbytes: State.Compilerˉbytes,
+        Compilerˉpathˉoffset: State.Compilerˉpath.Offset,
+        Compilerˉpathˉlength: State.Compilerˉpath.Length,
+        Projectˉdigestˉoffset: State.Projectˉdigest.Offset,
+        Projectˉdigestˉlength: State.Projectˉdigest.Length,
+        Projectˉbytes: State.Projectˉbytes,
+        Projectˉpathˉoffset: State.Projectˉpath.Offset,
+        Projectˉpathˉlength: State.Projectˉpath.Length,
+        Parts: State.Parts,
+        Dependencies: State.Dependencies,
+        Capabilities: State.Capabilities,
+        Partˉdirectory: Partˉdirectory,
+        Directory: State.Directory,
+        Outputˉdigestˉoffset: State.Outputˉdigest.Offset,
+        Outputˉdigestˉlength: State.Outputˉdigest.Length,
+        Outputˉbytes: State.Outputˉbytes,
+        Failureˉline: State.Lineˉnumber,
+        Failureˉcolumn: 1u32
+    };
 
     var Pathˉindex: u32 = 0u32;
-    while Pathˉindex < Parts {
+    while Pathˉindex < State.Parts {
         let Checkedˉpart: Windvaleˉlockedˉpart =
-            Windvaleˉlockedˉpartˉat(Candidate, Pathˉindex);
+            Windvaleˉlockedˉpartˉat(borrow Candidate, Pathˉindex);
         let Checkedˉpath: Packageˉtext.Windvaleˉpackageˉspan =
             Packageˉtext.Windvaleˉpackageˉspan(
                 Checkedˉpart.Pathˉoffset, Checkedˉpart.Pathˉlength
             );
         var Otherˉpathˉindex: u32 = Pathˉindex + 1u32;
-        while Otherˉpathˉindex < Parts {
+        while Otherˉpathˉindex < State.Parts {
             let Otherˉpart: Windvaleˉlockedˉpart =
-                Windvaleˉlockedˉpartˉat(Candidate, Otherˉpathˉindex);
+                Windvaleˉlockedˉpartˉat(borrow Candidate, Otherˉpathˉindex);
             let Otherˉpath: Packageˉtext.Windvaleˉpackageˉspan =
                 Packageˉtext.Windvaleˉpackageˉspan(
                     Otherˉpart.Pathˉoffset, Otherˉpart.Pathˉlength
@@ -709,13 +1090,13 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
         }
         Pathˉindex = Pathˉindex + 1u32;
     }
-    if !Partˉexists(Input, Candidate, Root) {
+    if !Partˉexists(Input, borrow Candidate, State.Root) {
         return Failure(Windvaleˉlockˉstatus.Unknownˉpart, 3u32, 1u32);
     }
     var Dependencyˉindex: u32 = 0u32;
-    while Dependencyˉindex < Dependencies {
+    while Dependencyˉindex < State.Dependencies {
         let Dependency: Windvaleˉlockedˉdependency =
-            Windvaleˉlockedˉdependencyˉat(Candidate, Dependencyˉindex);
+            Windvaleˉlockedˉdependencyˉat(borrow Candidate, Dependencyˉindex);
         let Verifiedˉimporter: Packageˉtext.Windvaleˉpackageˉspan =
             Packageˉtext.Windvaleˉpackageˉspan(
                 Dependency.Importerˉoffset, Dependency.Importerˉlength
@@ -724,17 +1105,17 @@ export fn Windvaleˉpackageˉscanˉlock(Input: bytes) -> Windvaleˉlockˉscan {
             Packageˉtext.Windvaleˉpackageˉspan(
                 Dependency.Requiredˉoffset, Dependency.Requiredˉlength
             );
-        if !Dependency.Found || !Partˉexists(Input, Candidate, Verifiedˉimporter) ||
-            !Partˉexists(Input, Candidate, Verifiedˉrequired) {
+        if !Dependency.Found || !Partˉexists(Input, borrow Candidate, Verifiedˉimporter) ||
+            !Partˉexists(Input, borrow Candidate, Verifiedˉrequired) {
             return Failure(
                 Windvaleˉlockˉstatus.Unknownˉpart,
-                10u32 + Parts + Dependencyˉindex,
+                10u32 + State.Parts + Dependencyˉindex,
                 1u32
             );
         }
         Dependencyˉindex = Dependencyˉindex + 1u32;
     }
-    return Candidate;
+    return Result.Result.Valid<Windvaleˉlockˉscan<Collections.Vector<Windvaleˉlockedˉpart> >, Windvaleˉlockˉfailure> { Value: Candidate };
 }
 
 export fn Windvaleˉlockˉdiagnosticˉcode(Status: Windvaleˉlockˉstatus) -> text {

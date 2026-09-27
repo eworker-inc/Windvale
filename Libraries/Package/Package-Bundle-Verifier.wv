@@ -6,6 +6,10 @@ authority library;
 
 
 import Foundationˉsha256 as Sha256;
+import Foundationˉmemory as Memory;
+import Foundationˉcollections as Collections;
+import Foundationˉresult as Result;
+import Foundationˉoption as Option;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
 import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
 import Windvaleˉpackageˉconsistency as Consistency;
@@ -79,6 +83,14 @@ export record Windvaleˉpackageˉbundleˉresult {
 record Windvaleˉpackageˉbundleˉdecimal {
     Valid: bool;
     Value: u32;
+}
+
+record Windvaleˉpackageˉbundleˉlockedˉsummary {
+    Status: Consistency.Windvaleˉpackageˉconsistencyˉstatus;
+    Index: u32;
+    Outputˉbytes: u64;
+    Outputˉdigestˉoffset: u32;
+    Outputˉdigestˉlength: u32;
 }
 
 record Windvaleˉpackageˉbundleˉindexˉscan {
@@ -731,7 +743,38 @@ fn Blobˉreferenced(
     return false;
 }
 
-export fn Windvaleˉpackageˉbundleˉverify(
+fn Lockedˉsummary(
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Package: Manifest.Windvaleˉpackageˉscan,
+    Budget: Memory.Memoryˉbudget
+) -> Windvaleˉpackageˉbundleˉlockedˉsummary {
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Locked } {
+            let Consistent: Consistency.Windvaleˉpackageˉconsistencyˉresult =
+                Consistency.Windvaleˉpackageˉverifyˉscannedˉmanifestˉlock(
+                    Manifestˉinput, Lockˉinput, Package, borrow Locked
+                );
+            return Windvaleˉpackageˉbundleˉlockedˉsummary(
+                Consistent.Status,
+                Consistent.Index,
+                Locked.Outputˉbytes,
+                Locked.Outputˉdigestˉoffset,
+                Locked.Outputˉdigestˉlength
+            );
+        }
+        case Option.Option.Absent {
+            return Windvaleˉpackageˉbundleˉlockedˉsummary(
+                Consistency.Windvaleˉpackageˉconsistencyˉstatus.Invalidˉlock,
+                0u32, 0u64, 0u32, 0u32
+            );
+        }
+    }
+}
+
+fn Verifyˉprecheck(
     Input: bytes
 ) -> Windvaleˉpackageˉbundleˉresult {
     let Total: u32 = Bytesˉlength(Input);
@@ -869,63 +912,39 @@ export fn Windvaleˉpackageˉbundleˉverify(
         );
     }
 
-    let Manifestˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
-        Index,
-        Scan.Directory,
+    return Windvaleˉpackageˉbundleˉresult(
+        Windvaleˉpackageˉbundleˉstatus.Valid,
+        0u32,
         Items,
         Blobs,
+        Index,
+        Scan.Directory,
+        Contentˉoffset,
+        Scan.Packageˉoffset, Scan.Packageˉlength,
+        Scan.Versionˉoffset, Scan.Versionˉlength,
+        Scan.Targetˉoffset, Scan.Targetˉlength,
         Scan.Manifestˉdigestˉoffset,
-        Scan.Manifestˉdigestˉlength
-    );
-    let Lockˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
-        Index,
-        Scan.Directory,
-        Items,
-        Blobs,
+        Scan.Manifestˉdigestˉlength,
+        Scan.Manifestˉbytes,
         Scan.Lockˉdigestˉoffset,
-        Scan.Lockˉdigestˉlength
+        Scan.Lockˉdigestˉlength,
+        Scan.Lockˉbytes,
+        Empty(Input)
     );
-    if !Manifestˉblob.Found || !Lockˉblob.Found ||
-        Manifestˉblob.Bytes != Scan.Manifestˉbytes ||
-        Lockˉblob.Bytes != Scan.Lockˉbytes {
-        return Failure(
-            Input,
-            Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch,
-            0u32
-        );
-    }
-    let Manifestˉinput: bytes = Bytesˉslice(
-        Input,
-        Contentˉoffset + Manifestˉblob.Contentˉoffset,
-        Manifestˉblob.Bytes
-    );
-    let Lockˉinput: bytes = Bytesˉslice(
-        Input,
-        Contentˉoffset + Lockˉblob.Contentˉoffset,
-        Lockˉblob.Bytes
-    );
-    let Consistent: Consistency.Windvaleˉpackageˉconsistencyˉresult =
-        Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
-            Manifestˉinput, Lockˉinput
-        );
-    if Consistent.Status !=
-        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid {
-        return Failure(
-            Input,
-            Windvaleˉpackageˉbundleˉstatus.Manifestˉlockˉmismatch,
-            Consistent.Index
-        );
-    }
-    let Package: Manifest.Windvaleˉpackageˉscan =
-        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
-    let Locked: Lock.Windvaleˉlockˉscan =
-        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput);
-    if Package.Status != Manifest.Windvaleˉpackageˉstatus.Valid ||
-        Locked.Status != Lock.Windvaleˉlockˉstatus.Valid {
-        return Failure(
-            Input, Windvaleˉpackageˉbundleˉstatus.Invalidˉpackage, 0u32
-        );
-    }
+}
+
+fn Verifyˉitems(
+    Input: bytes,
+    Scan: Windvaleˉpackageˉbundleˉresult,
+    Manifestˉinput: bytes,
+    Lockˉinput: bytes,
+    Package: Manifest.Windvaleˉpackageˉscan,
+    Locked: Windvaleˉpackageˉbundleˉlockedˉsummary
+) -> Windvaleˉpackageˉbundleˉresult {
+    let Index: bytes = Scan.Index;
+    let Items: u32 = Scan.Items;
+    let Blobs: u32 = Scan.Blobs;
+    let Contentˉoffset: u32 = Scan.Contentˉoffset;
     if !Spansˉequal(
         Index, Scan.Packageˉoffset, Scan.Packageˉlength,
         Manifestˉinput, Package.Nameˉoffset, Package.Nameˉlength
@@ -1072,6 +1091,76 @@ export fn Windvaleˉpackageˉbundleˉverify(
         Scan.Lockˉdigestˉlength,
         Scan.Lockˉbytes,
         Sha256.Foundationˉsha256ˉhex(Input)
+    );
+}
+
+export fn Windvaleˉpackageˉbundleˉverify(
+    Input: bytes,
+    Budget: Memory.Memoryˉbudget
+) -> Windvaleˉpackageˉbundleˉresult {
+    let Scan: Windvaleˉpackageˉbundleˉresult = Verifyˉprecheck(Input);
+    if Scan.Status != Windvaleˉpackageˉbundleˉstatus.Valid {
+        return Scan;
+    }
+    let Index: bytes = Scan.Index;
+    let Items: u32 = Scan.Items;
+    let Blobs: u32 = Scan.Blobs;
+    let Contentˉoffset: u32 = Scan.Contentˉoffset;
+    let Manifestˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
+        Index,
+        Scan.Directory,
+        Items,
+        Blobs,
+        Scan.Manifestˉdigestˉoffset,
+        Scan.Manifestˉdigestˉlength
+    );
+    let Lockˉblob: Windvaleˉpackageˉbundleˉblob = Findˉblob(
+        Index,
+        Scan.Directory,
+        Items,
+        Blobs,
+        Scan.Lockˉdigestˉoffset,
+        Scan.Lockˉdigestˉlength
+    );
+    if !Manifestˉblob.Found || !Lockˉblob.Found ||
+        Manifestˉblob.Bytes != Scan.Manifestˉbytes ||
+        Lockˉblob.Bytes != Scan.Lockˉbytes {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Itemˉmismatch,
+            0u32
+        );
+    }
+    let Manifestˉinput: bytes = Bytesˉslice(
+        Input,
+        Contentˉoffset + Manifestˉblob.Contentˉoffset,
+        Manifestˉblob.Bytes
+    );
+    let Lockˉinput: bytes = Bytesˉslice(
+        Input,
+        Contentˉoffset + Lockˉblob.Contentˉoffset,
+        Lockˉblob.Bytes
+    );
+    let Package: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
+    if Package.Status != Manifest.Windvaleˉpackageˉstatus.Valid {
+        return Failure(
+            Input, Windvaleˉpackageˉbundleˉstatus.Manifestˉlockˉmismatch, 0u32
+        );
+    }
+    let Locked: Windvaleˉpackageˉbundleˉlockedˉsummary = Lockedˉsummary(
+        Manifestˉinput, Lockˉinput, Package, Budget
+    );
+    if Locked.Status !=
+        Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid {
+        return Failure(
+            Input,
+            Windvaleˉpackageˉbundleˉstatus.Manifestˉlockˉmismatch,
+            Locked.Index
+        );
+    }
+    return Verifyˉitems(
+        Input, Scan, Manifestˉinput, Lockˉinput, Package, Locked
     );
 }
 

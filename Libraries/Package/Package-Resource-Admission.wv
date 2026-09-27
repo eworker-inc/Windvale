@@ -4,7 +4,10 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
-import Foundationˉsha256 as Sha256;
+import Foundationˉmemory as Memory;
+import Foundationˉcollections as Collections;
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
 import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉtext as Packageˉtext;
 
@@ -24,6 +27,7 @@ export enum Windvaleˉpackageˉresourceˉstatus: i32 {
     Pathˉmismatch = 1303;
     Byteˉcountˉmismatch = 1304;
     Digestˉmismatch = 1305;
+    Allocationˉfailure = 1306;
 }
 
 export record Windvaleˉpackageˉresourceˉresult {
@@ -68,13 +72,13 @@ fn Fixedˉresource(
 }
 
 fn Selectˉresource(
-    Scan: Lock.Windvaleˉlockˉscan,
+    Scan: borrow Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >,
     Kind: Windvaleˉpackageˉresourceˉkind,
     Index: u32
 ) -> Windvaleˉpackageˉlockedˉresource {
     if Kind == Windvaleˉpackageˉresourceˉkind.Part {
         let Part: Lock.Windvaleˉlockedˉpart =
-            Lock.Windvaleˉlockedˉpartˉat(Scan, Index);
+            Lock.Windvaleˉlockedˉpartˉat(borrow Scan, Index);
         if !Part.Found { return Missingˉresource(); }
         return Fixedˉresource(
             Part.Digestˉoffset, Part.Digestˉlength, Part.Bytes,
@@ -115,22 +119,63 @@ fn Selectˉresource(
     return Missingˉresource();
 }
 
-export fn Windvaleˉpackageˉverifyˉlockedˉresource(
+export fn Windvaleˉpackageˉverifyˉscannedˉresource(
     Lockˉinput: bytes,
+    Scan: borrow Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >,
     Kind: Windvaleˉpackageˉresourceˉkind,
     Index: u32,
     Path: bytes,
     Resource: bytes
 ) -> Windvaleˉpackageˉresourceˉresult {
-    let Scan: Lock.Windvaleˉlockˉscan =
-        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput);
-    if Scan.Status != Lock.Windvaleˉlockˉstatus.Valid {
-        return Admissionˉresult(
-            Windvaleˉpackageˉresourceˉstatus.Invalidˉlock, Kind, Index
-        );
-    }
     let Expected: Windvaleˉpackageˉlockedˉresource =
-        Selectˉresource(Scan, Kind, Index);
+        Selectˉresource(borrow Scan, Kind, Index);
+    return Checkˉresource(Lockˉinput, Kind, Index, Path, Resource, Expected);
+}
+
+export fn Windvaleˉpackageˉverifyˉlockedˉresource(
+    Lockˉinput: bytes,
+    Kind: Windvaleˉpackageˉresourceˉkind,
+    Index: u32,
+    Path: bytes,
+    Resource: bytes,
+    Budget: Memory.Memoryˉbudget
+) -> Windvaleˉpackageˉresourceˉresult {
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Scan } {
+            return Windvaleˉpackageˉverifyˉscannedˉresource(
+                Lockˉinput, borrow Scan, Kind, Index, Path, Resource
+            );
+        }
+        case Option.Option.Absent {
+            match Result.Borrowˉfailure(borrow Parsed) {
+                case Option.Option.Present { Value: Error } {
+                    match Error {
+                        case Lock.Windvaleˉlockˉfailure.Invalid { Status: _, Line: _, Column: _ } {
+                            return Admissionˉresult(Windvaleˉpackageˉresourceˉstatus.Invalidˉlock, Kind, Index);
+                        }
+                        case Lock.Windvaleˉlockˉfailure.Allocation { Error: _ } {
+                            return Admissionˉresult(Windvaleˉpackageˉresourceˉstatus.Allocationˉfailure, Kind, Index);
+                        }
+                    }
+                }
+                case Option.Option.Absent {
+                    return Admissionˉresult(Windvaleˉpackageˉresourceˉstatus.Invalidˉlock, Kind, Index);
+                }
+            }
+        }
+    }
+}
+
+fn Checkˉresource(
+    Lockˉinput: bytes,
+    Kind: Windvaleˉpackageˉresourceˉkind,
+    Index: u32,
+    Path: bytes,
+    Resource: bytes,
+    Expected: Windvaleˉpackageˉlockedˉresource
+) -> Windvaleˉpackageˉresourceˉresult {
     if !Expected.Found {
         return Admissionˉresult(
             Windvaleˉpackageˉresourceˉstatus.Invalidˉindex, Kind, Index
@@ -162,7 +207,7 @@ export fn Windvaleˉpackageˉverifyˉlockedˉresource(
             Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch, Kind, Index
         );
     }
-    let Digest: bytes = Sha256.Foundationˉsha256ˉhex(Resource);
+    let Digest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Resource));
     if !Packageˉtext.Windvaleˉpackageˉspansˉequal(
         Digest,
         Packageˉtext.Windvaleˉpackageˉwholeˉspan(Digest),
@@ -188,5 +233,6 @@ export fn Windvaleˉpackageˉresourceˉdiagnosticˉcode(
     if Status == Windvaleˉpackageˉresourceˉstatus.Pathˉmismatch { return "WVPK1303"; }
     if Status == Windvaleˉpackageˉresourceˉstatus.Byteˉcountˉmismatch { return "WVPK1304"; }
     if Status == Windvaleˉpackageˉresourceˉstatus.Digestˉmismatch { return "WVPK1305"; }
+    if Status == Windvaleˉpackageˉresourceˉstatus.Allocationˉfailure { return "WVPK1306"; }
     return "";
 }

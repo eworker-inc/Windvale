@@ -1,6 +1,9 @@
 windvale-project 4
 root "Tools/Windvale.Package/Package-Bundle-Verifier-Tool.wv"
 source "Libraries/Foundation/Values/Option.wv"
+source "Libraries/Foundation/Values/Result.wv"
+source "Libraries/Foundation/Memory/Memory.wv"
+source "Libraries/Foundation/Collections/Collections.wv"
 source "Foundation/Sha256.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv"

@@ -6,6 +6,8 @@ authority application;
 
 
 import Foundationˉsha256 as Sha256;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
 import Windvaleˉpackageˉbundleˉverifier as Verifier;
 import Windvaleˉpackageˉbundleˉwriter as Writer;
 
@@ -200,24 +202,59 @@ fn Write(
     Lock: bytes,
     Program: bytes,
     License: bytes,
-    Provenance: bytes
+    Provenance: bytes,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
 ) -> Writer.Windvaleˉpackageˉbundleˉwriteˉresult {
-    return Writer.Windvaleˉpackageˉbundleˉwrite(
-        Manifest, Lock, Program, License, Provenance
-    );
+    match Split {
+        case Result.Result.Valid { Value: Child } {
+            return Writer.Windvaleˉpackageˉbundleˉwrite(
+                Manifest, Lock, Program, License, Provenance, Child
+            );
+        }
+        case Result.Result.Failure { Error: _ } {
+            return Writer.Windvaleˉpackageˉbundleˉwriteˉresult(
+                Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Bundleˉlimit,
+                Empty(), 0u32, 0u32
+            );
+        }
+    }
 }
 
-fn Validˉcase() -> bytes {
+fn Verify(
+    Input: bytes,
+    Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>
+) -> Verifier.Windvaleˉpackageˉbundleˉresult {
+    match Split {
+        case Result.Result.Valid { Value: Child } {
+            return Verifier.Windvaleˉpackageˉbundleˉverify(Input, Child);
+        }
+        case Result.Result.Failure { Error: _ } {
+            return Verifier.Windvaleˉpackageˉbundleˉresult(
+                Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉsize,
+                0u32, 0u32, 0u32,
+                Empty(), Empty(), 0u32,
+                0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+                0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+                Empty()
+            );
+        }
+    }
+}
+
+fn Validˉcase(Budget: Memory.Memoryˉbudget) -> bytes {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Program: bytes = Executable();
     let Manifest: bytes = Manifestˉvalue("hosted-wvb-v1");
     let Lock: bytes = Lockˉvalue(Manifest, Program, "hosted-wvb-v1");
     let First: Writer.Windvaleˉpackageˉbundleˉwriteˉresult = Write(
         Manifest, Lock, Program, Textˉtoˉutf8("MIT\n"),
-        Textˉtoˉutf8("windvale-provenance 1\nfixture bundle-self-test\n")
+        Textˉtoˉutf8("windvale-provenance 1\nfixture bundle-self-test\n"),
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     );
     let Second: Writer.Windvaleˉpackageˉbundleˉwriteˉresult = Write(
         Manifest, Lock, Program, Textˉtoˉutf8("MIT\n"),
-        Textˉtoˉutf8("windvale-provenance 1\nfixture bundle-self-test\n")
+        Textˉtoˉutf8("windvale-provenance 1\nfixture bundle-self-test\n"),
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     );
     if First.Status != Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Valid ||
         First.Items != 3u32 || First.Blobs != 5u32 ||
@@ -225,7 +262,7 @@ fn Validˉcase() -> bytes {
         return Empty();
     }
     let Admitted: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(First.Value);
+        Verify(First.Value, Memory.Split(borrow mut Parent, 16384u64, 64u32));
     if Admitted.Status != Verifier.Windvaleˉpackageˉbundleˉstatus.Valid ||
         Admitted.Items != 3u32 || Admitted.Blobs != 5u32 {
         return Empty();
@@ -233,7 +270,8 @@ fn Validˉcase() -> bytes {
     return First.Value;
 }
 
-fn Writerˉrejections() -> u32 {
+fn Writerˉrejections(Budget: Memory.Memoryˉbudget) -> u32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Program: bytes = Executable();
     let Wrongˉmanifest: bytes = Manifestˉvalue("hosted-wvb-v2");
     let Wrongˉlock: bytes = Lockˉvalue(
@@ -241,7 +279,8 @@ fn Writerˉrejections() -> u32 {
     );
     let Wrong: Writer.Windvaleˉpackageˉbundleˉwriteˉresult = Write(
         Wrongˉmanifest, Wrongˉlock, Program,
-        Textˉtoˉutf8("MIT\n"), Textˉtoˉutf8("provenance\n")
+        Textˉtoˉutf8("MIT\n"), Textˉtoˉutf8("provenance\n"),
+        Memory.Split(borrow mut Parent, 16384u64, 64u32)
     );
     if Wrong.Status !=
         Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock {
@@ -255,7 +294,8 @@ fn Writerˉrejections() -> u32 {
     let Hostileˉresult: Writer.Windvaleˉpackageˉbundleˉwriteˉresult =
         Write(
             Hostileˉmanifest, Hostileˉlock, Hostile,
-            Textˉtoˉutf8("MIT\n"), Textˉtoˉutf8("provenance\n")
+            Textˉtoˉutf8("MIT\n"), Textˉtoˉutf8("provenance\n"),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Hostileˉresult.Status !=
         Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉexecutable {
@@ -265,7 +305,10 @@ fn Writerˉrejections() -> u32 {
     let Lock: bytes = Lockˉvalue(Manifest, Program, "hosted-wvb-v1");
     let Duplicate: bytes = Textˉtoˉutf8("same-resource\n");
     let Duplicateˉresult: Writer.Windvaleˉpackageˉbundleˉwriteˉresult =
-        Write(Manifest, Lock, Program, Duplicate, Duplicate);
+        Write(
+            Manifest, Lock, Program, Duplicate, Duplicate,
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
+        );
     if Duplicateˉresult.Status !=
         Writer.Windvaleˉpackageˉbundleˉwriteˉstatus.Duplicateˉblob {
         return 3u32;
@@ -273,19 +316,22 @@ fn Writerˉrejections() -> u32 {
     return 0u32;
 }
 
-fn Verifierˉmutations(Bundle: bytes) -> u32 {
+fn Verifierˉmutations(Bundle: bytes, Budget: Memory.Memoryˉbudget) -> u32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let Length: u32 = Bytesˉlength(Bundle);
     let Truncated: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Bytesˉslice(Bundle, 0u32, Length - 1u32)
+        Verify(
+            Bytesˉslice(Bundle, 0u32, Length - 1u32),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Truncated.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉheader {
         return 1u32;
     }
     let Corruptˉindex: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Replaceˉu8(Bundle, 128u32, 88u8)
+        Verify(
+            Replaceˉu8(Bundle, 128u32, 88u8),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Corruptˉindex.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉdigest {
@@ -295,24 +341,27 @@ fn Verifierˉmutations(Bundle: bytes) -> u32 {
     var Replacement: u8 = 0u8;
     if Last == 0u8 { Replacement = 1u8; }
     let Corruptˉblob: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Replaceˉu8(Bundle, Length - 1u32, Replacement)
+        Verify(
+            Replaceˉu8(Bundle, Length - 1u32, Replacement),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Corruptˉblob.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉdigest {
         return 3u32;
     }
     let Wrongˉtarget: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Wrongˉtargetˉbundle(Bundle)
+        Verify(
+            Wrongˉtargetˉbundle(Bundle),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Wrongˉtarget.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Wrongˉtarget {
         return 4u32;
     }
     let Oversized: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Replaceˉu32(Bundle, 56u32, 4097u32)
+        Verify(
+            Replaceˉu32(Bundle, 56u32, 4097u32),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Oversized.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Collectionˉlimit {
@@ -339,32 +388,41 @@ fn Geometryˉbundle(Secondˉoffset: text, Secondˉdigest: text) -> bytes {
     return Header(Textˉtoˉutf8(Index), Textˉtoˉutf8("cba"), 1u32, 3u32);
 }
 
-fn Geometryˉrejections() -> u32 {
+fn Geometryˉrejections(Budget: Memory.Memoryˉbudget) -> u32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
     let One: text =
         "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d";
     let Overlap: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(Geometryˉbundle("0", One));
+        Verify(
+            Geometryˉbundle("0", One),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
+        );
     if Overlap.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry {
         return 1u32;
     }
     let Gap: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(Geometryˉbundle("2", One));
+        Verify(
+            Geometryˉbundle("2", One),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
+        );
     if Gap.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉblobˉgeometry {
         return 2u32;
     }
     let Duplicate: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Geometryˉbundle("1", "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6")
+        Verify(
+            Geometryˉbundle("1", "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6"),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Duplicate.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Duplicateˉrecord {
         return 3u32;
     }
     let Unordered: Verifier.Windvaleˉpackageˉbundleˉresult =
-        Verifier.Windvaleˉpackageˉbundleˉverify(
-            Geometryˉbundle("1", "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+        Verify(
+            Geometryˉbundle("1", "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+            Memory.Split(borrow mut Parent, 16384u64, 64u32)
         );
     if Unordered.Status !=
         Verifier.Windvaleˉpackageˉbundleˉstatus.Invalidˉindexˉorder {
@@ -373,20 +431,53 @@ fn Geometryˉrejections() -> u32 {
     return 0u32;
 }
 
-export fn Main() -> i32 {
-    let Bundle: bytes = Validˉcase();
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    var Bundle: bytes = Empty();
+    let Validˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 49152u64, 192u32);
+    match Validˉsplit {
+        case Result.Result.Valid { Value: Validˉchild } {
+            Bundle = Validˉcase(Validˉchild);
+        }
+        case Result.Result.Failure { Error: _ } { return 1; }
+    }
     if Bytesˉlength(Bundle) == 0u32 { return 1; }
-    let Writerˉfailure: u32 = Writerˉrejections();
+    var Writerˉfailure: u32 = 0u32;
+    let Writerˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 49152u64, 192u32);
+    match Writerˉsplit {
+        case Result.Result.Valid { Value: Writerˉchild } {
+            Writerˉfailure = Writerˉrejections(Writerˉchild);
+        }
+        case Result.Result.Failure { Error: _ } { return 20; }
+    }
     if Writerˉfailure == 1u32 { return 21; }
     if Writerˉfailure == 2u32 { return 22; }
     if Writerˉfailure == 3u32 { return 23; }
-    let Verifierˉfailure: u32 = Verifierˉmutations(Bundle);
+    var Verifierˉfailure: u32 = 0u32;
+    let Verifierˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 81920u64, 320u32);
+    match Verifierˉsplit {
+        case Result.Result.Valid { Value: Verifierˉchild } {
+            Verifierˉfailure = Verifierˉmutations(Bundle, Verifierˉchild);
+        }
+        case Result.Result.Failure { Error: _ } { return 30; }
+    }
     if Verifierˉfailure == 1u32 { return 31; }
     if Verifierˉfailure == 2u32 { return 32; }
     if Verifierˉfailure == 3u32 { return 33; }
     if Verifierˉfailure == 4u32 { return 34; }
     if Verifierˉfailure == 5u32 { return 35; }
-    let Geometryˉfailure: u32 = Geometryˉrejections();
+    var Geometryˉfailure: u32 = 0u32;
+    let Geometryˉsplit: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+        Memory.Split(borrow mut Parent, 65536u64, 256u32);
+    match Geometryˉsplit {
+        case Result.Result.Valid { Value: Geometryˉchild } {
+            Geometryˉfailure = Geometryˉrejections(Geometryˉchild);
+        }
+        case Result.Result.Failure { Error: _ } { return 50; }
+    }
     if Geometryˉfailure == 1u32 { return 51; }
     if Geometryˉfailure == 2u32 { return 52; }
     if Geometryˉfailure == 3u32 { return 53; }

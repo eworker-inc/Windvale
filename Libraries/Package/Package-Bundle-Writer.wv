@@ -6,9 +6,14 @@ authority library;
 
 
 import Foundationˉsha256 as Sha256;
+import Foundationˉmemory as Memory;
+import Foundationˉcollections as Collections;
+import Foundationˉresult as Result;
+import Foundationˉoption as Option;
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Wvbˉverifier;
 import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
 import Windvaleˉpackageˉconsistency as Consistency;
+import Windvaleˉpackageˉlock as Lock;
 import Windvaleˉpackageˉmanifest as Manifest;
 import Windvaleˉpackageˉresourceˉadmission as Resourceˉadmission;
 import Windvaleˉpackageˉtext as Packageˉtext;
@@ -304,11 +309,24 @@ export fn Windvaleˉpackageˉbundleˉwrite(
     Lockˉinput: bytes,
     Executable: bytes,
     License: bytes,
-    Provenance: bytes
+    Provenance: bytes,
+    Budget: Memory.Memoryˉbudget
 ) -> Windvaleˉpackageˉbundleˉwriteˉresult {
+    let Package: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
+    if Package.Status != Manifest.Windvaleˉpackageˉstatus.Valid {
+        return Failure(
+            Manifestˉinput,
+            Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock
+        );
+    }
+    let Parsed: Result.Result<Lock.Windvaleˉlockˉscan<Collections.Vector<Lock.Windvaleˉlockedˉpart> >, Lock.Windvaleˉlockˉfailure> =
+        Lock.Windvaleˉpackageˉscanˉlock(Lockˉinput, Budget);
+    match Result.Borrowˉvalid(borrow Parsed) {
+        case Option.Option.Present { Value: Locked } {
     let Consistent: Consistency.Windvaleˉpackageˉconsistencyˉresult =
-        Consistency.Windvaleˉpackageˉverifyˉmanifestˉlock(
-            Manifestˉinput, Lockˉinput
+        Consistency.Windvaleˉpackageˉverifyˉscannedˉmanifestˉlock(
+            Manifestˉinput, Lockˉinput, Package, borrow Locked
         );
     if Consistent.Status !=
         Consistency.Windvaleˉpackageˉconsistencyˉstatus.Valid {
@@ -317,8 +335,6 @@ export fn Windvaleˉpackageˉbundleˉwrite(
             Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock
         );
     }
-    let Package: Manifest.Windvaleˉpackageˉscan =
-        Manifest.Windvaleˉpackageˉscanˉmanifest(Manifestˉinput);
     let Target: bytes = Spanˉbytes(
         Manifestˉinput, Package.Targetˉoffset, Package.Targetˉlength
     );
@@ -329,8 +345,9 @@ export fn Windvaleˉpackageˉbundleˉwrite(
         );
     }
     let Outputˉadmission: Resourceˉadmission.Windvaleˉpackageˉresourceˉresult =
-        Resourceˉadmission.Windvaleˉpackageˉverifyˉlockedˉresource(
+        Resourceˉadmission.Windvaleˉpackageˉverifyˉscannedˉresource(
             Lockˉinput,
+            borrow Locked,
             Resourceˉadmission.Windvaleˉpackageˉresourceˉkind.Output,
             0u32,
             Empty(Executable),
@@ -508,6 +525,14 @@ export fn Windvaleˉpackageˉbundleˉwrite(
     return Success(
         Bytesˉconcat(Headerˉbytes, Bytesˉconcat(Index, Content))
     );
+        }
+        case Option.Option.Absent {
+            return Failure(
+                Manifestˉinput,
+                Windvaleˉpackageˉbundleˉwriteˉstatus.Invalidˉmanifestˉlock
+            );
+        }
+    }
 }
 
 export fn Windvaleˉpackageˉbundleˉwriteˉdiagnosticˉcode(
