@@ -223,27 +223,21 @@ is not delivered. The old harness also forwards mutable budget borrows through
 helpers, outside the current owned/immutable helper boundary; replace that
 harness flow with explicit owned child budgets rather than inferring new support.
 
-Resolve execution resource use before changing the maintained package API.
-The saved parser probes reach the eight-call-depth limit or exhaust the hosted
-runner's 128 MiB byte arena. The bounded local-write log now lets a
-412,520-instruction parser probe return on both hosts at about 50 MiB peak
-Debian RSS, down from about 111 MiB before the frame-copy changes. The full
-typed probe still exhausts the unchanged arena. A bounded
-[Debian arena sample](../Evidence/2026-09-27-Typed-Parser-Arena-Sample.json)
-reproduces exit code 66 in 10.4 seconds. The largest observed writes in both
-sampled windows map to local-frame materialization, including after the arena
-cursor passes 127 million bytes (about 122 MiB). These windows do not measure
-live bytes or prove a global allocation ranking. The next gate is to account
-for descriptor
-ownership across local frames, calls and returns, then reclaim dead temporary
-bytes under the same arena limit and immutable-value semantics. Recheck both
-probes on Windows and Debian before adopting the typed scanner. The existing
-component fixtures use
-the current collection signature, valid typed backings and minor-42
-expectations.
-The maintained scanner and fixture remain unchanged. Preserve lock
-bytes, failure order, explicit allocation failures and resource bounds when
-the migration resumes; emission alone does not establish consumer delivery.
+The runner keeps its eight-call-depth and 128 MiB byte-arena limits. Deferring
+local-frame writes across scalar comparisons lets the saved typed-table probe
+return `42` in 722,721 instructions on Windows and Debian; the previous runner
+exited `66`. The short probe retains its 412,520-instruction result on both
+hosts, with Debian peak RSS falling from 50,300 to 43,168 KiB in one paired
+measurement. The [bounded comparison](../Evidence/2026-09-27-Typed-Parser-Deferred-Comparisons.json)
+closes that probe's measured arena blocker, not the maintained typed consumer.
+The typed-table WVB came from an ignored candidate source and harness. Other
+saved variants can still reach the call-depth limit; the maintained scanner's
+owned-budget harness is not yet executable. Migrate the candidate through the
+maintained package API, preserve exact lock bytes, failure order, allocation
+failures and resource bounds, then run the maintained consumer on both hosts.
+The existing component fixtures use the current collection signature, valid
+typed backings and minor-42 expectations. Emission alone does not establish
+consumer delivery.
 
 These immutable bridges do not enable consuming extraction or arbitrary payload
 composition. Native lowering for minors 40 through 42, installed promotion,

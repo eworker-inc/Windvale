@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-27-typed-parser-deferred-comparisons",
+  "date": "2026-09-27",
+  "subject": "Avoid premature local-frame copies across scalar comparisons",
+  "claim": "With local-frame writes deferred across stack-only comparison opcodes 96 through 103 and no-op opcode 118, the exact typed-table Package-Lock probe returns 42 in 722721 guest instructions on Windows and Debian. The previous runner exits 66 on that probe. The short parser probe retains result 1 and 412520 instructions on both hosts. In separate Debian RSS measurements, the short probe's peak falls from 50300 to 43168 KiB; the typed probe finishes at 126672 KiB whereas the previous runner fails at 137552 KiB. This closes the measured typed-table probe's arena blocker, not delivery of the maintained typed consumer or 1.0 qualification.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "64b2446d455cb5aa8b927242879bda627ec6a035"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 with Debian x64 WSL package child",
+      "target": "Build and function limits",
+      "tool": "Build-Cached-Split-Project-Wvb.mjs; Build-Cached-Segmented-Hosted-Wvb.mjs; Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Artifacts/Work/Package-Lock-2026-09-27/Build-Runner-Deferred.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.wvb",
+          "size": 1230515,
+          "sha256": "34e0e1c0585b69a67f890c658e68886bff7d06c9cef2e05d1de185b10fe97e9a"
+        },
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.exe",
+          "size": 10084352,
+          "sha256": "6ae604da628bf8e1df0667ef78ea246018d7497d4de9c0e111da11f501b996cc"
+        },
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.elf",
+          "size": 10084352,
+          "sha256": "d8899bb3b7221bb2f6400d68759b50a3125cefb5a4a42f22c7c16d8841690013"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Short parser probe",
+      "tool": "Runner-Deferred.exe",
+      "command": "Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.exe Artifacts/Work/Package-Lock-2026-09-26/Windows-1790504730755-Probe.wvb --report-steps",
+      "result": "Passed",
+      "elapsedMilliseconds": 4644,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Windows-1790504730755-Probe.wvb",
+          "size": 55220,
+          "sha256": "df952dc2ef3bc3bc247340a52a66e0717ae4c5f1bea0b3c3521afb4e66e83a04"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Typed-table parser probe",
+      "tool": "Runner-Deferred.exe",
+      "command": "Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.exe Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb --report-steps",
+      "result": "Passed",
+      "elapsedMilliseconds": 7829,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb",
+          "size": 56788,
+          "sha256": "6a1a5540c0d1a225df4afc25f272553a01249b158bbdec7062900b74e9c83fe6"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Foundation borrow runtime and malformed WVB cases",
+      "tool": "Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.exe",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Foundation borrow runtime and malformed WVB cases",
+      "tool": "Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.elf",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Baseline short probe RSS and behavior",
+      "tool": "Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py",
+      "command": "python3 Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-1790504730755-Probe.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 4983,
+      "peakWorkingSetBytes": 51507200,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf",
+          "size": 10084352,
+          "sha256": "af890ddc82076760789670d58ebfe975f70a66faad16446912634312ed6c9099"
+        },
+        {
+          "path": "Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py",
+          "size": 590,
+          "sha256": "f08f8053c138b46cd306e8897b4bb8fbcb8140eeee788cedcd6bfef9d1384f35"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Deferred short probe RSS and behavior",
+      "tool": "Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py",
+      "command": "python3 Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-1790504730755-Probe.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 4738,
+      "peakWorkingSetBytes": 44204032
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Baseline typed-table probe RSS and failure",
+      "tool": "Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py",
+      "command": "python3 Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py Artifacts/Work/Package-Lock-2026-09-27/Current-Baseline.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb",
+      "result": "Failed",
+      "elapsedMilliseconds": 8062,
+      "peakWorkingSetBytes": 140853248
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Deferred typed-table probe RSS and behavior",
+      "tool": "Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py",
+      "command": "python3 Documents/Evidence/Tools/2026-09-27-Measure-Runner-Rss.py Artifacts/Work/Package-Lock-2026-09-27/Runner-Deferred.elf Artifacts/Work/Package-Lock-2026-09-26/Windows-Typed-Table.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 8384,
+      "peakWorkingSetBytes": 129712128
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "The typed-table probe is a saved local WVB compiled from an ignored candidate Package-Lock source and test harness. It checks typed scan fields, indexed part/capability lookups, and result 42, but is not the unchanged maintained package source or a delivered consumer gate. The source and guest are identified by bytes rather than a Git revision.",
+    "The short probe intentionally returns 1 from its test assertions; the invariant is matching result and 412520 guest instructions across runner versions and hosts. This is not a passing Package-Lock assertion.",
+    "The construction wrapper and prepared compiler products were ignored local development artifacts. Compilation took 275570 ms; parallel Windows and Debian packaging took 98473 and 107834 ms. Exact runner outputs and the source commit are identified above, but independent cold reconstruction and qualification were not run.",
+    "The four Debian RSS measurements are individual sequential child-process runs using resource.getrusage(RUSAGE_CHILDREN).ru_maxrss, reported in KiB and converted to bytes in peakWorkingSetBytes. They include process startup and do not measure live arena ownership. Baseline typed execution fails before completion, so its time and peak are not comparable as a successful-workload speedup.",
+    "The Foundation borrow runtime selection passed ten cases per host, including malformed and truncated modules. The changed-file plan selected three wider owners with 2130 seconds expected cold duration. It was not run because those construction and unrelated behavior cases do not add causal evidence for this two-line deferral change. Integrated Windows/Linux 1.0 qualification and installed delivery were not run."
+  ],
+  "related": [
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-27-Typed-Parser-Arena-Sample.json",
+    "Documents/Decisions/0150-Bounded-Native-Dynamic-Value-Lifetimes.md"
+  ]
+}
