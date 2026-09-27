@@ -14,6 +14,7 @@ import {
     Constructˉcurrentˉsplitˉcompiler,
     Getˉcurrentˉsplitˉcompilerˉfamily,
     Getˉcurrentˉsplitˉcompilerˉkey,
+    Readˉpreparedˉsplitˉcompiler,
 } from './Current-Split-Compiler-Cache-Core.mjs';
 import {
     Constructˉsourceˉeditionˉpredecessor,
@@ -38,6 +39,8 @@ async function Buildˉcurrentˉsplitˉprojects() {
     let Deadline = null;
     let Prepareˉonly = false;
     let Preparedˉonly = false;
+    let Prepareˉcompiler = false;
+    let Selectedˉkey = null;
     for (let Index = 2; Index < process.argv.length; Index += 1) {
         if (process.argv[Index] === '--deadline-ms') {
             if (Deadline !== null || Index + 1 >= process.argv.length) Usage();
@@ -49,6 +52,13 @@ async function Buildˉcurrentˉsplitˉprojects() {
         } else if (process.argv[Index] === '--prepare-only') {
             if (Prepareˉonly) Usage();
             Prepareˉonly = true;
+        } else if (process.argv[Index] === '--compiler-checkpoint') {
+            if (Selectedˉkey !== null || Index + 1 >= process.argv.length) Usage();
+            Selectedˉkey = process.argv[++Index];
+            if (!/^[0-9a-f]{64}$/u.test(Selectedˉkey)) Usage();
+        } else if (process.argv[Index] === '--prepare-compiler') {
+            if (Prepareˉcompiler) Usage();
+            Prepareˉcompiler = true;
         } else if (process.argv[Index] === '--prepared-compiler-only') {
             if (Preparedˉonly) Usage();
             Preparedˉonly = true;
@@ -66,12 +76,15 @@ async function Buildˉcurrentˉsplitˉprojects() {
         Reject('WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1.');
     }
     Preparedˉonly ||= Productˉmode === '1';
+    if ((Prepareˉcompiler && (Preparedˉonly || Prepareˉonly || Deadline === null)) ||
+        (Selectedˉkey !== null && (Prepareˉonly || Prepareˉcompiler))) Usage();
     const Argumentˉcount = Targetˉarguments.length;
     if ((Prepareˉonly ? Argumentˉcount !== 0 || Deadline === null : Argumentˉcount < 2) ||
         Argumentˉcount % 2 !== 0 ||
         Argumentˉcount / 2 > MAXIMUM_TARGET_PROJECTS) {
         Usage();
     }
+    Deadline ??= Date.now() + 600_000;
     const Workˉdeadline = Deadline === null ? null : Deadline - CLEANUP_RESERVE_MILLISECONDS;
     Requireˉtime(Workˉdeadline, 'construction');
     if (process.arch !== 'x64' ||
@@ -112,6 +125,7 @@ async function Buildˉcurrentˉsplitˉprojects() {
     );
     const Pinnedˉanalyzerˉwvb = path.join(Bootstrapˉroot, 'wvanalyze.wvb');
     const Pinnedˉemitterˉwvb = path.join(Bootstrapˉroot, 'wvemit.wvb');
+    if (Prepareˉonly || Prepareˉcompiler) {
     Requireˉexactˉfile(
         Pinnedˉanalyzerˉwvb,
         PINNED_ANALYZER_BYTES,
@@ -124,6 +138,7 @@ async function Buildˉcurrentˉsplitˉprojects() {
         PINNED_EMITTER_SHA256,
         'pinned emitter',
     );
+    }
 
     const Temporaryˉroot = Canonicalˉordinaryˉdirectory(
         os.tmpdir(),
@@ -141,9 +156,10 @@ async function Buildˉcurrentˉsplitˉprojects() {
     let Primaryˉfailure = null;
 
     try {
-        const Compilerˉkey = await Getˉcurrentˉsplitˉcompilerˉkey();
-        const Compilerˉcheckpoint = await Acquireˉcurrentˉsplitˉcompiler(
-            await Getˉcurrentˉsplitˉcompilerˉfamily(),
+        const Compilerˉkey = Selectedˉkey ?? await Getˉcurrentˉsplitˉcompilerˉkey();
+        const Family = await Getˉcurrentˉsplitˉcompilerˉfamily();
+        const Compilerˉcheckpoint = Prepareˉonly || Prepareˉcompiler ? await Acquireˉcurrentˉsplitˉcompiler(
+            Family,
             Compilerˉkey,
             Candidate => {
                 if (Preparedˉonly) {
@@ -174,7 +190,15 @@ async function Buildˉcurrentˉsplitˉprojects() {
                 }
                 Requireˉtime(Workˉdeadline, 'compiler identity check');
             },
-        );
+        ) : await Readˉpreparedˉsplitˉcompiler(Family, Compilerˉkey);
+        async function Requireˉcompilerˉunchanged() {
+            if (Compilerˉcheckpoint.Requireˉunchanged) await Compilerˉcheckpoint.Requireˉunchanged();
+            if (Selectedˉkey === null && await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
+                Reject('Current compiler construction inputs changed.');
+            }
+            Requireˉtime(Workˉdeadline, 'compiler identity check');
+        }
+        await Requireˉcompilerˉunchanged();
         Requireˉtime(Workˉdeadline, 'compiler construction');
         if (Compilerˉcheckpoint.status === 'Hit' && Step === 0) {
             Totalˉsteps = Targets.length;
@@ -183,6 +207,8 @@ async function Buildˉcurrentˉsplitˉprojects() {
             'current split compiler cache status=' + Compilerˉcheckpoint.status +
             ' key=' + Compilerˉkey + '\n',
         );
+        process.stdout.write(`compiler selection=${Selectedˉkey === null ? 'current-source' : 'explicit-checkpoint'} ` +
+            `construction=${Prepareˉonly || Prepareˉcompiler ? 'allowed' : 'disabled'}\n`);
         const Evidence = [];
         for (const [Index, Target] of Targets.entries()) {
             const Label = Targets.length === 1
@@ -206,6 +232,7 @@ async function Buildˉcurrentˉsplitˉprojects() {
                 MAXIMUM_INPUT_BYTES,
             );
             Evidence.push(Targetˉevidence);
+            await Requireˉcompilerˉunchanged();
             Requireˉtime(Workˉdeadline, 'target publication');
             if (Targets.length > 1) {
                 process.stdout.write(
@@ -365,6 +392,7 @@ function Usage() {
     throw Object.assign(new Error(
         'Usage: node Tools/Native/Build-Current-Split-Project-Wvb.mjs ' +
         '[--deadline-ms <absolute-unix-ms>] ' +
+        '[--compiler-checkpoint <sha256-key> | --prepare-compiler] ' +
         '[--prepared-compiler-only] <project.wvproj> <output.wvb> ' +
         '[<project.wvproj> <output.wvb> ...] or ' +
         '--prepare-only --deadline-ms <absolute-unix-ms> [--prepared-compiler-only]\n',

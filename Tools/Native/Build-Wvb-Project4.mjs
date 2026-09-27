@@ -16,8 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-    Acquireˉcurrentˉsplitˉcompiler,
-    Constructˉcurrentˉsplitˉcompiler,
+    Readˉpreparedˉsplitˉcompiler,
     Getˉcurrentˉsplitˉcompilerˉfamily,
     Getˉcurrentˉsplitˉcompilerˉkey,
 } from './Current-Split-Compiler-Cache-Core.mjs';
@@ -31,13 +30,20 @@ const BUILD_TIMEOUT_MILLISECONDS = 600_000;
 const WINDOWS = process.platform === 'win32';
 const HOST_APPLICATION_EXTENSION = WINDOWS ? '.exe' : '.elf';
 
-if (process.argv.length !== 4) Usage();
+const Arguments = process.argv.slice(2);
+let Selectedˉkey = null;
+if (Arguments[0] === '--compiler-checkpoint') {
+    Selectedˉkey = Arguments[1];
+    if (!/^[0-9a-f]{64}$/u.test(Selectedˉkey ?? '')) Usage();
+    Arguments.splice(0, 2);
+}
+if (Arguments.length !== 2) Usage();
 
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
 const Workspace = path.join(Repositoryˉroot, 'Windvale.wvws');
-const Project = path.resolve(process.argv[2]);
-const Output = path.resolve(process.argv[3]);
+const Project = path.resolve(Arguments[0]);
+const Output = path.resolve(Arguments[1]);
 let Step = 0;
 let Totalˉsteps = 28;
 let Work = '';
@@ -74,18 +80,10 @@ async function Main() {
     Work = mkdtempSync(path.join(Temporaryˉroot, 'windvale-project4-build-'));
 
     try {
-        const Compilerˉkey = await Getˉcurrentˉsplitˉcompilerˉkey();
-        const Compilerˉcheckpoint = await Acquireˉcurrentˉsplitˉcompiler(
+        const Compilerˉkey = Selectedˉkey ?? await Getˉcurrentˉsplitˉcompilerˉkey();
+        const Compilerˉcheckpoint = await Readˉpreparedˉsplitˉcompiler(
             await Getˉcurrentˉsplitˉcompilerˉfamily(),
             Compilerˉkey,
-            Candidate => Constructˉcurrentˉsplitˉcompiler(
-                Work, Candidate, Runˉnative, Runˉnode,
-            ),
-            async () => {
-                if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
-                    Reject('Current compiler construction inputs changed.');
-                }
-            },
         );
         if (Compilerˉcheckpoint.status === 'Hit' && Step === 0) {
             Totalˉsteps = 8;
@@ -94,6 +92,7 @@ async function Main() {
             `project4 build compiler-cache status=${Compilerˉcheckpoint.status} ` +
             `key=${Compilerˉkey}\n`,
         );
+        process.stdout.write(`compiler selection=${Selectedˉkey === null ? 'current-source' : 'explicit-checkpoint'} construction=disabled\n`);
         const Analyzer = path.join(
             Compilerˉcheckpoint.directory,
             `Analyzer${HOST_APPLICATION_EXTENSION}`,
@@ -148,7 +147,8 @@ async function Main() {
         Totalˉsteps = Step + 1;
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Projectˉrequest);
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Publisherˉrequest);
-        if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
+        await Compilerˉcheckpoint.Requireˉunchanged();
+        if (Selectedˉkey === null && await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
             Reject('Current compiler inputs changed before native publication.');
         }
         try {
@@ -297,6 +297,7 @@ function Sameˉpath(Left, Right) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Build-Wvb-Project4.mjs ' +
+        '[--compiler-checkpoint <sha256-key>] ' +
         '<project.wvproj> <output.wvb>\n',
     );
     process.exit(64);

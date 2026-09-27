@@ -22,6 +22,43 @@ is not a hidden split-cache option.
 
 ## Prepared-product execution
 
+### Compiler selection and explicit preparation
+
+`Build-Current-Split-Project-Wvb.mjs` and `Build-Wvb-Project4.mjs` require
+an existing validated compiler checkpoint for ordinary project builds. Neither
+reconstructs compiler tools on a miss. The default selects the key derived from
+current compiler sources and construction inputs; a miss exits `64` with
+preparation instructions before invoking a compiler product.
+
+Both commands accept `--compiler-checkpoint <sha256-key>` to deliberately use
+one existing checkpoint in the current host's `current-split-compiler-v2`
+family. The Project 4 publication command requires this option before the
+project/output pair. The key is exactly 64 lowercase hexadecimal characters;
+there is no newest, closest, or automatic fallback selection. The existing
+bounded checkpoint inventory, host, identity records and executable digests
+are validated and rechecked before accepting completion (before transactional
+publication in the Project 4 front door). No new cache format is introduced.
+
+Explicit selection does not derive its identity from the current source tree.
+It reports `selection=explicit-checkpoint construction=disabled` and proves
+use of the selected products, not verification of newer compiler source or
+release qualification. Project admission, authentication and source/product
+cache identities still bind the actual selected producers. Source edits must
+invalidate their affected analysis and output products.
+
+Compiler construction belongs to the existing development builder's explicit
+`--prepare-only --deadline-ms <absolute-unix-ms>` mode. Construction owners that
+also build target projects may instead select `--prepare-compiler` with the
+same mandatory deadline. The latter conflicts with prepared-only restrictions,
+`--prepare-only`, and explicit checkpoint selection. Ordinary development
+builds default to a total ten-minute deadline, including cleanup, unless a
+deadline is supplied. The existing `--prepared-compiler-only` flag remains
+accepted. Publisher preparation is still a separate remaining cost in the
+transactional Project 4 front door; selecting a compiler does not imply a
+prepared publisher.
+
+### Reuse of all prepared products
+
 `WINDVALE_PREPARED_PRODUCTS_ONLY=1` selects reuse without construction in
 `Build-Current-Split-Project-Wvb.mjs`, `Build-Cached-Split-Project-Wvb.mjs` and
 `Build-Cached-Segmented-Hosted-Wvb.mjs`. Other defined values are rejected.
@@ -32,7 +69,8 @@ An invalid existing checkpoint fails closed. Hits retain complete validation,
 input-identity checks and private output materialization; missing intermediate
 analysis or image checkpoints do not require reconstruction when the final
 product is valid. A miss leaves previous owner output and completed cache entries
-unchanged. Ordinary invocation without this variable retains bounded construction.
+unchanged. Without this variable, requested project and application products
+may be constructed; compiler construction still requires explicit preparation.
 
 Preparation runs the same builders without this variable in a separately
 declared budget. This mode does not freeze unrelated repository tools or replace
@@ -202,9 +240,10 @@ because its result was never consumed; compiler-scale evidence comes from the
 current split analyzer/emitter reconstruction and fixed point.
 
 `Build-Current-Split-Project-Wvb.mjs` accepts one through eight ordered
-`<project.wvproj> <output.wvb>` pairs. It packages and identifies the pinned
-pair, reconstructs and identifies the current analyzer/emitter pair once, then
-builds every requested target through that same immutable current identity.
+`<project.wvproj> <output.wvb>` pairs. Its explicit preparation mode packages
+and identifies the pinned pair and reconstructs the current analyzer/emitter
+pair once. Ordinary builds require the prepared set and build every requested
+target through that same validated selected identity.
 The current Analyzer WVB is packaged once under Profile 7 for ordinary target
 analysis and once under Profile 8 for the larger artifact-reader emitter
 closure. Both packages contain the same WVB and have separate executable
@@ -261,16 +300,15 @@ memory, instruction, file-count, and output limits remain unchanged. Both branch
 settle before final-product copying or temporary cleanup; failures prevent pair
 publication and retain each branch error. The coordinator uses the existing
 bounded process-tree command runner, with a ten-minute per-command timeout and
-a 1 MiB combined diagnostic bound. The optional `--deadline-ms` argument supplies
+a 1 MiB combined diagnostic bound. The `--deadline-ms` argument supplies
 an absolute Unix-millisecond deadline across the whole construction request;
 individual commands use the earlier of that deadline and their existing ceiling.
 The builder reserves thirty seconds for its cleanup, and predecessor construction
 reserves a further thirty seconds for exact-path Git worktree removal. Invalid
-or expired deadlines reject before work-directory creation. Without this option,
-the existing per-command limits remain unchanged. Timeout status `124` is retained
+or expired deadlines reject before work-directory creation. Construction requires
+this option; ordinary builds default to a ten-minute total deadline. Timeout status `124` is retained
 through command, construction, and caller failures rather than becoming an
-assertion failure. Owner-level total budgets remain separate when no deadline is
-supplied.
+assertion failure. An enclosing owner may impose an earlier total deadline.
 Each progress line retains its assigned step number during overlapping work.
 
 On Linux, cancellation freezes each still-owned ancestor before enumerating its

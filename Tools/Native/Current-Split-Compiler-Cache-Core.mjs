@@ -208,6 +208,25 @@ async function Exists(Candidate) {
     });
 }
 
+// Selection validates an existing toolchain; it never reconstructs one or
+// asserts that an explicitly selected key describes the current source tree.
+export async function Readˉpreparedˉsplitˉcompiler(Family, Key) {
+    if (typeof Key !== 'string' || !/^[0-9a-f]{64}$/u.test(Key)) Reject('Invalid prepared compiler key.');
+    Family = await Directory(Family);
+    const Place = path.join(Family, Key);
+    if (!await Exists(Place)) throw Object.assign(new Error(
+        'Current compiler checkpoint missing. Project builds do not reconstruct compiler tools. ' +
+        'Run Build-Current-Split-Project-Wvb.mjs --prepare-only --deadline-ms <absolute-unix-ms> ' +
+        'in an explicitly budgeted preparation phase, or select an existing --compiler-checkpoint <key>.'
+    ), { exitCode: 64 });
+    const Original = Record(Key, await Validate(Place, Key));
+    return { directory: Place, status: 'Hit', Requireˉunchanged: async () => {
+        if (!Record(Key, await Validate(Place, Key)).equals(Original)) {
+            Reject('Selected compiler checkpoint changed during the build.');
+        }
+    } };
+}
+
 // Compiler and admission products are one identity-bound construction result.
 export async function Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, Requireˉunchanged) {
     if (typeof Key !== 'string' || !/^[0-9a-f]{64}$/.test(Key) || typeof Produce !== 'function' ||

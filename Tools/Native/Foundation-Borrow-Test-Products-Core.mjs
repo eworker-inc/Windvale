@@ -168,6 +168,7 @@ export async function Acquireˉfoundationˉborrowˉtestˉproducts({
         await Requireˉwork();
         await Run('foundation-products-build', process.execPath,
             [path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs'),
+                '--prepare-compiler',
                 '--deadline-ms', String(Deadline),
                 ...TARGETS.flatMap(([Name], Index) => [Projects[Index], Products[Name + 'ˉwvb']])], Deadline);
         Check();

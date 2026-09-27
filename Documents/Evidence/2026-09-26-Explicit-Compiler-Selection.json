@@ -1,0 +1,456 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-26-explicit-compiler-selection",
+  "date": "2026-09-26",
+  "subject": "Separate compiler preparation from ordinary source-edit feedback",
+  "claim": "Ordinary development and Project 4 builds require a prepared compiler and do not reconstruct it implicitly. Explicit host-specific checkpoint selection decouples application/library builds from current compiler source; it is not current-source compiler verification. The small Windows edit loop takes 2828 then 2581 ms including execution; the Foundation Option/Result loop takes 3186 then 3100 ms. Every measured compilation created new analysis and WVB cache entries and execution observed the expected changed result.",
+  "source": {
+    "kind": "Other",
+    "value": "b3e5b8e5721d126d60f3f6ce7c28a866e90f59ae plus exact changed tool identities in runs"
+  },
+  "runs": [
+    {
+      "host": "Windows x64; AMD Ryzen 9 3900X, Debian under WSL2",
+      "target": "Existing cache/lifecycle suite: 147 cases plus 24 analysis-cache cases; explicit selection, default miss without reconstruction, deadline/option conflicts, corrupt products, changed selected products and output preservation",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 20834,
+          "sha256": "41d01aaa1b4c907006251d64178cf9c375e60cd1eac6bb97fb355cac13da94d5"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 12877,
+          "sha256": "ce64662d048706039cbb9df5c4e474e3838545abc42c8923130f7d18d9a1c560"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 19322,
+          "sha256": "48f4dbdf820d7e0069185466313a67cfeed46236bd8da2f1b20bad63b961f64b"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12912,
+          "sha256": "3f381e2c022fe236e3b0c39e57f2f07271690ded2c1ea0d9c6575e21f308f1d1"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 113121,
+          "sha256": "07f105aa47f47e24f91eec4b46700c85a3ceadf7b895b2fdaa075b70d96d00f8"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+          "size": 30673,
+          "sha256": "cb757f49bea301f5b1721cb888922d4a8b604082c5edf19fe0e10ef34ab87fed"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Compiler-Selection-Windows.log",
+          "size": 5745,
+          "sha256": "60705d422e652108a78c5c547c18a7c45730b883a0667200dc5ea442d1959b6b"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64; AMD Ryzen 9 3900X, Debian under WSL2",
+      "target": "Existing cache/lifecycle suite: 150 cases plus 24 analysis-cache cases; explicit selection, default miss without reconstruction, deadline/option conflicts, corrupt products, changed selected products and output preservation",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 20834,
+          "sha256": "41d01aaa1b4c907006251d64178cf9c375e60cd1eac6bb97fb355cac13da94d5"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 12877,
+          "sha256": "ce64662d048706039cbb9df5c4e474e3838545abc42c8923130f7d18d9a1c560"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 19322,
+          "sha256": "48f4dbdf820d7e0069185466313a67cfeed46236bd8da2f1b20bad63b961f64b"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12912,
+          "sha256": "3f381e2c022fe236e3b0c39e57f2f07271690ded2c1ea0d9c6575e21f308f1d1"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 113121,
+          "sha256": "07f105aa47f47e24f91eec4b46700c85a3ceadf7b895b2fdaa075b70d96d00f8"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+          "size": 30673,
+          "sha256": "cb757f49bea301f5b1721cb888922d4a8b604082c5edf19fe0e10ef34ab87fed"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Compiler-Selection-Debian.log",
+          "size": 5816,
+          "sha256": "ec5e1e70bedca5872feac0ae6a406f2396385bbf9ab93a84f86c8541ded46d67"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0; AMD Ryzen 9 3900X, concurrent Debian lifecycle verification",
+      "target": "Selected-Compiler-Edit: source value 42, new analysis and WVB products, compile 2713 ms plus runner 115 ms, observed Result: 42",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Build-Current-Split-Project-Wvb.mjs --compiler-checkpoint 1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd --deadline-ms 1790470693924 D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Edit.wvproj D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Answer-42.wvb then Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Answer-42.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 2828,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 20834,
+          "sha256": "41d01aaa1b4c907006251d64178cf9c375e60cd1eac6bb97fb355cac13da94d5"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 12877,
+          "sha256": "ce64662d048706039cbb9df5c4e474e3838545abc42c8923130f7d18d9a1c560"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 19322,
+          "sha256": "48f4dbdf820d7e0069185466313a67cfeed46236bd8da2f1b20bad63b961f64b"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12912,
+          "sha256": "3f381e2c022fe236e3b0c39e57f2f07271690ded2c1ea0d9c6575e21f308f1d1"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 113121,
+          "sha256": "07f105aa47f47e24f91eec4b46700c85a3ceadf7b895b2fdaa075b70d96d00f8"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+          "size": 30673,
+          "sha256": "cb757f49bea301f5b1721cb888922d4a8b604082c5edf19fe0e10ef34ab87fed"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Edit.wv",
+          "size": 182,
+          "sha256": "294baa3995c1deec85ed3d01d22732a4a00ab7869196e42913d2b1ff09d02e5d"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Edit/Edit.wvproj",
+          "size": 521,
+          "sha256": "79e3392f6081ce173ce3346ed39f65fb8f2bbc37bf1433167454b4e7b3f13a89"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Answer-42.wvb",
+          "size": 257,
+          "sha256": "ac5d4b6a2de7507708e760c2a3b8fc4b92d2a7fac01a26c8aaa90f60341ee7ca"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Edit/Build-42.log",
+          "size": 1697,
+          "sha256": "218c9abfb77ac4763d6ee8b3f3764b4e44c7415e6134630de31cc61b8cd31364"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Edit/Run-42.log",
+          "size": 11,
+          "sha256": "bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0; AMD Ryzen 9 3900X, concurrent Debian lifecycle verification",
+      "target": "Selected-Compiler-Edit: source value 43, new analysis and WVB products, compile 2528 ms plus runner 53 ms, observed Result: 43",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Build-Current-Split-Project-Wvb.mjs --compiler-checkpoint 1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd --deadline-ms 1790470693924 D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Edit.wvproj D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Answer-43.wvb then Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Answer-43.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 2581,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 20834,
+          "sha256": "41d01aaa1b4c907006251d64178cf9c375e60cd1eac6bb97fb355cac13da94d5"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 12877,
+          "sha256": "ce64662d048706039cbb9df5c4e474e3838545abc42c8923130f7d18d9a1c560"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 19322,
+          "sha256": "48f4dbdf820d7e0069185466313a67cfeed46236bd8da2f1b20bad63b961f64b"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12912,
+          "sha256": "3f381e2c022fe236e3b0c39e57f2f07271690ded2c1ea0d9c6575e21f308f1d1"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 113121,
+          "sha256": "07f105aa47f47e24f91eec4b46700c85a3ceadf7b895b2fdaa075b70d96d00f8"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+          "size": 30673,
+          "sha256": "cb757f49bea301f5b1721cb888922d4a8b604082c5edf19fe0e10ef34ab87fed"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Edit.wv",
+          "size": 182,
+          "sha256": "ef3f6ff91b5769c800bdaeac10b3635a955240338e2ca282d2ea3ca0da3047f1"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Edit/Edit.wvproj",
+          "size": 521,
+          "sha256": "79e3392f6081ce173ce3346ed39f65fb8f2bbc37bf1433167454b4e7b3f13a89"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Edit\\Answer-43.wvb",
+          "size": 257,
+          "sha256": "99603c184e621a6b47fb1325adffeea1c9638157ae509f02cfbf28fdb9ed337a"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Edit/Build-43.log",
+          "size": 1696,
+          "sha256": "a07ca094283492ff304e6dc4dc3649be75e4cde46a7970c48f04ca4f1c7591bb"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Edit/Run-43.log",
+          "size": 11,
+          "sha256": "bf5c15b4f7666daf7fb8007396e7f1ce5d4be48eeddf97426e57d611d56704e0"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0; AMD Ryzen 9 3900X, concurrent Debian lifecycle verification",
+      "target": "Selected-Compiler-Library-Edit: source value 42, new analysis and WVB products, compile 3126 ms plus runner 60 ms, observed Result: 42",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Build-Current-Split-Project-Wvb.mjs --compiler-checkpoint 1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd --deadline-ms 1790470780082 D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Edit.wvproj D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Answer-42.wvb then Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Answer-42.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 3186,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 20834,
+          "sha256": "41d01aaa1b4c907006251d64178cf9c375e60cd1eac6bb97fb355cac13da94d5"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 12877,
+          "sha256": "ce64662d048706039cbb9df5c4e474e3838545abc42c8923130f7d18d9a1c560"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 19322,
+          "sha256": "48f4dbdf820d7e0069185466313a67cfeed46236bd8da2f1b20bad63b961f64b"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12912,
+          "sha256": "3f381e2c022fe236e3b0c39e57f2f07271690ded2c1ea0d9c6575e21f308f1d1"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 113121,
+          "sha256": "07f105aa47f47e24f91eec4b46700c85a3ceadf7b895b2fdaa075b70d96d00f8"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+          "size": 30673,
+          "sha256": "cb757f49bea301f5b1721cb888922d4a8b604082c5edf19fe0e10ef34ab87fed"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Edit.wv",
+          "size": 3745,
+          "sha256": "a8e4e2cc94b5d2bdad280a949d8cd26f8628b8a08845a894728ca69734a649cb"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Edit.wvproj",
+          "size": 623,
+          "sha256": "836556f343dd7092ed9540a35373903a6ef8d78aab56737460c2ffc5eb277700"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Answer-42.wvb",
+          "size": 4437,
+          "sha256": "67e0bec4444da598e10264da326afbe66f8befefa8ddf86eadc963f12c161f43"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Build-42.log",
+          "size": 1710,
+          "sha256": "481f545f671bc869dd3436573c2a93e61c9e583303a241c6d578f7319fec1a42"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Run-42.log",
+          "size": 11,
+          "sha256": "bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0; AMD Ryzen 9 3900X, concurrent Debian lifecycle verification",
+      "target": "Selected-Compiler-Library-Edit: source value 43, new analysis and WVB products, compile 3046 ms plus runner 54 ms, observed Result: 43",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "C:\\Program Files\\nodejs\\node.exe Tools/Native/Build-Current-Split-Project-Wvb.mjs --compiler-checkpoint 1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd --deadline-ms 1790470780082 D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Edit.wvproj D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Answer-43.wvb then Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Answer-43.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 3100,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 20834,
+          "sha256": "41d01aaa1b4c907006251d64178cf9c375e60cd1eac6bb97fb355cac13da94d5"
+        },
+        {
+          "path": "Tools/Native/Build-Wvb-Project4.mjs",
+          "size": 12877,
+          "sha256": "ce64662d048706039cbb9df5c4e474e3838545abc42c8923130f7d18d9a1c560"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 19322,
+          "sha256": "48f4dbdf820d7e0069185466313a67cfeed46236bd8da2f1b20bad63b961f64b"
+        },
+        {
+          "path": "Tools/Native/Foundation-Borrow-Test-Products-Core.mjs",
+          "size": 12912,
+          "sha256": "3f381e2c022fe236e3b0c39e57f2f07271690ded2c1ea0d9c6575e21f308f1d1"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 113121,
+          "sha256": "07f105aa47f47e24f91eec4b46700c85a3ceadf7b895b2fdaa075b70d96d00f8"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+          "size": 30673,
+          "sha256": "cb757f49bea301f5b1721cb888922d4a8b604082c5edf19fe0e10ef34ab87fed"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Edit.wv",
+          "size": 3745,
+          "sha256": "8c51dd5aa4e13e0c40b3f80ae8c663045c22701dff70ebe6110af6960d2d107c"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Edit.wvproj",
+          "size": 623,
+          "sha256": "836556f343dd7092ed9540a35373903a6ef8d78aab56737460c2ffc5eb277700"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Work\\Selected-Compiler-Library-Edit\\Answer-43.wvb",
+          "size": 4437,
+          "sha256": "3793035e1c7d35c49ee08f08dca7034c6136aa300342259a7ca18fba5812ba1b"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Build-43.log",
+          "size": 1710,
+          "sha256": "1f2bc76bed3ae1a8be1a6237fa3a1c214aad1a5807858cb158239dc94726ce48"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Run-43.log",
+          "size": 11,
+          "sha256": "bf5c15b4f7666daf7fb8007396e7f1ce5d4be48eeddf97426e57d611d56704e0"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Foreign-binding phase selection, process cleanup, prepared miss without construction, conflicting preparation rejected",
+      "tool": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs --termination-probe",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64",
+      "target": "Foreign-binding phase selection, process cleanup, prepared miss without construction, conflicting preparation rejected",
+      "tool": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs --termination-probe",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL2",
+      "target": "Existing interpreter executes both Windows-built Foundation outputs; observed Result: 42 and Result: 43",
+      "tool": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
+      "command": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf Artifacts/Work/Selected-Compiler-Library-Edit/Answer-{42,43}.wvb (two separate invocations)",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
+          "size": 10547200,
+          "sha256": "4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Answer-42.wvb",
+          "size": 4437,
+          "sha256": "67e0bec4444da598e10264da326afbe66f8befefa8ddf86eadc963f12c161f43"
+        },
+        {
+          "path": "Artifacts/Work/Selected-Compiler-Library-Edit/Answer-43.wvb",
+          "size": 4437,
+          "sha256": "3793035e1c7d35c49ee08f08dca7034c6136aa300342259a7ca18fba5812ba1b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Exact deliberately selected existing compiler inventory used for both edit workloads",
+      "tool": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+      "command": "Read prepared compiler key 1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd; validate checkpoint before and after compilation",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "C:/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/current-split-compiler-v2/win32-x64/1aff6d3f4c14edce3943e770a63ad3d086ed25dc01c5d0817c18f000402e85fd/Checkpoint.json",
+          "size": 1094,
+          "sha256": "be699210fdded15a1a46ede242a3a969f04fa9d4bfb98615f1e6e1967ba00021"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
+          "size": 10547712,
+          "sha256": "8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972"
+        },
+        {
+          "path": "Artifacts/Work/Measure-Selected-Compiler.mjs",
+          "size": 2948,
+          "sha256": "b4e45b52da3515e798e94af4fe9d6b1c22ecdde7158f5a07aa5717df98bc2118"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This establishes a development path, not a speedup of full cold compiler construction. No end-to-end 59-minute reconstruction comparison or release qualification was performed. The tests use existing native compiler and interpreter products, and no product binaries were promoted.",
+    "The small source has 182 bytes and 2 emitted functions. The Foundation source set has 4144 admitted bytes, 12 emitted functions and 4437 output bytes, using Option and Result. These are small named workloads, not a compiler-scale or general application latency guarantee; one initial/edited pair per workload, with concurrent verification. Peak working set was not measured.",
+    "Real compilation through explicit checkpoint selection was measured on Windows. Debian has no completed compatible six-product current checkpoint, so this batch verifies its selection/lifecycle rules and execution of the same portable outputs without starting a new cold compiler preparation.",
+    "The first private Foundation benchmark wrapper incorrectly added 42 to its existing successful 42 result and observed 84. The wrapper was corrected to require the existing checks return 42 before returning its edited value. That preliminary probe is not counted as product failure or passing timing evidence.",
+    "Existing construction owners must explicitly prepare; ordinary wrappers requiring a missing current-source checkpoint now fail with instructions. The explicit Foundation and CI foreign-binding preparation paths opt in with a deadline. General conversion of historical reconstruction scripts and component-specific compiler construction remain work.",
+    "The transactional Project 4 front door retains publisher source construction and native publication. Its new missing-compiler boundary is tested on both hosts; full publisher reconstruction and successful transactional publication were not rerun, because this batch changes compiler acquisition, not publication implementation. The fast measured path is the development builder plus existing interpreter.",
+    "The automatic routing plan selects broad admission and foreign-binding construction. Those full semantic/native suites were not run; existing cache/CLI, construction-order and lifecycle cases plus the foreign-binding phase probe cover the changed acquisition contract. Authentication, bytecode semantics and native code generation were unchanged.",
+    "Checkpoint selection is explicit and never an automatic fallback. Validated old compiler products do not verify newer compiler source. No module-level incremental compiler, new compiler format, additional cache family or verifier owner was added. Generated benchmark scripts, source and logs remain locally under ignored Artifacts/Work; commands and identities are recorded here."
+  ],
+  "related": [
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Documents/Runbooks/Native-Tests.md",
+    "Documents/Project/Verification-Throughput-Plan.md"
+  ]
+}

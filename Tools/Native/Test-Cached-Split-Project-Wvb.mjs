@@ -15,6 +15,7 @@ import {
     Acquireˉcurrentˉsplitˉcompiler,
     Constructˉcurrentˉsplitˉcompiler,
     Getˉcurrentˉsplitˉcompilerˉkey,
+    Readˉpreparedˉsplitˉcompiler,
     CURRENT_ADMISSION_PROJECTS,
 } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
@@ -1245,6 +1246,14 @@ async function Verifyˉconstructionˉdeadlineˉadmission() {
         [['--prepared-compiler-only'], 64, /Usage:/u],
         [['--prepared-compiler-only', '--prepared-compiler-only', ...Pair], 64, /Usage:/u],
         [['--prepare-only', '--deadline-ms', '1'], 124, /deadline expired before construction/u],
+        [['--prepare-compiler', ...Pair], 64, /Usage:/u],
+        [['--prepare-compiler', '--prepare-only', '--deadline-ms', Future], 64, /Usage:/u],
+        [['--prepare-compiler', '--prepare-compiler', '--deadline-ms', Future, ...Pair], 64, /Usage:/u],
+        [['--compiler-checkpoint', 'bad', ...Pair], 64, /Usage:/u],
+        [['--compiler-checkpoint', '../' + 'a'.repeat(64), ...Pair], 64, /Usage:/u],
+        [['--compiler-checkpoint', 'a'.repeat(64), '--compiler-checkpoint', 'b'.repeat(64), ...Pair], 64, /Usage:/u],
+        [['--compiler-checkpoint', 'a'.repeat(64), '--prepare-only', '--deadline-ms', Future], 64, /Usage:/u],
+        [['--compiler-checkpoint', 'a'.repeat(64), '--prepare-compiler', '--deadline-ms', Future, ...Pair], 64, /Usage:/u],
     ];
     for (const [Arguments, Status, Diagnostic] of Cases) {
         const Result = spawnSync(process.execPath, [Builder, ...Arguments], {
@@ -1480,9 +1489,9 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
                 if (Label === 'foundation-products-build') {
                     Assert.equal(Mode, 'explicit-construction');
                     Assert.equal(path.basename(Arguments[0]), 'Build-Current-Split-Project-Wvb.mjs');
-                    Assert.deepEqual(Arguments.slice(1, 3), ['--deadline-ms', String(Deadline)]);
-                    Assert.equal(Arguments.length, 9);
-                    for (let Index = 3; Index < Arguments.length; Index += 2) {
+                    Assert.deepEqual(Arguments.slice(1, 4), ['--prepare-compiler', '--deadline-ms', String(Deadline)]);
+                    Assert.equal(Arguments.length, 10);
+                    for (let Index = 4; Index < Arguments.length; Index += 2) {
                         Assert.equal(path.extname(Arguments[Index]), '.wvproj');
                         Outputˉdirectory = path.dirname(Arguments[Index + 1]);
                         Assert.equal(path.dirname(Outputˉdirectory), Work);
@@ -1703,6 +1712,40 @@ async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
     await writeFile(Output, Sentinel);
     Probe('flag', 64, /Current compiler checkpoint missing/u, [PROJECT, Output], false);
     Probe('1', 64, /Current compiler checkpoint missing/u, [PROJECT, Output], false);
+    Probe('normal', 64, /Project builds do not reconstruct compiler tools/u, [PROJECT, Output], false);
+    Probe('normal', 64, /checkpoint missing/u, ['--compiler-checkpoint', 'f'.repeat(64), PROJECT, Output], false);
+    Probe('1', 64, /Usage:/u, ['--prepare-compiler', PROJECT, Output], false);
+    const Selected = await Readˉpreparedˉsplitˉcompiler(Family, Wrongˉkey);
+    Assert.equal(Selected.status, 'Hit');
+    await Selected.Requireˉunchanged();
+    Cases += 1;
+    const Explicit = spawnSync(process.execPath, [Builder, '--compiler-checkpoint', Wrongˉkey, PROJECT, Output], {
+        cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true, timeout: 15_000,
+        env: { ...process.env, WINDVALE_NATIVE_CACHE_ROOT: Root, WINDVALE_PREPARED_PRODUCTS_ONLY: '1' },
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+    });
+    Assert.equal(Explicit.error, undefined);
+    Assert.equal(Explicit.status, 64, Childˉdiagnostic(Explicit));
+    Assert.match(Explicit.stdout, /selection=explicit-checkpoint construction=disabled/u);
+    Assert.match(Explicit.stderr, /Prepared split-project product missing/u);
+    Assert.doesNotMatch(Explicit.stdout, /stage1-|predecessor|pinned-analyzer-package/u);
+    Cases += 1;
+    // Both public and development entry points reject missing compiler tools
+    // before any native producer starts, and preserve the previous destination.
+    const Modern = path.join(Projectˉroot, 'Missing-Compiler.wvproj');
+    await writeFile(Modern, 'windvale-project 4\nroot "missing.wv"\nemit wvb\n');
+    const Public = path.join(SCRIPT_DIRECTORY, 'Build-Wvb-Project4.mjs');
+    for (const Options of [[], ['--compiler-checkpoint', 'f'.repeat(64)]]) {
+        const Missing = spawnSync(process.execPath, [Public, ...Options, Modern, Output], {
+            cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true, timeout: 15_000,
+            env: { ...process.env, WINDVALE_NATIVE_CACHE_ROOT: Root }, maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        });
+        Assert.equal(Missing.error, undefined);
+        Assert.equal(Missing.status, 64, Childˉdiagnostic(Missing));
+        Assert.match(Missing.stderr, /Project builds do not reconstruct compiler tools/u);
+        Assert.equal(Missing.stdout, '');
+        Cases += 1;
+    }
     Assert.deepEqual(await readFile(Output), Sentinel);
     Assert.deepEqual((await readdir(Family)).sort(), [Wrongˉkey]);
     Probe('0', 1, /must be absent or 1/u);
@@ -1718,6 +1761,10 @@ async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
     const Product = path.join(Ready.directory, `Emitter.${process.platform === 'win32' ? 'exe' : 'elf'}`);
     await writeFile(Product, Buffer.from('corrupt emitter'));
     Probe('flag', 1, /emitter identity differs/u);
+    await Assert.rejects(Readˉpreparedˉsplitˉcompiler(Family, Key), /emitter identity differs/u);
+    await writeFile(path.join(Selected.directory, 'Reader.' + (process.platform === 'win32' ? 'exe' : 'elf')), Buffer.from('changed'));
+    await Assert.rejects(Selected.Requireˉunchanged(), /checkpoint record differs/u);
+    Cases += 2;
     return Cases;
 }
 

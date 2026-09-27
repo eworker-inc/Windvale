@@ -40,6 +40,30 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The development build path now separates compiler preparation from project
+compilation. Ordinary split-project and Project 4 builds reject a missing
+compiler checkpoint instead of reconstructing the toolchain. An explicit
+checkpoint selection lets application/library work keep using a validated
+compiler while compiler source evolves; it does not verify those newer sources.
+Existing construction owners opt in with an explicit deadline.
+
+A Windows source-edit measurement using a retained compiler and existing WVB
+runner took 2.8 seconds initially and 2.6 seconds after changing one function.
+A Foundation Option/Result workload took 3.2 and 3.1 seconds. Every build missed
+both analysis and WVB caches, and execution observed the expected 42-to-43
+change. This avoids compiler reconstruction and native application packaging;
+it does not accelerate either cold operation. The cache/lifecycle owner passes
+147 Windows and 150 Debian cases, alongside its 24 analysis-cache cases per
+host. Both Foundation outputs also execute on Debian. See the
+[compiler-selection evidence](../Evidence/2026-09-26-Explicit-Compiler-Selection.json)
+and [development commands](../Runbooks/Native-Tests.md#separate-current-compiler-preparation).
+
+The accepted next design checkpoints are to separate publisher preparation,
+rebuild only changed compiler components where their interfaces permit it,
+and measure a representative larger edit through a reused execution host.
+They are not implemented by checkpoint selection. Module-level incremental
+compilation and broader qualification remain separate work.
+
 Compact frame initialization is implemented in the current native backend.
 A source-built analyzer processes the same 1.7 MB admitted source set in
 60.4 seconds instead of 100.3 seconds on Windows, and 63.7 instead of 106.3

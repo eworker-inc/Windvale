@@ -559,6 +559,7 @@ async function Main() {
         );
         const Buildˉstarted = Date.now();
         const Buildˉarguments = [Build];
+        if (Phase.Mode === 'prepare') Buildˉarguments.push('--prepare-compiler');
         if (Ownerˉdeadline !== null) Buildˉarguments.push('--deadline-ms', String(
             Math.min(Ownerˉdeadline - 10_000, Date.now() + BUILD_TIMEOUT_MILLISECONDS - 30_000)));
         for (const Item of Buildˉproducts) {

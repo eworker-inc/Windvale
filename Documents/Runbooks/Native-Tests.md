@@ -110,7 +110,8 @@ node Tools/Native/Build-Current-Split-Project-Wvb.mjs --prepare-only --deadline-
 The 30-minute value is an example selected budget, not a measured cold estimate.
 Preparation requires an explicit deadline. It uses the existing validated
 compiler cache and preserves a completed checkpoint if a later invocation fails.
-To build a test product without allowing an implicit compiler reconstruction:
+Ordinary project builds never reconstruct the compiler. To build a test product
+with the prepared compiler matching current source:
 
 ```powershell
 node Tools/Native/Build-Current-Split-Project-Wvb.mjs --prepared-compiler-only --deadline-ms $CompilerDeadline <project.wvproj> <output.wvb>
@@ -124,9 +125,37 @@ that environment setting scoped to behavior execution, after preparation.
 This mode still permits building the requested product from a valid compiler.
 It does not make a cold owner profile cheap or qualify a restored compiler.
 
-CI has not yet adopted the separate preparation phase. Its integration must
-save completed products before behavior execution, select preparation only for
-owners that need it, and report incomplete owners without claiming a full pass.
+For application or library development, deliberately select a previously
+prepared compiler by its reported checkpoint key. This selection stays fixed
+when compiler source changes; it is not evidence for those compiler changes:
+
+```powershell
+node Tools/Native/Build-Current-Split-Project-Wvb.mjs --compiler-checkpoint <key> <project.wvproj> <output.wvb>
+Tools/Native/Run-Wvb.cmd <output.wvb>
+```
+
+On Debian, execute the output with `bash Tools/Native/Run-Wvb.sh <output.wvb>`.
+Use the existing runner for supported bytecode behavior tests. Build a native
+package when native execution, imports or packaging are what the test exercises.
+An unsupported runner contract is an explicit failure, not permission to skip it.
+
+Keys are host-specific. Select an exact completed key reported by preparation;
+never rename a checkpoint, copy one between hosts, or substitute a cached product
+for a changed compiler component that the test is meant to exercise. The existing
+cache suite verifies missing and corrupt selections, changed products, preserved
+outputs and separation from preparation. No compiler tool is rebuilt in this loop.
+
+`Build-Wvb-Project4.mjs --compiler-checkpoint <key> <project.wvproj> <output.wvb>`
+uses the same explicit compiler selection and retains transactional native
+publication. Its publisher can still need preparation; that cost is not included
+in the development builder plus runner path above.
+
+Construction owners can explicitly combine preparation and project compilation
+with `--prepare-compiler --deadline-ms <absolute-unix-ms>`. Ordinary wrappers
+that previously relied on implicit compiler construction now need a separately
+prepared current checkpoint. The foreign-binding CI preparation phase and the
+explicit Foundation construction selection request preparation themselves;
+prepared behavior execution remains unable to reconstruct compiler tools.
 
 ### Focused Vector borrow integration
 
