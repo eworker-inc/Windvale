@@ -24,7 +24,7 @@ const MAXIMUM_PRODUCT_BYTES = 67_108_864;
 const MAXIMUM_NODE_BYTES = 134_217_728;
 const TARGETS = Object.freeze([
     ['Verifier', 'Tools/Windvale-Compiler-Wvb-Verifier.wvproj', '7'],
-    ['Runner', 'Tools/Windvale-Wvb-Runner.wvproj', '5'],
+    ['Runner', 'Tools/Windvale-Wvb-Runner.wvproj', '6'],
     ['Components', 'Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj', '1'],
 ]);
 const COMPILER_NAMES = Object.freeze([

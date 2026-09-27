@@ -1532,7 +1532,7 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
                 Assert.equal(Arguments.length, 6);
                 Assert.deepEqual(Arguments.slice(1, 3), ['--deadline-ms', String(Deadline)]);
                 const Name = path.basename(Arguments[4], '.wvb');
-                Assert.equal(Arguments[3], { Verifier: '7', Runner: '5', Components: '1' }[Name]);
+                Assert.equal(Arguments[3], { Verifier: '7', Runner: '6', Components: '1' }[Name]);
                 Assert.equal(path.basename(Arguments[5]), Name + Suffix);
                 if (Name !== 'Components') {
                     Arrivals += 1;

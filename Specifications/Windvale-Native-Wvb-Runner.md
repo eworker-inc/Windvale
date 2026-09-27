@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The profile-5 WVB runner is a paired-host-reconstructed,
+The pinned profile-5 WVB runner is a paired-host-reconstructed,
 qualification-pending native candidate. It preserves the fixed portable
 `Main() -> i32` execution command and additionally
 owns the internal bounded scripting mode defined by
@@ -195,11 +195,25 @@ native WVB runner reconstruction status=Complete artifacts=3
 `Run-Wvb.cmd` and `Run-Wvb.sh` execute the corresponding digest-bound candidate
 with either one module argument, the exact optional `--report-steps` flag, or
 the strict structured-task environment form documented below.
-The runner supplies the scalar interpreter with a fixed 1,000,000-instruction
-budget, matching the Stage 0 CLI's default execution budget. Default output
+The pinned profile-5 runner supplies the scalar interpreter with a fixed
+1,000,000-instruction budget, matching the Stage 0 CLI's default execution
+budget. The current source-built development runner uses 2,000,000 instructions
+for the ordinary module request; the other request modes retain their existing
+separate 1,000,000-instruction limits. Default output
 remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
+
+The source-built Foundation test-product path packages this runner with existing
+hosted-container profile 6. That profile provides a 234,881,024-byte (224 MiB)
+arena and an 8 KiB name stride on both hosts. The runner's declared capability
+set and WVB verifier remain unchanged. Profile 6 includes additional
+capability-free service helpers, so this selection does not grant a new host
+capability. It is a development candidate, not a replacement for the pinned
+profile-5 products in the table above. The typed Package-Consistency probe
+completed with result `42` after 1,180,385 guest instructions on Windows and
+Debian using the source-built profile-6 runner. Full consumer integration,
+candidate promotion, and paired-host reconstruction remain separate gates.
 
 The current source-built runner accepts the ordinary portable WVB 1.11-through-
 1.32 command profile, the exact focused System subsets through WVB 1.38, and
