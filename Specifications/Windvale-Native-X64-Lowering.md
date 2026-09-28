@@ -270,6 +270,49 @@ reclamation, not reference counting, collection mutation, budget-lease
 integration, or release of obsolete caller values below a checkpoint. Those
 remain Language 1.0 memory-management work.
 
+### Loop-entry arena reclamation
+
+The current source lowerer also reclaims obsolete byte/text allocations within
+eligible WVB 1.11 and 1.16 functions at backward-edge targets. It computes live
+locals from verified local reads, assignments, and both control-flow successors.
+A local is live when some following path reads its current value before replacing
+it. Verified basic-block boundaries have an empty evaluation stack, so no
+evaluation temporary can carry a hidden reference across this collection point.
+
+The function saves its entry arena cursor in one additional 16-byte frame cell.
+At loop entry, cleanup is skipped if the arena cursor equals the entry
+checkpoint. Otherwise generated cleanup gathers descriptors from live byte/text locals,
+nested record fields, and active variant cases. Null record locals are skipped.
+Physical descriptor-cell addresses are deduplicated before the existing range
+compactor updates pointers; immutable record parameters may share a backing
+cell. Caller storage below the checkpoint and static data retain their lifetime.
+The union of live ranges above the checkpoint remains accessible through all surviving
+aliases, and the released suffix becomes available to subsequent allocation.
+Generation words are cleared as on record return. The current live range may
+still need room for its replacement before the next loop entry.
+
+Analysis is restricted to at most 32 descriptor-bearing local bindings, 256
+basic blocks, 65,536 instruction bytes, and a pre-checkpoint frame smaller than
+65,536 bytes. The live-set fixed point takes at most `Blocks + 1` passes over
+those blocks, including a stability check. Each collection point admits at most 64 conservative
+flattened cells and 65,536 gather-code bytes; the complete cleanup plan is at
+most 262,144 code bytes. Exceeding a bound retains the previous arena policy for
+the entire function. Later bytecode versions are excluded until their opaque
+owners, callable environments, and unsafe addresses have explicit root rules.
+The runtime scratch and range-validation bounds are those of record-return
+reclamation, plus at most 2,016 descriptor-address deduplication comparisons.
+Copy work remains bounded by the occupied arena region; collection can impose
+extra work on growing live sets and requires consumer performance measurement.
+
+Object sizes, branch offsets, and data relocations include the cleanup bytes.
+ABI layouts, WVB semantics, instruction/call charges, and allocation-failure
+behavior stay unchanged. The existing focused owner tests fixed-state loops
+through 32,768 iterations with an 8-byte arena, surviving slices and aggregates
+with 12 bytes, branch joins, caller aliases, returns, deterministic objects,
+and conservative retention above the 32-binding and 64-cell bounds. This is a
+bounded immutable-storage improvement; owned mutable storage, allocation
+leases, general final-share release, and bootstrap promotion remain separate.
+
 ### Additional descriptor instructions
 
 `bytes.from_u64_little` checks exact eight-byte arena growth, publishes one complete owned descriptor, stores the complete source scalar in little-endian order, and uses the existing arena-exhaustion detail.

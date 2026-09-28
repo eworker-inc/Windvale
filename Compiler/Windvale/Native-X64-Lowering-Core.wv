@@ -14,6 +14,7 @@ import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 import Compilerˉnativeˉx64ˉloweringˉenums as Enums;
 import Compilerˉnativeˉx64ˉloweringˉenumˉinstructions as Enumˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+import Compilerˉnativeˉx64ˉloweringˉliveˉstorage as Liveˉstorage;
 import Compilerˉnativeˉx64ˉloweringˉrecords as Records;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉanalysis as Variantˉanalysis;
@@ -175,6 +176,7 @@ record Compilerˉnativeˉx64ˉcontrolˉanalysis {
     Recordˉscratchˉblockˉoffsets: bytes;
     Recordˉpersistentˉfields: u32;
     Recordˉscratchˉfields: u32;
+    Reclamation: bytes;
 }
 
 record Compilerˉnativeˉx64ˉblockˉanalysis {
@@ -1034,7 +1036,8 @@ fn Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input: bytes, Detail: u32)
         Compilerˉnativeˉx64ˉempty(Input),
         Compilerˉnativeˉx64ˉempty(Input),
         0u32,
-        0u32
+        0u32,
+        Compilerˉnativeˉx64ˉempty(Input)
     );
 }
 
@@ -3764,15 +3767,20 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             Scratchˉblock = Scratchˉblock + 1u32;
         }
     }
-    if Function.Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots +
+    let Frameˉslots: u32 = Function.Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots +
         U32ˉslots + Bytesˉslots + Enumˉslots + Recordˉslots +
         Storage.Persistentˉfields + Storage.Scratchˉfields +
         Compilerˉnativeˉx64ˉhiddenˉresultˉslots(Function.Returnˉtype) +
         Callableˉenvironmentˉslots + Callableˉcaptureˉslots +
-        Unsafeˉbackingˉslots >
-        4096u32 {
+        Unsafeˉbackingˉslots;
+    if Frameˉslots > 4096u32 {
         return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 11u32);
     }
+    let Reclamation: bytes = Liveˉstorage.Compilerˉnativeˉx64ˉliveˉstorageˉplan(
+        Input, Section.Payloadˉoffset, Instructionsˉmap, Blockˉoffsets,
+        Controlˉedges, Function.Localˉtypes, Types, Frameˉslots * 16u32
+    );
+    Bodyˉbytes = Bodyˉbytes + Liveˉstorage.Compilerˉnativeˉx64ˉliveˉstorageˉbytes(Reclamation, Blocks);
     return Compilerˉnativeˉx64ˉcontrolˉanalysis(
         true,
         I32ˉslots,
@@ -3799,7 +3807,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Storage.Scratchˉoffsets,
         Storage.Scratchˉblockˉoffsets,
         Storage.Persistentˉfields,
-        Storage.Scratchˉfields
+        Storage.Scratchˉfields,
+        Reclamation
     );
 }
 
@@ -4822,14 +4831,18 @@ export fn Compilerˉnativeˉx64ˉbuildˉblockˉoffsets(
     Callˉdirectory: bytes,
     Function: Compilerˉnativeˉx64ˉfunction,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
+    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities,
+    Reclamation: bytes
 ) -> bytes {
     var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Machine: u32 = Prologueˉbytes;
     var Cursor: u32 = 0u32;
+    var Block: u32 = 0u32;
     while Cursor < Section.Payloadˉlength {
         if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
             Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Machine));
+            Machine = Machine + Bytesˉlength(Liveˉstorage.Compilerˉnativeˉx64ˉliveˉstorageˉblock(Reclamation, Block));
+            Block = Block + 1u32;
         }
         let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
         var Callˉparameters: u32 = 0u32;
@@ -4876,13 +4889,15 @@ fn Compilerˉnativeˉx64ˉframeˉslots(
     Function: Compilerˉnativeˉx64ˉfunction,
     Analysis: Compilerˉnativeˉx64ˉcontrolˉanalysis
 ) -> u32 {
+    var Checkpoint: u32 = 0u32;
+    if Bytesˉlength(Analysis.Reclamation) > 0u32 { Checkpoint = 1u32; }
     return Function.Locals + Analysis.I32ˉslots + Analysis.Boolˉslots +
         Analysis.Textˉslots + Analysis.U8ˉslots + Analysis.U32ˉslots +
         Analysis.Bytesˉslots + Analysis.Enumˉslots + Analysis.Recordˉslots +
         Analysis.Recordˉpersistentˉfields + Analysis.Recordˉscratchˉfields +
         Compilerˉnativeˉx64ˉhiddenˉresultˉslots(Function.Returnˉtype) +
         Analysis.Callableˉenvironmentˉslots +
-        Analysis.Callableˉcaptureˉslots + Analysis.Unsafeˉbackingˉslots;
+        Analysis.Callableˉcaptureˉslots + Analysis.Unsafeˉbackingˉslots + Checkpoint;
 }
 
 fn Compilerˉnativeˉx64ˉunsafeˉbackingˉbase(
@@ -4969,6 +4984,7 @@ fn Compilerˉnativeˉx64ˉprologueˉbytes(
                 Frameˉbytes - Hiddenˉoffset - 16u32
             );
     }
+    if Bytesˉlength(Analysis.Reclamation) > 0u32 { Base = Base + 11u32; }
     return Base + Zeroˉbytes +
         Compilerˉnativeˉx64ˉentryˉparameterˉbytes(Function, Isˉmain);
 }
@@ -4989,7 +5005,12 @@ export fn Compilerˉnativeˉx64ˉcollectˉdataˉrelocations(
     );
     var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Cursor: u32 = 0u32;
+    var Block: u32 = 0u32;
     while Cursor < Section.Payloadˉlength {
+        if Bytesˉreadˉu8(Analysis.Leaders, Cursor) == 1u8 {
+            Machine = Machine + Bytesˉlength(Liveˉstorage.Compilerˉnativeˉx64ˉliveˉstorageˉblock(Analysis.Reclamation, Block));
+            Block = Block + 1u32;
+        }
         let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
         var Callˉparameters: u32 = 0u32;
         var Callˉtarget: u32 = 0u32;
@@ -5832,7 +5853,8 @@ fn Compilerˉnativeˉx64ˉemitˉcontrolˉprologue(
     Depthˉoffset: u32,
     Returnsˉrecord: bool,
     Returnsˉdescriptor: bool,
-    Hiddenˉresultˉslot: u32
+    Hiddenˉresultˉslot: u32,
+    Reclamation: bool
 ) -> bytes {
     var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
     if Isˉmain {
@@ -5925,6 +5947,9 @@ fn Compilerˉnativeˉx64ˉemitˉcontrolˉprologue(
         Complete = Compilerˉnativeˉx64ˉappendˉbyte(Complete, 132u8);
         Complete = Compilerˉnativeˉx64ˉappendˉbyte(Complete, 36u8);
         Complete = Compilerˉnativeˉx64ˉappendˉu32(Complete, 0u32);
+    }
+    if Reclamation {
+        Complete = Records.Compilerˉnativeˉx64ˉemitˉrecordˉcheckpoint(Complete, Frameˉbytes / 16u32 - 1u32);
     }
     return Complete;
 }
@@ -6776,7 +6801,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         Callˉdirectory,
         Function,
         Types,
-        Capabilityˉtable
+        Capabilityˉtable,
+        Analysis.Reclamation
     );
     let Returnsˉrecord: bool =
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
@@ -6802,7 +6828,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         Depthˉoffset,
         Returnsˉrecord,
         Returnsˉdescriptor,
-        Hiddenˉresultˉslot
+        Hiddenˉresultˉslot,
+        Bytesˉlength(Analysis.Reclamation) > 0u32
     );
 
     var Stackˉtypes: bytes = Compilerˉnativeˉx64ˉempty(Input);
@@ -6840,6 +6867,9 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
             Nextˉbytes = 0u32;
             Nextˉenum = 0u32;
             Nextˉrecord = 0u32;
+            Result = Bytesˉconcat(Result, Liveˉstorage.Compilerˉnativeˉx64ˉliveˉstorageˉblock(
+                Analysis.Reclamation, Emissionˉblock
+            ));
         }
         let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
         Result = Compilerˉnativeˉx64ˉemitˉcharge(

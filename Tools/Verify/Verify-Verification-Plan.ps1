@@ -1787,7 +1787,7 @@ $NativeCases = @(
         )
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
-            'native-sha256-lowering',
+            'native-x64-lowering-development',
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
@@ -1819,10 +1819,7 @@ $NativeCases = @(
         Paths = @(
             'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj'
         )
-        Suites = @(
-            'segmented-compiler-toolset-reconstruction',
-            'wv-linker-reconstruction'
-        )
+        Suites = @('native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1919,6 +1916,21 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $false
+    },
+    @{
+        Name = 'memory reclamation closures exclude pinned reconstruction'
+        Paths = @(
+            'Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj',
+            'Projects/Tests/Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe.wvproj',
+            'Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj'
+        )
+        Suites = @('native-x64-lowering-development')
+        Gaps = @()
+        VerifyPlan = $false
     },
     @{
         Name = 'shared lowerer source selects current-source development owner'
@@ -2095,14 +2107,7 @@ $NativeCases = @(
     @{
         Name = 'unconsumed lowerer project excludes native SHA-256 owner'
         Paths = @('Projects/Compiler/Windvale-Native-X64-Lowering.wvproj')
-        Suites = @(
-            'wvb-to-wvo-reconstruction',
-            'wv-linker-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction'
-        )
+        Suites = @('native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
     },

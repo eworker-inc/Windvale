@@ -1,0 +1,244 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉliveˉstorage;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉreclamation as Reclamation;
+
+// A plan contains one offset/length pair per basic block followed by native
+// cleanup bytes. Empty means conservative arena retention. All block entries
+// have an empty evaluation stack; only live local roots can cross that edge.
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+fn Word(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+fn Read(Input: bytes, Index: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Input, Index * 4u32);
+}
+fn Blockˉindex(Offsets: bytes, Offset: u32) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Offsets) / 4u32 {
+        if Read(Offsets, Index) == Offset { return Index; }
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
+record Roots {
+    Indices: bytes;
+    Locals: bytes;
+    Widths: bytes;
+    Count: u32;
+}
+
+fn Readˉroots(Input: bytes, Localˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes) -> Roots {
+    var Indices: bytes = Empty(Input);
+    var Locals: bytes = Empty(Input);
+    var Widths: bytes = Empty(Input);
+    var Count: u32 = 0u32;
+    var Local: u32 = 0u32;
+    while Local < Bytesˉlength(Localˉtypes) {
+        let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
+        var Width: u32 = 0u32;
+        if Type == 3u8 || Type == 6u8 { Width = 1u32; }
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+            let Index: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type);
+            if Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(Input, Types, Index) {
+                Width = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Index);
+            }
+        }
+        if Width > 0u32 {
+            Indices = Word(Indices, Count);
+            Locals = Word(Locals, Local);
+            Widths = Word(Widths, Width);
+            Count = Count + 1u32;
+        } else { Indices = Word(Indices, 4294967295u32); }
+        Local = Local + 1u32;
+    }
+    return Roots(Indices, Locals, Widths, Count);
+}
+
+record Flow {
+    Uses: bytes;
+    Definitions: bytes;
+    First: bytes;
+    Second: bytes;
+    Loops: bytes;
+}
+
+fn Readˉflow(Input: bytes, Codeˉoffset: u32, Instructions: bytes,
+    Offsets: bytes, Edges: bytes, Directory: Roots) -> Flow {
+    let Blocks: u32 = Bytesˉlength(Offsets) / 4u32;
+    var Uses: bytes = Empty(Input);
+    var Definitions: bytes = Empty(Input);
+    var First: bytes = Empty(Input);
+    var Second: bytes = Empty(Input);
+    var Loops: bytes = Empty(Input);
+    var Block: u32 = 0u32;
+    while Block < Blocks {
+        var Use: u32 = 0u32;
+        var Define: u32 = 0u32;
+        var Cursor: u32 = Read(Offsets, Block);
+        var End: u32 = Bytesˉlength(Instructions);
+        if Block + 1u32 < Blocks { End = Read(Offsets, Block + 1u32); }
+        while Cursor < End {
+            // Instruction boundaries store their encoded width, not a boolean.
+            if Bytesˉreadˉu8(Instructions, Cursor) != 0u8 {
+                let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+                if Opcode == 4u8 || Opcode == 5u8 {
+                    let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
+                    let Rank: u32 = Read(Directory.Indices, Local);
+                    if Rank < 32u32 {
+                        let Bit: u32 = 1u32 << Rank;
+                        if Opcode == 5u8 { Define = Define | Bit; }
+                        else { Use = Use | (Bit & ~Define); }
+                    }
+                }
+            }
+            Cursor = Cursor + 1u32;
+        }
+        Uses = Word(Uses, Use);
+        Definitions = Word(Definitions, Define);
+        let Terminator: u8 = Bytesˉreadˉu8(Edges, Block * 5u32);
+        var Next: u32 = 4294967295u32;
+        var Target: u32 = 4294967295u32;
+        if Terminator == 0u8 || Terminator == 2u8 { Next = Block + 1u32; }
+        if Terminator == 1u8 || Terminator == 2u8 {
+            Target = Blockˉindex(Offsets, Bytesˉreadˉu32ˉlittle(Edges, Block * 5u32 + 1u32));
+            if Target <= Block { Loops = Word(Loops, Target); }
+        }
+        First = Word(First, Next);
+        Second = Word(Second, Target);
+        Block = Block + 1u32;
+    }
+    return Flow(Uses, Definitions, First, Second, Loops);
+}
+
+fn Liveˉroots(Input: bytes, Graph: Flow, Blocks: u32) -> bytes {
+    var Live: bytes = Empty(Input);
+    var Block: u32 = 0u32;
+    while Block < Blocks { Live = Word(Live, 0u32); Block = Block + 1u32; }
+    var Iteration: u32 = 0u32;
+    var Changed: bool = true;
+    // Each iteration propagates one control-flow edge. A bit can reach every
+    // predecessor along a simple path in at most Blocks iterations.
+    while Changed && Iteration <= Blocks {
+        var Next: bytes = Empty(Input);
+        Changed = false;
+        Block = 0u32;
+        while Block < Blocks {
+            var Out: u32 = 0u32;
+            let First: u32 = Read(Graph.First, Block);
+            let Second: u32 = Read(Graph.Second, Block);
+            if First < Blocks { Out = Out | Read(Live, First); }
+            if Second < Blocks { Out = Out | Read(Live, Second); }
+            let Value: u32 = Read(Graph.Uses, Block) | (Out & ~Read(Graph.Definitions, Block));
+            if Value != Read(Live, Block) { Changed = true; }
+            Next = Word(Next, Value);
+            Block = Block + 1u32;
+        }
+        Live = Next;
+        Iteration = Iteration + 1u32;
+    }
+    if Changed { return Empty(Input); }
+    return Live;
+}
+
+// Record parameters may alias the same descriptor cell. Deduplicate addresses
+// before range compaction changes those cells (at most 2016 comparisons).
+data Deduplicate: bytes = [
+    49, 201, 49, 219, 76, 57, 233, 115, 31, 77, 139, 12, 206, 49, 210, 72,
+    57, 218, 115, 10, 77, 59, 12, 214, 116, 10, 255, 194, 235, 241, 77, 137,
+    12, 222, 255, 195, 255, 193, 235, 220, 65, 137, 221
+];
+data Loadˉcheckpoint: bytes = [139, 132, 36];
+// cmp eax,[r15+60]; je end: no call-local bytes means nothing can move.
+data Skipˉempty: bytes = [65, 59, 71, 60, 15, 132];
+data Addressˉlocal: bytes = [72, 141, 148, 36];
+data Loadˉrecord: bytes = [72, 139, 148, 36];
+data Guardˉrecord: bytes = [72, 133, 210, 15, 132];
+
+fn Cleanup(Input: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Localˉtypes: bytes, Directory: Roots, Live: u32, Checkpoint: u32) -> bytes {
+    var Result: bytes = Reclamation.Compilerˉnativeˉx64ˉreclamationˉprefix();
+    var Fields: u32 = 0u32;
+    var Rank: u32 = 0u32;
+    while Rank < Directory.Count {
+        if (Live & (1u32 << Rank)) != 0u32 {
+            Fields = Fields + Read(Directory.Widths, Rank);
+            if Fields > 64u32 { return Empty(Input); }
+            let Local: u32 = Read(Directory.Locals, Rank);
+            let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
+            // Seven saved registers and the descriptor-address array precede
+            // the unchanged 16-byte local cells during gathering.
+            let Offset: u32 = 568u32 + Local * 16u32;
+            if Type == 3u8 || Type == 6u8 {
+                Result = Word(Bytesˉconcat(Result, Addressˉlocal), Offset);
+                Result = Reclamation.Compilerˉnativeˉx64ˉgatherˉdescriptor(Result);
+            } else {
+                let Gather: bytes = Reclamation.Compilerˉnativeˉx64ˉgatherˉrecord(Input, Types,
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type));
+                if Bytesˉlength(Gather) > 65536u32 { return Empty(Input); }
+                Result = Word(Bytesˉconcat(Result, Loadˉrecord), Offset);
+                Result = Word(Bytesˉconcat(Result, Guardˉrecord), Bytesˉlength(Gather));
+                Result = Bytesˉconcat(Result, Gather);
+            }
+        }
+        if Bytesˉlength(Result) > 65536u32 { return Empty(Input); }
+        Rank = Rank + 1u32;
+    }
+    Result = Bytesˉconcat(Bytesˉconcat(Result, Deduplicate),
+        Reclamation.Compilerˉnativeˉx64ˉreclamationˉranges());
+    return Bytesˉconcat(Bytesˉconcat(Word(Loadˉcheckpoint, Checkpoint),
+        Word(Skipˉempty, Bytesˉlength(Result))), Result);
+}
+
+export fn Compilerˉnativeˉx64ˉliveˉstorageˉplan(
+    Input: bytes, Codeˉoffset: u32, Instructions: bytes, Offsets: bytes,
+    Edges: bytes, Localˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Frameˉbytes: u32
+) -> bytes {
+    let None: bytes = Empty(Input);
+    let Blocks: u32 = Bytesˉlength(Offsets) / 4u32;
+    // Later minor versions introduce opaque owners, borrows, closures and unsafe
+    // addresses. They need their own root/lease contracts before moving storage.
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) > 16u32 || Blocks > 256u32 ||
+        Frameˉbytes >= 65536u32 || Bytesˉlength(Instructions) > 65536u32 { return None; }
+    let Directory: Roots = Readˉroots(Input, Localˉtypes, Types);
+    if Directory.Count == 0u32 || Directory.Count > 32u32 { return None; }
+    let Graph: Flow = Readˉflow(Input, Codeˉoffset, Instructions, Offsets, Edges, Directory);
+    if Bytesˉlength(Graph.Loops) == 0u32 { return None; }
+    let Live: bytes = Liveˉroots(Input, Graph, Blocks);
+    if Bytesˉlength(Live) != Blocks * 4u32 { return None; }
+    var Header: bytes = None;
+    var Code: bytes = None;
+    var Block: u32 = 0u32;
+    while Block < Blocks {
+        var Bytes: bytes = None;
+        var Loop: u32 = 0u32;
+        while Loop < Bytesˉlength(Graph.Loops) / 4u32 {
+            if Read(Graph.Loops, Loop) == Block {
+                Bytes = Cleanup(Input, Types, Localˉtypes, Directory, Read(Live, Block), Frameˉbytes + 8u32);
+                if Bytesˉlength(Bytes) == 0u32 { return None; }
+                Loop = Bytesˉlength(Graph.Loops) / 4u32;
+            } else { Loop = Loop + 1u32; }
+        }
+        Header = Word(Word(Header, Blocks * 8u32 + Bytesˉlength(Code)), Bytesˉlength(Bytes));
+        Code = Bytesˉconcat(Code, Bytes);
+        if Bytesˉlength(Code) > 262144u32 { return None; }
+        Block = Block + 1u32;
+    }
+    return Bytesˉconcat(Header, Code);
+}
+
+export fn Compilerˉnativeˉx64ˉliveˉstorageˉblock(Plan: bytes, Block: u32) -> bytes {
+    if Bytesˉlength(Plan) == 0u32 { return Plan; }
+    return Bytesˉslice(Plan, Read(Plan, Block * 2u32), Read(Plan, Block * 2u32 + 1u32));
+}
+export fn Compilerˉnativeˉx64ˉliveˉstorageˉbytes(Plan: bytes, Blocks: u32) -> u32 {
+    if Bytesˉlength(Plan) == 0u32 { return 0u32; }
+    return Bytesˉlength(Plan) - Blocks * 8u32;
+}

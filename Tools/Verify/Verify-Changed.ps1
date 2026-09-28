@@ -187,7 +187,17 @@ if ($PreparationOnly) {
         & node (Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs') `
             --prepare-only --maximum-seconds $PreparationMaximumSeconds
         if ($LASTEXITCODE -ne 0) { throw "Native preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
-    } else {
+    }
+    if ($NativePlan.Suites -contains 'native-x64-lowering-development') {
+        $RemainingSeconds = [int][Math]::Floor($PreparationMaximumSeconds - ([DateTime]::UtcNow - $VerificationStartedUtc).TotalSeconds)
+        if ($RemainingSeconds -lt 30) { throw 'The shared preparation deadline is exhausted; completed caches remain reusable.' }
+        $HostTarget = if ($IsWindows -or [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) { 'windows' } else { 'linux' }
+        Write-Host "Preparation owner=native-x64-lowering-development maximum-seconds=$RemainingSeconds"
+        & node (Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs') `
+            $HostTarget $RepositoryRoot --prepare-only --maximum-seconds $RemainingSeconds
+        if ($LASTEXITCODE -ne 0) { throw "Native lowerer preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
+    }
+    if (@($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
         Write-Host 'Native preparation status=NotRequired selected-preparation-owners=0'
     }
     return
@@ -364,6 +374,13 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $OwnerArguments += '-AllowLongRun'
             }
             $OwnerMessage = $null
+            if ($Suite -eq 'native-x64-lowering-development' -and $UsePreparedProducts) {
+                $OwnerCommand = 'node'
+                $HostTarget = if ($IsWindowsHost) { 'windows' } else { 'linux' }
+                $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'),
+                    $HostTarget, $RepositoryRoot, '--prepared-products-only', '--maximum-seconds', '600')
+                $OwnerMessage = 'Native owner native-x64-lowering-development mode=prepared-products cases=81 maximum-seconds=600'
+            }
             if ($Suite -eq 'language-1-authenticated-foreign-binding' -and $UsePreparedProducts) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
                 $OwnerCommand = Join-Path $RepositoryRoot (
@@ -790,7 +807,7 @@ if ($Plan.Scope -in @('development', 'qualification')) {
             $OwnerSucceeded = $OwnerExitCode -eq 0
             if (!$OwnerSucceeded -and
                 ($OwnerCommand -ceq $Coordinator -or $Suite -eq 'language-1-front-door' -or
-                    ($UsePreparedProducts -and $Suite -eq 'language-1-authenticated-foreign-binding') -or
+                    ($UsePreparedProducts -and $Suite -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development')) -or
                     ($Suite -eq 'language-1-memory-budget-split-execution' -and
                         $NativePlan.UseVectorBorrowIntegrationDevelopment)) -and
                 $OwnerExitCode -ne 1) {
@@ -805,7 +822,7 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                     "outcome=$TimingOutcome exit=$OwnerExitCode. " +
                     'No passing evidence was recorded.')
                 if (!$AllowIncompleteInfrastructure -or
-                    ($UsePreparedProducts -and $Suite -eq 'language-1-authenticated-foreign-binding')) {
+                    ($UsePreparedProducts -and $Suite -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development'))) {
                     $StopAfterOwner = $true
                 }
             } elseif (!$OwnerSucceeded) {

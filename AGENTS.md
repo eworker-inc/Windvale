@@ -94,7 +94,12 @@ checked allocation, restricted buffer reuse, and function-return checkpoints.
 The current source lowerer compacts the byte/text ranges reachable from record
 and variant returns, reclaiming other allocations above the call's entry
 checkpoint. This does not release obsolete values below that checkpoint or
-provide general last-share ownership. Pinned bootstrap artifacts retain their
+provide general last-share ownership. Eligible immutable byte/text loops also
+compact storage reachable from live locals at loop entry, including nested
+records and active variants. The lowering contract bounds that analysis and
+retains storage conservatively outside its supported shapes and limits. This
+does not implement owned mutable storage, allocation leases, or the full 1.0
+release contract. Pinned bootstrap artifacts retain their
 recorded behavior until separately rebuilt and qualified. The interpreter
 repeatedly replaces immutable byte representations of working state. Its guest allocation
 accounting and reclamation are separate from the native storage running that

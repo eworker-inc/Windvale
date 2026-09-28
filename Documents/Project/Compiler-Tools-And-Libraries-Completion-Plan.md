@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-27
+> Last reviewed: 2026-09-28
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -67,6 +67,16 @@ retention defect, not general last-share release or the gates below. Pinned
 bootstrap tools require separate reconstruction and qualification before their
 identities change. The [native lowering contract](../../Specifications/Windvale-Native-X64-Lowering.md#record-return-arena-reclamation)
 owns the exact bounds and conservative fallback.
+
+Eligible immutable byte/text loops now reclaim obsolete storage at loop entry
+while retaining live local slices, nested records, and active variants. The
+fixed-state replacement regression uses an 8-byte arena through 32,768
+iterations; the shared-slice regression uses 12 bytes. Bounds on analyzed
+locals, blocks, and aggregate fields preserve conservative retention outside
+this supported subset. This adds reuse within a call, but leaves owned mutable
+storage, allocation leases, later bytecode shapes, and complete interpreter
+working-storage reclamation open. See the
+[loop reclamation contract](../../Specifications/Windvale-Native-X64-Lowering.md#loop-entry-arena-reclamation).
 
 Work proceeds through these gates, preserving existing qualified contracts:
 

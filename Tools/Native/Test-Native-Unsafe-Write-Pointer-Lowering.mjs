@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
@@ -10,7 +10,23 @@ const OUTPUT_LIMIT = 64 * 1024;
 const FIXTURE_LIMIT = 4 * 1024 * 1024;
 const COMMAND_TIMEOUT_MILLISECONDS = 120_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 15 * 60_000;
-const PROGRESS_INTERVAL_MILLISECONDS = 30_000;
+
+const Phase = process.argv[4];
+const Prepareˉonly = Phase === '--prepare-only';
+const Preparedˉonly = Phase === '--prepared-products-only';
+let Ownerˉdeadline = null;
+if (Prepareˉonly || Preparedˉonly) {
+    const Seconds = Number(process.argv[6]);
+    if (process.argv.length !== 7 || process.argv[5] !== '--maximum-seconds' ||
+        !/^[1-9][0-9]*$/u.test(process.argv[6]) ||
+        Seconds < 30 || Seconds > (Preparedˉonly ? 600 : 5400)) Usage();
+    if (Prepareˉonly && process.env.WINDVALE_PREPARED_PRODUCTS_ONLY !== undefined) {
+        Reject('Preparation cannot use a prepared-only environment.');
+    }
+    Ownerˉdeadline = Date.now() + Seconds * 1000;
+    if (Preparedˉonly) process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+    process.argv.splice(4);
+}
 
 if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7 && process.argv.length !== 8 && process.argv.length !== 10) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
@@ -66,7 +82,9 @@ const Work = await realpath(await mkdtemp(join(
     tmpdir(),
     'windvale-write-pointer-lowering-',
 )));
+let Preserveˉwork = false;
 try {
+    await Verifyˉsourceˉclosures();
     if (!Recordˉonly) await Runˉfoundationˉborrowˉemission();
     if (!Borrowˉonly) {
     const Canonical = await Readˉfixture(
@@ -104,8 +122,8 @@ try {
         'native unsafe write pointer lowering step=compiler-build status=Started\n',
     );
     await Requireˉsuccess(
-        process.execPath, [Build, Project, Lowererˉwvb], 'compiler-build',
-        CONSTRUCTION_TIMEOUT_MILLISECONDS,
+        process.execPath, [Build, ...Buildˉoptions(), Project, Lowererˉwvb], 'compiler-build',
+        Prepareˉonly ? Ownerˉdeadline - Date.now() : CONSTRUCTION_TIMEOUT_MILLISECONDS,
     );
     process.stdout.write(
         'native unsafe write pointer lowering step=compiler-package status=Started\n',
@@ -119,6 +137,9 @@ try {
     }
     if (!existsSync(Lowerer)) Reject('The current native lowerer was not published.');
 
+    if (Prepareˉonly) {
+        process.stdout.write('native x64 lowering preparation status=Ready products=2 behavior-cases=0\n');
+    } else {
     const Recordˉcases = await Runˉrecordˉreturnˉmemory(Lowerer);
     if (!Recordˉonly) {
     await Runˉoptionˉu64(Lowerer);
@@ -386,8 +407,49 @@ try {
     );
     }
     }
+    }
+} catch (Error) {
+    Preserveˉwork = Error.cleanupUncertain === true;
+    process.stderr.write(`${Error.message}\n`);
+    process.exitCode = Error.exitCode ?? 1;
 } finally {
-    await Removeˉwork(Work);
+    if (!Preserveˉwork) await Removeˉwork(Work);
+}
+
+async function Verifyˉsourceˉclosures() {
+    const Projects = [
+        'Compiler/Windvale-Native-X64-Lowering',
+        'Compiler/Windvale-Native-X64-Lowering-Tool',
+        'Compiler/Windvale-Native-X64-Lowering-Staging-Admission',
+        'Compiler/Windvale-Native-X64-Lowering-Staging-Tool',
+        'Tests/Windvale-Native-Test-Staging-Content-Native',
+        'Tests/Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe',
+        'Tests/Windvale-Native-Test-X64-Lowering-Data-Limit',
+    ];
+    for (const Projectˉname of Projects) {
+        const Manifest = await readFile(join(Repositoryˉroot, 'Projects', Projectˉname + '.wvproj'), 'utf8');
+        if (Buffer.byteLength(Manifest) > 65536) Reject('Lowerer source closure exceeds its bound.');
+        const Sources = [...Manifest.matchAll(/^(?:root|source) "([^"]+)"\r?$/gmu)].map(Match => Match[1]);
+        const Modules = new Set();
+        const Imports = new Set();
+        for (const Source of Sources) {
+            const Text = await readFile(join(Repositoryˉroot, Source), 'utf8');
+            if (Buffer.byteLength(Text) > FIXTURE_LIMIT) Reject('Lowerer source exceeds its bound.');
+            const Module = /^module ([^ ;]+)[; ]/mu.exec(Text);
+            if (Module === null || Modules.has(Module[1])) Reject('Lowerer module declaration differs.');
+            Modules.add(Module[1]);
+            for (const Match of Text.matchAll(/^import (Compilerˉnativeˉx64ˉlowering[^ ]*) as /gmu)) Imports.add(Match[1]);
+        }
+        for (const Imported of Imports) {
+            if (!Modules.has(Imported)) Reject(`Missing lowerer source in ${Projectˉname}: ${Imported}`);
+        }
+    }
+    process.stdout.write('native x64 lowering source-closures=7 status=Passed\n');
+}
+
+function Buildˉoptions() {
+    return [...(Prepareˉonly ? ['--prepare-compiler'] : []),
+        ...(Ownerˉdeadline === null ? [] : ['--deadline-ms', String(Ownerˉdeadline - 5000)])];
 }
 
 async function Runˉrecordˉreturnˉmemory(Lowerer) {
@@ -434,6 +496,22 @@ async function Runˉrecordˉreturnˉmemory(Lowerer) {
     const I32 = Shape(1), Bytes = Shape(6), Pair = Shape(7, 0);
     const Dead = [Op(10, 0), Op(10, 0), Op(0x77), Op(5, 0)];
     const Cases = [];
+    for (const Iterations of [1, 256, 4096, 32768]) {
+        const Code = [Op(1, 0x04030201), Op(0x7b), Op(5, 1),
+            Op(4, 1), Op(9, 1), Op(9, 2), Op(12), Op(5, 2), Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(4, 0), Op(0x7b), Op(5, 1), Op(4, 2), Op(5, 2),
+            Op(4, 2), Op(9, 0), Op(0x0d), Op(0x76), Op(9, 2), Op(0x60));
+        const Aliasˉfailure = Op(0x31, 0); Code.push(Aliasˉfailure);
+        Code.push(Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0), Op(4, 0), Op(1, Iterations), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(4, 1), Op(9, 0), Op(0x72),
+            Op(1, Iterations - 1), Op(0x11), Op(1, 42), Op(0x10), Op(0x51));
+        Aliasˉfailure.writeUInt32LE(Buffer.concat(Code).length, 1);
+        Code.push(Op(1, 0), Op(0x51));
+        Cases.push({ Name: `live-slice-replacement-${Iterations}`, Capacity: 12, Expected: 42,
+            Input: Module([Functionˉentry('Main', I32, [I32, Bytes, Bytes], Code, 3)], []) });
+    }
     for (const [Iterations, Fields] of [[1, 1], [256, 1], [4096, 1], [256, 64]]) {
         const Code = [Op(1, 0), Op(5, 0)];
         const Loop = Buffer.concat(Code).length;
@@ -471,6 +549,121 @@ async function Runˉrecordˉreturnˉmemory(Lowerer) {
     const Maybe = Shape(11, 1);
     const Variant = Buffer.concat([Buffer.from([3]), Name('Maybe'), U32(2),
         Name('Empty'), Buffer.from([0]), Name('Value'), Buffer.from([1]), Name('Payload'), Pair]);
+    // Every loop entry preserves a live aggregate while its old sibling buffer
+    // becomes dead. The fixed 12-byte arena also detects unbounded retention.
+    for (const Kind of ['direct', 'nested', 'variant']) {
+        const Root = Kind === 'direct' ? Pair : Kind === 'nested' ? Wrapper : Maybe;
+        const Path = Kind === 'direct' ? [] : Kind === 'nested' ? [Op(0x69, 0)] : [Op(0x99, 1, 1)];
+        const Code = [Op(1, 0x04030201), Op(0x7b), Op(5, 1),
+            Op(4, 1), Op(9, 1), Op(9, 2), Op(12), Op(0x68, 0),
+            ...(Kind === 'nested' ? [Op(0x68, 1)] : Kind === 'variant' ? [Op(0x97, 1, 1)] : []),
+            Op(5, 2), Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(4, 0), Op(0x7b), Op(5, 1),
+            Op(4, 2), ...Path, Op(0x69, 0), Op(9, 0), Op(0x0d), Op(0x76), Op(9, 2), Op(0x60));
+        const Failure = Op(0x31, 0); Code.push(Failure);
+        Code.push(Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0), Op(4, 0), Op(1, 4096), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(1, 42), Op(0x51));
+        Failure.writeUInt32LE(Buffer.concat(Code).length, 1); Code.push(Op(1, 0), Op(0x51));
+        const Types = [Record('Shared', [Bytes])];
+        if (Kind !== 'direct') Types.push(Kind === 'nested' ? Record('Wrapper', [Pair]) : Variant);
+        Cases.push({ Name: `live-${Kind}-replacement-4096`, Capacity: 12, Expected: 42,
+            Input: Module([Functionˉentry('Main', I32, [I32, Bytes, Root], Code, 3)], Types, Kind === 'variant' ? 16 : 11) });
+    }
+    for (const Iterations of [1, 4096, 32768]) {
+        const Code = [Op(1, 42), Op(0x7b), Op(5, 1), Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(4, 1), Op(9, 0), Op(0x72), Op(1, 42), Op(0x20));
+        const Failure = Op(0x31, 0); Code.push(Failure);
+        Code.push(Op(1, 42), Op(0x7b), Op(5, 1), Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0),
+            Op(4, 0), Op(1, Iterations), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(4, 1), Op(9, 0), Op(0x72), Op(0x51));
+        Failure.writeUInt32LE(Buffer.concat(Code).length, 1); Code.push(Op(1, 0), Op(0x51));
+        Cases.push({ Name: `live-last-share-replacement-${Iterations}`, Capacity: 8, Expected: 42,
+            Input: Module([Functionˉentry('Main', I32, [I32, Bytes], Code)], []) });
+    }
+    for (const Rootˉcount of [32, 33]) {
+        // Keep the highest-ranked root live; rank 31 exercises the top mask bit.
+        const Code = [Op(1, 99), Op(0x7b), Op(5, Rootˉcount), Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(1, 42), Op(0x7b), Op(5, 1),
+            Op(4, Rootˉcount), Op(9, 0), Op(0x72), Op(1, 99), Op(0x20));
+        const Failure = Op(0x31, 0); Code.push(Failure);
+        Code.push(Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0),
+            Op(4, 0), Op(1, 256), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(4, 1), Op(9, 0), Op(0x72), Op(0x51));
+        Failure.writeUInt32LE(Buffer.concat(Code).length, 1); Code.push(Op(1, 0), Op(0x51));
+        Cases.push({ Name: `live-root-bound-${Rootˉcount}`, Capacity: 8, Expected: Rootˉcount === 32 ? 42 : 1,
+            Input: Module([Functionˉentry('Main', I32, [I32, ...Array(Rootˉcount).fill(Bytes)], Code)], []) });
+    }
+    {
+        const Code = [Op(1, 42), Op(0x7b), Op(5, 1), Op(1, 42), Op(0x7b), Op(5, 2), Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(1, 7), Op(0x7b), Op(5, 3), Op(4, 0), Op(1, 128), Op(0x22));
+        const Other = Op(0x31, 0); Code.push(Other);
+        Code.push(Op(4, 1), Op(9, 0), Op(0x72), Op(5, 4));
+        const Join = Op(0x30, 0); Code.push(Join);
+        Other.writeUInt32LE(Buffer.concat(Code).length, 1);
+        Code.push(Op(4, 2), Op(9, 0), Op(0x72), Op(5, 4));
+        Join.writeUInt32LE(Buffer.concat(Code).length, 1);
+        Code.push(Op(4, 4), Op(1, 42), Op(0x20));
+        const Failure = Op(0x31, 0); Code.push(Failure);
+        Code.push(Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0), Op(4, 0), Op(1, 256), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(1, 42), Op(0x51));
+        Failure.writeUInt32LE(Buffer.concat(Code).length, 1); Code.push(Op(1, 0), Op(0x51));
+        Cases.push({ Name: 'live-branch-join-256', Capacity: 12, Expected: 42,
+            Input: Module([Functionˉentry('Main', I32, [I32, Bytes, Bytes, Bytes, I32], Code)], []) });
+    }
+    {
+        const Main = [Op(1, 99), Op(0x7b), Op(5, 0), Op(4, 0), Op(4, 0), Op(0x68, 0), Op(5, 1),
+            Op(4, 1), Op(4, 1), Op(0x40, 1), Op(5, 2)];
+        const Mainˉfailures = [];
+        for (const [Local, Field, Expected] of [[1, 0, 99], [2, 0, 42], [2, 1, 99]]) {
+            Main.push(Op(4, Local), Op(0x69, Field), Op(9, 0), Op(0x72), Op(1, Expected), Op(0x20));
+            const Failure = Op(0x31, 0); Main.push(Failure); Mainˉfailures.push(Failure);
+        }
+        Main.push(Op(1, 42), Op(0x51));
+        for (const Failure of Mainˉfailures) Failure.writeUInt32LE(Buffer.concat(Main).length, 1);
+        Main.push(Op(1, 0), Op(0x51));
+        const Code = [Op(1, 0), Op(5, 2)], Loop = Buffer.concat(Code).length, Failures = [];
+        Code.push(Op(1, 42), Op(0x7b), Op(5, 3));
+        for (const Parameter of [0, 1]) {
+            Code.push(Op(4, Parameter), Op(0x69, Parameter), Op(9, 0), Op(0x72), Op(1, 99), Op(0x20));
+            const Failure = Op(0x31, 0); Code.push(Failure); Failures.push(Failure);
+        }
+        Code.push(Op(4, 2), Op(1, 1), Op(0x10), Op(5, 2), Op(4, 2), Op(1, 4096), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(4, 3), Op(4, 0), Op(0x69, 0), Op(0x68, 0), Op(0x51));
+        for (const Failure of Failures) Failure.writeUInt32LE(Buffer.concat(Code).length, 1);
+        Code.push(Op(10, 1), Op(10, 1), Op(0x68, 0), Op(0x51));
+        const Helper = Functionˉentry('Value', Pair, [I32, Bytes], Code);
+        Helper.Parameters = [Pair, Pair];
+        Cases.push({ Name: 'live-borrowed-caller-and-return-4096', Capacity: 12, Expected: 42,
+            Input: Module([Functionˉentry('Main', I32, [Bytes, Pair, Pair], Main), Helper], [Record('Shared', [Bytes, Bytes])]) });
+    }
+    for (const Fields of [32, 33]) {
+        const Code = [...Array.from({ length: Fields }, () => Op(10, 1)), Op(0x68, 0), Op(5, 2),
+            Op(4, 2), Op(5, 3), Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(1, 42), Op(0x7b), Op(5, 1));
+        const Patches = [];
+        for (const Local of [2, 3]) {
+            Code.push(Op(4, Local), Op(0x69, Fields - 1), Op(9, 0), Op(0x72), Op(1, 42), Op(0x20));
+            const Failure = Op(0x31, 0); Code.push(Failure); Patches.push(Failure);
+        }
+        Code.push(Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0), Op(4, 0), Op(1, 256), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(1, 42), Op(0x51));
+        for (const Failure of Patches) Failure.writeUInt32LE(Buffer.concat(Code).length, 1);
+        Code.push(Op(1, 0), Op(0x51));
+        Cases.push({ Name: `live-field-bound-${Fields * 2}`, Capacity: 8, Expected: Fields === 32 ? 42 : 1,
+            Input: Module([Functionˉentry('Main', I32, [I32, Bytes, Pair, Pair], Code, Fields)],
+                [Record('Many', Array(Fields).fill(Bytes))]) });
+    }
     const Emptyˉcode = [Op(1, 0), Op(5, 0)];
     const Emptyˉloop = Buffer.concat(Emptyˉcode).length;
     Emptyˉcode.push(Op(0x40, 1), Op(0x98, 1, 0));
@@ -539,7 +732,7 @@ async function Runˉrecordˉreturnˉmemory(Lowerer) {
                 Functionˉentry('Main', I32, [Bytes, Pair, Bytes], Code), Helper,
             ], [Record('Shared', [Bytes, Bytes])]) });
     }
-    Cases.push({ ...Cases[0], Name: 'allocation-refusal', Capacity: 127, Expected: 1 });
+    Cases.push({ ...Cases.find(Case => Case.Name === 'borrowed-return-1-fields-1'), Name: 'allocation-refusal', Capacity: 127, Expected: 1 });
     const Context = Buffer.alloc(112);
     Context.writeUInt32LE(7, 0); Context.writeUInt32LE(112, 4);
     Context.writeBigUInt64LE(1000000n, 8); Context.writeBigUInt64LE(1024n, 16);
@@ -567,7 +760,7 @@ async function Runˉrecordˉreturnˉmemory(Lowerer) {
             Reject(`Record return execution failed: ${Case.Name}, code=${Result.Code}, output=${Result.Output}.`);
         }
     }
-    process.stdout.write(`native record return status=Passed cases=${Cases.length} iterations=1/256/4096 arena=1024 descriptor-limit=64 alias-depth=record/variant allocation-refusal=127\n`);
+    process.stdout.write(`native record return status=Passed cases=${Cases.length} iterations=1/256/4096/32768 replacement-arena=8/12 return-arena=1024 descriptor-limit=64 alias-depth=record/variant allocation-refusal=127\n`);
     return Cases.length;
 }
 
@@ -771,13 +964,15 @@ async function Runˉfoundationˉborrowˉemission() {
         await writeFile(Probeˉwvb, Bytes, { flag: 'wx' });
         process.stdout.write(`native foundation borrow step=probe-reuse sha256=${process.argv[9]}\n`);
     } else {
-        await Requireˉsuccess(join(Repositoryˉroot, 'Tools', 'Native',
-            `Build-Cached-Project-Wvb.${Extension}`), [Probeˉproject, Probeˉwvb],
-        'foundation-borrow-probe-build', CONSTRUCTION_TIMEOUT_MILLISECONDS);
+        await Requireˉsuccess(process.execPath,
+            [Build, ...Buildˉoptions(), Probeˉproject, Probeˉwvb],
+            'foundation-borrow-probe-build',
+            Prepareˉonly ? Ownerˉdeadline - Date.now() : CONSTRUCTION_TIMEOUT_MILLISECONDS);
     }
     await Requireˉsuccess(Packageˉlowerer,
         ['6', Probeˉwvb, Probe, '--development-cache'],
         'foundation-borrow-probe-package', CONSTRUCTION_TIMEOUT_MILLISECONDS);
+    if (Prepareˉonly) return;
     await Requireˉsuccess(Probe, [Binary], 'foundation-borrow-probe-generate');
     const Code = await readFile(Binary);
     if (Code.length === 0 || Code.length > 16 * 1024) {
@@ -990,86 +1185,17 @@ async function Requireˉsuccess(
 ) {
     const Result = await Runˉprocess(Tool, Arguments, Timeout, Label);
     if (!Passed(Result)) {
-        Reject(`The ${Label} step failed with exit ${Result.Code}.\n${Result.Output}`);
+        throw Object.assign(new Error(`The ${Label} step failed with exit ${Result.Code}.\n${Result.Output}`),
+            { exitCode: [64, 124].includes(Result.Code) ? Result.Code : 1 });
     }
     return Result;
 }
 
-function Runˉprocess(Tool, Arguments, Timeout, Step) {
-    return new Promise((Resolveˉresult, Rejectˉpromise) => {
-        const Isˉcommand = WINDOWS && Tool.toLowerCase().endsWith('.cmd');
-        if (Isˉcommand && [Tool, ...Arguments].some(
-            Argument => /[\r\n&|<>^%!"]/u.test(Argument))) {
-            Rejectˉpromise(new Error('A Windows test argument is unsafe.'));
-            return;
-        }
-        const Executable = Isˉcommand ? process.env.ComSpec ?? 'cmd.exe' : Tool;
-        const Toolˉarguments = Isˉcommand ? [
-            '/d', '/v:off', '/s', '/c',
-            `"${[Tool, ...Arguments].map(Value => `"${Value}"`).join(' ')}"`,
-        ] : Arguments;
-        const Child = spawn(Executable, Toolˉarguments, {
-            cwd: Repositoryˉroot,
-            detached: !WINDOWS,
-            stdio: ['ignore', 'pipe', 'pipe'],
-            windowsHide: true,
-            windowsVerbatimArguments: Isˉcommand,
-        });
-        const Output = [];
-        let Outputˉbytes = 0;
-        let Exceeded = false;
-        let Timedˉout = false;
-        const Capture = Chunk => {
-            Outputˉbytes += Chunk.length;
-            if (Outputˉbytes <= OUTPUT_LIMIT) Output.push(Chunk);
-            else {
-                Exceeded = true;
-                Terminate(Child);
-            }
-        };
-        Child.stdout.on('data', Capture);
-        Child.stderr.on('data', Capture);
-        Child.once('error', Rejectˉpromise);
-        const Started = Date.now();
-        const Progress = setInterval(() => {
-            process.stdout.write(
-                `native unsafe write pointer lowering step=${Step} ` +
-                `status=Active elapsed-seconds=${Math.floor(
-                    (Date.now() - Started) / 1000,
-                )}\n`,
-            );
-        }, PROGRESS_INTERVAL_MILLISECONDS);
-        Progress.unref();
-        const Timer = setTimeout(() => {
-            Timedˉout = true;
-            Terminate(Child);
-        }, Timeout);
-        Child.once('close', Code => {
-            clearInterval(Progress);
-            clearTimeout(Timer);
-            Resolveˉresult({
-                Code,
-                Output: Buffer.concat(Output).toString('utf8'),
-                Exceeded,
-                Timedˉout,
-            });
-        });
-    });
+async function Runˉprocess(Tool, Arguments, Timeout, Step) {
+    const Deadline = Math.min(Date.now() + Timeout, Ownerˉdeadline ?? Number.MAX_SAFE_INTEGER);
+    const Result = await Runˉdevelopmentˉcommand(Tool, Arguments, Deadline, Prepareˉonly, OUTPUT_LIMIT);
+    return { Code: Result.Code, Output: Result.Output + Result.Error, Exceeded: false, Timedˉout: false };
 }
-
-function Terminate(Child) {
-    if (Child.pid === undefined) return;
-    if (WINDOWS) {
-        const Killer = spawn(
-            'taskkill.exe', ['/pid', String(Child.pid), '/t', '/f'],
-            { stdio: 'ignore', windowsHide: true },
-        );
-        Killer.unref();
-    } else {
-        try { process.kill(-Child.pid, 'SIGKILL'); } catch { Child.kill('SIGKILL'); }
-    }
-}
-
 async function Removeˉwork(Path) {
     const Temporaryˉroot = await realpath(resolve(tmpdir()));
     const Parent = await realpath(dirname(Path));
@@ -1084,6 +1210,7 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
         '<windows|linux> <repository-root> [--foundation-borrow-emission|' +
+        '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
         '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]]\n',
     );
     process.exit(64);

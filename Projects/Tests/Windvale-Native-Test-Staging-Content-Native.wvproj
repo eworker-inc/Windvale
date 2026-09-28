@@ -1,6 +1,7 @@
 windvale-project 4
 root "Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Core.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Affine-Ownership.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv"

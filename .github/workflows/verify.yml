@@ -171,7 +171,7 @@ jobs:
             $Paths = @(git diff --name-only --no-renames --diff-filter=ACDMRTUXB $env:BASE_SHA $env:HEAD_SHA --)
             if ($LASTEXITCODE -ne 0) { throw 'Cannot enumerate preparation inputs.' }
             $NativePlan = ./Tools/Verify/Get-Native-Changed-Verification-Plan.ps1 -ChangedPath $Paths -PassThru -Quiet
-            $PreparationRequired = $NativePlan.Suites -contains 'language-1-authenticated-foreign-binding'
+            $PreparationRequired = @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -ne 0
           }
           "preparation_required=$($PreparationRequired.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           $Hosts = if ($env:WINDOWS_REQUIRED -eq 'true') { '["ubuntu-latest","windows-latest"]' } else { '["ubuntu-latest"]' }

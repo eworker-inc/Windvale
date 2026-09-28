@@ -138,3 +138,16 @@ export fn Compilerˉnativeˉx64ˉrecordˉreclamation(
     if Bytesˉlength(Gather) > 65536u32 { return Empty; }
     return Bytesˉconcat(Bytesˉconcat(Reclaimˉprefix, Gather), Reclaimˉranges);
 }
+
+export fn Compilerˉnativeˉx64ˉreclamationˉprefix() -> bytes { return Reclaimˉprefix; }
+export fn Compilerˉnativeˉx64ˉreclamationˉranges() -> bytes { return Reclaimˉranges; }
+export fn Compilerˉnativeˉx64ˉgatherˉdescriptor(Output: bytes) -> bytes {
+    return Gatherˉfield(Output, 0u32);
+}
+export fn Compilerˉnativeˉx64ˉgatherˉrecord(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> bytes {
+    return Gatherˉtype(Bytesˉslice(Input, 0u32, 0u32), Input, Types, Typeˉindex, 0u32);
+}

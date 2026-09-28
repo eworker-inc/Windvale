@@ -3486,6 +3486,8 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Object.wv',
         'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
         'Compiler/Windvale/Native-X64-Lowering-Records.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Allocation.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv',
@@ -4685,27 +4687,22 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj',
         'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
         'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj',
+        'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
+        'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj',
+        'Projects/Tests/Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe.wvproj',
+        'Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj'
+    )) {
+        # These are source closures over the same lowerer. Verify their closure
+        # and current lowering behavior; pinned tool reconstruction is a separate
+        # artifact boundary, not evidence for newly emitted machine bytes.
+        Add-Suite 'native-x64-lowering-development'
+    } elseif ($Path -in @(
         'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj',
         'Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj'
     )) {
         Add-Suite @(
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction'
-        )
-        if ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj') {
-            Add-Suite 'native-sha256-lowering'
-        }
-    } elseif ($Path -eq
-        'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj') {
-        Add-Suite 'native-x64-lowering-development'
-    } elseif ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj') {
-        Add-Suite @(
-            'wvb-to-wvo-reconstruction',
-            'wv-linker-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction'
         )
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj') {
         Add-Suite 'libraries'
