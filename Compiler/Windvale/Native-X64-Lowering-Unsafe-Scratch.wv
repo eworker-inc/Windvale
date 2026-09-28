@@ -19,7 +19,8 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     Localˉtypes: bytes,
     Localˉtypeˉidentities: bytes,
     Localˉborrowˉkinds: bytes,
-    Typeˉcount: u32,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Isˉmain: bool,
     Instructions: bytes
 ) -> bool {
     return Affineˉownership.Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
@@ -30,7 +31,8 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         Localˉtypes,
         Localˉtypeˉidentities,
         Localˉborrowˉkinds,
-        Typeˉcount,
+        Types,
+        Isˉmain,
         Instructions
     );
 }

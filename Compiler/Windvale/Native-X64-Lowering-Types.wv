@@ -346,7 +346,7 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
         );
     }
     if Kind == 37u8 {
-        if Minor != 39u32 && Minor != 41u32 { return Invalidˉshape(); }
+        if Minor != 39u32 && Minor != 41u32 && Minor != 42u32 { return Invalidˉshape(); }
         let Payload: Compilerˉnativeˉx64ˉshape =
             Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor + 1u32, Limit, Types);
         // One ordinary native payload only: no nested loans or opaque owners.
@@ -2121,5 +2121,5 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(
 }
 
 export fn Compilerˉnativeˉx64ˉownedˉminor(Minor: u32) -> bool {
-    return Minor == 24u32 || Minor == 25u32 || Minor == 27u32 || Minor == 41u32;
+    return Minor == 24u32 || Minor == 25u32 || Minor == 27u32 || Minor == 41u32 || Minor == 42u32;
 }

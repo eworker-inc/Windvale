@@ -3,6 +3,7 @@ import { Runˉownedˉstorageˉcases } from './Native-Owned-Storage-Cases.mjs';
 import { Prepareˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
 import { Prepareˉownedˉvector, Runˉownedˉvectorˉcases } from './Native-Owned-Vector-Cases.mjs';
 import { Prepareˉvectorˉaccess, Runˉvectorˉaccess } from './Native-Owned-Vector-Access-Cases.mjs';
+import { Prepareˉownedˉhelpers, Runˉownedˉhelpers } from './Native-Owned-Helper-Cases.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
@@ -19,7 +20,8 @@ let Oracleˉproduct = null;
 let Vectorˉproduct = null;
 let Growthˉproduct = null;
 let Appendˉproduct = null;
-while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append'].includes(process.argv.at(-3))) {
+let Helperˉproduct = null;
+while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append', '--owned-helpers'].includes(process.argv.at(-3))) {
     if (!/^[0-9a-f]{64}$/u.test(process.argv.at(-1))) Usage();
     const Product = { Path: resolve(process.argv.at(-2)), Sha256: process.argv.at(-1) };
     if (process.argv.at(-3) === '--budget-oracle') {
@@ -31,6 +33,9 @@ while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append']
     } else if (process.argv.at(-3) === '--owned-growth') {
         if (Growthˉproduct !== null) Usage();
         Growthˉproduct = Product;
+    } else if (process.argv.at(-3) === '--owned-helpers') {
+        if (Helperˉproduct !== null) Usage();
+        Helperˉproduct = Product;
     } else {
         if (Appendˉproduct !== null) Usage();
         Appendˉproduct = Product;
@@ -175,7 +180,8 @@ try {
         await Prepareˉbudgetˉoracle({ Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Oracleˉproduct });
         await Prepareˉownedˉvector({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Vectorˉproduct });
         await Prepareˉvectorˉaccess({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Growthˉproduct, Appendˉproduct });
-        process.stdout.write('native x64 lowering preparation status=Ready products=6 behavior-cases=0\n');
+        await Prepareˉownedˉhelpers({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Helperˉproduct });
+        process.stdout.write('native x64 lowering preparation status=Ready products=7 behavior-cases=0\n');
     } else {
     const Recordˉcases = await Runˉrecordˉreturnˉmemory(Lowerer);
     if (!Recordˉonly) {
@@ -184,6 +190,9 @@ try {
     }, Lowerer);
     const Accessˉcases = await Runˉvectorˉaccess({
         Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Growthˉproduct, Appendˉproduct,
+    }, Lowerer);
+    const Helperˉcases = await Runˉownedˉhelpers({
+        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Helperˉproduct,
     }, Lowerer);
     await Runˉoptionˉu64(Lowerer);
     await Runˉframeˉinitialization(Lowerer);
@@ -442,9 +451,9 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     process.stdout.write(
-        `native unsafe write pointer lowering status=Passed cases=${53 + Recordˉcases + Ownedˉcases + Vectorˉcases.Cases + Accessˉcases.Cases} ` +
-        `valid=${28 + Recordˉcases + Ownedˉcases + Vectorˉcases.Valid + Accessˉcases.Valid} malformed=${25 + Vectorˉcases.Malformed + Accessˉcases.Malformed} native-execution=${13 + Recordˉcases + Ownedˉcases + Vectorˉcases.Executions + Accessˉcases.Executions} ` +
-        `record-return-cases=${Recordˉcases} owned-storage-cases=${Ownedˉcases} owned-vector-cases=${Vectorˉcases.Cases} vector-access-cases=${Accessˉcases.Cases} foundation-borrow-cases=12 ` +
+        `native unsafe write pointer lowering status=Passed cases=${53 + Recordˉcases + Ownedˉcases + Vectorˉcases.Cases + Accessˉcases.Cases + Helperˉcases.Cases} ` +
+        `valid=${28 + Recordˉcases + Ownedˉcases + Vectorˉcases.Valid + Accessˉcases.Valid + Helperˉcases.Valid} malformed=${25 + Vectorˉcases.Malformed + Accessˉcases.Malformed + Helperˉcases.Malformed} native-execution=${13 + Recordˉcases + Ownedˉcases + Vectorˉcases.Executions + Accessˉcases.Executions + Helperˉcases.Executions} ` +
+        `record-return-cases=${Recordˉcases} owned-storage-cases=${Ownedˉcases} owned-vector-cases=${Vectorˉcases.Cases} vector-access-cases=${Accessˉcases.Cases} owned-helper-cases=${Helperˉcases.Cases} foundation-borrow-cases=12 ` +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
@@ -1257,7 +1266,7 @@ function Usage() {
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
         '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]] ' +
         '[--budget-oracle <wvb> <sha256>] [--owned-vector <wvb> <sha256>] ' +
-        '[--owned-growth <wvb> <sha256>] [--owned-append <wvb> <sha256>]\n',
+        '[--owned-growth <wvb> <sha256>] [--owned-append <wvb> <sha256>] [--owned-helpers <wvb> <sha256>]\n',
     );
     process.exit(64);
 }

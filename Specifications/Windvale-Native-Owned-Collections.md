@@ -2,8 +2,8 @@
 
 ## Status
 
-Candidate x64 compiler/runtime integration for bounded WVB 1.24, 1.25, 1.27
-and 1.41 subsets.
+Candidate x64 compiler/runtime integration for bounded WVB 1.24, 1.25, 1.27,
+1.41 and scalar-collection 1.42 subsets.
 The current source lowerer emits **ABI 24**, with **execution context 10**,
 for that subset. Source signatures and WVB bytes are unchanged. ABI 22/23,
 their consumers and pinned bootstrap products retain their recorded behavior.
@@ -20,9 +20,10 @@ integration. No reduction in ordinary interpreter process memory is claimed.
 
 ## Admitted source and bytecode
 
-The module is capability-free Core, with no static data and exactly one exported
-`Main(Budget: Memoryˉbudget) -> i32`. WVB input is at most 1 MiB, Main code at
-most 4,096 bytes, total locals at most 128, and the projected native frame at
+The module is capability-free Core, with no static data, at most 64 functions,
+and exactly one exported `Main(Budget: Memoryˉbudget) -> i32`. WVB input is at
+most 1 MiB. Each function has at most 64 parameters, 4,096 code bytes, 128 total
+locals including parameters, and a projected native frame at
 most 240 cells (3,840 bytes), below one Windows stack page. The shared complete WVB verifier runs before
 native admission; the native ownership analysis is an additional restriction.
 
@@ -47,8 +48,25 @@ general aggregate drops are not yet admitted. The entry wrapper owns remaining
 owners until Main returns or traps. The current source borrow validator freezes
 a Vector after indexed access for the remaining function; moving it into a
 later `using` binding is rejected. Such programs use terminal domain cleanup.
-Helper calls, owned returns, aggregate drops, freeze, sharing, hosted capabilities and WVB
-1.29/1.42 remain unsupported by this native subset.
+Direct helper calls (`40`) transfer owned budgets, scalar Vectors and canonical
+allocation Results through the existing native argument and return convention.
+Recursive helpers share the entry's instruction and call-depth limits. The
+entry template is emitted once at Main, at any function-directory position;
+helper allocation and release operations call that same template. Calling Main
+from bytecode is rejected because its wrapper owns initialization and teardown.
+
+Every ordinary helper return must have consumed, explicitly released or
+returned all its tracked owners. The native target rejects otherwise valid WVB
+that needs implicit helper-local cleanup. Allocation Results are tracked by
+their exact type even when received from a call or parameter; tracking does not
+depend on a constructor appearing in the same function. At most 64 owned local
+slots are tracked per function. Terminal helper traps unwind to Main's wrapper
+and reclaim the execution domain. Returned owners remain live in the caller.
+
+Helper parameters do not yet admit borrows; bytes/text values, aggregate drops,
+arbitrary owner-bearing records, freeze, sharing, hosted capabilities and WVB
+1.29 remain unsupported. WVB 1.42 Copy-record collection elements also reject;
+admission of scalar helpers does not admit that version's entire vocabulary.
 
 ## Context and ownership
 
@@ -153,8 +171,17 @@ returns the original item. Refusal and index-boundary mutations also require
 terminal cleanup; the adapter tests separately compare complete pre/post
 snapshots for ordinary refusals.
 
-Preparation includes six products: lowerer, borrow probe, budget oracle,
-scope, growth and append-refusal source fixtures. The behavior phase reuses them. Explicit
+The [helper workload](../Tests/Fixtures/Native-X64/Owned-Vector-Helpers.wv)
+constructs a Vector in a helper, returns its allocation Result, transfers the
+Vector through recursive calls, appends in a separate helper and releases it.
+Its 1,000 iterations fit the same 64-byte arena and 32-byte peak charge, with
+zero live charge at completion. Main is last in the function directory; the
+Vector travels through a stack argument as well as a return. Checks cover the
+64-function boundary, allocation refusal, nested fuel/depth failure, entry
+recursion rejection, copied owners and a helper retaining an owner at return.
+
+Preparation includes seven products: lowerer, borrow probe, budget oracle,
+scope, growth, append-refusal and helper source fixtures. The behavior phase reuses them. Explicit
 digest-checked products may be supplied with `--lowerer`, `--borrow-probe`,
-`--budget-oracle`, `--owned-vector`, `--owned-growth` and `--owned-append`
+`--budget-oracle`, `--owned-vector`, `--owned-growth`, `--owned-append` and `--owned-helpers`
 to the existing native owner.

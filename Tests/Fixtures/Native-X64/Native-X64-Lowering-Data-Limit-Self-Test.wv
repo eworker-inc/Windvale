@@ -96,7 +96,7 @@ fn Checkˉborrowedˉshape(
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input, 0u32, Length, Types, Minor
             );
-        if Versioned.Valid != (Minor == 39u32 || Minor == 41u32) { return false; }
+        if Versioned.Valid != (Minor == 39u32 || Minor == 41u32 || Minor == 42u32) { return false; }
         Minor = Minor + 1u32;
     }
     var Prefix: u32 = 0u32;
@@ -189,7 +189,7 @@ fn Borrowˉshapes(Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes) -> bool {
                 Bytesˉfromˉu8(20u8), 0u32, 1u32, Types, Minor
             );
         if Unit.Valid != (Minor == 24u32 || Minor == 25u32 ||
-                Minor == 27u32 || Minor == 41u32) { return false; }
+                Minor == 27u32 || Minor == 41u32 || Minor == 42u32) { return false; }
         if Unit.Valid && (Unit.Type != 5u8 || Unit.Identity != 20u32 ||
                 Unit.Next != 1u32 || Unit.Borrowˉkind != 0u8) { return false; }
         let Budget: Typeˉreader.Compilerˉnativeˉx64ˉshape =

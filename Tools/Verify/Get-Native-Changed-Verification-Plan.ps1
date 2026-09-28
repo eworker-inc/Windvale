@@ -1359,7 +1359,7 @@ function Add-Native-Tool-Suite {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
     if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases',
-        'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
+        'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -2523,8 +2523,10 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Native-Owned-Collections.md',
         'Tests/Fixtures/Native-X64/Owned-Vector-Scope.wv',
         'Tests/Fixtures/Native-X64/Owned-Vector-Growth.wv',
+        'Tests/Fixtures/Native-X64/Owned-Vector-Helpers.wv',
         'Tests/Fixtures/Native-X64/Owned-Vector-Append-Refusal.wv',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Growth.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Owned-Vector-Helpers.wvproj',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Append-Refusal.wvproj',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scope.wvproj',
         'Runtime/Native/X64-Memory-Budget-Validation.wva',

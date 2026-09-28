@@ -141,8 +141,8 @@ export fn Opcodeˉisˉsupported(Opcode: u8) -> bool {
         Opcode == 8u8 || Opcode == 9u8 ||
         (Numeric >= 16u32 && Numeric <= 22u32) ||
         (Numeric >= 32u32 && Numeric <= 40u32) ||
-        Opcode == 48u8 || Opcode == 49u8 || Opcode == 80u8 || Opcode == 81u8 ||
-        (Numeric >= 104u32 && Numeric <= 108u32) ||
+        Opcode == 48u8 || Opcode == 49u8 || Opcode == 64u8 || Opcode == 80u8 || Opcode == 81u8 ||
+        (Numeric >= 96u32 && Numeric <= 108u32) ||
         Opcode == 128u8 || Opcode == 129u8 ||
         (Numeric >= 133u32 && Numeric <= 148u32) ||
         (Numeric >= 151u32 && Numeric <= 153u32) ||
@@ -159,6 +159,11 @@ fn Isˉscalar(Shape: Types.Compilerˉnativeˉx64ˉshape) -> bool {
         (Shape.Type == 1u8 || Shape.Type == 2u8 || Shape.Type == 4u8 ||
          Shape.Type == 5u8 || Shape.Type == 9u8 || Shape.Type == 10u8 ||
          Types.Compilerˉnativeˉx64ˉtypeˉisˉenum(Shape.Type));
+}
+
+export fn Shapeˉisˉsupported(Shape: Types.Compilerˉnativeˉx64ˉshape) -> bool {
+    return Shape.Valid && (Isˉscalar(Shape) || Isˉowner(Shape) ||
+        Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type));
 }
 
 fn Scalarˉrecord(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32) -> bool {
@@ -291,15 +296,16 @@ fn Load(Output: bytes, Register: u8, Slot: u32) -> bytes {
         Bytesˉconcat(Bytesˉfromˉu8(Register), Stackˉindex)), Slot * 16u32);
 }
 
-fn Call(Output: bytes, Helper: u32, Emittedˉoffset: u32, Invalidˉtarget: u32) -> bytes {
+fn Call(Output: bytes, Helper: u32, Emittedˉoffset: u32, Invalidˉtarget: u32, Entryˉbase: u32, Codeˉbase: u32) -> bytes {
     var Result: bytes = Bytesˉconcat(Output, Callˉrelative);
-    Result = Word(Result, Relative(Helper, Entryˉbytes() + Emittedˉoffset + Bytesˉlength(Result) + 4u32));
+    Result = Word(Result, Relative(Entryˉbase + Helper, Codeˉbase + Emittedˉoffset + Bytesˉlength(Result) + 4u32));
     Result = Bytesˉconcat(Result, Rejectˉnonzero);
     return Word(Result, Relative(Invalidˉtarget, Bytesˉlength(Result) + 4u32));
 }
 
 export fn Emitˉoperation(
     Input: bytes, Offset: u32, Opcode: u8, Emittedˉoffset: u32,
+    Entryˉbase: u32, Codeˉbase: u32,
     Localˉidentities: bytes,
     Table: Types.Compilerˉnativeˉx64ˉtypes,
     Layout: Instructions.Compilerˉnativeˉx64ˉrecordˉlayout,
@@ -323,7 +329,7 @@ export fn Emitˉoperation(
         if Bytesˉreadˉu32ˉlittle(Localˉidentities, Local * 4u32) == 25u32 { Operation = 7u32; }
         Output = Load(Output, 132u8, Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32));
         Output = Word(Bytesˉconcat(Output, Moveˉecx), Operation);
-        Output = Call(Output, 1151u32, Emittedˉoffset, Invalidˉtarget);
+        Output = Call(Output, 1151u32, Emittedˉoffset, Invalidˉtarget, Entryˉbase, Codeˉbase);
     } else if Opcode == 195u8 || Opcode == 202u8 || Opcode == 227u8 {
         var Valueˉtype: u8 = 10u8;
         var Valueˉindex: u32 = Nextˉu32;
@@ -348,7 +354,7 @@ export fn Emitˉoperation(
         if Opcode == 195u8 { Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(53809u32)); }
         else {
             Output = Word(Bytesˉconcat(Output, Moveˉecx), Accessˉoperation);
-            Output = Call(Output, 1451u32, Emittedˉoffset, Invalidˉtarget);
+            Output = Call(Output, 1451u32, Emittedˉoffset, Invalidˉtarget, Entryˉbase, Codeˉbase);
         }
         Output = Word(Bytesˉconcat(Output, Storeˉrdx), Valueˉslot * 16u32);
         Stackˉtypes = Bytesˉconcat(Bytesˉslice(State.Stackˉtypes, 0u32, Depth), Bytesˉfromˉu8(Valueˉtype));
@@ -381,7 +387,7 @@ export fn Emitˉoperation(
             Helper = 1451u32;
         } else { Output = Bytesˉconcat(Output, Clearˉecx); }
         Output = Word(Bytesˉconcat(Output, Addressˉr8), Backing * 16u32);
-        Output = Call(Output, Helper, Emittedˉoffset, Invalidˉtarget);
+        Output = Call(Output, Helper, Emittedˉoffset, Invalidˉtarget, Entryˉbase, Codeˉbase);
         Output = Word(Bytesˉconcat(Output, Addressˉrax), Backing * 16u32);
         Output = Word(Bytesˉconcat(Output, Storeˉrax), Target * 16u32);
         Stackˉtypes = Bytesˉconcat(Bytesˉslice(State.Stackˉtypes, 0u32, Depth),

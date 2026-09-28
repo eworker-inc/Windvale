@@ -671,6 +671,10 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         if !Parameterˉshape.Valid {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
+        if Ownedˉcollections.Minorˉisˉsupported(Moduleˉminor) &&
+            (!Ownedˉcollections.Shapeˉisˉsupported(Parameterˉshape) || Parameterˉshape.Borrowˉkind != 0u8) {
+            return Compilerˉnativeˉx64ˉinvalidˉfunction();
+        }
         if !Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(
             Parameterˉshape.Type
         ) {
@@ -713,6 +717,10 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
     }
     let Returnˉtype: u8 = Returnˉshape.Type;
+    if Ownedˉcollections.Minorˉisˉsupported(Moduleˉminor) && Returnˉtype != 0u8 &&
+        !Ownedˉcollections.Shapeˉisˉsupported(Returnˉshape) {
+        return Compilerˉnativeˉx64ˉinvalidˉfunction();
+    }
     if Returnˉtype != 0u8 &&
         !Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(Returnˉtype) {
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
@@ -758,6 +766,9 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
                 Moduleˉminor
             );
         if !Localˉshape.Valid {
+            return Compilerˉnativeˉx64ˉinvalidˉfunction();
+        }
+        if Ownedˉcollections.Minorˉisˉsupported(Moduleˉminor) && !Ownedˉcollections.Shapeˉisˉsupported(Localˉshape) {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉlocalˉtypeˉisˉsupported(
@@ -1380,6 +1391,12 @@ fn Compilerˉnativeˉx64ˉcodeˉusesˉsha256(
     return false;
 }
 
+fn Compilerˉnativeˉx64ˉownedˉmain(Input: bytes) -> u32 {
+    let Structure: Compilerˉnativeˉx64ˉstructure = Compilerˉnativeˉx64ˉreadˉstructure(Input);
+    if !Structure.Valid || Structure.Exportsˉlength != 17u32 { return 4294967295u32; }
+    return Bytesˉreadˉu32ˉlittle(Input, Structure.Exportsˉoffset + 13u32);
+}
+
 fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
     Input: bytes,
     Codeˉoffset: u32,
@@ -1410,6 +1427,10 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
     var Writeˉpointers: u32 = 0u32;
     var Foreignˉcalls: u32 = 0u32;
     var Previousˉopcode: u8 = 0u8;
+    var Ownedˉmain: u32 = 4294967295u32;
+    if Ownedˉcollections.Minorˉisˉsupported(Minor) {
+        Ownedˉmain = Compilerˉnativeˉx64ˉownedˉmain(Input);
+    }
     var Cursor: u32 = 0u32;
     while Cursor < Codeˉlength {
         let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
@@ -1418,6 +1439,9 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
         if Ownedˉcollections.Minorˉisˉsupported(Minor) {
             if !Ownedˉcollections.Opcodeˉisˉsupported(Opcode) ||
                 (Opcode == 80u8 && Previousˉopcode != 205u8) { return false; }
+            // The exported entry owns domain teardown and cannot be called as
+            // a helper. Internal recursive helpers retain the common depth cap.
+            if Opcode == 64u8 && Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32) == Ownedˉmain { return false; }
         } else if Ownedˉcollections.Operationˉisˉsupported(Opcode) &&
             Opcode != 206u8 { return false; }
         Previousˉopcode = Opcode;
@@ -3599,7 +3623,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Function.Localˉtypes,
         Function.Localˉtypeˉidentities,
         Function.Localˉborrowˉkinds,
-        Types.Count,
+        Types,
+        Isˉmain,
         Instructionsˉmap
     ) {
         return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 13u32);
@@ -5453,6 +5478,8 @@ fn Compilerˉnativeˉx64ˉemitˉrecordˉbackedˉstep(
     Isˉmain: bool,
     Invalidˉlimitˉtarget: u32,
     Emittedˉoffset: u32,
+    Ownedˉentryˉbase: u32,
+    Codeˉbase: u32,
     State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
 ) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
     if Ownedˉcollections.Operationˉisˉsupported(Opcode) {
@@ -5471,6 +5498,8 @@ fn Compilerˉnativeˉx64ˉemitˉrecordˉbackedˉstep(
             Offset,
             Opcode,
             Emittedˉoffset,
+            Ownedˉentryˉbase,
+            Codeˉbase,
             Function.Localˉtypeˉidentities,
             Types,
             Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout(
@@ -6850,6 +6879,10 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> bytes {
+    var Ownedˉentryˉbase: u32 = 0u32;
+    if Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+        Ownedˉentryˉbase = Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Callˉdirectory, Compilerˉnativeˉx64ˉownedˉmain(Input));
+    }
     let Directoryˉfunctions: u32 = Bytesˉlength(Callˉdirectory) /
         Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes();
     let Lastˉfunction: u32 = Directoryˉfunctions - 1u32;
@@ -7305,6 +7338,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                         Emittedˉprefixˉbytes
                     ),
                     Emittedˉprefixˉbytes,
+                    Ownedˉentryˉbase,
+                    Codeˉbase,
                     Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
                         Result,
                         Stackˉtypes,
@@ -7759,7 +7794,7 @@ fn Compilerˉnativeˉx64ˉmeasureˉfunction(
         if Compilerˉnativeˉx64ˉframeˉslots(Function, Analysis) > 240u32 {
             return 2147483648u32;
         }
-        Prefixˉbytes = Ownedˉcollections.Entryˉbytes();
+        if Isˉmain { Prefixˉbytes = Ownedˉcollections.Entryˉbytes(); }
     }
     return Prefixˉbytes + Compilerˉnativeˉx64ˉfunctionˉbytes(
         Function, Analysis, Analysis.Hasˉdivision, Analysis.Hasˉshift, Isˉmain);
@@ -7790,11 +7825,14 @@ fn Compilerˉnativeˉx64ˉemitˉfunctionˉartifacts(
             Capabilityˉtable
         );
     if !Analysis.Valid { return Compilerˉnativeˉx64ˉempty(Input); }
-    let Codeˉbase: u32 =
+    var Codeˉbase: u32 =
         Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
             Directory,
             Functionˉindex
         );
+    if Isˉmain && Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+        Codeˉbase = Codeˉbase + Ownedˉcollections.Entryˉbytes();
+    }
     let Relocations: bytes =
         Compilerˉnativeˉx64ˉcollectˉdataˉrelocations(
             Input,
@@ -7821,7 +7859,7 @@ fn Compilerˉnativeˉx64ˉemitˉfunctionˉartifacts(
         Types,
         Capabilityˉtable
     );
-    if Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+    if Isˉmain && Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
         Code = Bytesˉconcat(Ownedˉcollections.Entry(), Code);
     }
     let Header: bytes = Bytesˉconcat(
@@ -8459,7 +8497,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         Input,
         Functions.Payloadˉoffset
     );
-    if Ownedˉcollections.Minorˉisˉsupported(Minor) && (Functionˉcount != 1u32 || Profile != 1u8 || Data.Count != 0u32 ||
+    if Ownedˉcollections.Minorˉisˉsupported(Minor) && (Functionˉcount > 64u32 || Profile != 1u8 || Data.Count != 0u32 ||
         !Ownedˉcollections.Typesˉareˉsupported(Input, Types)) {
         return Compilerˉnativeˉx64ˉplanˉfailure(Input, Compilerˉnativeˉx64ˉstatus.Unsupportedˉmodule);
     }
@@ -8543,7 +8581,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
                 200u32
             );
         }
-        if Ownedˉcollections.Minorˉisˉsupported(Minor) && (Function.Parameters != 1u32 || Function.Returnˉtype != 1u8 ||
+        if Ownedˉcollections.Minorˉisˉsupported(Minor) && ((Isˉmain && (Function.Parameters != 1u32 || Function.Returnˉtype != 1u8)) ||
             Function.Locals > 128u32 || Function.Codeˉlength > 4096u32) {
             return Compilerˉnativeˉx64ˉplanˉfailure(Input, Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction);
         }

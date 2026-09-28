@@ -84,9 +84,12 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     Localˉtypes: bytes,
     Localˉtypeˉidentities: bytes,
     Localˉborrowˉkinds: bytes,
-    Typeˉcount: u32,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Isˉmain: bool,
     Instructions: bytes
 ) -> bool {
+    let Typeˉcount: u32 = Types.Count;
+    let Ownedˉmodule: bool = Nominalˉtypes.Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32));
     let Locals: u32 = Bytesˉlength(Localˉtypes);
     let Borrowˉkinds: u32 = Bytesˉlength(Localˉborrowˉkinds);
     if Bytesˉlength(Localˉtypeˉidentities) != Locals * 4u32 ||
@@ -96,6 +99,18 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     }
 
     var Scratchˉresultˉtypes: bytes = Zeroˉmap(Input, Typeˉcount);
+    if Ownedˉmodule {
+        // A Result received from a helper owns its payload just as a locally
+        // constructed Result does. Classification cannot depend on local ops.
+        var Allocationˉresultˉindex: u32 = 0u32;
+        while Allocationˉresultˉindex < Typeˉcount {
+            if Nominalˉtypes.Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(Input, Types, Allocationˉresultˉindex) ||
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvectorˉresultˉisˉexact(Input, Types, Allocationˉresultˉindex) {
+                Scratchˉresultˉtypes = Setˉmapˉbyte(Input, Scratchˉresultˉtypes, Allocationˉresultˉindex);
+            }
+            Allocationˉresultˉindex = Allocationˉresultˉindex + 1u32;
+        }
+    }
     var Pointerˉtypes: bytes = Zeroˉmap(Input, Typeˉcount);
     var Cursor: u32 = 0u32;
     while Cursor < Codeˉlength {
@@ -266,6 +281,16 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         );
 
         let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Ownedˉmodule && Opcode == 80u8 {
+            // Only direct budget and Vector drops have a native release path.
+            // A Result must first move out its active payload.
+            if Cursor < 5u32 || Bytesˉreadˉu8(Input, Codeˉoffset + Cursor - 5u32) != 205u8 { return false; }
+            let Droppedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor - 4u32);
+            if Droppedˉlocal >= Locals || Bytesˉreadˉu8(Localˉtypes, Droppedˉlocal) != 10u8 { return false; }
+            let Droppedˉidentity: u32 = Bytesˉreadˉu32ˉlittle(Localˉtypeˉidentities, Droppedˉlocal * 4u32);
+            if Droppedˉidentity != 25u32 &&
+                (Droppedˉidentity < 2147483648u32 || Droppedˉidentity == 4294967295u32) { return false; }
+        }
         if Opcode == 4u8 || Opcode == 5u8 || Opcode == 205u8 {
             let Targetˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 1u32
@@ -593,7 +618,12 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             }
             if Opcode == 48u8 { Reachable = false; }
         }
-        if Opcode == 81u8 { Reachable = false; }
+        if Opcode == 81u8 {
+            // Only Main owns terminal domain teardown. Helpers must move or
+            // explicitly release all local owners before a successful return.
+            if Ownedˉmodule && !Isˉmain && (Availableˉlow != 0u32 || Availableˉhigh != 0u32) { return false; }
+            Reachable = false;
+        }
         Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
     }
     return true;
