@@ -2342,6 +2342,23 @@ fn Readˉscalar(Value: borrow Indexedˉenum) -> i32 {
         ['nonzero-index-multiple-elements', Multiple],
         ['full-width-u64-nonzero-index', Wide],
         ['enum-nominal-element', Enumˉsource],
+        ['byte-read-width-and-alias', Replace(Source,
+            'fn Readˉscalar(Value: borrow i32) -> i32 { return Value; }',
+            `fn Readˉscalar(Value: borrow i32) -> i32 {
+    let Storage: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(2309737967u32),
+        Bytesˉfromˉu32ˉlittle(4275878552u32)
+    );
+    let Alias: bytes = Bytesˉslice(Storage, 0u32, 8u32);
+    if Bytesˉreadˉu8(Alias, 0u32) != 239u8 { return 31; }
+    if Bytesˉreadˉu16ˉlittle(Alias, 0u32) != 52719u32 { return 32; }
+    if Bytesˉreadˉu32ˉlittle(Alias, 0u32) != 2309737967u32 { return 33; }
+    if Bytesˉreadˉu64ˉlittle(Alias, 0u32) != 18364758544817573359u64 { return 34; }
+    if Bytesˉreadˉu64ˉlittle(Storage, 0u32) != 18364758544817573359u64 { return 35; }
+    let Padded: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8), Storage);
+    if Bytesˉreadˉu64ˉlittle(Padded, 1u32) != 18364758544817573359u64 { return 36; }
+    return Value;
+}`)],
     ];
     function Inspect(Bytes, Requireˉprojection = true) {
         if (Bytes.length > 16384 || Bytes.readUInt16LE(6) !== 41) {
@@ -2569,10 +2586,24 @@ fn Readˉscalar(`), /Unsupportedˉoperation/u],
         }
         process.stdout.write(`PASS Vector indexed borrow source rejection case=${Label}\n`);
     }
-    const Bounds = [['length', '1u64'], ['high-half-only', '4294967296u64'], ['maximum-index', '18446744073709551615u64']];
-    for (const [Label, Index] of Bounds) {
-        const Text = Replace(Source, 'return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, 0u64));',
-            `return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, ${Index}));`);
+    const Bounds = [['length', '1u64'], ['high-half-only', '4294967296u64'], ['maximum-index', '18446744073709551615u64']]
+        .map(([Label, Index]) => [Label, Replace(Source,
+            'return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, 0u64));',
+            `return Readˉscalar(Collections.Vectorˉborrowˉat(borrow Value, ${Index}));`)]);
+    for (const [Label, Length, Offset] of [
+        ['byte-empty', 0, 0], ['byte-truncated', 7, 0],
+        ['byte-at-end', 8, 8], ['byte-offset-overflow', 8, 4294967295],
+    ]) {
+        Bounds.push([Label, Replace(Source,
+            'fn Readˉscalar(Value: borrow i32) -> i32 { return Value; }',
+            `fn Readˉscalar(Value: borrow i32) -> i32 {
+    let Storage: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(0u32));
+    let View: bytes = Bytesˉslice(Storage, 0u32, ${Length}u32);
+    if Bytesˉreadˉu64ˉlittle(View, ${Offset}u32) == 0u64 { return 36; }
+    return Value;
+}`)]);
+    }
+    for (const [Label, Text] of Bounds) {
         const Input = path.join(Work, 'Indexed-bounds-' + Label + '.wv');
         const Output = path.join(Work, 'Indexed-bounds-' + Label + '.wvb');
         writeFileSync(Input, Text, { flag: 'wx' });

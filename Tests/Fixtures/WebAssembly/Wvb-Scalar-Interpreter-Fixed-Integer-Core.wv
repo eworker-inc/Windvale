@@ -143,6 +143,7 @@ export fn Scanˉfunction(
         if Opcode >= 159u32 && Opcode <= 162u32 { Supported = true; }
         if Opcode >= 173u32 && Opcode <= 178u32 { Supported = true; }
         if Opcode >= 179u32 && Opcode <= 184u32 { Supported = true; }
+        if Opcode == 189u32 { Supported = true; }
         if Opcode == 190u32 || Opcode == 191u32 { Supported = true; }
         if Opcode == 192u32 {
             Width = Scanˉfixedˉinteger(

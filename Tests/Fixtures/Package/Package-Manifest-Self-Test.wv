@@ -92,8 +92,31 @@ fn Rejectionˉcases() -> bool {
     return Statusˉis(Escapingˉpath, Manifest.Windvaleˉpackageˉstatus.Invalidˉpath);
 }
 
+fn Tokenˉdiagnostic(
+    Line: text, Column: u32, Expected: Manifest.Windvaleˉpackageˉstatus
+) -> bool {
+    let Prefix: text = "windvale-package 1\nname windvale.example\nversion 1\nlicense MIT\nroot a\ntarget hosted-wvb-v1\nproject Projects/Example.wvproj\n";
+    let Input: bytes = Textˉtoˉutf8(Textˉconcat(Prefix, Textˉconcat(Line, "\n")));
+    let Scan: Manifest.Windvaleˉpackageˉscan =
+        Manifest.Windvaleˉpackageˉscanˉmanifest(Input);
+    return Scan.Status == Expected &&
+        Scan.Failureˉline == 8u32 && Scan.Failureˉcolumn == Column;
+}
+
+fn Tokenˉboundaryˉcases() -> bool {
+    let Record: Manifest.Windvaleˉpackageˉstatus = Manifest.Windvaleˉpackageˉstatus.Invalidˉrecord;
+    if !Tokenˉdiagnostic("", 1u32, Manifest.Windvaleˉpackageˉstatus.Invalidˉtext) { return false; }
+    if !Tokenˉdiagnostic(" part a portable A.wv", 1u32, Record) { return false; }
+    if !Tokenˉdiagnostic("part a portable A.wv ", 21u32, Record) { return false; }
+    if !Tokenˉdiagnostic("part  a portable A.wv", 6u32, Record) { return false; }
+    if !Tokenˉdiagnostic("part a portable A.wv extra", 1u32, Record) { return false; }
+    // Validation must continue beyond the four cached token positions.
+    return Tokenˉdiagnostic("part a portable A.wv extra  tail", 28u32, Record);
+}
+
 export fn Main() -> i32 {
     if !Validˉcase() { return 1; }
     if !Rejectionˉcases() { return 2; }
+    if !Tokenˉboundaryˉcases() { return 3; }
     return 42;
 }

@@ -229,14 +229,87 @@ fn Partˉexists(
     return false;
 }
 
-fn Tokenˉspan(
+record Manifestˉtokens {
+    Valid: bool;
+    Count: u32;
+    Failureˉcolumn: u32;
+    Offset: u32;
+    Firstˉend: u32;
+    Secondˉend: u32;
+    Thirdˉend: u32;
+    Fourthˉend: u32;
+}
+
+fn Scanˉtokens(
     Input: bytes,
-    Line: Packageˉtext.Windvaleˉpackageˉline,
+    Line: Packageˉtext.Windvaleˉpackageˉline
+) -> Manifestˉtokens {
+    let Span: Packageˉtext.Windvaleˉpackageˉspan =
+        Packageˉtext.Windvaleˉpackageˉspan(Line.Offset, Line.Length);
+    if !Line.Valid || Line.Length == 0u32 ||
+        !Packageˉtext.Windvaleˉpackageˉspanˉvalid(Input, Span) {
+        return Manifestˉtokens(false, 0u32, 1u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    let End: u32 = Line.Offset + Line.Length;
+    if Bytesˉreadˉu8(Input, Line.Offset) == 32u8 {
+        return Manifestˉtokens(false, 0u32, 1u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu8(Input, End - 1u32) == 32u8 {
+        return Manifestˉtokens(false, 0u32, Line.Length, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    var Firstˉend: u32 = End;
+    var Secondˉend: u32 = End;
+    var Thirdˉend: u32 = End;
+    var Fourthˉend: u32 = End;
+    var Count: u32 = 1u32;
+    var Cursor: u32 = Line.Offset;
+    var Previousˉspace: bool = false;
+    while Cursor < End {
+        let Space: bool = Bytesˉreadˉu8(Input, Cursor) == 32u8;
+        if Space {
+            if Previousˉspace {
+                return Manifestˉtokens(
+                    false, 0u32, Cursor - Line.Offset + 1u32,
+                    0u32, 0u32, 0u32, 0u32, 0u32
+                );
+            }
+            if Count == 1u32 { Firstˉend = Cursor; }
+            if Count == 2u32 { Secondˉend = Cursor; }
+            if Count == 3u32 { Thirdˉend = Cursor; }
+            if Count == 4u32 { Fourthˉend = Cursor; }
+            Count = Count + 1u32;
+        }
+        Previousˉspace = Space;
+        Cursor = Cursor + 1u32;
+    }
+    return Manifestˉtokens(
+        true, Count, Line.Length + 1u32, Line.Offset,
+        Firstˉend, Secondˉend, Thirdˉend, Fourthˉend
+    );
+}
+
+fn Tokenˉspan(
+    Scanned: Manifestˉtokens,
     Index: u32
 ) -> Packageˉtext.Windvaleˉpackageˉspan {
-    return Packageˉtext.Windvaleˉpackageˉtokenˉspan(
-        Packageˉtext.Windvaleˉpackageˉtokenˉat(Input, Line, Index)
-    );
+    if !Scanned.Valid || Index >= Scanned.Count || Index >= 4u32 {
+        return Packageˉtext.Windvaleˉpackageˉemptyˉspan();
+    }
+    var Start: u32 = Scanned.Offset;
+    var End: u32 = Scanned.Firstˉend;
+    if Index == 1u32 {
+        Start = Scanned.Firstˉend + 1u32;
+        End = Scanned.Secondˉend;
+    }
+    if Index == 2u32 {
+        Start = Scanned.Secondˉend + 1u32;
+        End = Scanned.Thirdˉend;
+    }
+    if Index == 3u32 {
+        Start = Scanned.Thirdˉend + 1u32;
+        End = Scanned.Fourthˉend;
+    }
+    return Packageˉtext.Windvaleˉpackageˉspan(Start, End - Start);
 }
 
 export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉscan {
@@ -252,15 +325,14 @@ export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉ
 
     let Header: Packageˉtext.Windvaleˉpackageˉline =
         Packageˉtext.Windvaleˉpackageˉreadˉline(Input, 0u32);
-    let Headerˉtokens: Packageˉtext.Windvaleˉpackageˉtokens =
-        Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Header);
+    let Headerˉtokens: Manifestˉtokens = Scanˉtokens(Input, Header);
     if !Headerˉtokens.Valid || Headerˉtokens.Count != 2u32 {
         return Failure(Windvaleˉpackageˉstatus.Invalidˉheader, 1u32, 1u32);
     }
     if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-        Input, Tokenˉspan(Input, Header, 0u32), "windvale-package"
+        Input, Tokenˉspan(Headerˉtokens, 0u32), "windvale-package"
     ) || !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(
-        Input, Tokenˉspan(Input, Header, 1u32), "1"
+        Input, Tokenˉspan(Headerˉtokens, 1u32), "1"
     ) {
         return Failure(Windvaleˉpackageˉstatus.Invalidˉheader, 1u32, 1u32);
     }
@@ -290,8 +362,7 @@ export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉ
         let Line: Packageˉtext.Windvaleˉpackageˉline =
             Packageˉtext.Windvaleˉpackageˉreadˉline(Input, Cursor);
         Cursor = Line.Nextˉoffset;
-        let Tokens: Packageˉtext.Windvaleˉpackageˉtokens =
-            Packageˉtext.Windvaleˉpackageˉscanˉtokens(Input, Line);
+        let Tokens: Manifestˉtokens = Scanˉtokens(Input, Line);
         if !Tokens.Valid {
             return Failure(
                 Windvaleˉpackageˉstatus.Invalidˉrecord,
@@ -299,13 +370,13 @@ export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉ
                 Tokens.Failureˉcolumn
             );
         }
-        let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 0u32);
+        let Kind: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 0u32);
 
         if Lineˉnumber <= 7u32 {
             if Tokens.Count != 2u32 {
                 return Failure(Windvaleˉpackageˉstatus.Invalidˉrecord, Lineˉnumber, 1u32);
             }
-            let Value: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
+            let Value: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 1u32);
             if Lineˉnumber == 2u32 {
                 if !Packageˉtext.Windvaleˉpackageˉspanˉequalsˉtext(Input, Kind, "name") {
                     return Failure(Windvaleˉpackageˉstatus.Invalidˉorder, Lineˉnumber, 1u32);
@@ -376,9 +447,9 @@ export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉ
                 if Parts >= 64u32 {
                     return Failure(Windvaleˉpackageˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
                 }
-                let Partˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
-                let Scopeˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
-                let Partˉpath: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 3u32);
+                let Partˉname: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 1u32);
+                let Scopeˉspan: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 2u32);
+                let Partˉpath: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 3u32);
                 let Scope: u32 = Packageˉtext.Windvaleˉpackageˉscope(Input, Scopeˉspan);
                 if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Partˉname) {
                     return Failure(Windvaleˉpackageˉstatus.Invalidˉidentifier, Lineˉnumber, 6u32);
@@ -413,8 +484,8 @@ export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉ
                     if Dependencies >= 256u32 {
                         return Failure(Windvaleˉpackageˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
                     }
-                    let Importer: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 1u32);
-                    let Required: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Input, Line, 2u32);
+                    let Importer: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 1u32);
+                    let Required: Packageˉtext.Windvaleˉpackageˉspan = Tokenˉspan(Tokens, 2u32);
                     if !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Importer) ||
                         !Packageˉtext.Windvaleˉpackageˉpackageˉidentifierˉvalid(Input, Required) {
                         return Failure(Windvaleˉpackageˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
@@ -450,7 +521,7 @@ export fn Windvaleˉpackageˉscanˉmanifest(Input: bytes) -> Windvaleˉpackageˉ
                             return Failure(Windvaleˉpackageˉstatus.Collectionˉlimit, Lineˉnumber, 1u32);
                         }
                         let Capability: Packageˉtext.Windvaleˉpackageˉspan =
-                            Tokenˉspan(Input, Line, 1u32);
+                            Tokenˉspan(Tokens, 1u32);
                         if !Packageˉtext.Windvaleˉpackageˉidentifierˉvalid(Input, Capability) {
                             return Failure(Windvaleˉpackageˉstatus.Invalidˉidentifier, Lineˉnumber, 1u32);
                         }

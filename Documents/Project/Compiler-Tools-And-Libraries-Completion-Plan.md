@@ -8,9 +8,11 @@ The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
 Windows/Debian package execution. Focused candidate WVB 1.40 through 1.42 bridges
 let immutable helpers observe raw Vector payloads and borrow scalar or Copy-record
-elements without consuming their owners. The next milestones are a separate
-owned-resource consumer, wider composition, exclusive
-borrowing, take, mapping, and the wider Libraries 1.0 suite. The
+elements without consuming their owners. The immediate priority is completing
+the Language 1.0 ownership-to-storage memory path before expanding consumers
+that depend on it. A separate owned-resource consumer, wider composition,
+exclusive borrowing, take, mapping, and the wider Libraries 1.0 suite follow
+that prerequisite. The
 maintainer approved this delivery split on
 15 September 2026; it changes progress reporting, not language or release scope.
 
@@ -45,6 +47,38 @@ overviews must not override newer focused evidence. Existing cases are evidence
 for their exact recorded inputs, not an automatic pass for later source states.
 
 ## Ordered completion chunks
+
+### 0. Complete the ownership-to-storage memory path
+
+The maintainer selected this priority on 27 September 2026; the
+[handbook](../../AGENTS.md#memory-management-current-limitations-and-target)
+owns the durable direction and completion rules. Existing native arena
+checkpoints, copy reductions, and deferred interpreter writes are bounded
+mitigations. Guest allocation release does not establish reuse of the native
+storage executing the interpreter.
+
+Work proceeds through these gates, preserving existing qualified contracts:
+
+1. Carry descriptor and aggregate ownership through the current Windvale
+   compiler's calls, assignments, last uses, returns, and failure paths.
+   Reassess the historical ownership plan and allocator leaf against the
+   current implementation; version any changed native ABI through a decision.
+2. Integrate reusable backing storage and allocation leases, including shared
+   immutable aliases, uniquely owned mutable storage, and typed allocation
+   refusal. Allocating runtime services must follow the same lifetime rules.
+3. Bound and reclaim interpreter working storage independently of the guest
+   heap. Fixed-live-state loops must stabilize as iteration counts increase.
+4. Complete the typed package-lock consumer with allocation failure preserved
+   through bundle writing and verification, unchanged-on-refusal behavior,
+   cleanup, alias-survival, and repeated allocation/release coverage.
+5. Establish Windows and real Debian evidence for those paths, measuring live,
+   reusable, cumulative, and budget-charged storage separately from process
+   peak memory. Close only the exact supported target and API scope.
+
+The unintegrated typed package-lock work is useful consumer groundwork, but its
+capacity probes do not close these gates. A larger hosted runner arena is not
+the selected solution. The maintained parser/runtime optimizations can be
+integrated independently while this memory prerequisite remains open.
 
 ### 1. Deliver the package parser, then complete Option/Result
 
