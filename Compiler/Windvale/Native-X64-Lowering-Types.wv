@@ -254,8 +254,9 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
     if Kind == 23u8 {
-        if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 24u32 ||
-            !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
+        // Shape readers also accept isolated descriptors, without a WVB header.
+        // Version admission belongs to the enclosing type-table reader.
+        if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
         let Vectorˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         if Compilerˉnativeˉx64ˉtypeˉkind(Types, Vectorˉindex) != 5u8 {
             return Invalidˉshape();
@@ -346,7 +347,8 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
             Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor + 1u32, Limit, Types);
         // One ordinary native payload only: no nested loans or opaque owners.
         if !Payload.Valid || Payload.Borrowˉkind != 0u8 ||
-            (Payload.Type == 10u8 && Payload.Identity == 25u32) {
+            (Payload.Type == 10u8 && (Payload.Identity == 25u32 ||
+                (Payload.Identity >= 2147483648u32 && Payload.Identity != 4294967295u32))) {
             return Invalidˉshape();
         }
         return Compilerˉnativeˉx64ˉshape(
