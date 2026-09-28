@@ -1,4 +1,5 @@
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
+import { Runˉownedˉstorageˉcases } from './Native-Owned-Storage-Cases.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
@@ -31,10 +32,13 @@ if (Prepareˉonly || Preparedˉonly) {
 if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7 && process.argv.length !== 8 && process.argv.length !== 10) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
 const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
+const Ownedˉonly = process.argv[4] === '--owned-storage';
+if (Ownedˉonly) Ownerˉdeadline = Date.now() + 600_000;
 const Recordˉonly = process.argv.length === 8 && process.argv[7] === '--record-return-memory';
 if (process.argv.length === 8 && !Recordˉonly) Usage();
-if (process.argv.length === 5 && !Borrowˉonly) Usage();
+if (process.argv.length === 5 && !Borrowˉonly && !Ownedˉonly) Usage();
 const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10 || Recordˉonly;
+if (Suppliedˉlowerer && Ownerˉdeadline === null) Ownerˉdeadline = Date.now() + 600_000;
 const Suppliedˉborrowˉprobe = process.argv.length === 10;
 if (Suppliedˉlowerer && (process.argv[4] !== '--lowerer' ||
     !/^[0-9a-f]{64}$/u.test(process.argv[6]))) Usage();
@@ -84,6 +88,10 @@ const Work = await realpath(await mkdtemp(join(
 )));
 let Preserveˉwork = false;
 try {
+    const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
+        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess,
+    }) : 0;
+    if (!Ownedˉonly) {
     await Verifyˉsourceˉclosures();
     if (!Recordˉonly) await Runˉfoundationˉborrowˉemission();
     if (!Borrowˉonly) {
@@ -399,12 +407,13 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     process.stdout.write(
-        `native unsafe write pointer lowering status=Passed cases=${53 + Recordˉcases} ` +
-        `valid=${28 + Recordˉcases} malformed=25 native-execution=${13 + Recordˉcases} ` +
-        `record-return-cases=${Recordˉcases} foundation-borrow-cases=12 ` +
+        `native unsafe write pointer lowering status=Passed cases=${53 + Recordˉcases + Ownedˉcases} ` +
+        `valid=${28 + Recordˉcases + Ownedˉcases} malformed=25 native-execution=${13 + Recordˉcases + Ownedˉcases} ` +
+        `record-return-cases=${Recordˉcases} owned-storage-cases=${Ownedˉcases} foundation-borrow-cases=12 ` +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
+    }
     }
     }
     }
@@ -1209,7 +1218,7 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
-        '<windows|linux> <repository-root> [--foundation-borrow-emission|' +
+        '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|' +
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
         '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]]\n',
     );

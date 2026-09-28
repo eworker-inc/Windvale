@@ -1,0 +1,661 @@
+windvale-assembly 1
+
+# Runtime-private owned backing, not an ABI-22 descriptor allocator replacement.
+# R8: exclusive 2112-byte state; R9: exclusive 64-byte request. The caller
+# supplies disjoint readable/writable extents and a never-reused nonzero epoch.
+# All nonvolatile registers and R10/R11 execution budgets are preserved.
+# See Specifications/Windvale-Native-Owned-Storage.md for fields and statuses.
+symbol export function Windvale_owned_storage in .text
+symbol import function Windvale_descriptor_allocator
+
+section code .text align 16
+define Windvale_owned_storage
+test r8 r8
+branch equal Invalid_pointer
+test_i32 r8 15
+branch not_equal Invalid_pointer
+test r9 r9
+branch equal Invalid_pointer
+test_i32 r9 7
+branch not_equal Invalid_pointer
+
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r10
+push r11
+# 32-byte call shadow, 40-byte private allocator request, 8-byte loop scratch.
+subtract_i32 rsp 80
+move r12 r8
+move r13 r9
+
+# Establish disjoint result storage before any error can publish a status.
+move rax r12
+add_i32 rax 2112
+branch below Invalid_extent
+move rcx r13
+add_i32 rcx 64
+branch below Invalid_extent
+compare r12 rcx
+branch above_equal Request_disjoint
+compare r13 rax
+branch below Invalid_extent
+label Request_disjoint
+load_memory_u64 rbx r12 none 1 32
+load_memory_u32 edx r12 none 1 40
+move rbp rbx
+add rbp rdx
+branch below Invalid_extent
+compare rbx rcx
+branch above_equal Request_arena_disjoint
+compare r13 rbp
+branch below Invalid_extent
+label Request_arena_disjoint
+
+load_memory_u32 eax r13 none 1 0
+compare_i32 eax 1
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 4
+compare_i32 eax 64
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 5
+branch above Invalid_request
+load_memory_u64 rax r13 none 1 40
+test rax rax
+branch not_equal Invalid_request
+load_memory_u64 rax r13 none 1 48
+test rax rax
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 60
+test eax eax
+branch not_equal Invalid_request
+
+load_memory_u32 eax r12 none 1 4
+compare_i32 eax 1
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 8
+compare_i32 eax 2112
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 12
+compare_i32 eax 64
+branch not_equal Corrupt_state
+load_memory_u64 rax r12 none 1 16
+test rax rax
+branch equal Corrupt_state
+load_memory_u64 rcx r13 none 1 16
+compare rax rcx
+branch not_equal Stale_handle
+load_memory_u32 eax r12 none 1 60
+test eax eax
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 28
+compare_i32 eax 1
+branch above Corrupt_state
+
+load_memory_u64 rbx r12 none 1 32
+test rbx rbx
+branch equal Corrupt_state
+test_i32 rbx 15
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 40
+compare_i32 eax 16
+branch below Corrupt_state
+compare_i32 eax 16777216
+branch above Corrupt_state
+test_i32 eax 15
+branch not_equal Corrupt_state
+move rbp rbx
+add rbp rax
+branch below Corrupt_state
+
+# Reject extent arithmetic overflow and overlap before writing any state.
+move rax r12
+add_i32 rax 2112
+branch below Corrupt_state
+move rcx r13
+add_i32 rcx 64
+branch below Invalid_request
+compare r12 rcx
+branch above_equal State_request_disjoint
+compare r13 rax
+branch below Invalid_request
+label State_request_disjoint
+compare rbx rax
+branch above_equal Arena_state_disjoint
+compare r12 rbp
+branch below Corrupt_state
+label Arena_state_disjoint
+compare rbx rcx
+branch above_equal Arena_request_disjoint
+compare r13 rbp
+branch below Invalid_request
+label Arena_request_disjoint
+
+load_memory_u32 eax r13 none 1 8
+test eax eax
+branch equal Initialize
+load_memory_u32 eax r12 none 1 0
+compare_i32 eax 1397700183
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 44
+compare_i32 eax 1396790871
+branch not_equal Corrupt_state
+
+# Validate every live slot, its allocation header and aggregate accounting.
+# RSI is the slot offset, RDI the charged sum, R10D the live count, R14 the
+# first reusable slot. A retired generation is never selected again.
+move_u32 esi 64
+xor edi edi
+xor r10d r10d
+xor r14d r14d
+label Validate_slot
+load_memory_u64 rax r12 rsi 1 24
+test rax rax
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 rsi 1 4
+test eax eax
+branch not_equal Validate_live
+load_memory_u64 rax r12 rsi 1 8
+load_memory_u64 rcx r12 rsi 1 16
+or rax rcx
+test rax rax
+branch not_equal Corrupt_state
+test r14 r14
+branch not_equal Validate_next
+load_memory_u32 eax r12 rsi 1 0
+compare_i32 eax -1
+branch equal Validate_next
+move r14 r12
+add r14 rsi
+jump_label Validate_next
+label Validate_live
+load_memory_u32 ecx r12 rsi 1 0
+test ecx ecx
+branch equal Corrupt_state
+load_memory_u32 ecx r12 rsi 1 8
+test ecx ecx
+branch equal Corrupt_state
+compare_i32 ecx 4194304
+branch above Corrupt_state
+load_memory_u32 edx r12 rsi 1 12
+compare edx ecx
+branch above Corrupt_state
+add_i32 ecx 31
+and_i32 ecx -16
+load_memory_u32 edx r12 rsi 1 16
+compare edx ecx
+branch not_equal Corrupt_state
+add edi edx
+branch below Corrupt_state
+add_i32 r10d 1
+load_memory_u32 ecx r12 rsi 1 20
+test ecx ecx
+branch equal Corrupt_state
+compare_i32 ecx 16
+branch above Corrupt_state
+move edx ecx
+subtract_i32 edx 1
+test ecx edx
+branch not_equal Corrupt_state
+subtract_i32 eax 1
+test_i32 eax 15
+branch not_equal Corrupt_state
+move edx eax
+add_i32 edx 16
+branch below Corrupt_state
+load_memory_u32 ecx r12 none 1 40
+compare edx ecx
+branch above Corrupt_state
+move r11 rbx
+add r11 rax
+load_memory_u32 edx r11 none 1 0
+load_memory_u32 ecx r12 rsi 1 16
+compare edx ecx
+branch not_equal Corrupt_state
+add eax edx
+branch below Corrupt_state
+load_memory_u32 ecx r12 none 1 40
+compare eax ecx
+branch above Corrupt_state
+load_memory_u32 ecx r11 none 1 4
+compare_i32 ecx 1
+branch not_equal Corrupt_state
+load_memory_u32 ecx r11 none 1 8
+test ecx ecx
+branch not_equal Corrupt_state
+load_memory_u32 ecx r11 none 1 12
+compare_i32 ecx 1279350359
+branch not_equal Corrupt_state
+
+# Distinct live leases cannot overlap, even if corrupt payload imitates a header.
+move_u32 ecx 64
+label Validate_overlap
+compare rcx rsi
+branch above_equal Validate_next
+load_memory_u32 edx r12 rcx 1 4
+test edx edx
+branch equal Validate_overlap_next
+subtract_i32 edx 1
+compare edx eax
+branch above_equal Validate_overlap_next
+load_memory_u32 r8d r12 rcx 1 16
+add edx r8d
+branch below Corrupt_state
+load_memory_u32 r8d r12 rsi 1 4
+subtract_i32 r8d 1
+compare edx r8d
+branch above Corrupt_state
+label Validate_overlap_next
+add_i32 ecx 32
+jump_label Validate_overlap
+label Validate_next
+add_i32 esi 32
+compare_i32 esi 2112
+branch below Validate_slot
+load_memory_u32 eax r12 none 1 52
+compare eax r10d
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 56
+compare eax edi
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 24
+compare eax edi
+branch below Corrupt_state
+load_memory_u32 ecx r12 none 1 40
+compare eax ecx
+branch above Corrupt_state
+
+# Validate the complete free inventory before any mutating allocator call.
+# At most 64 live blocks imply at most 65 coalesced free blocks. Ordered,
+# disjoint free/live extents whose lengths sum to the arena leave no gaps.
+load_memory_u32 esi r12 none 1 48
+xor r8d r8d
+xor r9d r9d
+label Validate_free
+test esi esi
+branch equal Validate_free_end
+subtract_i32 esi 1
+test_i32 esi 15
+branch not_equal Corrupt_state
+test r8d r8d
+branch equal Validate_free_first
+compare esi r9d
+branch below_equal Corrupt_state
+label Validate_free_first
+add_i32 r8d 1
+compare_i32 r8d 65
+branch above Corrupt_state
+move ecx esi
+add_i32 ecx 16
+branch below Corrupt_state
+load_memory_u32 eax r12 none 1 40
+compare ecx eax
+branch above Corrupt_state
+move r11 rbx
+add r11 rsi
+load_memory_u32 eax r11 none 1 4
+test eax eax
+branch not_equal Corrupt_state
+load_memory_u32 eax r11 none 1 12
+compare_i32 eax 1380341335
+branch not_equal Corrupt_state
+load_memory_u32 eax r11 none 1 0
+compare_i32 eax 16
+branch below Corrupt_state
+test_i32 eax 15
+branch not_equal Corrupt_state
+add edi eax
+branch below Corrupt_state
+move ecx esi
+add ecx eax
+branch below Corrupt_state
+load_memory_u32 eax r12 none 1 40
+compare ecx eax
+branch above Corrupt_state
+move_u32 edx 64
+label Validate_free_overlap
+load_memory_u32 eax r12 rdx 1 4
+test eax eax
+branch equal Validate_free_overlap_next
+subtract_i32 eax 1
+compare eax ecx
+branch above_equal Validate_free_overlap_next
+load_memory_u32 r10d r12 rdx 1 16
+add eax r10d
+compare eax esi
+branch above Corrupt_state
+label Validate_free_overlap_next
+add_i32 edx 32
+compare_i32 edx 2112
+branch below Validate_free_overlap
+move r9d ecx
+load_memory_u32 esi r11 none 1 8
+jump_label Validate_free
+label Validate_free_end
+load_memory_u32 eax r12 none 1 40
+compare edi eax
+branch not_equal Corrupt_state
+load_memory_u32 eax r12 none 1 28
+test eax eax
+branch not_equal Closed
+
+# Clear a fresh private leaf request. Caller request output remains untouched
+# until the operation succeeds, except its final closed status field.
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u64 rsp none 1 40 rax
+store_memory_u64 rsp none 1 48 rax
+store_memory_u64 rsp none 1 56 rax
+store_memory_u64 rsp none 1 64 rax
+move_u32 eax 1
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 40
+store_memory_u32 rsp none 1 36 eax
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 1
+branch equal Reserve
+
+load_memory_u32 eax r13 none 1 12
+load_memory_u32 ecx r13 none 1 32
+or eax ecx
+load_memory_u32 ecx r13 none 1 56
+or eax ecx
+test eax eax
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 5
+branch equal Teardown
+
+# Handles are (generation << 32) | (slot + 1), scoped by the epoch at +16.
+load_memory_u32 eax r13 none 1 24
+subtract_i32 eax 1
+branch below Stale_handle
+compare_i32 eax 64
+branch above_equal Stale_handle
+shift_left eax 5
+add_i32 eax 64
+move r14 r12
+add r14 rax
+load_memory_u32 eax r14 none 1 4
+test eax eax
+branch equal Stale_handle
+load_memory_u32 eax r14 none 1 0
+load_memory_u32 ecx r13 none 1 28
+compare eax ecx
+branch not_equal Stale_handle
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 2
+branch equal Resize
+load_memory_u32 eax r13 none 1 36
+test eax eax
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 3
+branch equal Release
+jump_label Publish
+
+label Reserve
+load_memory_u64 rax r13 none 1 24
+test rax rax
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 12
+test eax eax
+branch equal Invalid_request
+compare_i32 eax 4194304
+branch above Target_limit
+load_memory_u32 ecx r13 none 1 36
+compare ecx eax
+branch above Length_limit
+load_memory_u32 ecx r13 none 1 32
+test ecx ecx
+branch equal Invalid_request
+move edx ecx
+subtract_i32 edx 1
+test ecx edx
+branch not_equal Invalid_request
+compare_i32 ecx 4096
+branch above Invalid_request
+compare_i32 ecx 16
+branch above Target_limit
+move edx eax
+add_i32 edx 31
+and_i32 edx -16
+load_memory_u32 ecx r13 none 1 56
+compare edx ecx
+branch above Budget_exhausted
+test r14 r14
+branch equal Slots_exhausted
+store_memory_u32 rsp none 1 44 eax
+move_u32 eax 1
+store_memory_u32 rsp none 1 40 eax
+move r8 r12
+add_i32 r8 32
+move r9 rsp
+add_i32 r9 32
+call Windvale_descriptor_allocator
+compare_i32 eax 2
+branch equal Pool_exhausted
+test eax eax
+branch not_equal Corrupt_state
+
+# Zero committed capacity before publishing a successor lease or any pointer.
+load_memory_u64 rdi rsp none 1 56
+load_memory_u32 ecx r13 none 1 12
+xor eax eax
+xor edx edx
+label Reserve_zero
+compare edx ecx
+branch above_equal Reserve_publish
+store_memory_u8 rdi rdx 1 0 al
+add_i32 edx 1
+jump_label Reserve_zero
+label Reserve_publish
+load_memory_u32 eax r14 none 1 0
+add_i32 eax 1
+store_memory_u32 r14 none 1 0 eax
+store_memory_u32 r13 none 1 28 eax
+load_memory_u32 eax rsp none 1 48
+store_memory_u32 r14 none 1 4 eax
+load_memory_u32 eax r13 none 1 12
+store_memory_u32 r14 none 1 8 eax
+load_memory_u32 eax r13 none 1 36
+store_memory_u32 r14 none 1 12 eax
+load_memory_u32 eax rsp none 1 64
+store_memory_u32 r14 none 1 16 eax
+load_memory_u32 eax r13 none 1 32
+store_memory_u32 r14 none 1 20 eax
+move rax r14
+subtract rax r12
+subtract_i32 eax 64
+shift_right eax 5
+add_i32 eax 1
+store_memory_u32 r13 none 1 24 eax
+load_memory_u32 eax r12 none 1 56
+load_memory_u32 ecx r12 none 1 24
+compare eax ecx
+branch below_equal Publish
+store_memory_u32 r12 none 1 24 eax
+jump_label Publish
+
+label Resize
+load_memory_u32 ecx r13 none 1 36
+load_memory_u32 eax r14 none 1 8
+compare ecx eax
+branch above Length_limit
+load_memory_u32 edx r14 none 1 12
+compare ecx edx
+branch below_equal Resize_publish
+load_memory_u32 eax r14 none 1 4
+add_i32 eax 15
+move rdi rbx
+add rdi rax
+xor eax eax
+label Resize_zero
+compare edx ecx
+branch above_equal Resize_publish
+store_memory_u8 rdi rdx 1 0 al
+add_i32 edx 1
+jump_label Resize_zero
+label Resize_publish
+store_memory_u32 r14 none 1 12 ecx
+jump_label Publish
+
+label Release
+xor eax eax
+store_memory_u32 rsp none 1 52 eax
+store_memory_u64 rsp none 1 56 rax
+store_memory_u32 rsp none 1 64 eax
+move_u32 eax 3
+store_memory_u32 rsp none 1 40 eax
+load_memory_u32 eax r14 none 1 4
+store_memory_u32 rsp none 1 48 eax
+move r8 r12
+add_i32 r8 32
+move r9 rsp
+add_i32 r9 32
+call Windvale_descriptor_allocator
+test eax eax
+branch not_equal Corrupt_state
+# Generation survives release, including the final retired generation.
+xor eax eax
+store_memory_u32 r14 none 1 4 eax
+store_memory_u64 r14 none 1 8 rax
+store_memory_u64 r14 none 1 16 rax
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 5
+branch equal Teardown_next
+jump_label Success
+
+label Teardown
+load_memory_u64 rax r13 none 1 24
+test rax rax
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 36
+test eax eax
+branch not_equal Invalid_request
+move r14 r12
+add_i32 r14 64
+label Teardown_scan
+load_memory_u32 eax r14 none 1 4
+test eax eax
+branch not_equal Release
+label Teardown_next
+add_i32 r14 32
+move rax r12
+add_i32 rax 2112
+compare r14 rax
+branch below Teardown_scan
+move_u32 eax 1
+store_memory_u32 r12 none 1 28 eax
+jump_label Success
+
+label Publish
+load_memory_u32 eax r14 none 1 4
+add_i32 eax 15
+add rax rbx
+store_memory_u64 r13 none 1 48 rax
+load_memory_u32 eax r14 none 1 16
+store_memory_u32 r13 none 1 44 eax
+jump_label Success
+
+label Initialize
+load_memory_u32 eax r12 none 1 0
+test eax eax
+branch not_equal Invalid_request
+load_memory_u64 rax r12 none 1 24
+test rax rax
+branch not_equal Corrupt_state
+load_memory_u64 rax r12 none 1 44
+test rax rax
+branch not_equal Corrupt_state
+load_memory_u64 rax r12 none 1 52
+test rax rax
+branch not_equal Corrupt_state
+move_u32 ecx 64
+label Initialize_check
+load_memory_u64 rax r12 rcx 1 0
+test rax rax
+branch not_equal Corrupt_state
+add_i32 ecx 8
+compare_i32 ecx 2112
+branch below Initialize_check
+load_memory_u32 eax r13 none 1 12
+load_memory_u64 rcx r13 none 1 24
+or rax rcx
+load_memory_u64 rcx r13 none 1 32
+or rax rcx
+load_memory_u32 ecx r13 none 1 56
+or rax rcx
+test rax rax
+branch not_equal Invalid_request
+load_memory_u32 eax r12 none 1 40
+store_memory_u32 rbx none 1 0 eax
+xor eax eax
+store_memory_u32 rbx none 1 4 eax
+store_memory_u32 rbx none 1 8 eax
+move_u32 eax 1380341335
+store_memory_u32 rbx none 1 12 eax
+move_u32 eax 1396790871
+store_memory_u32 r12 none 1 44 eax
+move_u32 eax 1
+store_memory_u32 r12 none 1 48 eax
+move_u32 eax 1397700183
+store_memory_u32 r12 none 1 0 eax
+jump_label Success
+
+label Invalid_request
+move_u32 eax 1
+jump_label Return_status
+label Budget_exhausted
+move_u32 eax 2
+jump_label Return_status
+label Pool_exhausted
+move_u32 eax 3
+jump_label Return_status
+label Stale_handle
+move_u32 eax 4
+jump_label Return_status
+label Corrupt_state
+move_u32 eax 5
+jump_label Return_status
+label Slots_exhausted
+move_u32 eax 6
+jump_label Return_status
+label Length_limit
+move_u32 eax 7
+jump_label Return_status
+label Target_limit
+move_u32 eax 8
+jump_label Return_status
+label Closed
+move_u32 eax 9
+jump_label Return_status
+label Success
+xor eax eax
+label Return_status
+store_memory_u32 r13 none 1 40 eax
+label Return_registers
+add_i32 rsp 80
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+label Invalid_extent
+move_u32 eax 1
+jump_label Return_registers
+label Invalid_pointer
+move_u32 eax 1
+return
+end define
+end section

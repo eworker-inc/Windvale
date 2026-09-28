@@ -1237,6 +1237,17 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Runtime-private native owned storage routing'
+        Paths = @(
+            'Runtime/Native/X64-Owned-Storage.wva',
+            'Specifications/Windvale-Native-Owned-Storage.md',
+            'Tools/Native/Native-Owned-Storage-Cases.mjs'
+        )
+        Suites = @('native-x64-lowering-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Slice 8 runtime-owned Foreign provider routing'
         Paths = @('Runtime/Native/Linux-X64-Paper-Buffer-Source.wva')
         Suites = @(

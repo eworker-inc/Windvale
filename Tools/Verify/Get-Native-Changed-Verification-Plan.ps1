@@ -1358,7 +1358,7 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
-    if ($Stem -eq 'Test-Language-1.0-Unsafe-Write-Region-Wir') {
+    if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -2514,7 +2514,9 @@ foreach ($Path in $Paths) {
         'Tests/Native/Wvb-To-Wvo-Rejections/Option-U64-Return.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
-        'Tests/Native/X64-Paper-Buffer-Source.wva'
+        'Tests/Native/X64-Paper-Buffer-Source.wva',
+        'Runtime/Native/X64-Owned-Storage.wva',
+        'Specifications/Windvale-Native-Owned-Storage.md'
     )) {
         Add-Suite 'native-x64-lowering-development'
     } elseif ($Path -eq 'Runtime/Native/Linux-X64-Paper-Buffer-Source.wva') {

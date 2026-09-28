@@ -74,6 +74,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native hosted-verifier startup](../Windvale-Native-Hosted-Verifier-Startup.md) | Documented |
 | [Windvale native linker hostile-input tests](../Windvale-Native-Linker-Hostile-Input-Tests.md) | Documented |
 | [Windvale native output-table construction](../Windvale-Native-Output-Table-Construction.md) | Current |
+| [Windvale native owned storage](../Windvale-Native-Owned-Storage.md) | Implemented |
 | [Windvale native capability-provider call](../Windvale-Native-Provider-Call.md) | Implemented |
 | [Windvale native publication lifetime](../Windvale-Native-Publication-Lifetime.md) | Documented |
 | [Windvale native publication plan](../Windvale-Native-Publication-Plan.md) | Documented |

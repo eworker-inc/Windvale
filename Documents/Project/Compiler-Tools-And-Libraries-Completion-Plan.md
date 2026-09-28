@@ -78,6 +78,16 @@ storage, allocation leases, later bytecode shapes, and complete interpreter
 working-storage reclamation open. See the
 [loop reclamation contract](../../Specifications/Windvale-Native-X64-Lowering.md#loop-entry-arena-reclamation).
 
+The runtime-private [owned-storage provider](../../Specifications/Windvale-Native-Owned-Storage.md)
+implements the physical part of gate 2: committed zeroed capacity, exact physical
+charging, generation-safe reuse, and bounded teardown. Its repeated-reuse case
+holds 17 bytes of capacity within a 64-byte arena across 32,768 allocations,
+with 2,112 bytes of fixed metadata. It does not yet consume canonical budget
+leases or back generated collections and interpreter state. The next connection
+must join budget accounting and physical storage without partial mutation on
+refusal, then carry owned cleanup through the compiler. Existing consumer
+process-memory measurements remain unchanged by this isolated provider.
+
 Work proceeds through these gates, preserving existing qualified contracts:
 
 1. Carry descriptor and aggregate ownership through the current Windvale
