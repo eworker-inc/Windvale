@@ -112,9 +112,11 @@ of efficient memory use.
 The runtime-private [owned-storage leaf](Specifications/Windvale-Native-Owned-Storage.md)
 now adds committed capacity, generation-checked handles, zeroing, exact physical
 charges, non-tail reuse, and domain teardown over the historical allocator.
-Its fixed 64-slot profile is foundation work: ordinary collections, canonical
-budget accounting, and interpreter working state do not call it yet. Connect
-those lifetimes and charges before describing the 1.0 storage path as complete.
+The [budgeted adapter](Specifications/Windvale-Native-Budgeted-Storage.md) now
+binds this fixed 64-slot profile to canonical budget/lease accounting, preserving
+both domains on refusal and crediting parents on release. Ordinary collections
+and interpreter working state still need compiler/runtime integration. Connect
+their lifetimes and charges before describing the 1.0 storage path as complete.
 
 Implement the existing [Language 1.0 allocation and release rules](Specifications/Windvale-Language-1.0.md#allocation-and-release)
 and [Foundation memory domains](Specifications/Windvale-Language-1.0-Foundation.md#memory-domains-and-allocation):

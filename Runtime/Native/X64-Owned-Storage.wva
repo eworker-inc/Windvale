@@ -63,7 +63,7 @@ load_memory_u32 eax r13 none 1 4
 compare_i32 eax 64
 branch not_equal Invalid_request
 load_memory_u32 eax r13 none 1 8
-compare_i32 eax 5
+compare_i32 eax 6
 branch above Invalid_request
 load_memory_u64 rax r13 none 1 40
 test rax rax
@@ -370,6 +370,8 @@ branch not_equal Invalid_request
 load_memory_u32 eax r13 none 1 8
 compare_i32 eax 5
 branch equal Teardown
+compare_i32 eax 6
+branch equal Validate_only
 
 # Handles are (generation << 32) | (slot + 1), scoped by the epoch at +16.
 load_memory_u32 eax r13 none 1 24
@@ -552,6 +554,15 @@ compare r14 rax
 branch below Teardown_scan
 move_u32 eax 1
 store_memory_u32 r12 none 1 28 eax
+jump_label Success
+
+label Validate_only
+load_memory_u64 rax r13 none 1 24
+test rax rax
+branch not_equal Invalid_request
+load_memory_u32 eax r13 none 1 36
+test eax eax
+branch not_equal Invalid_request
 jump_label Success
 
 label Publish

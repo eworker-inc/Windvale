@@ -5,9 +5,10 @@
 Current runtime-private x64 implementation, version 1. This is physical backing
 for the accepted Language 1.0 memory direction, implemented by
 [`X64-Owned-Storage.wva`](../Runtime/Native/X64-Owned-Storage.wva) over the existing
-descriptor allocator leaf. It is not connected to compiler-generated collection
-operations, the canonical `Memoryˉbudget` accounting state, or interpreter working
-storage. It neither changes native ABI 22 nor replaces its arena/context fields.
+descriptor allocator leaf. The [budgeted adapter](Windvale-Native-Budgeted-Storage.md)
+now connects it to canonical budget accounting. Compiler-generated collection
+operations and interpreter working storage still need integration. It neither
+changes native ABI 22 nor replaces its arena/context fields.
 
 The native lowering development owner verifies this leaf on Windows and Linux.
 Its focused selection is `--owned-storage`; the complete owner includes the same
@@ -16,8 +17,8 @@ cases. This is development evidence, not installed-toolchain qualification.
 The leaf provides committed capacity, zeroed mutable storage, exact physical
 charges, deterministic reuse and domain teardown. A generation in each handle
 prevents a released handle from accessing a later allocation at the same address.
-The next integration must bind physical charges to canonical budget leases and
-carry ownership and cleanup through emitted operations. No process-memory
+The adapter binds physical charges to canonical budget leases; the compiler
+must still carry ownership and cleanup through emitted operations. No process-memory
 improvement for existing consumers follows from this isolated implementation.
 
 ## Authority and lifetime
@@ -84,7 +85,7 @@ Request version 1 is exactly 64 bytes:
 | --- | --- | --- |
 | 0 | 4 | Version 1 |
 | 4 | 4 | Request size 64 |
-| 8 | 4 | Operation 0 through 5 |
+| 8 | 4 | Operation 0 through 6 |
 | 12 | 4 | Requested capacity, reserve only |
 | 16 | 8 | Expected domain epoch |
 | 24 | 8 | Handle input; zero for reserve, initialization and teardown |
@@ -125,6 +126,9 @@ entire domain is destroyed; generations never wrap.
 5. **Teardown:** validate the entire domain before mutation, release all live
    slots in index order, and close the domain. Current charge and live count
    become zero; the peak remains available. Later operations report closed.
+6. **Validate:** check the complete initialized, open domain without mutation.
+   All operation-specific fields must be zero. The budgeted adapter uses this
+   operation to establish physical validity before coordinating accounting.
 
 The exact charge is `align_up(capacity + 16, 16)`, including the allocation
 header and alignment padding. It must fit the request's maximum authorized

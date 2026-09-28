@@ -11,6 +11,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native fragment artifact (`WVNF 1.0`)](../Native-Fragment-Artifact.md) | Documented |
 | [Windvale native argument-table construction](../Windvale-Native-Argument-Table-Construction.md) | Documented |
 | [Windvale native baseline-JIT publication](../Windvale-Native-Baseline-Jit-Publication.md) | Candidate |
+| [Windvale native budgeted storage](../Windvale-Native-Budgeted-Storage.md) | Current |
 | [Windvale native byte-result admission](../Windvale-Native-Byte-Result-Admission.md) | Current |
 | [Windvale native capability-provider table](../Windvale-Native-Capability-Provider-Table.md) | Candidate |
 | [Windvale native changed-file verification](../Windvale-Native-Changed-Verification.md) | Documented |

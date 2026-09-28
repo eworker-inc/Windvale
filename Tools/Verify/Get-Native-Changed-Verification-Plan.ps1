@@ -1358,7 +1358,8 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
-    if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases')) {
+    if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases',
+        'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -2341,7 +2342,8 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv') {
         Add-Suite @(
             'language-1-memory-budget-accounting',
-            'language-1-memory-budget-split-execution'
+            'language-1-memory-budget-split-execution',
+            'native-x64-lowering-development'
         )
     } elseif ($Path -in @(
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv',
@@ -2516,7 +2518,12 @@ foreach ($Path in $Paths) {
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
         'Tests/Native/X64-Paper-Buffer-Source.wva',
         'Runtime/Native/X64-Owned-Storage.wva',
-        'Specifications/Windvale-Native-Owned-Storage.md'
+        'Runtime/Native/X64-Budgeted-Storage.wva',
+        'Runtime/Native/X64-Memory-Budget-Validation.wva',
+        'Specifications/Windvale-Native-Owned-Storage.md',
+        'Specifications/Windvale-Native-Budgeted-Storage.md',
+        'Tests/Fixtures/Native-X64/Budgeted-Storage-Accounting-Oracle.wv',
+        'Projects/Tests/Windvale-Native-Test-Budgeted-Storage-Accounting-Oracle.wvproj'
     )) {
         Add-Suite 'native-x64-lowering-development'
     } elseif ($Path -eq 'Runtime/Native/Linux-X64-Paper-Buffer-Source.wva') {

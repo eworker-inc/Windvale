@@ -1,0 +1,166 @@
+windvale-assembly 1
+
+# Read-only validation of the existing 2616-byte accounting state. This is the
+# native counterpart of Memory_budget_state_is_valid, not a second token format.
+# R8 points to a complete mapped state. EAX=0 valid, 5 invalid. Preserve all
+# nonvolatile registers and R10/R11. No allocation or host calls.
+symbol export function Windvale_memory_budget_validate in .text
+section code .text align 16
+define Windvale_memory_budget_validate
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r10
+push r11
+move rbx r8
+test rbx rbx
+branch equal Invalid
+load_memory_u32 eax rbx none 1 0
+compare_i32 eax 1112364631
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 4
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 65
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 12
+compare_i32 eax 1
+branch not_equal Invalid
+
+# Validate every parent index before following any ancestor chain.
+move_u32 edi 1
+move rsi rbx
+add_i32 rsi 16
+label Structure
+load_memory_u32 eax rsi none 1 8
+compare_i32 eax 1
+branch above Invalid
+load_memory_u32 ecx rsi none 1 12
+compare ecx eax
+branch above Invalid
+test eax eax
+branch not_equal Active
+move_u32 ecx 4
+label Inactive
+load_memory_u32 eax rsi rcx 1 0
+test eax eax
+branch not_equal Invalid
+add_i32 ecx 4
+compare_i32 ecx 40
+branch below Inactive
+jump_label Structure_next
+label Active
+load_memory_u32 eax rsi none 1 0
+test eax eax
+branch equal Invalid
+load_memory_u32 eax rsi none 1 4
+compare_i32 edi 1
+branch not_equal Child
+test eax eax
+branch not_equal Invalid
+jump_label Limits
+label Child
+test eax eax
+branch equal Invalid
+compare_i32 eax 65
+branch above Invalid
+subtract_i32 eax 1
+move r10d eax
+shift_left eax 5
+shift_left r10d 3
+add eax r10d
+load_memory_u32 ecx rbx rax 1 24
+compare_i32 ecx 1
+branch not_equal Invalid
+label Limits
+load_memory_u64 rax rsi none 1 32
+load_memory_u64 rcx rsi none 1 24
+compare rax rcx
+branch above Invalid
+load_memory_u32 eax rsi none 1 20
+load_memory_u32 ecx rsi none 1 16
+compare eax ecx
+branch above Invalid
+label Structure_next
+add_i32 edi 1
+add_i32 rsi 40
+compare_i32 edi 65
+branch below_equal Structure
+
+move_u32 edi 1
+move rsi rbx
+add_i32 rsi 16
+label Accounting
+load_memory_u32 eax rsi none 1 8
+test eax eax
+branch equal Accounting_next
+load_memory_u32 eax rsi none 1 4
+xor ecx ecx
+label Ancestors
+test eax eax
+branch equal Children
+compare eax edi
+branch equal Invalid
+add_i32 ecx 1
+compare_i32 ecx 65
+branch above Invalid
+subtract_i32 eax 1
+move r10d eax
+shift_left eax 5
+shift_left r10d 3
+add eax r10d
+load_memory_u32 eax rbx rax 1 20
+jump_label Ancestors
+label Children
+xor r12d r12d
+xor r13d r13d
+move rbp rbx
+add_i32 rbp 56
+move_u32 edx 2
+label Sum_children
+load_memory_u32 eax rbp none 1 8
+test eax eax
+branch equal Sum_next
+load_memory_u32 eax rbp none 1 4
+compare eax edi
+branch not_equal Sum_next
+load_memory_u64 rax rbp none 1 24
+add r12 rax
+branch below Invalid
+add_i32 r13d 1
+label Sum_next
+add_i32 rbp 40
+add_i32 edx 1
+compare_i32 edx 65
+branch below_equal Sum_children
+load_memory_u64 rax rsi none 1 32
+compare rax r12
+branch not_equal Invalid
+load_memory_u32 eax rsi none 1 20
+compare eax r13d
+branch not_equal Invalid
+label Accounting_next
+add_i32 edi 1
+add_i32 rsi 40
+compare_i32 edi 65
+branch below_equal Accounting
+xor eax eax
+jump_label Finish
+label Invalid
+move_u32 eax 5
+label Finish
+pop r11
+pop r10
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section

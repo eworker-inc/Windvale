@@ -274,6 +274,7 @@ $NativeCases = @(
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv'
         )
         Suites = @(
+            'native-x64-lowering-development',
             'language-1-memory-budget-accounting',
             'language-1-memory-budget-split-execution'
         )
@@ -1240,8 +1241,15 @@ $NativeCases = @(
         Name = 'Runtime-private native owned storage routing'
         Paths = @(
             'Runtime/Native/X64-Owned-Storage.wva',
+            'Runtime/Native/X64-Budgeted-Storage.wva',
+            'Runtime/Native/X64-Memory-Budget-Validation.wva',
             'Specifications/Windvale-Native-Owned-Storage.md',
-            'Tools/Native/Native-Owned-Storage-Cases.mjs'
+            'Specifications/Windvale-Native-Budgeted-Storage.md',
+            'Tools/Native/Native-Owned-Storage-Cases.mjs',
+            'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
+            'Tools/Native/Native-Storage-Fixture.mjs',
+            'Tests/Fixtures/Native-X64/Budgeted-Storage-Accounting-Oracle.wv',
+            'Projects/Tests/Windvale-Native-Test-Budgeted-Storage-Accounting-Oracle.wvproj'
         )
         Suites = @('native-x64-lowering-development')
         Gaps = @()

@@ -1,0 +1,61 @@
+#!wv/1 en@1
+module Budgetedˉstorageˉaccountingˉoracle;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore as Budgets;
+
+// Emit complete canonical states, not native implementation-derived deltas.
+// The native tests compare every accounting byte at the matching checkpoints.
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return 1; }
+    let Root: bytes = Budgets.Constructˉrootˉmemoryˉbudget(4096u64, 64u32);
+    let Rootˉtoken: bytes = Budgets.Rootˉmemoryˉbudgetˉtoken(Root);
+    var States: bytes = Root;
+    let Child: Budgets.Memoryˉbudgetˉsplitˉresult = Budgets.Splitˉmemoryˉbudget(Root, Rootˉtoken, 48u64, 64u32);
+    if !Child.Valid || !Child.Succeeded { return 2; }
+    States = Bytesˉconcat(States, Child.State);
+    let Lease: Budgets.Allocationˉleaseˉresult = Budgets.Constructˉallocationˉlease(Child.State, Child.Token, 48u64, 48u64, 16u32);
+    if !Lease.Valid || !Lease.Succeeded { return 3; }
+    States = Bytesˉconcat(States, Lease.State);
+    let Released: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉallocationˉlease(Lease.State, Lease.Token, 48u64, 48u64, 16u32);
+    if !Released.Valid { return 4; }
+    States = Bytesˉconcat(States, Released.State);
+    let Parent: Budgets.Memoryˉbudgetˉsplitˉresult = Budgets.Splitˉmemoryˉbudget(Root, Rootˉtoken, 96u64, 64u32);
+    if !Parent.Valid || !Parent.Succeeded { return 5; }
+    let Grandchild: Budgets.Memoryˉbudgetˉsplitˉresult = Budgets.Splitˉmemoryˉbudget(Parent.State, Parent.Token, 48u64, 64u32);
+    if !Grandchild.Valid || !Grandchild.Succeeded { return 6; }
+    States = Bytesˉconcat(States, Grandchild.State);
+    let Parentˉlease: Budgets.Allocationˉleaseˉresult = Budgets.Constructˉallocationˉlease(Grandchild.State, Parent.Token, 48u64, 48u64, 16u32);
+    if !Parentˉlease.Valid || !Parentˉlease.Succeeded { return 7; }
+    States = Bytesˉconcat(States, Parentˉlease.State);
+    let Deferred: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉallocationˉlease(Parentˉlease.State, Parentˉlease.Token, 48u64, 48u64, 16u32);
+    if !Deferred.Valid { return 8; }
+    States = Bytesˉconcat(States, Deferred.State);
+    let Grandˉlease: Budgets.Allocationˉleaseˉresult = Budgets.Constructˉallocationˉlease(Deferred.State, Grandchild.Token, 48u64, 48u64, 16u32);
+    if !Grandˉlease.Valid || !Grandˉlease.Succeeded { return 9; }
+    States = Bytesˉconcat(States, Grandˉlease.State);
+    let Final: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉallocationˉlease(Grandˉlease.State, Grandˉlease.Token, 48u64, 48u64, 16u32);
+    if !Final.Valid { return 10; }
+    States = Bytesˉconcat(States, Final.State);
+    let Rootˉreleased: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉmemoryˉbudget(Grandchild.State, Rootˉtoken);
+    if !Rootˉreleased.Valid { return 11; }
+    let Parentˉreleased: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉmemoryˉbudget(Rootˉreleased.State, Parent.Token);
+    if !Parentˉreleased.Valid { return 12; }
+    States = Bytesˉconcat(States, Parentˉreleased.State);
+    let Last: Budgets.Allocationˉleaseˉresult = Budgets.Constructˉallocationˉlease(Parentˉreleased.State, Grandchild.Token, 48u64, 48u64, 16u32);
+    if !Last.Valid || !Last.Succeeded { return 13; }
+    let Gone: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉallocationˉlease(Last.State, Last.Token, 48u64, 48u64, 16u32);
+    if !Gone.Valid { return 14; }
+    States = Bytesˉconcat(States, Gone.State);
+    let Closed: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Teardownˉmemoryˉbudgets(Grandˉlease.State);
+    if !Closed.Valid { return 15; }
+    States = Bytesˉconcat(States, Closed.State);
+    if Bytesˉlength(States) != 31392u32 { return 16; }
+    file.write_bytes(process.argument(0u32), States);
+    return 0;
+}

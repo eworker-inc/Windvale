@@ -1,5 +1,6 @@
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { Runˉownedˉstorageˉcases } from './Native-Owned-Storage-Cases.mjs';
+import { Prepareˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
@@ -11,6 +12,13 @@ const OUTPUT_LIMIT = 64 * 1024;
 const FIXTURE_LIMIT = 4 * 1024 * 1024;
 const COMMAND_TIMEOUT_MILLISECONDS = 120_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 15 * 60_000;
+
+let Oracleˉproduct = null;
+if (process.argv.at(-3) === '--budget-oracle') {
+    if (!/^[0-9a-f]{64}$/u.test(process.argv.at(-1))) Usage();
+    Oracleˉproduct = { Path: resolve(process.argv.at(-2)), Sha256: process.argv.at(-1) };
+    process.argv.splice(-3);
+}
 
 const Phase = process.argv[4];
 const Prepareˉonly = Phase === '--prepare-only';
@@ -89,7 +97,7 @@ const Work = await realpath(await mkdtemp(join(
 let Preserveˉwork = false;
 try {
     const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
-        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess,
+        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct,
     }) : 0;
     if (!Ownedˉonly) {
     await Verifyˉsourceˉclosures();
@@ -146,7 +154,8 @@ try {
     if (!existsSync(Lowerer)) Reject('The current native lowerer was not published.');
 
     if (Prepareˉonly) {
-        process.stdout.write('native x64 lowering preparation status=Ready products=2 behavior-cases=0\n');
+        await Prepareˉbudgetˉoracle({ Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Oracleˉproduct });
+        process.stdout.write('native x64 lowering preparation status=Ready products=3 behavior-cases=0\n');
     } else {
     const Recordˉcases = await Runˉrecordˉreturnˉmemory(Lowerer);
     if (!Recordˉonly) {
@@ -1220,7 +1229,8 @@ function Usage() {
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
         '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|' +
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
-        '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]]\n',
+        '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]] ' +
+        '[--budget-oracle <wvb> <sha256>]\n',
     );
     process.exit(64);
 }

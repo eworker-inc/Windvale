@@ -1,8 +1,10 @@
+import { Buildˉstorageˉfixture } from './Native-Storage-Fixture.mjs';
+import { Buildˉbudgetedˉstorageˉcases, Readˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-// Extends the existing native lowering owner; no compiler reconstruction is
-// needed for this runtime-private assembly leaf's focused selection.
+// Extends the existing native owner. The accounting oracle uses a prepared
+// compiler or an explicitly supplied, digest-checked WVB product.
 export async function Runˉownedˉstorageˉcases(Context) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
@@ -11,6 +13,8 @@ export async function Runˉownedˉstorageˉcases(Context) {
     for (const [Name, Source] of [
         ['Owned', 'Runtime/Native/X64-Owned-Storage.wva'],
         ['Allocator', 'Compiler/Native/Allocator/Descriptor-Allocator.wva'],
+        ['Budget-Validation', 'Runtime/Native/X64-Memory-Budget-Validation.wva'],
+        ['Budgeted', 'Runtime/Native/X64-Budgeted-Storage.wva'],
     ]) {
         process.stdout.write(`native owned storage step=assemble leaf=${Name}\n`);
         const Object = join(Work, `${Name}.wvo`);
@@ -23,7 +27,8 @@ export async function Runˉownedˉstorageˉcases(Context) {
         await Requireˉsuccess(Tool('Check-Wvo'), [Object], `owned-${Name}-validate`);
         Objects.push(Object);
     }
-    const Cases = Buildˉcases();
+    const Oracle = await Readˉbudgetˉoracle(Context);
+    const Cases = [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle)];
     for (const [Index, Case] of Cases.entries()) {
         process.stdout.write(`native owned storage step=execute item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
         const Prefix = join(Work, `Owned-${Case.Name}`);
@@ -43,101 +48,13 @@ export async function Runˉownedˉstorageˉcases(Context) {
         }
         process.stdout.write(`native owned storage case=${Case.Name} status=Passed elapsed-ms=${Math.round(performance.now() - Start)}\n`);
     }
-    process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 stress-iterations=32768 stress-arena=64 stress-peak-charge=48\n`);
+    process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=9 accounting-states=12 budgeted-metadata-bytes=5816 stress-iterations=32768 stress-arena=64 stress-peak-charge=48\n`);
     return Cases.length;
 }
 
 function Buildˉcases() {
     const Cases = [];
-    function Case(Name, Capacity, Body) {
-        const Lines = ['windvale-assembly 1',
-            'symbol local function Request_reset in .text',
-            'symbol local function Snapshot_compare in .text',
-            'symbol local function Snapshot_save in .text',
-            'symbol export function Main in .text',
-            'symbol import function Windvale_owned_storage',
-            'section code .text align 16', 'define Main'];
-        const Emit = (...Text) => Lines.push(...Text);
-        for (const Register of ['rbx', 'rbp', 'rsi', 'rdi', 'r12', 'r13', 'r14', 'r15']) Emit(`push ${Register}`);
-        // Touch each stack page before descending across Windows guard pages.
-        Emit('move_u32 ebp 1', 'move_u32 ebx 5151', 'move_u32 esi 6161', 'move_u32 r15d 7171', 'xor eax eax');
-        for (let Page = 0; Page < 4; Page++) Emit('subtract_i32 rsp 4096', 'store_memory_u64 rsp none 1 0 rax');
-        Emit('subtract_i32 rsp 8', 'move_u32 ecx 32', 'label Frame_zero',
-            'store_memory_u64 rsp rcx 1 0 rax', 'add_i32 ecx 8', 'compare_i32 ecx 16384',
-            'branch below Frame_zero', 'move r12 rsp', 'add_i32 r12 32',
-            'move r13 rsp', 'add_i32 r13 2144', 'move r14 rsp', 'add_i32 r14 2208');
-        let Checkˉindex = 0;
-        function Set(Base, Offset, Value) {
-            Emit(`move_u32 eax ${Value}`, `store_memory_u32 ${Base} none 1 ${Offset} eax`);
-        }
-        function Check(Base, Offset, Value) {
-            Emit(`move_u32 ebp ${1 + (++Checkˉindex % 40)}`, `load_memory_u32 eax ${Base} none 1 ${Offset}`,
-                `compare_i32 eax ${Value}`, 'branch not_equal Failed');
-        }
-        function Equal(Left, Right) { Emit(`compare ${Left} ${Right}`, 'branch not_equal Failed'); }
-        function Save(Requestˉoffset, Slot) {
-            Emit(`load_memory_u64 rax r13 none 1 ${Requestˉoffset}`, `store_memory_u64 rsp none 1 ${12800 + Slot * 8} rax`);
-        }
-        function Load(Slot, Register = 'rax') { Emit(`load_memory_u64 ${Register} rsp none 1 ${12800 + Slot * 8}`); }
-        function Request(Operation, { Capacity: Bytes = 0, Length = 0, Alignment = 0, Budget = 0, Handle = null } = {}) {
-            Emit('call Request_reset');
-            for (const [Offset, Value] of [[8, Operation], [12, Bytes], [32, Alignment], [36, Length], [56, Budget]]) {
-                if (Value !== 0) Set('r13', Offset, Value);
-            }
-            if (Handle !== null) { Load(Handle); Emit('store_memory_u64 r13 none 1 24 rax'); }
-        }
-        function Snapshot(Compare) {
-            Emit(`call Snapshot_${Compare ? 'compare' : 'save'}`, 'test eax eax', 'branch not_equal Failed');
-        }
-        function Snapshotˉbody(Compare) {
-            const Label = `Snapshot_${Compare ? 'compare' : 'save'}`;
-            Emit(`define ${Label}`);
-            // State and the whole backing extent; rejected requests must change neither.
-            for (const [Base, Bytes, Saved] of [['r12', 2112, 6400], ['r14', 4096, 8512], ['r13', 64, 12608]]) {
-                Emit('xor ecx ecx', `label ${Label}_${Base}`);
-                if (Compare && Base === 'r13') Emit('compare_i32 ecx 40', `branch equal ${Label}_skip_status`);
-                Emit(`load_memory_u32 eax ${Base} rcx 1 0`);
-                if (Compare) Emit(`load_memory_u32 edx rsp rcx 1 ${Saved + 8}`, 'compare eax edx', 'branch not_equal Mismatch');
-                else Emit(`store_memory_u32 rsp rcx 1 ${Saved + 8} eax`);
-                if (Compare && Base === 'r13') Emit(`label ${Label}_skip_status`);
-                Emit('add_i32 ecx 4', `compare_i32 ecx ${Bytes}`, `branch below ${Label}_${Base}`);
-            }
-            Emit('xor eax eax', 'return');
-            if (Compare) Emit('label Mismatch', 'move_u32 eax 1', 'return');
-            Emit('end define');
-        }
-        function Call(Status = 0, Atomic = Status !== 0) {
-            if (Atomic) Snapshot(false);
-            Emit('store_memory_u64 rsp none 1 13100 rdi', 'store_memory_u64 rsp none 1 13108 rbp');
-            Emit('move r8 r12', 'move r9 r13', 'move_u32 r10d 12345', 'move_u32 r11d 67890',
-                'call Windvale_owned_storage', `compare_i32 eax ${Status}`, 'branch not_equal Failed',
-                'compare_i32 r10d 12345', 'branch not_equal Failed', 'compare_i32 r11d 67890', 'branch not_equal Failed',
-                'compare_i32 ebx 5151', 'branch not_equal Failed', 'compare_i32 esi 6161', 'branch not_equal Failed',
-                'compare_i32 r15d 7171', 'branch not_equal Failed',
-                'load_memory_u64 rax rsp none 1 13100', 'compare rax rdi', 'branch not_equal Failed',
-                'load_memory_u64 rax rsp none 1 13108', 'compare rax rbp', 'branch not_equal Failed');
-            Check('r13', 40, Status);
-            if (Atomic) Snapshot(true);
-        }
-        function Reserve(Bytes = 32, Handle = 0, Pointer = 1) {
-            Request(1, { Capacity: Bytes, Length: Bytes, Alignment: 16, Budget: (Bytes + 31) & ~15 }); Call();
-            Save(24, Handle); Save(48, Pointer);
-        }
-        function Release(Handle = 0) { Request(3, { Handle }); Call(); }
-        Set('r12', 4, 1); Set('r12', 8, 2112); Set('r12', 12, 64); Set('r12', 16, 71);
-        Emit('store_memory_u64 r12 none 1 32 r14'); Set('r12', 40, Capacity);
-        Request(0); Call();
-        Body({ Emit, Set, Check, Equal, Save, Load, Request, Call, Reserve, Release, Snapshot });
-        Emit('move_u32 eax 42', 'jump_label Finished', 'label Failed', 'move eax ebp', 'label Finished', 'add_i32 rsp 16392');
-        for (const Register of ['r15', 'r14', 'r13', 'r12', 'rdi', 'rsi', 'rbp', 'rbx']) Emit(`pop ${Register}`);
-        Emit('return', 'end define', 'define Request_reset', 'xor eax eax');
-        for (let Offset = 0; Offset < 64; Offset += 8) Emit(`store_memory_u64 r13 none 1 ${Offset} rax`);
-        Set('r13', 0, 1); Set('r13', 4, 64); Set('r13', 16, 71);
-        Emit('return', 'end define');
-        Snapshotˉbody(false); Snapshotˉbody(true);
-        Emit('end section', '');
-        Cases.push({ Name, Source: Lines.join('\n') });
-    }
+    const Case = (...Arguments) => Cases.push(Buildˉstorageˉfixture(...Arguments));
 
     Case('resize-and-zero', 144, ({ Emit, Check, Load, Request, Call, Reserve, Release }) => {
         Reserve(33); Check('r13', 44, 64); Check('r12', 56, 64);

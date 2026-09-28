@@ -82,11 +82,15 @@ The runtime-private [owned-storage provider](../../Specifications/Windvale-Nativ
 implements the physical part of gate 2: committed zeroed capacity, exact physical
 charging, generation-safe reuse, and bounded teardown. Its repeated-reuse case
 holds 17 bytes of capacity within a 64-byte arena across 32,768 allocations,
-with 2,112 bytes of fixed metadata. It does not yet consume canonical budget
-leases or back generated collections and interpreter state. The next connection
-must join budget accounting and physical storage without partial mutation on
-refusal, then carry owned cleanup through the compiler. Existing consumer
-process-memory measurements remain unchanged by this isolated provider.
+with 2,112 bytes of fixed metadata. The
+[budgeted adapter](../../Specifications/Windvale-Native-Budgeted-Storage.md) now
+joins it to canonical budget/lease accounting: refusal preserves both domains,
+release credits parents, and teardown clears all owned storage and accounting.
+Its metadata totals 5,816 bytes and its repeated-credit workload returns the
+parent reservation to zero through 32,768 cycles. Generated collections and
+interpreter state still need integration. Carry owned cleanup through the
+compiler next; existing consumer process-memory measurements remain unchanged
+by this runtime connection alone.
 
 Work proceeds through these gates, preserving existing qualified contracts:
 
