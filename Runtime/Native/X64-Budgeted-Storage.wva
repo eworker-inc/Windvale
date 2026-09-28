@@ -120,7 +120,7 @@ load_memory_u32 eax r13 none 1 4
 compare_i32 eax 96
 branch not_equal Invalid
 load_memory_u32 eax r13 none 1 8
-compare_i32 eax 5
+compare_i32 eax 10
 branch above Invalid
 load_memory_u64 rax r13 none 1 40
 load_memory_u64 rcx r13 none 1 48
@@ -285,8 +285,24 @@ compare_i32 eax 5
 branch equal Teardown
 compare_i32 eax 1
 branch equal Reserve
+compare_i32 eax 6
+branch below Existing_owner
+compare_i32 eax 6
+branch equal Split_fields
+compare_i32 eax 8
+branch below_equal Budget_fields
+load_memory_u64 rcx r13 none 1 64
+load_memory_u64 rdx r13 none 1 72
+or rcx rdx
+load_memory_u64 rdx r13 none 1 80
+or rcx rdx
+load_memory_u32 edx r13 none 1 88
+or rcx rdx
+test rcx rcx
+branch not_equal Invalid
 
 # Existing-owner requests carry the exact canonical 28-byte lease token.
+label Existing_owner
 load_memory_u32 eax r13 none 1 12
 load_memory_u32 ecx r13 none 1 32
 or eax ecx
@@ -307,8 +323,12 @@ compare rax rcx
 branch not_equal Stale
 load_memory_u64 rax rdi none 1 8
 load_memory_u64 rcx r13 none 1 64
+load_memory_u32 edx r13 none 1 8
+compare_i32 edx 9
+branch above_equal Handle_token
 compare rax rcx
 branch not_equal Stale
+label Handle_token
 move ecx eax
 subtract_i32 ecx 1
 move edx ecx
@@ -318,6 +338,9 @@ add ecx edx
 add_i32 ecx 16
 add rcx r15
 store_memory_u64 rsp none 1 184 rcx
+load_memory_u32 edx r13 none 1 8
+compare_i32 edx 9
+branch above_equal Invoke
 load_memory_u32 eax r13 none 1 24
 subtract_i32 eax 1
 shift_left eax 5
@@ -346,6 +369,7 @@ load_memory_u32 ecx r13 none 1 88
 or rax rcx
 test rax rax
 branch not_equal Invalid
+label Budget_token
 load_memory_u32 eax r13 none 1 64
 test eax eax
 branch equal Stale
@@ -371,6 +395,9 @@ branch not_equal Stale
 load_memory_u32 edx rax none 1 12
 compare_i32 edx 1
 branch not_equal Stale
+load_memory_u32 edx r13 none 1 8
+compare_i32 edx 1
+branch not_equal Budget_operation
 compare_i32 ecx -1
 branch equal Unavailable
 load_memory_u32 ecx r13 none 1 12
@@ -399,6 +426,12 @@ branch below Copy_request
 move_u32 eax 64
 store_memory_u32 rsp none 1 36 eax
 load_memory_u32 eax r13 none 1 8
+compare_i32 eax 9
+branch below Invoke_reserve
+subtract_i32 eax 6
+store_memory_u32 rsp none 1 40 eax
+jump_label Invoke_physical
+label Invoke_reserve
 compare_i32 eax 1
 branch not_equal Invoke_physical
 load_memory_u32 eax rsp none 1 192
@@ -415,7 +448,92 @@ compare_i32 eax 1
 branch equal Commit_reserve
 compare_i32 eax 3
 branch equal Commit_release
+compare_i32 eax 9
+branch equal Commit_release
 jump_label Publish
+
+# Compiler operations use the same canonical tree and retain its generations.
+label Budget_fields
+load_memory_u64 rax r13 none 1 72
+load_memory_u32 ecx r13 none 1 88
+or rax rcx
+test rax rax
+branch not_equal Invalid
+label Split_fields
+load_memory_u32 eax r13 none 1 12
+load_memory_u64 rcx r13 none 1 24
+or rax rcx
+load_memory_u64 rcx r13 none 1 32
+or rax rcx
+load_memory_u64 rcx r13 none 1 80
+or rax rcx
+test rax rax
+branch not_equal Invalid
+load_memory_u32 eax r13 none 1 88
+compare_i32 eax 64
+branch above Invalid
+jump_label Budget_token
+label Budget_operation
+move rbx rax
+compare_i32 edx 7
+branch equal Release_budget
+load_memory_u64 rsi rbx none 1 24
+load_memory_u64 rax rbx none 1 32
+subtract rsi rax
+compare_i32 edx 8
+branch equal Query_budget
+load_memory_u64 rbp r13 none 1 72
+compare rbp rsi
+branch above Budget_exhausted
+load_memory_u32 eax rbx none 1 20
+load_memory_u32 ecx rbx none 1 16
+compare eax ecx
+branch above_equal Budget_exhausted
+move_u32 edi 2
+move rdx r15
+add_i32 rdx 56
+label Find_budget_slot
+load_memory_u32 eax rdx none 1 8
+test eax eax
+branch not_equal Next_budget_slot
+load_memory_u32 eax rdx none 1 0
+or_i32 eax 1
+load_memory_u32 ecx rdx none 1 0
+compare eax ecx
+branch not_equal Found_budget_slot
+add_i32 eax 2
+branch above_equal Found_budget_slot
+label Next_budget_slot
+add_i32 edi 1
+add_i32 rdx 40
+compare_i32 edi 65
+branch below_equal Find_budget_slot
+jump_label Unavailable
+label Found_budget_slot
+store_memory_u32 rdx none 1 0 eax
+store_memory_u32 r13 none 1 68 eax
+load_memory_u32 eax r13 none 1 64
+store_memory_u32 rdx none 1 4 eax
+move_u32 eax 1
+store_memory_u32 rdx none 1 8 eax
+store_memory_u32 rdx none 1 12 eax
+load_memory_u32 eax r13 none 1 88
+store_memory_u32 rdx none 1 16 eax
+store_memory_u64 rdx none 1 24 rbp
+load_memory_u32 eax rbx none 1 20
+add_i32 eax 1
+store_memory_u32 rbx none 1 20 eax
+load_memory_u64 rax rbx none 1 32
+add rax rbp
+store_memory_u64 rbx none 1 32 rax
+store_memory_u32 r13 none 1 64 edi
+label Query_budget
+store_memory_u64 r13 none 1 80 rsi
+jump_label Success
+label Release_budget
+xor eax eax
+store_memory_u32 rbx none 1 12 eax
+jump_label Finalize
 
 label Commit_reserve
 load_memory_u64 rbx rsp none 1 184

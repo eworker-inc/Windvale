@@ -1359,7 +1359,7 @@ function Add-Native-Tool-Suite {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
     if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases',
-        'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
+        'Native-Owned-Vector-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -2519,6 +2519,10 @@ foreach ($Path in $Paths) {
         'Tests/Native/X64-Paper-Buffer-Source.wva',
         'Runtime/Native/X64-Owned-Storage.wva',
         'Runtime/Native/X64-Budgeted-Storage.wva',
+        'Runtime/Native/X64-Owned-Entry.wva',
+        'Specifications/Windvale-Native-Owned-Collections.md',
+        'Tests/Fixtures/Native-X64/Owned-Vector-Scope.wv',
+        'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scope.wvproj',
         'Runtime/Native/X64-Memory-Budget-Validation.wva',
         'Specifications/Windvale-Native-Owned-Storage.md',
         'Specifications/Windvale-Native-Budgeted-Storage.md',
@@ -3492,6 +3496,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Layout.wv',
         'Compiler/Windvale/Native-X64-Lowering-Memory-Budget.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Owned-Collections.wv',
         'Compiler/Windvale/Native-X64-Lowering-Object.wv',
         'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
         'Compiler/Windvale/Native-X64-Lowering-Records.wv',

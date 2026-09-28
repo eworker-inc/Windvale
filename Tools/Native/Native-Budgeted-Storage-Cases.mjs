@@ -163,18 +163,61 @@ export function Buildˉbudgetedˉstorageˉcases(Oracle) {
     });
     Case('repeated-credit-and-reuse', 64, ({ Emit, Field, Request, Set, Call, Save, Release, Check }) => {
         Set('rsp', 13000, 32768); Emit('label Repeat_budget');
-        // Same canonical Split transition: reserve child maximum, advance its
-        // odd budget generation, then consume it into an even lease generation.
-        Set('rsp', 17540, 1); Set('rsp', 17552, 48);
-        Emit('load_memory_u32 eax rsp none 1 17560', 'add_i32 eax 1',
-            'store_memory_u32 rsp none 1 17560 eax', 'store_memory_u32 rsp none 1 13004 eax');
-        Set('rsp', 17564, 1); Set('rsp', 17568, 1); Set('rsp', 17572, 1); Set('rsp', 17584, 48);
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Set('r13', 72, 48); Call();
+        Emit('load_memory_u32 eax r13 none 1 68', 'store_memory_u32 rsp none 1 13004 eax');
         Request(1, { Capacity: 17, Length: 17, Alignment: 16 }); Set('r13', 64, 2);
         Emit('load_memory_u32 eax rsp none 1 13004', 'store_memory_u32 r13 none 1 68 eax'); Call();
         Save(24, 0); for (let Index = 0; Index < 4; Index++) Save(64 + Index * 8, 2 + Index);
         Release(); Field(1, 32, 0);
         Emit('load_memory_u32 eax rsp none 1 13000', 'subtract_i32 eax 1', 'store_memory_u32 rsp none 1 13000 eax', 'branch not_equal Repeat_budget');
         Field(2, 0, 65536); Field(1, 32, 0); Check('rsp', 88, 0); Check('rsp', 56, 48);
+    });
+    Case('split-query-and-release', 64, ({ Request, Set, Call, Check, Field, Allocate, Oracleˉstate }) => {
+        Request(8); Set('r13', 64, 1); Set('r13', 68, 1); Call(); Check('r13', 80, 4096); Oracleˉstate(0);
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Set('r13', 72, 48); Set('r13', 88, 64); Call();
+        Check('r13', 64, 2); Check('r13', 68, 1); Check('r13', 80, 4096); Oracleˉstate(1);
+        Request(8); Set('r13', 64, 1); Set('r13', 68, 1); Call(); Check('r13', 80, 4048);
+        Allocate(2, 1); Oracleˉstate(2);
+        Request(10, { Handle: 0 }); Call(); Check('r13', 44, 48); Check('r13', 64, 0);
+        Request(9, { Handle: 0 }); Call(); Oracleˉstate(3);
+        Request(9, { Handle: 0 }); Call(4);
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Set('r13', 72, 0); Call();
+        Check('r13', 64, 2); Check('r13', 68, 3); Field(1, 20, 1); Field(1, 32, 0);
+        Request(7); Set('r13', 64, 2); Set('r13', 68, 3); Call(); Field(1, 20, 0); Field(2, 0, 3);
+        Request(7); Set('r13', 64, 1); Set('r13', 68, 1); Call(); Field(1, 8, 0);
+        Request(8); Set('r13', 64, 1); Set('r13', 68, 1); Call(4);
+    });
+    Case('budget-operation-refusals', 64, ({ Request, Set, Call, Entry, Offset, Check }) => {
+        for (const Operation of [6, 7, 8, 9, 10]) {
+            Request(Operation); Set('r13', 64, 1); Set('r13', 68, 1); Set('r13', 92, 1); Call(1);
+        }
+        for (const [Operation, Field, Value, Status] of [
+            [6, 72, 4097, 2], [6, 88, 65, 1], [6, 68, 2, 4], [6, 64, 66, 4],
+            [6, 12, 1, 1], [6, 24, 1, 1], [6, 32, 1, 1], [6, 36, 1, 1], [6, 80, 1, 1],
+            [7, 72, 1, 1], [7, 88, 1, 1], [8, 72, 1, 1], [8, 80, 1, 1], [8, 88, 1, 1],
+        ]) {
+            Request(Operation); Set('r13', 64, 1); Set('r13', 68, 1); Set('r13', Field, Value); Call(Status);
+        }
+        Entry(1, 1, 0, 4096); Set('rsp', Offset(1) + 16, 0);
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Call(2);
+        Set('rsp', Offset(1) + 16, 64); Set('rsp', Offset(2), 4294967295);
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Call(); Check('r13', 64, 3);
+        Request(7); Set('r13', 64, 3); Set('r13', 68, 1); Call();
+        for (let Identity = 3; Identity <= 65; Identity++) Set('rsp', Offset(Identity), 4294967295);
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Call(6);
+    });
+    Case('budget-drop-with-live-descendants', 64, ({ Request, Set, Call, Oracleˉstate, Allocate }) => {
+        for (const [Parent, Maximum] of [[1, 96], [2, 48]]) {
+            Request(6); Set('r13', 64, Parent); Set('r13', 68, 1); Set('r13', 72, Maximum); Set('r13', 88, 64); Call();
+        }
+        Oracleˉstate(4);
+        for (const Identity of [1, 2]) { Request(7); Set('r13', 64, Identity); Set('r13', 68, 1); Call(); }
+        Oracleˉstate(9);
+        Allocate(3, 1);
+        for (const Operation of [9, 10]) {
+            for (const Field of [64, 72, 80, 88]) { Request(Operation, { Handle: 0 }); Set('r13', Field, 1); Call(1); }
+        }
+        Request(9, { Handle: 0 }); Call(); Oracleˉstate(10);
     });
     return Cases;
 }

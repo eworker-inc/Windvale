@@ -101,7 +101,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         let Resultˉopcode: u8 = Bytesˉreadˉu8(
             Input, Codeˉoffset + Cursor
         );
-        if Resultˉopcode == 206u8 || Resultˉopcode == 220u8 ||
+        if Resultˉopcode == 206u8 || Resultˉopcode == 207u8 || Resultˉopcode == 220u8 ||
             Resultˉopcode == 222u8 {
             let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 5u32
@@ -187,7 +187,8 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         );
         let Borrowˉkind: u8 = Readˉborrowˉkind(Localˉborrowˉkinds, Local);
         var Isˉtracked: bool = Borrowˉkind == 0u8 && Type == 10u8 &&
-            Identity == 25u32;
+            (Identity == 25u32 || (Identity >= 2147483648u32 &&
+                Identity != 4294967295u32));
         if Borrowˉkind == 0u8 && Identity < Typeˉcount &&
             Bytesˉreadˉu8(Scratchˉresultˉtypes, Identity) == 1u8 {
             Isˉtracked = true;
@@ -234,6 +235,12 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     Branches, Branch + 8u32
                 );
                 if Reachable {
+                    if Bytesˉreadˉu16ˉlittle(Input, 6u32) == 24u32 &&
+                        (Availableˉlow != Branchˉlow || Availableˉhigh != Branchˉhigh) {
+                        // This target lowers explicit drops. A join may not
+                        // silently forget an owner that survives on one path.
+                        return false;
+                    }
                     Availableˉlow = Availableˉlow & Branchˉlow;
                     Availableˉhigh = Availableˉhigh & Branchˉhigh;
                 } else {
@@ -426,7 +433,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 return false;
             }
         }
-        if Opcode == 220u8 {
+        if Opcode == 220u8 || Opcode == 207u8 {
             let Budget: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 1u32
             );

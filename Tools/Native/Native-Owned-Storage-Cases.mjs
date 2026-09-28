@@ -48,7 +48,7 @@ export async function Runˉownedˉstorageˉcases(Context) {
         }
         process.stdout.write(`native owned storage case=${Case.Name} status=Passed elapsed-ms=${Math.round(performance.now() - Start)}\n`);
     }
-    process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=9 accounting-states=12 budgeted-metadata-bytes=5816 stress-iterations=32768 stress-arena=64 stress-peak-charge=48\n`);
+    process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=12 accounting-states=12 budgeted-metadata-bytes=5816 stress-iterations=32768 stress-arena=64 stress-peak-charge=48\n`);
     return Cases.length;
 }
 

@@ -1,0 +1,338 @@
+windvale-assembly 1
+
+# ABI 24 entry and operation helpers. The lowerer resolves the body import to
+# generated Main immediately after this prefix. Context 10 supplies one domain.
+symbol local function Memory_call in .text
+symbol export function Windvale_owned_entry in .text
+symbol export function Windvale_owned_release in .text
+symbol export function Windvale_owned_split in .text
+symbol export function Windvale_owned_vector in .text
+symbol import function Windvale_owned_body
+section code .text align 16
+define Windvale_owned_entry
+push r12
+subtract_i32 rsp 144
+move r12 rdx
+test r12 r12
+branch equal Invalid
+load_memory_u32 eax r12 none 1 0
+compare_i32 eax 10
+branch not_equal Invalid
+load_memory_u32 eax r12 none 1 4
+compare_i32 eax 136
+branch not_equal Invalid
+load_memory_u64 rax r12 none 1 128
+test rax rax
+branch not_equal Invalid
+load_memory_u64 r8 r12 none 1 112
+test r8 r8
+branch equal Invalid
+test_i32 r8 15
+branch not_equal Invalid
+load_memory_u64 rax r12 none 1 120
+test rax rax
+branch equal Invalid
+xor eax eax
+move_u32 ecx 32
+label Clear_query
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Clear_query
+move_u32 eax 1
+store_memory_u32 rsp none 1 32 eax
+store_memory_u32 rsp none 1 96 eax
+store_memory_u32 rsp none 1 100 eax
+move_u32 eax 96
+store_memory_u32 rsp none 1 36 eax
+move_u32 eax 8
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rax r8 none 1 32
+store_memory_u64 rsp none 1 48 rax
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r12 none 1 120
+call_register rax
+test eax eax
+branch not_equal Invalid
+move rdx r12
+call Windvale_owned_body
+store_memory_u64 rsp none 1 128 rax
+xor eax eax
+move_u32 ecx 32
+label Clear_teardown
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Clear_teardown
+move_u32 eax 1
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 96
+store_memory_u32 rsp none 1 36 eax
+move_u32 eax 5
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 r8 r12 none 1 112
+load_memory_u64 rax r8 none 1 32
+store_memory_u64 rsp none 1 48 rax
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r12 none 1 120
+call_register rax
+test eax eax
+branch equal Result
+load_memory_u64 rcx rsp none 1 128
+shift_right rcx 32
+test rcx rcx
+branch equal Invalid
+label Result
+load_memory_u64 rax rsp none 1 128
+jump_label Finish
+label Invalid
+move_u32 eax 9
+shift_left rax 32
+label Finish
+add_i32 rsp 144
+pop r12
+return
+end define
+
+# Private generated-code helpers: R15 is context 10, RAX an opaque owner,
+# RDX the maximum, ECX child count (split), R8 a five-cell Result backing.
+# A cell occupies 16 bytes. EAX zero includes typed allocation refusal;
+# nonzero means an invalid execution contract and must trap in generated code.
+define Windvale_owned_split
+push r12
+push r13
+push rbx
+push rbp
+push rsi
+subtract_i32 rsp 128
+move r12 r8
+move r13 rax
+move rbx rdx
+move esi ecx
+compare_i32 esi 64
+branch above Invalid
+call Memory_call
+test eax eax
+branch not_equal Invalid
+load_memory_u64 rbp rsp none 1 112
+xor eax eax
+store_memory_u64 rsp none 1 112 rax
+move_u32 eax 6
+store_memory_u32 rsp none 1 40 eax
+store_memory_u64 rsp none 1 104 rbx
+store_memory_u32 rsp none 1 120 esi
+load_memory_u64 r8 r15 none 1 112
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r15 none 1 120
+call_register rax
+test eax eax
+branch equal Valid
+compare_i32 eax 2
+branch equal Exhausted
+compare_i32 eax 6
+branch not_equal Invalid
+move_u32 eax 3
+jump_label Failure
+label Exhausted
+move_u32 eax 1
+label Failure
+store_memory_u64 r12 none 1 32 rax
+move_u32 eax 1
+store_memory_u64 r12 none 1 0 rax
+store_memory_u64 r12 none 1 48 rbx
+store_memory_u64 r12 none 1 64 rbp
+jump_label Success
+label Valid
+store_memory_u64 r12 none 1 0 rax
+load_memory_u64 rax rsp none 1 96
+store_memory_u64 r12 none 1 16 rax
+label Success
+xor eax eax
+jump_label Finished
+label Invalid
+move_u32 eax 1
+label Finished
+add_i32 rsp 128
+pop rsi
+pop rbp
+pop rbx
+pop r13
+pop r12
+return
+end define
+
+define Windvale_owned_vector
+push r12
+push r13
+push rbx
+push rbp
+push rsi
+subtract_i32 rsp 128
+move r12 r8
+move r13 rax
+move rsi rdx
+test rsi rsi
+branch equal Invalid
+call Memory_call
+test eax eax
+branch not_equal Invalid
+load_memory_u64 rbp rsp none 1 112
+# The target charge includes the collection header and physical header.
+# Saturate an unrepresentable requested charge for typed target refusal.
+move_u32 ebx 4294967295
+move rax rbx
+shift_left rbx 32
+or rbx rax
+move rax rsi
+shift_right rax 61
+test rax rax
+branch not_equal Target_limit
+move rbx rsi
+shift_left rbx 3
+add_i32 rbx 39
+branch below Charge_overflow
+and_i32 rbx -16
+store_memory_u64 r12 none 1 48 rbx
+compare_i32 rsi 2047
+branch above Target_limit
+xor eax eax
+store_memory_u64 rsp none 1 112 rax
+move_u32 eax 1
+store_memory_u32 rsp none 1 40 eax
+move rax rsi
+shift_left rax 3
+add_i32 eax 8
+store_memory_u32 rsp none 1 44 eax
+store_memory_u32 rsp none 1 68 eax
+move_u32 eax 16
+store_memory_u32 rsp none 1 64 eax
+load_memory_u64 r8 r15 none 1 112
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r15 none 1 120
+call_register rax
+test eax eax
+branch equal Valid
+compare_i32 eax 2
+branch equal Exhausted
+compare_i32 eax 3
+branch equal Fragmented
+compare_i32 eax 6
+branch not_equal Invalid
+move_u32 ebx 3
+jump_label Failure
+label Exhausted
+move_u32 ebx 1
+jump_label Failure
+label Fragmented
+move_u32 ebx 4
+jump_label Failure
+label Charge_overflow
+move_u32 ebx 4294967295
+move rax rbx
+shift_left rbx 32
+or rbx rax
+label Target_limit
+store_memory_u64 r12 none 1 48 rbx
+move_u32 ebx 2
+label Failure
+# Preserve failure fields before the serialized, allocation-free budget drop.
+store_memory_u64 r12 none 1 32 rbx
+store_memory_u64 r12 none 1 64 rbp
+move_u32 eax 1
+store_memory_u64 r12 none 1 0 rax
+move rax r13
+move_u32 ecx 7
+call Windvale_owned_release
+test eax eax
+branch not_equal Invalid
+jump_label Success
+label Valid
+load_memory_u64 rdx rsp none 1 80
+store_memory_u32 rdx none 1 4 esi
+xor eax eax
+store_memory_u64 r12 none 1 0 rax
+load_memory_u64 rax rsp none 1 56
+store_memory_u64 r12 none 1 16 rax
+label Success
+xor eax eax
+jump_label Finished
+label Invalid
+move_u32 eax 1
+label Finished
+add_i32 rsp 128
+pop rsi
+pop rbp
+pop rbx
+pop r13
+pop r12
+return
+end define
+
+# Release receives ECX=7 for a budget or ECX=9 for a physical owner.
+define Windvale_owned_release
+push r12
+subtract_i32 rsp 128
+move r12 rax
+move rdx rcx
+xor eax eax
+move_u32 ecx 32
+label Clear
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Clear
+move_u32 eax 1
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 96
+store_memory_u32 rsp none 1 36 eax
+store_memory_u32 rsp none 1 40 edx
+compare_i32 edx 7
+branch equal Budget
+store_memory_u64 rsp none 1 56 r12
+jump_label Invoke
+label Budget
+store_memory_u64 rsp none 1 96 r12
+label Invoke
+load_memory_u64 r8 r15 none 1 112
+load_memory_u64 rax r8 none 1 32
+store_memory_u64 rsp none 1 48 rax
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r15 none 1 120
+call_register rax
+add_i32 rsp 128
+pop r12
+return
+end define
+
+# Initialize and execute a query in the caller's 128-byte request frame.
+# R13 carries the budget owner. The extra return address accounts for +8.
+define Memory_call
+xor eax eax
+move_u32 ecx 40
+label Clear
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 136
+branch below Clear
+move_u32 eax 1
+store_memory_u32 rsp none 1 40 eax
+move_u32 eax 96
+store_memory_u32 rsp none 1 44 eax
+move_u32 eax 8
+store_memory_u32 rsp none 1 48 eax
+store_memory_u64 rsp none 1 104 r13
+load_memory_u64 r8 r15 none 1 112
+load_memory_u64 rax r8 none 1 32
+store_memory_u64 rsp none 1 56 rax
+move r9 rsp
+add_i32 r9 40
+load_memory_u64 rax r15 none 1 120
+# Tail call retains the caller's aligned shadow space and return address.
+jump_register rax
+end define
+end section

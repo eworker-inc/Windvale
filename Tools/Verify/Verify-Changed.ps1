@@ -379,7 +379,7 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $HostTarget = if ($IsWindowsHost) { 'windows' } else { 'linux' }
                 $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'),
                     $HostTarget, $RepositoryRoot, '--prepared-products-only', '--maximum-seconds', '600')
-                $OwnerMessage = 'Native owner native-x64-lowering-development mode=prepared-products cases=100 maximum-seconds=600'
+                $OwnerMessage = 'Native owner native-x64-lowering-development mode=prepared-products cases=123 maximum-seconds=600'
             }
             if ($Suite -eq 'language-1-authenticated-foreign-binding' -and $UsePreparedProducts) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }

@@ -9,11 +9,11 @@ connects the existing generation-safe budget accounting state to
 consumes a budget into a lease and owns real committed backing; release returns
 that backing and credits the accounting tree. Refusal changes neither resource.
 
-This is a runtime connection, not compiler lowering of `Vector`, builders or
-maps. Ordinary collection code and interpreter working storage still need that
-integration. Source signatures, WVB, native ABI 22/23, execution-context slots,
-and pinned bootstrap identities are unchanged. No consumer process-memory
-improvement or installed qualification is claimed.
+The candidate [native owned-collections path](Windvale-Native-Owned-Collections.md)
+uses this adapter for scalar Vector reservation and release. Wider collection
+code and interpreter working storage still need integration. Source signatures,
+WVB, native ABI 22/23 and pinned bootstrap identities are unchanged. No ordinary
+interpreter process-memory improvement or installed qualification is claimed.
 
 ## Ownership and authority
 
@@ -105,7 +105,7 @@ lease. An active accounting lease whose owner has been released may remain
 without backing while children survive; it is not an owned live lease.
 
 The first 64 request bytes use the physical-request fields with these changes:
-size at +4 is **96**, operation at +8 is 0 through 5, and the physical maximum
+size at +4 is **96**, operation at +8 is 0 through 10, and the physical maximum
 field at +56 is always zero. The adapter computes authority from the budget,
 rather than trusting a caller-supplied byte maximum. The tail is:
 
@@ -119,7 +119,7 @@ rather than trusting a caller-supplied byte maximum. The tail is:
 
 Reserve requires zero handle, lease metadata and result fields. Success publishes
 the physical handle at +24, charge at +44, borrowed pointer at +48 and complete
-lease at +64. Existing-owner operations require both the matching physical
+lease at +64. Operations 2 through 4 require both the matching physical
 handle and the exact 28-byte lease. Initialize and teardown require all
 operation-specific fields to be zero. All other unused fields remain zero as
 in the physical contract.
@@ -147,6 +147,23 @@ in the physical contract.
    bindings and all active accounting entries while retaining their generations,
    and close both physical and adapter domains. All later adapter operations
    refuse; destroying and recreating a domain requires a new epoch.
+6. **Split budget:** +64 is the parent budget token, +72 the child maximum and
+   +88 its maximum child count (0 through 64). Other operation fields are zero.
+   Success publishes the child token at +64 and pre-call parent availability at
+   +80. Reserve the child's full maximum and advance an inactive slot to its
+   next odd generation. Never reuse a retired generation or the root slot.
+7. **Release budget:** +64 is an owned odd-generation budget token; all other
+   operation fields are zero. Release that owner and finalize unowned ancestors
+   only after their last child disappears. This operation cannot release leases.
+8. **Query budget:** same input as release budget. Publish available authority
+   at +80 without changing any domain state.
+9. **Release bound handle:** +24 is the physical owner; all other operation
+   fields are zero. Full binding validation supplies the hidden lease authority,
+   then performs the same release as operation 3. Source values cannot forge
+   handles; the caller keeps them inside the exclusive domain.
+10. **Inspect bound handle:** same input as operation 9; return its borrowed
+    pointer and charge without acquiring another owner. No lease metadata is
+    published. The same lifetime and serialization rules as operation 4 apply.
 
 Status codes retain the physical vocabulary: 1 invalid request, 2 insufficient
 budget authority, 3 physical exhaustion/fragmentation, 4 stale or mismatched
@@ -168,7 +185,7 @@ Release and teardown are bounded local operations independent of provider loss.
 
 ## Verification and remaining integration
 
-The existing native lowering development owner includes nine adapter cases
+The existing native lowering development owner includes twelve adapter cases
 alongside the ten physical-storage cases. It builds the
 [accounting oracle](../Tests/Fixtures/Native-X64/Budgeted-Storage-Accounting-Oracle.wv)
 from the existing Windvale budget core and compares all 2,616 bytes at twelve
@@ -177,13 +194,14 @@ credit and teardown. The native implementation is not the oracle's generator.
 Corruption tests cover cycles, overflowing child sums, mismatched bindings,
 stale tokens and request overlap. Rejected operations compare snapshots of all
 state, backing and request inputs. The repeated-credit workload performs 32,768
-pairs in a 64-byte arena, returns the parent's reservation to zero each cycle,
+Split/reserve/release cycles in a 64-byte arena, returns the parent's reservation to zero each cycle,
 and enforces peak physical charge 48 with fixed metadata 5,816 bytes.
 
 Use `Test-Native-Unsafe-Write-Pointer-Lowering.mjs <host> <repo> --owned-storage`
 with a prepared compiler, or append `--budget-oracle <wvb> <sha256>` to supply
 an explicitly checked oracle product. The ordinary `--prepare-only` phase now
-prepares three products: lowerer, borrow probe and accounting oracle. The
+prepares four products: lowerer, borrow probe, accounting oracle and owned Vector fixture. The
 prepared behavior phase must reuse them and may not reconstruct the compiler.
-Source collections, automatic compiler cleanup, shared immutable backing,
-capacity replacement and interpreter migration remain the next integrations.
+Wider collection operations, general aggregate cleanup, shared immutable
+backing, capacity replacement and interpreter migration remain integrations
+after the bounded native Vector path.

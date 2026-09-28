@@ -114,9 +114,13 @@ now adds committed capacity, generation-checked handles, zeroing, exact physical
 charges, non-tail reuse, and domain teardown over the historical allocator.
 The [budgeted adapter](Specifications/Windvale-Native-Budgeted-Storage.md) now
 binds this fixed 64-slot profile to canonical budget/lease accounting, preserving
-both domains on refusal and crediting parents on release. Ordinary collections
-and interpreter working state still need compiler/runtime integration. Connect
-their lifetimes and charges before describing the 1.0 storage path as complete.
+both domains on refusal and crediting parents on release. The candidate
+[native collection path](Specifications/Windvale-Native-Owned-Collections.md)
+now connects single-Main scalar Vector reservation, explicit scope release and
+terminal teardown through ABI 24/context 10. Wider Vector operations, owned
+helper/aggregate transfer, normal launchers and interpreter working state still
+need integration. Connect those lifetimes and charges before describing the
+1.0 storage path as complete.
 
 Implement the existing [Language 1.0 allocation and release rules](Specifications/Windvale-Language-1.0.md#allocation-and-release)
 and [Foundation memory domains](Specifications/Windvale-Language-1.0-Foundation.md#memory-domains-and-allocation):

@@ -1242,11 +1242,17 @@ $NativeCases = @(
         Paths = @(
             'Runtime/Native/X64-Owned-Storage.wva',
             'Runtime/Native/X64-Budgeted-Storage.wva',
+            'Runtime/Native/X64-Owned-Entry.wva',
+            'Specifications/Windvale-Native-Owned-Collections.md',
+            'Tests/Fixtures/Native-X64/Owned-Vector-Scope.wv',
+            'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scope.wvproj',
             'Runtime/Native/X64-Memory-Budget-Validation.wva',
             'Specifications/Windvale-Native-Owned-Storage.md',
             'Specifications/Windvale-Native-Budgeted-Storage.md',
             'Tools/Native/Native-Owned-Storage-Cases.mjs',
             'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
+            'Tools/Native/Native-Owned-Vector-Cases.mjs',
+            'Compiler/Windvale/Native-X64-Lowering-Owned-Collections.wv',
             'Tools/Native/Native-Storage-Fixture.mjs',
             'Tests/Fixtures/Native-X64/Budgeted-Storage-Accounting-Oracle.wv',
             'Projects/Tests/Windvale-Native-Test-Budgeted-Storage-Accounting-Oracle.wvproj'
