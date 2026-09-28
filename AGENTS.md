@@ -61,6 +61,91 @@ The signed `v0.1.0` preview completed Windvale's initial feasibility phase. Do n
 - Prefer a small coherent path over parallel compilers, runtimes, object models, or compatibility layers.
 - Do not preserve obsolete experimental formats during early development unless a named compatibility case is explicitly required. Update fixtures and tests to the current contract.
 
+## Current baseline and Language 1.0 direction
+
+Use these distinctions when choosing implementation work or describing progress:
+
+- The signed `v0.1.0` preview and Windvale Seed are historical baselines, not the
+  target for new memory-management work. Preserve their exact recovery evidence;
+  do not add permanent Seed compatibility to the forward compiler.
+- [The Language 1.0 source-freeze decision](Documents/Decisions/0767-Freeze-Windvale-Language-1.0-Source.md)
+  and its accepted amendments establish the source contract. Some identity-bound
+  specifications and manifests preserve pre-freeze status text. Read their
+  promotion/amendment decisions before interpreting that text as current status;
+  do not edit frozen bytes merely to modernize a heading.
+- [The Slice 8 qualification decision](Documents/Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md)
+  establishes the forward Language 1.0 compiler within its exact qualified scope
+  and target subsets. It does not establish complete Libraries 1.0, general
+  runtime memory management, installed delivery, or a released 1.0 product.
+- The [completion plan](Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md)
+  and [1.0 completion matrix](Documents/Project/Compiler-Tools-And-Libraries-1.0-Matrix.md)
+  distinguish maintained consumers from candidate probes and unfinished APIs.
+  Keep implemented, verified, qualified, and released claims separate.
+
+### Memory management: current limitations and target
+
+The maintainer selected completing the Language 1.0 ownership-to-storage path
+as the priority on 27 September 2026. Close that path before further consumer
+expansion that depends on it. This direction is accepted; the complete native
+implementation and its qualification remain work to do.
+
+Current native execution still uses bootstrap-era byte/text arena mechanics:
+checked allocation, restricted buffer reuse, and function-return checkpoints.
+Returning records containing byte/text references preserves the arena rather
+than reclaiming their obsolete intermediate buffers. The interpreter repeatedly
+replaces immutable byte representations of working state. Its guest allocation
+accounting and reclamation are separate from the native storage running that
+interpreter. A guest release therefore does not prove native memory reuse.
+Deferred frame writes and fewer copies reduce pressure but do not complete
+reclamation. A fixed arena ceiling, including the hosted runner's 128 MiB
+profile, bounds exhaustion; it is neither a portable language limit nor proof
+of efficient memory use.
+
+Implement the existing [Language 1.0 allocation and release rules](Specifications/Windvale-Language-1.0.md#allocation-and-release)
+and [Foundation memory domains](Specifications/Windvale-Language-1.0-Foundation.md#memory-domains-and-allocation):
+
+- Keep scalars and suitable records in registers, stack, or inline storage;
+  ordinary value updates must not require rebuilding an entire heap-backed frame.
+- Give mutable vectors, buffers, builders, and maps unique ownership, exclusive
+  borrowed mutation, explicit limits, and deterministic release.
+- Track shared immutable byte/text/sequence backing through copies, slices,
+  aggregate fields, calls, and returns. Preserve its charge while a semantic
+  share remains; final release must make storage reusable. Reference counting
+  is a compatible implementation candidate, not a newly frozen source rule.
+- Keep borrowed views within their owner's lifetime. Recursive graphs use owned
+  typed arenas with generation-checked non-owning handles and bounded teardown.
+- Connect physical storage to budgets and allocation leases. Preserve typed
+  allocation refusal, reservation guarantees, unchanged-on-refusal behavior,
+  and the specified accounting transfer on move, growth, freeze, and release.
+- Bound and reclaim runtime scratch and interpreter working storage separately
+  from guest accounting. Use typed owned state and reserved buffers/builders as
+  their native support becomes available; bytes remain appropriate for actual
+  serialized formats.
+
+### Implementation and completion rules
+
+- Extend the existing compiler and shared native runtime. Carry ownership and
+  cleanup through normal exits, failure propagation, and aggregate transfers;
+  terminal teardown must reclaim the enclosing resource domain. Do not bypass
+  alias safety by resetting an arena while returned references remain live.
+- The [descriptor allocator leaf](Compiler/Native/Allocator/Descriptor-Allocator.wva)
+  is candidate groundwork, not an integrated 1.0 allocator. Evaluate it against
+  the full ownership and accounting contracts. Version ABI or format changes
+  through the existing decision process before claiming the successor selected.
+- Treat larger arenas, deferred writes, and local copying reductions as bounded
+  mitigations with explicit limits. They do not close the 1.0 memory gate.
+- Measure live storage, reusable storage, cumulative allocation, budget charges,
+  and process peak memory separately. Source-code size and process RSS alone
+  cannot establish the live working set or attribute a leak.
+- Require fixed-live-state workloads to stabilize within a justified memory
+  bound as iterations increase, plus repeated allocation/release reuse, alias
+  survival, failure cleanup, and a maintained parser/collection consumer. Extend
+  existing focused owners and enforce named workload thresholds. One saved
+  probe finishing below an arena ceiling is insufficient completion evidence.
+- Qualify the changed path on Windows and real Debian against exact declared
+  inputs. Preserve unaffected earlier evidence and state remaining target/API
+  gaps; do not infer complete 1.0 delivery from a narrow passing selection.
+
 ## Architecture boundaries
 
 Keep these responsibilities distinct even if early prototypes temporarily share a project or process:
