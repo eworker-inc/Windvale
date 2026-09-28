@@ -12,11 +12,13 @@ const COMMAND_TIMEOUT_MILLISECONDS = 120_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 15 * 60_000;
 const PROGRESS_INTERVAL_MILLISECONDS = 30_000;
 
-if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7 && process.argv.length !== 10) ||
+if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7 && process.argv.length !== 8 && process.argv.length !== 10) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
 const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
+const Recordˉonly = process.argv.length === 8 && process.argv[7] === '--record-return-memory';
+if (process.argv.length === 8 && !Recordˉonly) Usage();
 if (process.argv.length === 5 && !Borrowˉonly) Usage();
-const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10;
+const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10 || Recordˉonly;
 const Suppliedˉborrowˉprobe = process.argv.length === 10;
 if (Suppliedˉlowerer && (process.argv[4] !== '--lowerer' ||
     !/^[0-9a-f]{64}$/u.test(process.argv[6]))) Usage();
@@ -65,7 +67,7 @@ const Work = await realpath(await mkdtemp(join(
     'windvale-write-pointer-lowering-',
 )));
 try {
-    await Runˉfoundationˉborrowˉemission();
+    if (!Recordˉonly) await Runˉfoundationˉborrowˉemission();
     if (!Borrowˉonly) {
     const Canonical = await Readˉfixture(
         join(Fixtureˉdirectory, 'Unsafe-Write-Pointer.wvb.b64'),
@@ -117,6 +119,8 @@ try {
     }
     if (!existsSync(Lowerer)) Reject('The current native lowerer was not published.');
 
+    const Recordˉcases = await Runˉrecordˉreturnˉmemory(Lowerer);
+    if (!Recordˉonly) {
     await Runˉoptionˉu64(Lowerer);
     await Runˉframeˉinitialization(Lowerer);
 
@@ -374,14 +378,197 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     process.stdout.write(
-        'native unsafe write pointer lowering status=Passed cases=53 ' +
-        'valid=28 malformed=25 native-execution=13 foundation-borrow-cases=12 ' +
+        `native unsafe write pointer lowering status=Passed cases=${53 + Recordˉcases} ` +
+        `valid=${28 + Recordˉcases} malformed=25 native-execution=${13 + Recordˉcases} ` +
+        `record-return-cases=${Recordˉcases} foundation-borrow-cases=12 ` +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
     }
+    }
 } finally {
     await Removeˉwork(Work);
+}
+
+async function Runˉrecordˉreturnˉmemory(Lowerer) {
+    const Template = await Readˉbinary(join(Candidateˉdirectory, 'Return-42.wvb'),
+        174, '7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31');
+    const U32 = Value => { const Bytes = Buffer.alloc(4); Bytes.writeUInt32LE(Value); return Bytes; };
+    const Name = Value => { const Bytes = Buffer.from(Value); return Buffer.concat([U32(Bytes.length), Bytes]); };
+    const Shape = (Kind, Index) => Index === undefined ? Buffer.from([Kind]) : Buffer.concat([Buffer.from([Kind]), U32(Index)]);
+    const Op = (Kind, ...Values) => Buffer.concat([Buffer.from([Kind]), ...Values.map(U32)]);
+    const Record = (Label, Fields) => Buffer.concat([Buffer.from([1]), Name(Label), U32(Fields.length),
+        ...Fields.flatMap((Type, Index) => [Name(`Field${Index}`), Type])]);
+    function Functionˉentry(Label, Return, Locals, Code, Stack = 2) {
+        return { Label, Return, Locals, Code: Buffer.concat(Code), Stack };
+    }
+    function Module(Functions, Types, Minor = 11) {
+        let Offset = 0;
+        const Directory = [U32(Functions.length)];
+        for (const Entry of Functions) {
+            const Parameters = Entry.Parameters ?? [];
+            Directory.push(Name(Entry.Label), U32(Parameters.length), ...Parameters, Entry.Return, U32(Entry.Locals.length), ...Entry.Locals,
+                U32(Offset), U32(Entry.Code.length), U32(Entry.Stack));
+            Offset += Entry.Code.length;
+        }
+        const Header = Buffer.from(Template.subarray(0, 12));
+        Header.writeUInt16LE(Minor, 6);
+        const Sections = new Map([
+            [3, Buffer.concat([U32(2), Name('Padding'), Buffer.from([5]), U32(64), Buffer.alloc(64, 65),
+                Name('Answer'), Buffer.from([5]), U32(4), U32(42)])],
+            [4, Buffer.concat(Directory)], [5, Buffer.concat(Functions.map(Entry => Entry.Code))],
+            [7, Buffer.concat([U32(Types.length), ...Types])],
+        ]);
+        const Result = [Header];
+        for (let Cursor = 12; Cursor < Template.length;) {
+            const Kind = Template[Cursor];
+            const Length = Template.readUInt32LE(Cursor + 4);
+            const Payload = Sections.get(Kind) ?? Template.subarray(Cursor + 8, Cursor + 8 + Length);
+            const Section = Buffer.from(Template.subarray(Cursor, Cursor + 8));
+            Section.writeUInt32LE(Payload.length, 4);
+            Result.push(Section, Payload);
+            Cursor += 8 + Length;
+        }
+        return Buffer.concat(Result);
+    }
+    const I32 = Shape(1), Bytes = Shape(6), Pair = Shape(7, 0);
+    const Dead = [Op(10, 0), Op(10, 0), Op(0x77), Op(5, 0)];
+    const Cases = [];
+    for (const [Iterations, Fields] of [[1, 1], [256, 1], [4096, 1], [256, 64]]) {
+        const Code = [Op(1, 0), Op(5, 0)];
+        const Loop = Buffer.concat(Code).length;
+        Code.push(Op(0x40, 1), Op(0x69, 0), Op(9, 0), Op(0x72), Op(5, 1),
+            Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0), Op(4, 0), Op(1, Iterations), Op(0x22));
+        const End = Buffer.concat(Code).length + 10;
+        Code.push(Op(0x31, End), Op(0x30, Loop), Op(4, 1), Op(0x51));
+        Cases.push({ Name: `borrowed-return-${Iterations}-fields-${Fields}`, Capacity: 1024, Expected: 42,
+            Input: Module([
+                Functionˉentry('Main', I32, [I32, I32], Code),
+                Functionˉentry('Value', Pair, [Bytes], [...Dead,
+                    ...Array.from({ length: Fields }, () => Op(10, 1)), Op(0x68, 0), Op(0x51)], Math.max(2, Fields)),
+            ], [Record('Returned', Array(Fields).fill(Bytes))]) });
+    }
+    const Pairˉtype = Record('Aliases', [Bytes, Bytes, Bytes, Bytes, Bytes]);
+    const Value = Functionˉentry('Value', Pair, [Bytes, Bytes, Bytes], [
+        ...Dead, Op(1, 0x04030201), Op(0x7b), Op(5, 1), Op(1, 0x08070605), Op(0x7b), Op(5, 2),
+        // Reverse address order, overlapping views, and a zero-length view.
+        Op(4, 2), Op(9, 1), Op(9, 3), Op(12),
+        Op(4, 1), Op(9, 1), Op(9, 3), Op(12), Op(4, 1), Op(4, 2),
+        Op(4, 1), Op(9, 2), Op(9, 0), Op(12), Op(0x68, 0), Op(0x51),
+    ], 7);
+    const Unionˉcode = [Op(1, 0), Op(5, 0)];
+    const Unionˉloop = Buffer.concat(Unionˉcode).length;
+    Unionˉcode.push(Op(0x40, 1), Op(5, 1), Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0),
+        Op(4, 0), Op(1, 64), Op(0x22));
+    const Unionˉend = Buffer.concat(Unionˉcode).length + 10;
+    Unionˉcode.push(Op(0x31, Unionˉend), Op(0x30, Unionˉloop),
+        Op(4, 1), Op(0x69, 2), Op(9, 0), Op(0x72), Op(1, 0x04030201), Op(0x11), Op(1, 42), Op(0x10), Op(0x51));
+    // Eight unique live bytes per return fit; copying every overlapping view
+    // independently would exceed this ceiling during the same 64 calls.
+    Cases.push({ Name: 'overlapping-range-union-64', Capacity: 800, Expected: 42,
+        Input: Module([Functionˉentry('Main', I32, [I32, Pair], Unionˉcode), Value], [Pairˉtype]) });
+    const Wrapper = Shape(7, 1);
+    const Maybe = Shape(11, 1);
+    const Variant = Buffer.concat([Buffer.from([3]), Name('Maybe'), U32(2),
+        Name('Empty'), Buffer.from([0]), Name('Value'), Buffer.from([1]), Name('Payload'), Pair]);
+    const Emptyˉcode = [Op(1, 0), Op(5, 0)];
+    const Emptyˉloop = Buffer.concat(Emptyˉcode).length;
+    Emptyˉcode.push(Op(0x40, 1), Op(0x98, 1, 0));
+    const Wrongˉcase = Op(0x31, 0); Emptyˉcode.push(Wrongˉcase);
+    Emptyˉcode.push(Op(4, 0), Op(1, 1), Op(0x10), Op(5, 0), Op(4, 0), Op(1, 4096), Op(0x22));
+    const Emptyˉend = Buffer.concat(Emptyˉcode).length + 10;
+    Emptyˉcode.push(Op(0x31, Emptyˉend), Op(0x30, Emptyˉloop), Op(1, 42), Op(0x51));
+    Wrongˉcase.writeUInt32LE(Buffer.concat(Emptyˉcode).length, 1);
+    Emptyˉcode.push(Op(1, 0), Op(0x51));
+    Cases.push({ Name: 'inactive-variant-4096', Capacity: 1024, Expected: 42,
+        Input: Module([
+            Functionˉentry('Main', I32, [I32], Emptyˉcode),
+            Functionˉentry('Value', Maybe, [Bytes], [...Dead, Op(0x97, 1, 0), Op(0x51)]),
+        ], [Pairˉtype, Variant], 16) });
+    for (const Kind of ['direct', 'nested', 'variant']) {
+        const Return = Kind === 'direct' ? Pair : Kind === 'nested' ? Wrapper : Maybe;
+        const Path = Kind === 'direct' ? [] : Kind === 'nested' ? [Op(0x69, 0)] : [Op(0x99, 1, 1)];
+        const Call = Kind === 'direct' ? 1 : 2;
+        const Code = [Op(0x40, Call), Op(5, 0), Op(0x40, Call), Op(5, 1)];
+        const Patches = [];
+        for (const Local of [0, 1]) {
+            for (const [Field, Expected] of [[0, 6], [1, 2], [2, 0x04030201], [3, 0x08070605], [4, 0]]) {
+                Code.push(Op(4, Local), ...Path, Op(0x69, Field));
+                if (Field === 4) Code.push(Op(0x0b), Op(9, Expected), Op(0x60));
+                else if (Field < 2) Code.push(Op(9, 0), Op(0x0d), Op(0x76), Op(9, Expected), Op(0x60));
+                else Code.push(Op(9, 0), Op(0x72), Op(1, Expected), Op(0x20));
+                const Patch = Op(0x31, 0); Patches.push(Patch); Code.push(Patch);
+            }
+        }
+        Code.push(Op(1, 42), Op(0x51));
+        const Failure = Buffer.concat(Code).length;
+        Code.push(Op(1, 0), Op(0x51));
+        for (const Patch of Patches) Patch.writeUInt32LE(Failure, 1);
+        const Functions = [Functionˉentry('Main', I32, [Return, Return], Code), Value];
+        const Types = [Pairˉtype];
+        if (Kind !== 'direct') {
+            Types.push(Kind === 'nested' ? Record('Wrapper', [Pair]) : Variant);
+            Functions.push(Functionˉentry('Wrap', Return, [], [Op(0x40, 1),
+                ...(Kind === 'nested' ? [Op(0x68, 1)] : [Op(0x97, 1, 1)]), Op(0x51)], 1));
+        }
+        Cases.push({ Name: `${Kind}-overlapping-aliases`, Capacity: 1024, Expected: 42,
+            Input: Module(Functions, Types, Kind === 'variant' ? 16 : 11) });
+    }
+    for (const Crossing of [false, true]) {
+        const Code = [Op(1, 99), Op(0x7b), Op(5, 0), Op(4, 0), Op(0x40, 1), Op(5, 1),
+            Op(1, 123), Op(0x7b), Op(5, 2)];
+        const Patches = [];
+        for (const [Field, Offset, Expected] of [[0, 0, 99], [1, 0, Crossing ? 99 : 42],
+            ...(Crossing ? [[1, 4, 42]] : [])]) {
+            Code.push(Op(4, 1), Op(0x69, Field), Op(9, Offset), Op(0x72), Op(1, Expected), Op(0x20));
+            const Patch = Op(0x31, 0); Patches.push(Patch); Code.push(Patch);
+        }
+        Code.push(Op(4, 0), Op(9, 0), Op(0x72), Op(1, 99), Op(0x20));
+        const Checkˉcaller = Op(0x31, 0); Patches.push(Checkˉcaller); Code.push(Checkˉcaller);
+        Code.push(Op(1, 42), Op(0x51));
+        const Failure = Buffer.concat(Code).length;
+        for (const Patch of Patches) Patch.writeUInt32LE(Failure, 1);
+        Code.push(Op(1, 0), Op(0x51));
+        const Helper = Crossing
+            ? Functionˉentry('Value', Pair, [], [Op(4, 0), Op(4, 0), Op(10, 1), Op(0x77), Op(0x68, 0), Op(0x51)], 3)
+            : Functionˉentry('Value', Pair, [Bytes], [Op(10, 0), Op(10, 0), Op(0x77), Op(5, 1),
+                Op(4, 0), Op(1, 42), Op(0x7b), Op(0x68, 0), Op(0x51)]);
+        Helper.Parameters = [Bytes];
+        Cases.push({ Name: Crossing ? 'checkpoint-crossing-range' : 'caller-and-callee-ranges',
+            Capacity: Crossing ? 12 : 512, Expected: 42, Input: Module([
+                Functionˉentry('Main', I32, [Bytes, Pair, Bytes], Code), Helper,
+            ], [Record('Shared', [Bytes, Bytes])]) });
+    }
+    Cases.push({ ...Cases[0], Name: 'allocation-refusal', Capacity: 127, Expected: 1 });
+    const Context = Buffer.alloc(112);
+    Context.writeUInt32LE(7, 0); Context.writeUInt32LE(112, 4);
+    Context.writeBigUInt64LE(1000000n, 8); Context.writeBigUInt64LE(1024n, 16);
+    Context.writeUInt32LE(2097152, 40); Context.writeUInt32LE(16777216, 56);
+    for (const [Index, Case] of Cases.entries()) {
+        process.stdout.write(`native record return item=${Index + 1}/${Cases.length} case=${Case.Name} arena=${Case.Capacity} status=Started\n`);
+        const Prefix = join(Work, `Record-${Case.Name}`), Source = Prefix + '.wvb', Object = Prefix + '.wvo';
+        await writeFile(Source, Case.Input, { flag: 'wx' });
+        await Requireˉsuccess(Lowerer, [Source, Object], `record-${Case.Name}-lower`);
+        await Requireˉsuccess(Lowerer, [Source, Prefix + '-repeat.wvo'], `record-${Case.Name}-repeat`);
+        if (!(await readFile(Object)).equals(await readFile(Prefix + '-repeat.wvo'))) Reject('Record return lowering is not deterministic.');
+        await Requireˉsuccess(Check, [Object], `record-${Case.Name}-check`);
+        const Image = Prefix + '.bin';
+        const Linked = await Requireˉsuccess(Link, ['0', 'Main', Image, Object], `record-${Case.Name}-link`);
+        const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
+        if (Entry === null) Reject('Record return test entry point is missing.');
+        const Application = Prefix + '.' + Nativeˉextension;
+        await Requireˉsuccess(Packageˉconsole, [`${Target}-x64-console-v1`, Image, Entry[1], Application], `record-${Case.Name}-package`);
+        const Packaged = await readFile(Application), Location = Packaged.indexOf(Context);
+        if (Location < 0 || Packaged.indexOf(Context, Location + 1) >= 0) Reject('Record test execution context is not unique.');
+        Packaged.writeUInt32LE(Case.Capacity, Location + 56);
+        await writeFile(Application, Packaged);
+        const Result = await Runˉprocess(Application, [], COMMAND_TIMEOUT_MILLISECONDS, `record-${Case.Name}-execute`);
+        if (Result.Code !== Case.Expected || Result.Exceeded || Result.Timedˉout || Result.Output !== '') {
+            Reject(`Record return execution failed: ${Case.Name}, code=${Result.Code}, output=${Result.Output}.`);
+        }
+    }
+    process.stdout.write(`native record return status=Passed cases=${Cases.length} iterations=1/256/4096 arena=1024 descriptor-limit=64 alias-depth=record/variant allocation-refusal=127\n`);
+    return Cases.length;
 }
 
 async function Runˉframeˉinitialization(Lowerer) {
@@ -897,7 +1084,7 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
         '<windows|linux> <repository-root> [--foundation-borrow-emission|' +
-        '--lowerer <application> <sha256> [--borrow-probe <wvb> <sha256>]]\n',
+        '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]]\n',
     );
     process.exit(64);
 }

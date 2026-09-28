@@ -6,6 +6,7 @@ authority library;
 
 
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉreclamation as Reclamation;
 import Compilerˉnativeˉx64ˉloweringˉcallˉarguments as Callˉarguments;
 
 fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
@@ -162,12 +163,17 @@ export fn Compilerˉnativeˉx64ˉargumentˉbytes(
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉreturnˉbytes(
-    Fields: u32,
-    Hasˉdescriptors: bool
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
 ) -> u32 {
-    var Result: u32 = 45u32 + Fields * 28u32;
-    if !Hasˉdescriptors { Result = Result + 11u32; }
-    return Result;
+    let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Typeˉindex);
+    if !Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(Input, Types, Typeˉindex) {
+        return 56u32 + Fields * 28u32;
+    }
+    return 52u32 + Fields * 28u32 + Bytesˉlength(
+        Reclamation.Compilerˉnativeˉx64ˉrecordˉreclamation(Input, Types, Typeˉindex)
+    );
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉhiddenˉrecordˉresult(
@@ -246,13 +252,15 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉcall(
 
 export fn Compilerˉnativeˉx64ˉemitˉrecordˉreturn(
     Result: bytes,
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Typeˉindex: u32,
-    Fields: u32,
-    Hasˉdescriptors: bool,
     Sourceˉslot: u32,
     Hiddenˉslot: u32,
     Frameˉbytes: u32
 ) -> bytes {
+    let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Typeˉindex);
+    let Hasˉdescriptors: bool = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(Input, Types, Typeˉindex);
     var Output: bytes = Typeˉtag(Result, Typeˉindex);
     Output = Loadˉrdx(Output, Hiddenˉslot);
     Output = Loadˉrax(Output, Sourceˉslot);
@@ -278,7 +286,15 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉreturn(
         Output = Appendˉu32(Output, Offset);
         Field = Field + 1u32;
     }
-    if !Hasˉdescriptors {
+    if Hasˉdescriptors {
+        // Read the checkpoint before the reclamation prefix borrows stack space.
+        Output = Appendˉbyte(Output, 139u8);
+        Output = Appendˉbyte(Output, 132u8);
+        Output = Appendˉbyte(Output, 36u8);
+        Output = Appendˉu32(Output, Hiddenˉslot * 16u32 + 8u32);
+        Output = Bytesˉconcat(Output,
+            Reclamation.Compilerˉnativeˉx64ˉrecordˉreclamation(Input, Types, Typeˉindex));
+    } else {
         Output = Appendˉbyte(Output, 139u8);
         Output = Appendˉbyte(Output, 132u8);
         Output = Appendˉbyte(Output, 36u8);

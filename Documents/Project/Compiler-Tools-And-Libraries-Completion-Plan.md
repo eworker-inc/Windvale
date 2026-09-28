@@ -57,6 +57,17 @@ checkpoints, copy reductions, and deferred interpreter writes are bounded
 mitigations. Guest allocation release does not establish reuse of the native
 storage executing the interpreter.
 
+The current source lowerer now reclaims call-local byte/text temporaries when
+returning descriptor-bearing records and variants. It compacts the union of
+returned ranges, including overlapping slices and nested fields, while keeping
+caller-owned ranges unchanged. A workload returning borrowed data holds its
+arena requirement at 1 KiB from one through 4,096 calls on Windows and Debian; a 127-byte arena
+still refuses an allocation that cannot fit. This closes that return-path
+retention defect, not general last-share release or the gates below. Pinned
+bootstrap tools require separate reconstruction and qualification before their
+identities change. The [native lowering contract](../../Specifications/Windvale-Native-X64-Lowering.md#record-return-arena-reclamation)
+owns the exact bounds and conservative fallback.
+
 Work proceeds through these gates, preserving existing qualified contracts:
 
 1. Carry descriptor and aggregate ownership through the current Windvale

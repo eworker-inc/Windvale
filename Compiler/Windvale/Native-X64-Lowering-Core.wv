@@ -3284,18 +3284,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                                                                     Function.Returnˉtype
                                                                 );
                                                             Bodyˉbytes = Bodyˉbytes +
-                                                                Records.Compilerˉnativeˉx64ˉrecordˉreturnˉbytes(
-                                                                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
-                                                                        Input,
-                                                                        Types,
-                                                                        Returnˉtypeˉindex
-                                                                    ),
-                                                                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
-                                                                        Input,
-                                                                        Types,
-                                                                        Returnˉtypeˉindex
-                                                                    )
-                                                                );
+                                                                Records.Compilerˉnativeˉx64ˉrecordˉreturnˉbytes(Input, Types, Returnˉtypeˉindex);
                                                         } else {
                                                         if Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(
                                                             Function.Returnˉtype
@@ -4777,18 +4766,7 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
             Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
                 Functionˉreturnˉtype
             );
-        return Records.Compilerˉnativeˉx64ˉrecordˉreturnˉbytes(
-            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
-                Input,
-                Types,
-                Returnˉtypeˉindex
-            ),
-            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
-                Input,
-                Types,
-                Returnˉtypeˉindex
-            )
-        );
+        return Records.Compilerˉnativeˉx64ˉrecordˉreturnˉbytes(Input, Types, Returnˉtypeˉindex);
     }
     if Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(
         Functionˉreturnˉtype
@@ -7488,17 +7466,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                                         );
                                     Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉreturn(
                                         Result,
-                                        Returnˉtypeˉindex,
-                                        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
-                                            Input,
-                                            Types,
-                                            Returnˉtypeˉindex
-                                        ),
-                                        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
-                                            Input,
-                                            Types,
-                                            Returnˉtypeˉindex
-                                        ),
+                                        Input, Types, Returnˉtypeˉindex,
                                         Returnˉslot,
                                         Hiddenˉresultˉslot,
                                         Frameˉbytes

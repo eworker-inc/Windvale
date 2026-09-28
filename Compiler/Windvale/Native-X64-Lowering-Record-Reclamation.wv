@@ -1,0 +1,140 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉrecordˉreclamation;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+
+// ABI 22 descriptors stay unchanged. Reclamation has no allocator metadata or
+// host calls: the callee may move only storage above its entry checkpoint.
+// RDX is the copied return backing; RAX is the entry arena cursor. The prefix
+// preserves RBX/RBP/RSI/RDI/R12-R14, reserves 64 address cells (512 bytes), and
+// sets R12 = checkpoint address, RBP = old arena end, R14 = cells, R13 = count.
+data Reclaimˉprefix: bytes = [
+    83, 85, 86, 87, 65, 84, 65, 85, 65, 86, 72, 129, 236, 0, 2, 0,
+    0, 73, 137, 230, 69, 49, 237, 73, 137, 196, 77, 3, 103, 48, 65, 139,
+    111, 60, 73, 3, 111, 48
+];
+
+// Filter active descriptors, invalidate generation-based growth, and validate
+// every arena range before moving data. A range crossing the checkpoint or
+// arena end conservatively preserves the arena. Insertion-sort descriptor
+// addresses by original data pointer (at most 64 cells / 2016 comparisons).
+// Copy the union of ranges in ascending address order with forward REP MOVSB,
+// rebasing overlapping aliases by the same displacement. Publish the cursor
+// only after all ranges survive. R10/R11 instruction/call budgets are untouched.
+data Reclaimˉranges: bytes = [
+    49, 219, 49, 201, 76, 57, 233, 115, 81, 77, 139, 12, 206, 65, 199, 65,
+    12, 0, 0, 0, 0, 65, 139, 81, 8, 133, 210, 116, 57, 73, 139, 1,
+    73, 59, 71, 48, 114, 48, 72, 57, 232, 119, 43, 73, 137, 192, 73, 1,
+    208, 15, 130, 168, 0, 0, 0, 73, 57, 232, 15, 135, 159, 0, 0, 0,
+    76, 57, 224, 115, 11, 77, 57, 224, 15, 135, 145, 0, 0, 0, 235, 6,
+    77, 137, 12, 222, 255, 195, 255, 193, 235, 170, 65, 137, 221, 185, 1, 0,
+    0, 0, 76, 57, 233, 115, 42, 77, 139, 12, 206, 77, 139, 1, 72, 137,
+    200, 72, 133, 192, 116, 19, 73, 139, 84, 198, 248, 76, 57, 2, 118, 9,
+    73, 137, 20, 198, 72, 255, 200, 235, 232, 77, 137, 12, 198, 255, 193, 235,
+    209, 76, 137, 230, 76, 137, 231, 49, 219, 252, 76, 57, 235, 115, 56, 77,
+    139, 12, 222, 73, 139, 1, 65, 139, 73, 8, 72, 137, 194, 72, 1, 202,
+    72, 57, 240, 114, 8, 73, 137, 57, 72, 137, 198, 235, 20, 72, 1, 248,
+    72, 41, 240, 73, 137, 1, 72, 57, 242, 118, 8, 72, 137, 209, 72, 41,
+    241, 243, 164, 255, 195, 235, 195, 73, 43, 127, 48, 65, 137, 127, 60, 72,
+    129, 196, 0, 2, 0, 0, 65, 94, 65, 93, 65, 92, 95, 94, 93, 91
+];
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Gatherˉfield(Output: bytes, Cell: u32) -> bytes {
+    // lea rcx,[rdx+cell*16]; mov [r14+r13*8],rcx; inc r13
+    var Result: bytes = Bytesˉconcat(Output, Bytesˉfromˉu8(72u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(35469u32));
+    Result = Appendˉu32(Result, Cell * 16u32);
+    return Bytesˉconcat(Result, Gatherˉsuffix);
+}
+
+data Gatherˉsuffix: bytes = [75, 137, 12, 238, 73, 255, 197];
+
+fn Gatherˉtype(
+    Output: bytes,
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Base: u32
+) -> bytes {
+    var Result: bytes = Output;
+    let Variant: bool = Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+        Types, Typeˉindex
+    ) == 3u8;
+    let Items: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types, Typeˉindex
+    );
+    var Item: u32 = 0u32;
+    while Item < Items && Bytesˉlength(Result) <= 65536u32 {
+        if Variant {
+            // cmp dword [rdx+base*16],case; jne next-case
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(47745u32));
+            Result = Appendˉu32(Result, Base * 16u32);
+            Result = Appendˉu32(Result, Item);
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(34063u32));
+            let Patch: u32 = Bytesˉlength(Result);
+            Result = Appendˉu32(Result, 0u32);
+            var Field: u32 = 0u32;
+            var More: bool = true;
+            while More && Field < 64u32 && Bytesˉlength(Result) <= 65536u32 {
+                let Shape: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+                        Input, Types, Typeˉindex, Item, Field
+                    );
+                if !Shape.Valid { More = false; } else {
+                    let Cell: u32 = Base +
+                        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉbackingˉoffset(
+                            Input, Types, Typeˉindex, Item, Field
+                        );
+                    if Shape.Type == 3u8 || Shape.Type == 6u8 {
+                        Result = Gatherˉfield(Result, Cell);
+                    } else if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) {
+                        Result = Gatherˉtype(Result, Input, Types,
+                            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Shape.Type), Cell);
+                    }
+                    Field = Field + 1u32;
+                }
+            }
+            Result = Bytesˉconcat(
+                Appendˉu32(Bytesˉslice(Result, 0u32, Patch),
+                    Bytesˉlength(Result) - Patch - 4u32),
+                Bytesˉslice(Result, Patch + 4u32, Bytesˉlength(Result) - Patch - 4u32)
+            );
+        } else {
+            let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+                Input, Types, Typeˉindex, Item
+            );
+            if Type == 3u8 || Type == 6u8 {
+                Result = Gatherˉfield(Result, Base + Item);
+            } else if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                let Recordˉcell: u32 = Base +
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(
+                        Input, Types, Typeˉindex, Item
+                    );
+                Result = Gatherˉtype(Result, Input, Types,
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type), Recordˉcell);
+            }
+        }
+        Item = Item + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉreclamation(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Gather: bytes = Gatherˉtype(Empty, Input, Types, Typeˉindex, 0u32);
+    // Keep code generation bounded for exponentially repeated nested cases.
+    // An oversized gather retains the previous conservative arena policy.
+    if Bytesˉlength(Gather) > 65536u32 { return Empty; }
+    return Bytesˉconcat(Bytesˉconcat(Reclaimˉprefix, Gather), Reclaimˉranges);
+}

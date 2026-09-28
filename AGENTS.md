@@ -91,9 +91,12 @@ implementation and its qualification remain work to do.
 
 Current native execution still uses bootstrap-era byte/text arena mechanics:
 checked allocation, restricted buffer reuse, and function-return checkpoints.
-Returning records containing byte/text references preserves the arena rather
-than reclaiming their obsolete intermediate buffers. The interpreter repeatedly
-replaces immutable byte representations of working state. Its guest allocation
+The current source lowerer compacts the byte/text ranges reachable from record
+and variant returns, reclaiming other allocations above the call's entry
+checkpoint. This does not release obsolete values below that checkpoint or
+provide general last-share ownership. Pinned bootstrap artifacts retain their
+recorded behavior until separately rebuilt and qualified. The interpreter
+repeatedly replaces immutable byte representations of working state. Its guest allocation
 accounting and reclamation are separate from the native storage running that
 interpreter. A guest release therefore does not prove native memory reuse.
 Deferred frame writes and fewer copies reduce pressure but do not complete
