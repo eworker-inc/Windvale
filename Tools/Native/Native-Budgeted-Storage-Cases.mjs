@@ -29,10 +29,10 @@ export async function Readˉbudgetˉoracle(Context) {
     const Application = await Prepareˉbudgetˉoracle(Context);
     const Output = join(Context.Work, 'Budget-States.bin');
     await Context.Requireˉsuccess(Application, [Output], 'budget-oracle-execute');
-    if ((await stat(Output)).size !== 31392) throw new Error('Budget oracle checkpoint length differs.');
+    if ((await stat(Output)).size !== 36624) throw new Error('Budget oracle checkpoint length differs.');
     const Bytes = await readFile(Output);
-    process.stdout.write('native budgeted storage accounting-oracle status=Passed states=12 bytes=31392\n');
-    return Array.from({ length: 12 }, (_, Index) => Bytes.subarray(Index * 2616, (Index + 1) * 2616));
+    process.stdout.write('native budgeted storage accounting-oracle status=Passed states=14 bytes=36624\n');
+    return Array.from({ length: 14 }, (_, Index) => Bytes.subarray(Index * 2616, (Index + 1) * 2616));
 }
 
 export function Buildˉbudgetedˉstorageˉcases(Oracle) {
@@ -63,7 +63,11 @@ export function Buildˉbudgetedˉstorageˉcases(Oracle) {
                 }
             }
             function Release(Slot = 0) { Begin(3, Slot); Call(); }
-            Body({ ...Fixture, Offset, Entry, Field, Allocate, Begin, Release });
+            function Replace(Bytes = 33, Prefix = 17, Slot = 0, Budget = 1) {
+                Request(11, { Capacity: Bytes, Length: Bytes, Alignment: 16, Handle: Slot });
+                Set('r13', 64, Budget); Set('r13', 68, 1); Set('r13', 88, Prefix);
+            }
+            Body({ ...Fixture, Offset, Entry, Field, Allocate, Begin, Release, Replace });
         }, true, Oracle));
     }
     Case('commit-and-release', 64, ({ Entry, Field, Allocate, Begin, Release, Check, Call, Emit, Load, Set, Oracleˉstate }) => {
@@ -218,6 +222,63 @@ export function Buildˉbudgetedˉstorageˉcases(Oracle) {
             for (const Field of [64, 72, 80, 88]) { Request(Operation, { Handle: 0 }); Set('r13', Field, 1); Call(1); }
         }
         Request(9, { Handle: 0 }); Call(); Oracleˉstate(10);
+    });
+    Case('replacement-copy-and-credit', 112, ({ Emit, Entry, Allocate, Replace, Call, Load, Save, Set, Check, Field, Request, Oracleˉstate }) => {
+        Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48);
+        Allocate(2, 1); Load(1, 'rdi'); Set('rdi', 0, 123456); Set('rdi', 8, 765432);
+        Emit('move_u32 eax 91', 'store_memory_u8 rdi none 1 16 al'); Replace(); Call(); Oracleˉstate(12);
+        Save(24, 8); Save(48, 9); Check('r13', 64, 1); Check('r13', 68, 1);
+        Check('r13', 44, 64); Check('rsp', 56, 112); Check('rsp', 88, 64);
+        Load(9, 'rdi'); Check('rdi', 0, 123456); Check('rdi', 8, 765432);
+        Check('rdi', 16, 91); Check('rdi', 20, 0); Check('rdi', 28, 0);
+        Field(1, 20, 1); Field(1, 32, 64); Field(2, 8, 0); Field(3, 0, 2);
+        Request(10, { Handle: 0 }); Call(4);
+        Request(9, { Handle: 8 }); Call(); Oracleˉstate(13); Check('rsp', 88, 0);
+    });
+    Case('replacement-refusals', 112, ({ Entry, Allocate, Replace, Set, Call, Field, Offset, Request }) => {
+        Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48); Allocate(2, 1);
+        for (const [Index, Value, Status] of [
+            [12, 17, 1], [12, 0, 1], [12, 4194305, 8], [24, 65, 4],
+            [28, 2, 4], [64, 2, 4], [68, 3, 4], [32, 3, 1], [32, 32, 8],
+            [36, 34, 7], [36, 16, 1], [72, 1, 1], [80, 1, 1], [88, 18, 1], [92, 1, 1],
+        ]) { Replace(); Set('r13', Index, Value); Call(Status); }
+        Set('rsp', Offset(1) + 24, 111); Replace(); Call(2);
+        Set('rsp', Offset(1) + 24, 4096); Set('rsp', Offset(1) + 16, 1); Replace(); Call(2);
+        Set('rsp', Offset(1) + 16, 64);
+        for (let Identity = 3; Identity <= 65; Identity++) Set('rsp', Offset(Identity), 4294967294);
+        Replace(); Call(6); Field(2, 0, 2);
+        Request(9, { Handle: 0 }); Call();
+    });
+    Case('replacement-physical-refusal', 96, ({ Entry, Allocate, Replace, Call, Request, Check }) => {
+        Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48); Allocate(2, 1);
+        Replace(); Call(3); Check('rsp', 56, 48);
+        Request(9, { Handle: 0 }); Call(); Check('rsp', 88, 0);
+    });
+    Case('replacement-fragmentation', 192, ({ Entry, Allocate, Replace, Release, Call, Request }) => {
+        Entry(1, 1, 0, 4096, 4, 192);
+        for (let Identity = 2; Identity <= 5; Identity++) Entry(Identity, 1, 1, 48);
+        for (let Identity = 2; Identity <= 5; Identity++) {
+            Allocate(Identity, 1, 17, (Identity - 2) * 8);
+        }
+        Release(8); Release(24); Replace(); Call(3); Request(5); Call();
+    });
+    Case('replacement-generation-selection', 112, ({ Entry, Allocate, Replace, Offset, Set, Call, Field, Request }) => {
+        Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48); Allocate(2, 1);
+        Set('rsp', Offset(3), 4294967293); Set('rsp', Offset(4), 3);
+        Replace(); Call(); Field(3, 0, -3); Field(4, 0, 6); Field(4, 8, 1);
+        Request(5); Call();
+    });
+    Case('replacement-repeated-reuse', 112, ({ Emit, Request, Set, Call, Save, Replace, Field, Check }) => {
+        Set('rsp', 13000, 1000); Emit('label Repeat_replacement');
+        Request(6); Set('r13', 64, 1); Set('r13', 68, 1); Set('r13', 72, 48); Call();
+        Save(64, 2);
+        Request(1, { Capacity: 17, Length: 17, Alignment: 16 });
+        Emit('load_memory_u64 rax rsp none 1 12816', 'store_memory_u64 r13 none 1 64 rax'); Call(); Save(24, 0);
+        Replace(); Call(); Save(24, 8); Request(9, { Handle: 8 }); Call();
+        Field(1, 20, 0); Field(1, 32, 0); Check('rsp', 88, 0);
+        Emit('load_memory_u32 eax rsp none 1 13000', 'subtract_i32 eax 1',
+            'store_memory_u32 rsp none 1 13000 eax', 'branch not_equal Repeat_replacement');
+        Field(2, 0, 2000); Field(3, 0, 2000); Check('rsp', 56, 112);
     });
     return Cases;
 }

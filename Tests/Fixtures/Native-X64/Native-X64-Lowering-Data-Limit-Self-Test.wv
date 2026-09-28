@@ -91,12 +91,12 @@ fn Checkˉborrowedˉshape(
         Typeˉreader.Compilerˉnativeˉx64ˉreturnˉshapeˉread(Input, 0u32, Length, Types);
     if Stored.Valid || Returned.Valid { return false; }
     var Minor: u32 = 0u32;
-    while Minor <= 40u32 {
+    while Minor <= 42u32 {
         let Versioned: Typeˉreader.Compilerˉnativeˉx64ˉshape =
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input, 0u32, Length, Types, Minor
             );
-        if Versioned.Valid != (Minor == 39u32) { return false; }
+        if Versioned.Valid != (Minor == 39u32 || Minor == 41u32) { return false; }
         Minor = Minor + 1u32;
     }
     var Prefix: u32 = 0u32;
@@ -183,7 +183,15 @@ fn Borrowˉshapes(Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes) -> bool {
         );
     if Rejected.Valid { return false; }
     var Minor: u32 = 0u32;
-    while Minor <= 40u32 {
+    while Minor <= 42u32 {
+        let Unit: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉfromˉu8(20u8), 0u32, 1u32, Types, Minor
+            );
+        if Unit.Valid != (Minor == 24u32 || Minor == 25u32 ||
+                Minor == 27u32 || Minor == 41u32) { return false; }
+        if Unit.Valid && (Unit.Type != 5u8 || Unit.Identity != 20u32 ||
+                Unit.Next != 1u32 || Unit.Borrowˉkind != 0u8) { return false; }
         let Budget: Typeˉreader.Compilerˉnativeˉx64ˉshape =
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Bytesˉfromˉu8(36u8), 0u32, 1u32, Types, Minor
@@ -240,7 +248,7 @@ fn Checkˉfoundationˉview(Section: bytes, Expected: u8) -> bool {
     let Input: bytes = Bytesˉconcat(Section,
         Bytesˉconcat(Bytesˉfromˉu8(29u8), Bytesˉfromˉu32ˉlittle(0u32)));
     var Minor: u32 = 0u32;
-    while Minor <= 40u32 {
+    while Minor <= 42u32 {
         let Shape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input, Length, Length + 5u32, Types, Minor

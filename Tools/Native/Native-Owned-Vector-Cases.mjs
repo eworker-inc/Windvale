@@ -63,7 +63,7 @@ export async function Runˉownedˉvectorˉcases(Context, Lowerer) {
     if (Body !== Bytes.length || !(await readFile(Template)).subarray(0, Body).equals(Bytes)) {
         throw new Error('Owned entry template differs from assembled runtime source.');
     }
-    for (const [Name, Offset] of [['split', 442], ['vector', 705], ['release', 1151]]) {
+    for (const [Name, Offset] of [['split', 442], ['vector', 705], ['release', 1151], ['access', 1451], ['grow', 1686]]) {
         if (!Templateˉmap.Output.includes(`name=Windvale_owned_${Name} address=${Offset} `)) {
             throw new Error(`Owned ${Name} helper offset differs.`);
         }

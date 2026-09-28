@@ -2,7 +2,8 @@
 
 ## Status
 
-Candidate x64 compiler/runtime integration for a bounded WVB 1.24 subset.
+Candidate x64 compiler/runtime integration for bounded WVB 1.24, 1.25, 1.27
+and 1.41 subsets.
 The current source lowerer emits **ABI 24**, with **execution context 10**,
 for that subset. Source signatures and WVB bytes are unchanged. ABI 22/23,
 their consumers and pinned bootstrap products retain their recorded behavior.
@@ -10,7 +11,9 @@ This path has a dedicated test caller; normal installed launchers do not yet
 construct context 10. It is not installed qualification or complete Libraries 1.0.
 
 Reserved scalar Vectors now own physical storage and a canonical allocation
-lease. An explicit scope release returns the storage and parent budget credit.
+lease. Append and indexed scalar reads use that backing directly. Explicit
+growth reserves replacement storage before releasing the old allocation.
+An explicit scope release returns the storage and parent budget credit.
 Normal return and terminal traps tear down the enclosing execution domain.
 The interpreter's working storage and shared immutable backing still need
 integration. No reduction in ordinary interpreter process memory is claimed.
@@ -19,8 +22,8 @@ integration. No reduction in ordinary interpreter process memory is claimed.
 
 The module is capability-free Core, with no static data and exactly one exported
 `Main(Budget: Memoryˉbudget) -> i32`. WVB input is at most 1 MiB, Main code at
-most 4,096 bytes, total locals at most 64, and the projected native frame at
-most 128 cells (2,048 bytes). The shared complete WVB verifier runs before
+most 4,096 bytes, total locals at most 128, and the projected native frame at
+most 240 cells (3,840 bytes), below one Windows stack page. The shared complete WVB verifier runs before
 native admission; the native ownership analysis is an additional restriction.
 
 This first path admits scalar control flow, flat scalar records, enums,
@@ -30,13 +33,21 @@ owner release (`CD` immediately followed by `50`). Vector elements are `i32`,
 `bool`, `u8`, `u32`, `i64` or `u64`; elements use eight-byte physical cells.
 Vectors containing records or resource-owning values are rejected.
 
+The additional operations are unit constants (`C3`), length (`CA`), append
+(`D0`), reserved growth (`D1`) and indexed borrowed scalar reads (`E3`). Unit
+uses its exact shape 20 identity; it is not interchangeable with an integer.
+Append uses the canonical `Result<unit, Vectorˉappendˉfailure<T>>`; growth uses
+`Result<unit, Allocationˉfailure>`. Native admission checks their exact layouts.
+
 Opaque owners cannot be loaded as ordinary values, forged from integers,
 copied, used after a move or consumed twice. Control-flow joins and backedges
 must agree on their live owners: this target does not silently discard a
 branch-specific owner. Explicit release accepts a budget or a Vector local;
 general aggregate drops are not yet admitted. The entry wrapper owns remaining
-owners until Main returns or traps. Helper calls, owned returns, borrowed
-Vector access, append, growth, freeze, sharing, hosted capabilities and WVB
+owners until Main returns or traps. The current source borrow validator freezes
+a Vector after indexed access for the remaining function; moving it into a
+later `using` binding is rejected. Such programs use terminal domain cleanup.
+Helper calls, owned returns, aggregate drops, freeze, sharing, hosted capabilities and WVB
 1.29/1.42 remain unsupported by this native subset.
 
 ## Context and ownership
@@ -96,6 +107,22 @@ Failures report the requested physical charge and the budget's pre-call
 available bytes. Every typed construction outcome consumes the supplied budget;
 refusal releases it locally. Split refusal preserves its parent exactly.
 
+Append within capacity writes one scalar cell and increments length without
+allocating. A full Vector returns `Capacityˉexhausted` with its maximum and the
+original input value, preserving length and contents. Indexed reads require
+`index < length`; an out-of-range index is a terminal invalid-limit failure.
+
+Growth requires a strictly larger positive capacity. It borrows both the Vector
+and funding budget. The complete replacement charge must fit the funding
+budget while the old allocation is still live; this deliberately exposes peak
+memory rather than charging only the difference. Adapter operation 11 reserves
+zeroed backing, copies the header and live cells, transfers the owning local
+to the new handle, and releases the old backing and lease. The helper updates
+the capacity header after the adapter succeeds. Typed refusal leaves the
+Vector, funding budget, accounting generations and both storage domains
+unchanged. The funding budget remains owned after success or refusal. Invalid
+limits are terminal; the other allocation reasons match construction above.
+
 Explicit Vector release uses the validated handle-to-lease binding, releases
 the committed allocation, and credits its accounting tree exactly once.
 Releasing a budget with live descendants defers its parent's credit until the
@@ -119,7 +146,15 @@ charge. Tests also cover typed refusal, invalid limits, fuel/depth cleanup,
 old/short contexts, deterministic output and rejected ownership violations.
 This is a bounded allocation-reuse result, not a general working-set benchmark.
 
-Preparation now includes four products: lowerer, borrow probe, budget oracle
-and owned Vector source fixture. The behavior phase reuses them. Explicit
+The growth workload appends 7, grows capacity from one to two, appends 35 and
+reads back 42. Its arena is 80 bytes: old charge 32 plus replacement charge 48,
+with zero live charge after return. A second workload checks that a full append
+returns the original item. Refusal and index-boundary mutations also require
+terminal cleanup; the adapter tests separately compare complete pre/post
+snapshots for ordinary refusals.
+
+Preparation includes six products: lowerer, borrow probe, budget oracle,
+scope, growth and append-refusal source fixtures. The behavior phase reuses them. Explicit
 digest-checked products may be supplied with `--lowerer`, `--borrow-probe`,
-`--budget-oracle` and `--owned-vector` to the existing native owner.
+`--budget-oracle`, `--owned-vector`, `--owned-growth` and `--owned-append`
+to the existing native owner.

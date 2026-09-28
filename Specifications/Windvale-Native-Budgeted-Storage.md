@@ -10,7 +10,7 @@ consumes a budget into a lease and owns real committed backing; release returns
 that backing and credits the accounting tree. Refusal changes neither resource.
 
 The candidate [native owned-collections path](Windvale-Native-Owned-Collections.md)
-uses this adapter for scalar Vector reservation and release. Wider collection
+uses this adapter for scalar Vector reservation, replacement growth and release. Wider collection
 code and interpreter working storage still need integration. Source signatures,
 WVB, native ABI 22/23 and pinned bootstrap identities are unchanged. No ordinary
 interpreter process-memory improvement or installed qualification is claimed.
@@ -62,7 +62,8 @@ physical charge `align_up(capacity + 16, 16)`. The charge must fit the consumed
 budget's maximum minus its outstanding child reservations. It does not change
 the reservation already held by that budget's parent. Logical shrinking keeps
 the full committed charge; subsequent logical growth within capacity remains
-allocation-free. General capacity growth, sharing, transfer to another domain
+allocation-free. Replacement growth uses a separate full-charge reservation
+while the old allocation remains live. In-place capacity growth, sharing, transfer to another domain
 and a different collection's public accounting formula are outside this leaf.
 Compiler integration must preserve each collection's accepted charging contract.
 
@@ -81,7 +82,7 @@ All integer fields are unsigned and little-endian. R8 points to a
 16-byte-aligned 1,088-byte adapter state. R9 points to an 8-byte-aligned 96-byte
 request. EAX returns status; nonvolatile registers and R10/R11 survive. The
 existing native x64 shadow-space and stack-alignment requirements apply.
-The adapter uses 296 bytes below its entry stack pointer, plus the bounded
+The adapter uses 392 bytes below its entry stack pointer, plus the bounded
 nested validator or physical-leaf call. Its temporary request and extent table
 are stack-owned and do not outlive the call.
 
@@ -105,7 +106,7 @@ lease. An active accounting lease whose owner has been released may remain
 without backing while children survive; it is not an owned live lease.
 
 The first 64 request bytes use the physical-request fields with these changes:
-size at +4 is **96**, operation at +8 is 0 through 10, and the physical maximum
+size at +4 is **96**, operation at +8 is 0 through 11, and the physical maximum
 field at +56 is always zero. The adapter computes authority from the budget,
 rather than trusting a caller-supplied byte maximum. The tail is:
 
@@ -164,6 +165,23 @@ in the physical contract.
 10. **Inspect bound handle:** same input as operation 9; return its borrowed
     pointer and charge without acquiring another owner. No lease metadata is
     published. The same lifetime and serialization rules as operation 4 apply.
+11. **Replace bound backing:** +24 is the old physical handle, +64 a borrowed
+    owned budget token, +12 the new capacity, +32 alignment, +36 new logical
+    length and +88 the prefix byte count to preserve. Lease fields +72/+80 and
+    result fields must be zero. Capacity must increase; the prefix must fit
+    both old and new logical lengths. Preflight the complete replacement charge,
+    one additional budget child and an available accounting generation. Reserve
+    new zeroed storage while the old backing is live, copy the prefix, commit a
+    new child lease and binding, then release and credit the old pair. Success
+    publishes the replacement handle, charge and pointer at +24/+44/+48. The
+    borrowed budget token remains unchanged; no lease metadata is published.
+
+Replacement advances an inactive nonroot accounting slot exactly as a split
+followed by lease construction would, skipping slots whose next even generation
+would overflow. No generation or reservation is consumed on refusal. The copy
+is bounded by the physical 4 MiB capacity ceiling. Serialized preflight makes
+old-pair release infallible after commit; a detected internal invariant failure
+there is terminal, never reported as an ordinary atomic refusal.
 
 Status codes retain the physical vocabulary: 1 invalid request, 2 insufficient
 budget authority, 3 physical exhaustion/fragmentation, 4 stale or mismatched
@@ -185,10 +203,10 @@ Release and teardown are bounded local operations independent of provider loss.
 
 ## Verification and remaining integration
 
-The existing native lowering development owner includes twelve adapter cases
+The existing native lowering development owner includes eighteen adapter cases
 alongside the ten physical-storage cases. It builds the
 [accounting oracle](../Tests/Fixtures/Native-X64/Budgeted-Storage-Accounting-Oracle.wv)
-from the existing Windvale budget core and compares all 2,616 bytes at twelve
+from the existing Windvale budget core and compares all 2,616 bytes at fourteen
 matching checkpoints, including consumption, deferred parent release, ancestor
 credit and teardown. The native implementation is not the oracle's generator.
 Corruption tests cover cycles, overflowing child sums, mismatched bindings,
@@ -196,12 +214,18 @@ stale tokens and request overlap. Rejected operations compare snapshots of all
 state, backing and request inputs. The repeated-credit workload performs 32,768
 Split/reserve/release cycles in a 64-byte arena, returns the parent's reservation to zero each cycle,
 and enforces peak physical charge 48 with fixed metadata 5,816 bytes.
+Replacement adds exact content/padding checks, accounting-oracle comparison,
+full-state refusal snapshots, insufficient full-charge authority, fragmented
+backing, generation exhaustion and 1,000 replacement cycles in a 112-byte
+arena with peak charge 112 and zero final live charge. The owner runs at most
+two independent native fixtures concurrently and drains them before cleanup.
 
 Use `Test-Native-Unsafe-Write-Pointer-Lowering.mjs <host> <repo> --owned-storage`
 with a prepared compiler, or append `--budget-oracle <wvb> <sha256>` to supply
 an explicitly checked oracle product. The ordinary `--prepare-only` phase now
-prepares four products: lowerer, borrow probe, accounting oracle and owned Vector fixture. The
+prepares six products: lowerer, borrow probe, accounting oracle and the scope,
+growth and append-refusal Vector fixtures. The
 prepared behavior phase must reuse them and may not reconstruct the compiler.
-Wider collection operations, general aggregate cleanup, shared immutable
-backing, capacity replacement and interpreter migration remain integrations
+Owned helper transfer, general aggregate cleanup, shared immutable
+backing, in-place capacity growth and interpreter migration remain integrations
 after the bounded native Vector path.

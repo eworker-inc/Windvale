@@ -4,6 +4,7 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
@@ -235,7 +236,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     Branches, Branch + 8u32
                 );
                 if Reachable {
-                    if Bytesˉreadˉu16ˉlittle(Input, 6u32) == 24u32 &&
+                    if Nominalˉtypes.Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) &&
                         (Availableˉlow != Branchˉlow || Availableˉhigh != Branchˉhigh) {
                         // This target lowers explicit drops. A join may not
                         // silently forget an owner that survives on one path.
@@ -533,9 +534,16 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 return false;
             }
         }
-        if Opcode == 206u8 {
+        if Opcode == 208u8 || Opcode == 209u8 || Opcode == 227u8 {
+            let Vectorˉowner: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
+            if Vectorˉowner >= Locals || Bytesˉreadˉu8(Tracked, Vectorˉowner) != 1u8 ||
+                !Available(Availableˉlow, Availableˉhigh, Bytesˉreadˉu32ˉlittle(Ranks, Vectorˉowner * 4u32)) { return false; }
+        }
+        if Opcode == 206u8 || Opcode == 209u8 {
+            var Fundingˉoffset: u32 = 1u32;
+            if Opcode == 209u8 { Fundingˉoffset = 5u32; }
             let Parent: u32 = Bytesˉreadˉu32ˉlittle(
-                Input, Codeˉoffset + Cursor + 1u32
+                Input, Codeˉoffset + Cursor + Fundingˉoffset
             );
             if Parent >= Locals || Bytesˉreadˉu8(Tracked, Parent) != 1u8 ||
                 Bytesˉreadˉu8(Localˉtypes, Parent) != 10u8 ||

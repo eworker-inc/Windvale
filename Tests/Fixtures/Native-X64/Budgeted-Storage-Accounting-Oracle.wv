@@ -55,7 +55,17 @@ export fn Main() -> i32 {
     let Closed: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Teardownˉmemoryˉbudgets(Grandˉlease.State);
     if !Closed.Valid { return 15; }
     States = Bytesˉconcat(States, Closed.State);
-    if Bytesˉlength(States) != 31392u32 { return 16; }
+    let Replacementˉbudget: Budgets.Memoryˉbudgetˉsplitˉresult = Budgets.Splitˉmemoryˉbudget(Lease.State, Rootˉtoken, 64u64, 0u32);
+    if !Replacementˉbudget.Valid || !Replacementˉbudget.Succeeded { return 16; }
+    let Replacement: Budgets.Allocationˉleaseˉresult = Budgets.Constructˉallocationˉlease(Replacementˉbudget.State, Replacementˉbudget.Token, 64u64, 64u64, 16u32);
+    if !Replacement.Valid || !Replacement.Succeeded { return 17; }
+    let Replaced: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉallocationˉlease(Replacement.State, Lease.Token, 48u64, 48u64, 16u32);
+    if !Replaced.Valid { return 18; }
+    States = Bytesˉconcat(States, Replaced.State);
+    let Replacementˉreleased: Budgets.Memoryˉbudgetˉreleaseˉresult = Budgets.Releaseˉallocationˉlease(Replaced.State, Replacement.Token, 64u64, 64u64, 16u32);
+    if !Replacementˉreleased.Valid { return 19; }
+    States = Bytesˉconcat(States, Replacementˉreleased.State);
+    if Bytesˉlength(States) != 36624u32 { return 20; }
     file.write_bytes(process.argument(0u32), States);
     return 0;
 }

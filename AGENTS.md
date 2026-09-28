@@ -116,9 +116,11 @@ The [budgeted adapter](Specifications/Windvale-Native-Budgeted-Storage.md) now
 binds this fixed 64-slot profile to canonical budget/lease accounting, preserving
 both domains on refusal and crediting parents on release. The candidate
 [native collection path](Specifications/Windvale-Native-Owned-Collections.md)
-now connects single-Main scalar Vector reservation, explicit scope release and
-terminal teardown through ABI 24/context 10. Wider Vector operations, owned
-helper/aggregate transfer, normal launchers and interpreter working state still
+now connects single-Main scalar Vector reservation, append, length, indexed
+reads, explicit replacement growth, scope release and terminal teardown through
+ABI 24/context 10. Growth funds the full replacement while the old backing is
+live and preserves both owners on refusal. Owned helper/aggregate transfer,
+normal launchers and interpreter working state still
 need integration. Connect those lifetimes and charges before describing the
 1.0 storage path as complete.
 

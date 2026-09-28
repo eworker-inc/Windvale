@@ -1,0 +1,48 @@
+#!wv/1 en@1
+module Nativeˉownedˉvectorˉgrowth;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    let Child: Results.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> = Memory.Split(borrow mut Parent, 32u64, 0u32);
+    match Child {
+        case Results.Result.Failure { Error: Splitˉfailure } { return 1; }
+        case Results.Result.Valid { Value: Reservation } {
+            let Created: Results.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> = Collections.Vectorˉconstructˉreserved::<i32>(Reservation, 1u64);
+            match Created {
+                case Results.Result.Failure { Error: Createˉfailure } { return 2; }
+                case Results.Result.Valid { Value: Initial } {
+                    var Values: Collections.Vector<i32> = Initial;
+                    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<i32> > = Collections.Vectorˉappend::<i32>(borrow mut Values, 7);
+                    match Appended {
+                        case Results.Result.Failure { Error: Appendˉfailure } { return 3; }
+                        case Results.Result.Valid { Value: Acceptedˉfirst } {
+                            let Grown: Results.Result<unit, Memory.Allocationˉfailure> = Collections.Vectorˉgrowˉreserved::<i32>(borrow mut Values, borrow mut Parent, 2u64);
+                            match Grown {
+                                case Results.Result.Failure { Error: Growˉfailure } { return 4; }
+                                case Results.Result.Valid { Value: Acceptedˉgrowth } {
+                                    let Last: Results.Result<unit, Collections.Vectorˉappendˉfailure<i32> > = Collections.Vectorˉappend::<i32>(borrow mut Values, 35);
+                                    match Last {
+                                        case Results.Result.Failure { Error: Lastˉfailure } { return 5; }
+                                        case Results.Result.Valid { Value: Acceptedˉlast } {
+                                            if Collections.Vectorˉlength(borrow Values) != 2u64 { return 6; }
+                                            let Sum: i32 = Collections.Vectorˉborrowˉat::<i32>(borrow Values, 0u64) +
+                                                Collections.Vectorˉborrowˉat::<i32>(borrow Values, 1u64);
+                                            return Sum;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

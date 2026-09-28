@@ -253,6 +253,9 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
     if Limit > Bytesˉlength(Input) { return Invalidˉshape(); }
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Kind == 20u8 {
+        return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, 5u8, 20u32, 0u8);
+    }
     if Kind == 23u8 {
         // Shape readers also accept isolated descriptors, without a WVB header.
         // Version admission belongs to the enclosing type-table reader.
@@ -327,6 +330,7 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
     if Limit > Bytesˉlength(Input) ||
         !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Kind == 20u8 && !Compilerˉnativeˉx64ˉownedˉminor(Minor) { return Invalidˉshape(); }
     if Kind == 29u8 {
         if Minor != 39u32 || !Rangeˉisˉvalid(Limit, Cursor, 5u32) {
             return Invalidˉshape();
@@ -342,11 +346,12 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
         );
     }
     if Kind == 37u8 {
-        if Minor != 39u32 { return Invalidˉshape(); }
+        if Minor != 39u32 && Minor != 41u32 { return Invalidˉshape(); }
         let Payload: Compilerˉnativeˉx64ˉshape =
             Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor + 1u32, Limit, Types);
         // One ordinary native payload only: no nested loans or opaque owners.
         if !Payload.Valid || Payload.Borrowˉkind != 0u8 ||
+            (Payload.Type == 5u8 && Payload.Identity == 20u32) ||
             (Payload.Type == 10u8 && (Payload.Identity == 25u32 ||
                 (Payload.Identity >= 2147483648u32 && Payload.Identity != 4294967295u32))) {
             return Invalidˉshape();
@@ -390,7 +395,8 @@ fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
         }
     }
     if Kind == 25u8 { return Cursor + 1u32; }
-    if Kind == 23u8 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 24u32 {
+    if Kind == 20u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) { return Cursor + 1u32; }
+    if Kind == 23u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
         if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return 0u32; }
         return Cursor + 5u32;
     }
@@ -409,7 +415,8 @@ fn Skipˉhostedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
         return Cursor + 1u32;
     }
     if Kind == 25u8 { return Cursor + 1u32; }
-    if Kind == 23u8 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 24u32 {
+    if Kind == 20u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) { return Cursor + 1u32; }
+    if Kind == 23u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
         if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return 0u32; }
         return Cursor + 5u32;
     }
@@ -498,7 +505,7 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         if Kind != 1u8 && Kind != 2u8 {
             if !Allowˉvariants ||
                 (Kind != 3u8 && Kind != 7u8 && Kind != 8u8 &&
-                    !(Kind == 5u8 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 24u32)) {
+                    !(Kind == 5u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)))) {
                 return Invalid(Input);
             }
         }
@@ -1490,18 +1497,22 @@ export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉvalueˉtype(
 export fn Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(
     Input: bytes, Types: Compilerˉnativeˉx64ˉtypes, Resultˉtype: u32
 ) -> bool {
-    return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, false);
+    return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, 0u32);
 }
 
 export fn Compilerˉnativeˉx64ˉvectorˉresultˉisˉexact(
     Input: bytes, Types: Compilerˉnativeˉx64ˉtypes, Resultˉtype: u32
 ) -> bool {
-    return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, true);
+    return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, 1u32);
+}
+
+export fn Compilerˉnativeˉx64ˉunitˉallocationˉresultˉisˉexact(Input: bytes, Types: Compilerˉnativeˉx64ˉtypes, Resultˉtype: u32) -> bool {
+    return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, 2u32);
 }
 
 fn Allocationˉresultˉisˉexact(
     Input: bytes, Types: Compilerˉnativeˉx64ˉtypes,
-    Resultˉtype: u32, Vector: bool
+    Resultˉtype: u32, Mode: u32
 ) -> bool {
     if Resultˉtype >= Types.Count ||
         Compilerˉnativeˉx64ˉtypeˉkind(Types, Resultˉtype) != 3u8 ||
@@ -1521,9 +1532,7 @@ fn Allocationˉresultˉisˉexact(
         return false;
     }
     let Valid: Compilerˉnativeˉx64ˉshape =
-        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
-            Input, Types, Resultˉtype, 0u32, 0u32
-        );
+        Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Types, Resultˉtype, 0u32);
     let Extraˉvalid: Compilerˉnativeˉx64ˉshape =
         Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
             Input, Types, Resultˉtype, 0u32, 1u32
@@ -1537,11 +1546,12 @@ fn Allocationˉresultˉisˉexact(
             Input, Types, Resultˉtype, 1u32, 1u32
         );
     var Ownerˉmatches: bool = Valid.Identity == 25u32;
-    if Vector {
+    if Mode == 1u32 {
         Ownerˉmatches = Valid.Identity >= 2147483648u32 &&
             Valid.Identity != 4294967295u32;
     }
-    if !Valid.Valid || Valid.Type != 10u8 || !Ownerˉmatches ||
+    if Mode == 2u32 { Ownerˉmatches = Valid.Type == 5u8 && Valid.Identity == 20u32; }
+    if !Valid.Valid || (Mode != 2u32 && Valid.Type != 10u8) || !Ownerˉmatches ||
         Extraˉvalid.Valid || !Failure.Valid || Extraˉfailure.Valid ||
         !Compilerˉnativeˉx64ˉtypeˉisˉrecord(Failure.Type) {
         return false;
@@ -2108,4 +2118,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Resultˉu32ˉvalues));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bodyˉbytes + Emittedˉbytes));
     return Bytesˉconcat(Result, Resultˉstack);
+}
+
+export fn Compilerˉnativeˉx64ˉownedˉminor(Minor: u32) -> bool {
+    return Minor == 24u32 || Minor == 25u32 || Minor == 27u32 || Minor == 41u32;
 }

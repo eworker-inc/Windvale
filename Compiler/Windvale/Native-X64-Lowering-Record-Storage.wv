@@ -156,12 +156,15 @@ fn Popˉrecords(Records: bytes, Depth: u32) -> bytes {
 }
 
 fn Instructionˉsize(Opcode: u8) -> u32 {
+    if Opcode == 195u8 { return 1u32; }
     if Opcode == 1u8 { return 5u32; }
     if Opcode == 2u8 { return 2u32; }
     if Opcode == 3u8 { return 5u32; }
     if Opcode == 4u8 { return 5u32; }
     if Opcode == 205u8 { return 5u32; }
-    if Opcode == 206u8 || Opcode == 207u8 { return 9u32; }
+    if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 227u8 { return 9u32; }
+    if Opcode == 209u8 { return 13u32; }
+    if Opcode == 202u8 { return 5u32; }
     if Opcode == 5u8 { return 5u32; }
     if Opcode == 6u8 { return 5u32; }
     if Opcode == 7u8 { return 5u32; }
@@ -1135,9 +1138,17 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
             Handled = true;
         }
-        if Opcode == 206u8 || Opcode == 207u8 || Opcode == 220u8 {
+        if Opcode == 195u8 || Opcode == 202u8 {
+            if Opcode == 202u8 && Depth == 0u32 { return Invalid(Input); }
+            Stackˉrecords = Pushˉscalar(Stackˉrecords); Depth = Depth + 1u32; Handled = true;
+        }
+        if Opcode == 227u8 {
+            if Depth == 0u32 { return Invalid(Input); }
+            Handled = true;
+        }
+        if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 || Opcode == 220u8 {
             var Operands: u32 = 2u32;
-            if Opcode == 207u8 { Operands = 1u32; }
+            if Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 { Operands = 1u32; }
             if Depth < Operands || Blockˉrecordˉvalues >= 256u32 {
                 return Invalid(Input);
             }
@@ -1153,10 +1164,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Scratchˉstorageˉalignmentˉrecord != 4294967295u32 {
                 return Invalid(Input);
             }
-            let Scratchˉstorageˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
-                Input,
-                Codeˉoffset + Cursor + 5u32
-            );
+            let Scratchˉstorageˉtypeˉindex: u32 = Resourceˉresultˉtype(Input, Codeˉoffset + Cursor, Opcode);
             if Scratchˉstorageˉtypeˉindex >= Types.Count ||
                 Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
                     Types,
@@ -1656,4 +1664,9 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         Scratchˉblockˉoffsets,
         Instructions
     );
+}
+
+fn Resourceˉresultˉtype(Input: bytes, Offset: u32, Opcode: u8) -> u32 {
+    if Opcode == 209u8 { return Bytesˉreadˉu32ˉlittle(Input, Offset + 9u32); }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
 }

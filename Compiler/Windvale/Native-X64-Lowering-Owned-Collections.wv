@@ -7,6 +7,7 @@ authority library;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Types;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Instructions;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Storage;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Frames;
 
 // Linked from Runtime/Native/X64-Owned-Entry.wva with Main immediately after
 // this prefix. The native owner rebuilds and compares these bytes and offsets.
@@ -21,7 +22,7 @@ data Entryˉtemplate: bytes = [
     0, 0, 137, 132, 36, 96, 0, 0, 0, 137, 132, 36, 100, 0, 0, 0, 184, 96, 0, 0, 0, 137, 132, 36,
     36, 0, 0, 0, 184, 8, 0, 0, 0, 137, 132, 36, 40, 0, 0, 0, 73, 139, 132, 32, 32, 0, 0, 0,
     72, 137, 132, 36, 48, 0, 0, 0, 73, 137, 225, 73, 129, 193, 32, 0, 0, 0, 73, 139, 132, 36, 120, 0,
-    0, 0, 255, 208, 133, 192, 15, 133, 171, 0, 0, 0, 76, 137, 226, 232, 156, 4, 0, 0, 72, 137, 132, 36,
+    0, 0, 255, 208, 133, 192, 15, 133, 171, 0, 0, 0, 76, 137, 226, 232, 12, 8, 0, 0, 72, 137, 132, 36,
     128, 0, 0, 0, 49, 192, 185, 32, 0, 0, 0, 72, 137, 132, 12, 0, 0, 0, 0, 129, 193, 8, 0, 0,
     0, 129, 249, 128, 0, 0, 0, 15, 130, 230, 255, 255, 255, 184, 1, 0, 0, 0, 137, 132, 36, 32, 0, 0,
     0, 184, 96, 0, 0, 0, 137, 132, 36, 36, 0, 0, 0, 184, 5, 0, 0, 0, 137, 132, 36, 40, 0, 0,
@@ -31,7 +32,7 @@ data Entryˉtemplate: bytes = [
     0, 0, 72, 139, 132, 36, 128, 0, 0, 0, 233, 9, 0, 0, 0, 184, 9, 0, 0, 0, 72, 193, 224, 32,
     72, 129, 196, 144, 0, 0, 0, 65, 92, 195, 65, 84, 65, 85, 83, 85, 86, 72, 129, 236, 128, 0, 0, 0,
     77, 137, 196, 73, 137, 197, 72, 137, 211, 137, 206, 129, 254, 64, 0, 0, 0, 15, 135, 206, 0, 0, 0, 232,
-    65, 3, 0, 0, 133, 192, 15, 133, 193, 0, 0, 0, 72, 139, 172, 36, 112, 0, 0, 0, 49, 192, 72, 137,
+    177, 6, 0, 0, 133, 192, 15, 133, 193, 0, 0, 0, 72, 139, 172, 36, 112, 0, 0, 0, 49, 192, 72, 137,
     132, 36, 112, 0, 0, 0, 184, 6, 0, 0, 0, 137, 132, 36, 40, 0, 0, 0, 72, 137, 156, 36, 104, 0,
     0, 0, 137, 180, 36, 120, 0, 0, 0, 77, 139, 132, 39, 112, 0, 0, 0, 73, 137, 225, 73, 129, 193, 32,
     0, 0, 0, 73, 139, 132, 39, 120, 0, 0, 0, 255, 208, 133, 192, 15, 132, 81, 0, 0, 0, 129, 248, 2,
@@ -41,7 +42,7 @@ data Entryˉtemplate: bytes = [
     0, 233, 24, 0, 0, 0, 73, 137, 132, 36, 0, 0, 0, 0, 72, 139, 132, 36, 96, 0, 0, 0, 73, 137,
     132, 36, 16, 0, 0, 0, 49, 192, 233, 5, 0, 0, 0, 184, 1, 0, 0, 0, 72, 129, 196, 128, 0, 0,
     0, 94, 93, 91, 65, 93, 65, 92, 195, 65, 84, 65, 85, 83, 85, 86, 72, 129, 236, 128, 0, 0, 0, 77,
-    137, 196, 73, 137, 197, 72, 137, 214, 72, 133, 246, 15, 132, 138, 1, 0, 0, 232, 63, 2, 0, 0, 133, 192,
+    137, 196, 73, 137, 197, 72, 137, 214, 72, 133, 246, 15, 132, 138, 1, 0, 0, 232, 175, 5, 0, 0, 133, 192,
     15, 133, 125, 1, 0, 0, 72, 139, 172, 36, 112, 0, 0, 0, 187, 255, 255, 255, 255, 72, 137, 216, 72, 193,
     227, 32, 72, 9, 195, 72, 137, 240, 72, 193, 232, 61, 72, 133, 192, 15, 133, 226, 0, 0, 0, 72, 137, 243,
     72, 193, 227, 3, 72, 129, 195, 39, 0, 0, 0, 15, 130, 191, 0, 0, 0, 72, 129, 227, 240, 255, 255, 255,
@@ -65,12 +66,49 @@ data Entryˉtemplate: bytes = [
     148, 36, 40, 0, 0, 0, 129, 250, 7, 0, 0, 0, 15, 132, 13, 0, 0, 0, 76, 137, 164, 36, 56, 0,
     0, 0, 233, 8, 0, 0, 0, 76, 137, 164, 36, 96, 0, 0, 0, 77, 139, 132, 39, 112, 0, 0, 0, 73,
     139, 132, 32, 32, 0, 0, 0, 72, 137, 132, 36, 48, 0, 0, 0, 73, 137, 225, 73, 129, 193, 32, 0, 0,
-    0, 73, 139, 132, 39, 120, 0, 0, 0, 255, 208, 72, 129, 196, 128, 0, 0, 0, 65, 92, 195, 49, 192, 185,
-    40, 0, 0, 0, 72, 137, 132, 12, 0, 0, 0, 0, 129, 193, 8, 0, 0, 0, 129, 249, 136, 0, 0, 0,
-    15, 130, 230, 255, 255, 255, 184, 1, 0, 0, 0, 137, 132, 36, 40, 0, 0, 0, 184, 96, 0, 0, 0, 137,
-    132, 36, 44, 0, 0, 0, 184, 8, 0, 0, 0, 137, 132, 36, 48, 0, 0, 0, 76, 137, 172, 36, 104, 0,
-    0, 0, 77, 139, 132, 39, 112, 0, 0, 0, 73, 139, 132, 32, 32, 0, 0, 0, 72, 137, 132, 36, 56, 0,
-    0, 0, 73, 137, 225, 73, 129, 193, 40, 0, 0, 0, 73, 139, 132, 39, 120, 0, 0, 0, 255, 224, 0, 0,
+    0, 73, 139, 132, 39, 120, 0, 0, 0, 255, 208, 72, 139, 148, 36, 80, 0, 0, 0, 68, 139, 132, 36, 76,
+    0, 0, 0, 72, 129, 196, 128, 0, 0, 0, 65, 92, 195, 72, 129, 236, 40, 0, 0, 0, 185, 10, 0, 0,
+    0, 232, 57, 255, 255, 255, 133, 192, 15, 133, 85, 0, 0, 0, 139, 140, 34, 0, 0, 0, 0, 68, 139, 140,
+    34, 4, 0, 0, 0, 69, 133, 201, 15, 132, 56, 0, 0, 0, 65, 129, 249, 255, 7, 0, 0, 15, 135, 43,
+    0, 0, 0, 68, 57, 201, 15, 135, 34, 0, 0, 0, 68, 137, 200, 193, 224, 3, 129, 192, 39, 0, 0, 0,
+    129, 224, 240, 255, 255, 255, 68, 57, 192, 15, 133, 7, 0, 0, 0, 49, 192, 233, 5, 0, 0, 0, 184, 1,
+    0, 0, 0, 72, 129, 196, 40, 0, 0, 0, 195, 65, 84, 65, 85, 83, 72, 129, 236, 32, 0, 0, 0, 77,
+    137, 196, 73, 137, 213, 137, 203, 232, 113, 255, 255, 255, 133, 192, 15, 133, 189, 0, 0, 0, 133, 219, 15, 132,
+    34, 0, 0, 0, 129, 251, 1, 0, 0, 0, 15, 133, 29, 0, 0, 0, 73, 57, 205, 15, 131, 155, 0, 0,
+    0, 74, 139, 148, 234, 8, 0, 0, 0, 233, 135, 0, 0, 0, 137, 202, 233, 128, 0, 0, 0, 68, 57, 201,
+    15, 131, 44, 0, 0, 0, 76, 137, 172, 202, 8, 0, 0, 0, 129, 193, 1, 0, 0, 0, 137, 140, 34, 0,
+    0, 0, 0, 49, 192, 73, 137, 132, 36, 0, 0, 0, 0, 73, 137, 132, 36, 16, 0, 0, 0, 233, 75, 0,
+    0, 0, 184, 1, 0, 0, 0, 73, 137, 132, 36, 0, 0, 0, 0, 76, 137, 224, 72, 129, 192, 32, 0, 0,
+    0, 73, 137, 132, 36, 16, 0, 0, 0, 72, 129, 192, 32, 0, 0, 0, 73, 137, 132, 36, 32, 0, 0, 0,
+    77, 137, 172, 36, 48, 0, 0, 0, 184, 2, 0, 0, 0, 73, 137, 132, 36, 64, 0, 0, 0, 77, 137, 140,
+    36, 80, 0, 0, 0, 49, 192, 233, 5, 0, 0, 0, 184, 1, 0, 0, 0, 72, 129, 196, 32, 0, 0, 0,
+    91, 65, 93, 65, 92, 195, 65, 84, 65, 85, 83, 85, 86, 87, 72, 129, 236, 136, 0, 0, 0, 77, 137, 196,
+    77, 137, 205, 72, 137, 195, 72, 137, 214, 72, 139, 132, 35, 0, 0, 0, 0, 232, 119, 254, 255, 255, 133, 192,
+    15, 133, 186, 1, 0, 0, 76, 57, 206, 15, 134, 177, 1, 0, 0, 137, 207, 232, 191, 1, 0, 0, 133, 192,
+    15, 133, 162, 1, 0, 0, 72, 139, 172, 36, 112, 0, 0, 0, 186, 255, 255, 255, 255, 72, 137, 208, 72, 193,
+    226, 32, 72, 9, 194, 72, 137, 240, 72, 193, 232, 61, 72, 133, 192, 15, 133, 2, 1, 0, 0, 72, 137, 242,
+    72, 193, 226, 3, 72, 129, 194, 39, 0, 0, 0, 15, 130, 223, 0, 0, 0, 72, 129, 226, 240, 255, 255, 255,
+    73, 137, 148, 36, 48, 0, 0, 0, 72, 129, 254, 255, 7, 0, 0, 15, 135, 210, 0, 0, 0, 49, 192, 72,
+    137, 132, 36, 112, 0, 0, 0, 184, 11, 0, 0, 0, 137, 132, 36, 40, 0, 0, 0, 72, 139, 132, 35, 0,
+    0, 0, 0, 72, 137, 132, 36, 56, 0, 0, 0, 137, 240, 193, 224, 3, 129, 192, 8, 0, 0, 0, 137, 132,
+    36, 44, 0, 0, 0, 137, 132, 36, 68, 0, 0, 0, 184, 16, 0, 0, 0, 137, 132, 36, 64, 0, 0, 0,
+    137, 248, 193, 224, 3, 129, 192, 8, 0, 0, 0, 137, 132, 36, 120, 0, 0, 0, 77, 139, 132, 39, 112, 0,
+    0, 0, 73, 137, 225, 73, 129, 193, 32, 0, 0, 0, 73, 139, 132, 39, 120, 0, 0, 0, 255, 208, 133, 192,
+    15, 132, 146, 0, 0, 0, 129, 248, 2, 0, 0, 0, 15, 132, 34, 0, 0, 0, 129, 248, 3, 0, 0, 0,
+    15, 132, 32, 0, 0, 0, 129, 248, 6, 0, 0, 0, 15, 133, 166, 0, 0, 0, 184, 3, 0, 0, 0, 233,
+    48, 0, 0, 0, 184, 1, 0, 0, 0, 233, 38, 0, 0, 0, 184, 4, 0, 0, 0, 233, 28, 0, 0, 0,
+    186, 255, 255, 255, 255, 72, 137, 208, 72, 193, 226, 32, 72, 9, 194, 73, 137, 148, 36, 48, 0, 0, 0, 184,
+    2, 0, 0, 0, 73, 137, 132, 36, 32, 0, 0, 0, 73, 137, 172, 36, 64, 0, 0, 0, 184, 1, 0, 0,
+    0, 73, 137, 132, 36, 0, 0, 0, 0, 76, 137, 224, 72, 129, 192, 32, 0, 0, 0, 73, 137, 132, 36, 16,
+    0, 0, 0, 233, 49, 0, 0, 0, 72, 139, 132, 36, 56, 0, 0, 0, 72, 137, 132, 35, 0, 0, 0, 0,
+    72, 139, 148, 36, 80, 0, 0, 0, 137, 180, 34, 4, 0, 0, 0, 49, 192, 73, 137, 132, 36, 0, 0, 0,
+    0, 73, 137, 132, 36, 16, 0, 0, 0, 49, 192, 233, 5, 0, 0, 0, 184, 1, 0, 0, 0, 72, 129, 196,
+    136, 0, 0, 0, 95, 94, 93, 91, 65, 93, 65, 92, 195, 49, 192, 185, 40, 0, 0, 0, 72, 137, 132, 12,
+    0, 0, 0, 0, 129, 193, 8, 0, 0, 0, 129, 249, 136, 0, 0, 0, 15, 130, 230, 255, 255, 255, 184, 1,
+    0, 0, 0, 137, 132, 36, 40, 0, 0, 0, 184, 96, 0, 0, 0, 137, 132, 36, 44, 0, 0, 0, 184, 8,
+    0, 0, 0, 137, 132, 36, 48, 0, 0, 0, 76, 137, 172, 36, 104, 0, 0, 0, 77, 139, 132, 39, 112, 0,
+    0, 0, 73, 139, 132, 32, 32, 0, 0, 0, 72, 137, 132, 36, 56, 0, 0, 0, 73, 137, 225, 73, 129, 193,
+    40, 0, 0, 0, 73, 139, 132, 39, 120, 0, 0, 0, 255, 224, 0, 0,
 ];
 
 data Loadˉprefix: bytes = [72, 139];
@@ -82,9 +120,20 @@ data Clearˉecx: bytes = [49, 201];
 data Addressˉr8: bytes = [76, 141, 132, 36];
 data Addressˉrax: bytes = [72, 141, 132, 36];
 data Storeˉrax: bytes = [72, 137, 132, 36];
+data Storeˉrdx: bytes = [72, 137, 148, 36];
+data Loadˉr9: bytes = [76, 139, 140, 36];
 
 export fn Entry() -> bytes { return Entryˉtemplate; }
 export fn Entryˉbytes() -> u32 { return Bytesˉlength(Entryˉtemplate); }
+
+export fn Minorˉisˉsupported(Minor: u32) -> bool {
+    return Types.Compilerˉnativeˉx64ˉownedˉminor(Minor);
+}
+
+export fn Operationˉisˉsupported(Opcode: u8) -> bool {
+    return Opcode == 80u8 || Opcode == 195u8 || Opcode == 202u8 || Opcode == 206u8 ||
+        Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 || Opcode == 227u8;
+}
 
 export fn Opcodeˉisˉsupported(Opcode: u8) -> bool {
     let Numeric: u32 = U32ˉfromˉu8(Opcode);
@@ -97,7 +146,7 @@ export fn Opcodeˉisˉsupported(Opcode: u8) -> bool {
         Opcode == 128u8 || Opcode == 129u8 ||
         (Numeric >= 133u32 && Numeric <= 148u32) ||
         (Numeric >= 151u32 && Numeric <= 153u32) ||
-        Opcode == 196u8 || Opcode == 205u8 || Opcode == 206u8 || Opcode == 207u8;
+        Opcode == 196u8 || Opcode == 205u8 || Operationˉisˉsupported(Opcode);
 }
 
 fn Isˉowner(Shape: Types.Compilerˉnativeˉx64ˉshape) -> bool {
@@ -112,21 +161,85 @@ fn Isˉscalar(Shape: Types.Compilerˉnativeˉx64ˉshape) -> bool {
          Types.Compilerˉnativeˉx64ˉtypeˉisˉenum(Shape.Type));
 }
 
+fn Scalarˉrecord(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32) -> bool {
+    if Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index) != 1u8 { return false; }
+    var Field: u32 = 0u32;
+    while Field < Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(Table, Index) {
+        if !Isˉscalar(Types.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Table, Index, Field)) { return false; }
+        Field = Field + 1u32;
+    }
+    return true;
+}
+
+fn Collectionˉfailure(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32) -> bool {
+    if Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index) != 3u8 ||
+        Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(Table, Index) != 10u32 ||
+        Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table, Index) != 6u32 ||
+        !Types.Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Table, Index, 2u32, "Capacityˉexhausted") ||
+        !Types.Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(Input, Table, Index, 2u32, 0u32, "Maximum") {
+        return false;
+    }
+    let Maximum: Types.Compilerˉnativeˉx64ˉshape = Types.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Table, Index, 2u32, 0u32);
+    if !Isˉscalar(Maximum) || Maximum.Type != 10u8 { return false; }
+    var Case: u32 = 0u32;
+    while Case < 10u32 {
+        var Field: u32 = 0u32;
+        var More: bool = true;
+        while Field < 5u32 && More {
+            let Shape: Types.Compilerˉnativeˉx64ˉshape = Types.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Table, Index, Case, Field);
+            if !Shape.Valid { More = false; }
+            else if !Isˉscalar(Shape) {
+                if !Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) || !Scalarˉrecord(Input, Table, Shape.Identity) { return false; }
+            }
+            Field = Field + 1u32;
+        }
+        if More { return false; }
+        Case = Case + 1u32;
+    }
+    return true;
+}
+
+fn Appendˉfailure(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32) -> bool {
+    if Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index) != 1u8 ||
+        Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(Table, Index) != 2u32 ||
+        Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table, Index) != 8u32 ||
+        !Types.Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(Input, Table, Index, 0u32, "Error") ||
+        !Types.Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(Input, Table, Index, 1u32, "Value") { return false; }
+    let Error: Types.Compilerˉnativeˉx64ˉshape = Types.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Table, Index, 0u32);
+    return Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Error.Type) && Collectionˉfailure(Input, Table, Error.Identity) &&
+        Isˉscalar(Types.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Table, Index, 1u32));
+}
+
+export fn Vectorˉelement(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32) -> u8 {
+    if Index >= Table.Count || Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index) != 5u8 { return 0u8; }
+    return Bytesˉreadˉu8(Input, Types.Compilerˉnativeˉx64ˉtypeˉitemˉoffset(Table, Index));
+}
+
+export fn Appendˉresult(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32, Element: u8) -> bool {
+    if Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index) != 3u8 ||
+        Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(Table, Index) != 2u32 ||
+        Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table, Index) != 10u32 ||
+        !Types.Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Table, Index, 0u32, "Valid") ||
+        !Types.Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Table, Index, 1u32, "Failure") { return false; }
+    let Valid: Types.Compilerˉnativeˉx64ˉshape = Types.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Table, Index, 0u32);
+    let Failure: Types.Compilerˉnativeˉx64ˉshape = Types.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Table, Index, 1u32);
+    if !Valid.Valid || Valid.Type != 5u8 || Valid.Identity != 20u32 || !Failure.Valid ||
+        !Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Failure.Type) || !Appendˉfailure(Input, Table, Failure.Identity) { return false; }
+    let Value: Types.Compilerˉnativeˉx64ˉshape = Types.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Table, Failure.Identity, 1u32);
+    return Value.Type == Element;
+}
+
 export fn Typesˉareˉsupported(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes) -> bool {
-    // This first target has flat scalar records and canonical allocation Results.
-    // Reject nested owner aggregates until their deterministic drops are lowered.
+    // Scalar records, canonical allocation Results and append refusal payloads.
+    // The only nested value record admitted here is the exact append failure;
+    // no recursive aggregate walk or nested owner aggregate is introduced.
     var Index: u32 = 0u32;
     while Index < Table.Count {
         let Kind: u8 = Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index);
         let Items: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(Table, Index);
         var Item: u32 = 0u32;
         if Kind == 1u8 {
-            while Item < Items {
-                if !Isˉscalar(Types.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Table, Index, Item)) {
-                    return false;
-                }
-                Item = Item + 1u32;
-            }
+            if !Scalarˉrecord(Input, Table, Index) && !Appendˉfailure(Input, Table, Index) { return false; }
         } else if Kind == 3u8 {
             while Item < Items {
                 var Field: u32 = 0u32;
@@ -140,7 +253,7 @@ export fn Typesˉareˉsupported(Input: bytes, Table: Types.Compilerˉnativeˉx64
                             !Types.Compilerˉnativeˉx64ˉvectorˉresultˉisˉexact(Input, Table, Index) { return false; }
                     } else if !Isˉscalar(Shape) {
                         if !Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) ||
-                            Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Shape.Identity) != 1u8 {
+                            (!Scalarˉrecord(Input, Table, Shape.Identity) && !Appendˉfailure(Input, Table, Shape.Identity)) {
                             return false;
                         }
                     }
@@ -157,6 +270,10 @@ export fn Typesˉareˉsupported(Input: bytes, Table: Types.Compilerˉnativeˉx64
 export fn Operationˉbytes(Opcode: u8) -> u32 {
     if Opcode == 80u8 { return 36u32; }
     if Opcode == 207u8 { return 65u32; }
+    if Opcode == 195u8 { return 20u32; }
+    if Opcode == 208u8 { return 68u32; }
+    if Opcode == 202u8 { return 44u32; }
+    if Opcode == 227u8 { return 52u32; }
     return 71u32;
 }
 
@@ -184,16 +301,22 @@ fn Call(Output: bytes, Helper: u32, Emittedˉoffset: u32, Invalidˉtarget: u32) 
 export fn Emitˉoperation(
     Input: bytes, Offset: u32, Opcode: u8, Emittedˉoffset: u32,
     Localˉidentities: bytes,
+    Table: Types.Compilerˉnativeˉx64ˉtypes,
     Layout: Instructions.Compilerˉnativeˉx64ˉrecordˉlayout,
     Backings: Storage.Compilerˉnativeˉx64ˉrecordˉstorage,
     Invalidˉtarget: u32,
     State: Instructions.Compilerˉnativeˉx64ˉrecordˉstate
 ) -> Instructions.Compilerˉnativeˉx64ˉrecordˉstate {
-    var Depth: u32 = State.Stackˉdepth - 1u32;
+    var Depth: u32 = State.Stackˉdepth;
+    if Opcode != 195u8 { Depth = Depth - 1u32; }
     var Output: bytes = State.Result;
     var Stackˉtypes: bytes = Bytesˉslice(State.Stackˉtypes, 0u32, Depth);
     var Stackˉslots: bytes = Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32);
     var Nextˉrecord: u32 = State.Nextˉrecord;
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
     if Opcode == 80u8 {
         let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset - 4u32);
         var Operation: u32 = 9u32;
@@ -201,18 +324,61 @@ export fn Emitˉoperation(
         Output = Load(Output, 132u8, Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32));
         Output = Word(Bytesˉconcat(Output, Moveˉecx), Operation);
         Output = Call(Output, 1151u32, Emittedˉoffset, Invalidˉtarget);
+    } else if Opcode == 195u8 || Opcode == 202u8 || Opcode == 227u8 {
+        var Valueˉtype: u8 = 10u8;
+        var Valueˉindex: u32 = Nextˉu32;
+        var Accessˉoperation: u32 = 0u32;
+        if Opcode == 195u8 {
+            Valueˉtype = 5u8;
+        } else if Opcode == 202u8 {
+            Output = Load(Output, 132u8, Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32));
+            Depth = Depth + 1u32;
+        } else {
+            Output = Load(Output, 132u8, Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32));
+            Output = Load(Output, 148u8, Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32));
+            Valueˉtype = Vectorˉelement(Input, Table, Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32));
+            Accessˉoperation = 1u32;
+            if Valueˉtype == 1u8 { Valueˉindex = Nextˉi32; }
+            if Valueˉtype == 2u8 { Valueˉindex = Nextˉbool; }
+            if Valueˉtype == 4u8 { Valueˉindex = Nextˉu8; }
+        }
+        let Valueˉslot: u32 = Frames.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(Layout.Locals,
+            Layout.I32ˉslots, Layout.Boolˉslots, Layout.Textˉslots, Layout.U8ˉslots,
+            Layout.U32ˉslots, Layout.Bytesˉslots, Valueˉtype, Valueˉindex);
+        if Opcode == 195u8 { Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(53809u32)); }
+        else {
+            Output = Word(Bytesˉconcat(Output, Moveˉecx), Accessˉoperation);
+            Output = Call(Output, 1451u32, Emittedˉoffset, Invalidˉtarget);
+        }
+        Output = Word(Bytesˉconcat(Output, Storeˉrdx), Valueˉslot * 16u32);
+        Stackˉtypes = Bytesˉconcat(Bytesˉslice(State.Stackˉtypes, 0u32, Depth), Bytesˉfromˉu8(Valueˉtype));
+        Stackˉslots = Bytesˉconcat(Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32), Bytesˉfromˉu32ˉlittle(Valueˉslot));
+        Depth = Depth + 1u32;
+        if Valueˉtype == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+        else if Valueˉtype == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
+        else if Valueˉtype == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+        else { Nextˉu32 = Nextˉu32 + 1u32; }
     } else {
         if Opcode == 206u8 { Depth = Depth - 1u32; }
         let Owner: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
-        let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+        var Resultˉoffset: u32 = 5u32;
+        if Opcode == 209u8 { Resultˉoffset = 9u32; }
+        let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + Resultˉoffset);
         let Target: u32 = Layout.Recordˉbase + State.Nextˉrecord;
         let Backing: u32 = Layout.Scratchˉbase + Bytesˉreadˉu32ˉlittle(Backings.Scratchˉoffsets, State.Nextˉrecord * 4u32);
-        Output = Load(Output, 132u8, Owner);
+        if Opcode == 209u8 { Output = Word(Bytesˉconcat(Output, Addressˉrax), Owner * 16u32); }
+        else { Output = Load(Output, 132u8, Owner); }
         Output = Load(Output, 148u8, Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32));
         var Helper: u32 = 705u32;
         if Opcode == 206u8 {
             Output = Load(Output, 140u8, Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 1u32) * 4u32));
             Helper = 442u32;
+        } else if Opcode == 209u8 {
+            Output = Word(Bytesˉconcat(Output, Loadˉr9), Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32) * 16u32);
+            Helper = 1686u32;
+        } else if Opcode == 208u8 {
+            Output = Word(Bytesˉconcat(Output, Moveˉecx), 2u32);
+            Helper = 1451u32;
         } else { Output = Bytesˉconcat(Output, Clearˉecx); }
         Output = Word(Bytesˉconcat(Output, Addressˉr8), Backing * 16u32);
         Output = Call(Output, Helper, Emittedˉoffset, Invalidˉtarget);
@@ -226,6 +392,91 @@ export fn Emitˉoperation(
     }
     return Instructions.Compilerˉnativeˉx64ˉrecordˉstate(
         Output, Stackˉtypes, Stackˉslots, Depth,
-        State.Nextˉi32, State.Nextˉbool, State.Nextˉtext, State.Nextˉu8,
-        State.Nextˉu32, State.Nextˉbytes, State.Nextˉenum, Nextˉrecord);
+        Nextˉi32, Nextˉbool, State.Nextˉtext, Nextˉu8,
+        Nextˉu32, State.Nextˉbytes, State.Nextˉenum, Nextˉrecord);
+}
+
+export record Analysis {
+    Valid: bool;
+    Stack: bytes;
+    Depth: u32;
+    I32ˉvalues: u32;
+    Boolˉvalues: u32;
+    U8ˉvalues: u32;
+    U32ˉvalues: u32;
+    Recordˉvalues: u32;
+    Bodyˉbytes: u32;
+}
+
+export fn Analyze(Input: bytes, Instructionˉoffset: u32, Opcode: u8, Localˉtypeˉidentities: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, InitialˉStack: bytes, InitialˉDepth: u32, InitialˉI32ˉvalues: u32, InitialˉBoolˉvalues: u32, InitialˉU8ˉvalues: u32, InitialˉU32ˉvalues: u32, InitialˉRecordˉvalues: u32, InitialˉBodyˉbytes: u32) -> Analysis {
+    var Stack: bytes = InitialˉStack;
+    var Depth: u32 = InitialˉDepth;
+    var I32ˉvalues: u32 = InitialˉI32ˉvalues;
+    var Boolˉvalues: u32 = InitialˉBoolˉvalues;
+    var U8ˉvalues: u32 = InitialˉU8ˉvalues;
+    var U32ˉvalues: u32 = InitialˉU32ˉvalues;
+    var Recordˉvalues: u32 = InitialˉRecordˉvalues;
+    var Bodyˉbytes: u32 = InitialˉBodyˉbytes;
+    if Opcode == 195u8 {
+        Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(5u8));
+        Depth = Depth + 1u32;
+        U32ˉvalues = U32ˉvalues + 1u32;
+        Bodyˉbytes = Bodyˉbytes + Operationˉbytes(Opcode);
+    }
+    if Opcode == 202u8 {
+        if Depth == 0u32 || Bytesˉreadˉu8(Stack, Depth - 1u32) != 10u8 ||
+            Vectorˉelement(Input, Table, Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 1u32)) == 0u8 {
+            return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+        }
+        Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(10u8));
+        Depth = Depth + 1u32;
+        U32ˉvalues = U32ˉvalues + 1u32;
+        Bodyˉbytes = Bodyˉbytes + Operationˉbytes(Opcode);
+    }
+    if Opcode == 208u8 || Opcode == 209u8 || Opcode == 227u8 {
+        let Vectorˉlocal: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 1u32);
+        if Depth == 0u32 || Vectorˉlocal >= Bytesˉlength(Localˉtypeˉidentities) / 4u32 {
+            return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+        }
+        let Vectorˉidentity: u32 = Bytesˉreadˉu32ˉlittle(Localˉtypeˉidentities, Vectorˉlocal * 4u32);
+        if Vectorˉidentity < 2147483648u32 || Vectorˉidentity == 4294967295u32 {
+            return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+        }
+        let Element: u8 = Vectorˉelement(Input, Table, Vectorˉidentity - 2147483648u32);
+        var Expected: u8 = 10u8;
+        if Opcode == 208u8 { Expected = Element; }
+        if Element == 0u8 || Bytesˉreadˉu8(Stack, Depth - 1u32) != Expected {
+            return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+        }
+        var Produced: u8 = Element;
+        if Opcode == 227u8 {
+            if Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 5u32) != Vectorˉidentity - 2147483648u32 {
+                return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+            }
+            if Element == 1u8 { I32ˉvalues = I32ˉvalues + 1u32; }
+            else if Element == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
+            else if Element == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
+            else { U32ˉvalues = U32ˉvalues + 1u32; }
+        } else {
+            var Resultˉoffset: u32 = 5u32;
+            if Opcode == 209u8 {
+                Resultˉoffset = 9u32;
+                let Funding: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 5u32);
+                if Funding >= Bytesˉlength(Localˉtypeˉidentities) / 4u32 ||
+                    Bytesˉreadˉu32ˉlittle(Localˉtypeˉidentities, Funding * 4u32) != 25u32 {
+                    return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+                }
+            }
+            let Outcome: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + Resultˉoffset);
+            if (Opcode == 208u8 && !Appendˉresult(Input, Table, Outcome, Element)) ||
+                (Opcode == 209u8 && !Types.Compilerˉnativeˉx64ˉunitˉallocationˉresultˉisˉexact(Input, Table, Outcome)) {
+                return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
+            }
+            Produced = Types.Compilerˉnativeˉx64ˉvariantˉtype(Outcome);
+            Recordˉvalues = Recordˉvalues + 1u32;
+        }
+        Stack = Bytesˉconcat(Bytesˉslice(Stack, 0u32, Depth - 1u32), Bytesˉfromˉu8(Produced));
+        Bodyˉbytes = Bodyˉbytes + Operationˉbytes(Opcode);
+    }
+    return Analysis(true, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
 }

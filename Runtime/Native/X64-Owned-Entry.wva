@@ -3,7 +3,10 @@ windvale-assembly 1
 # ABI 24 entry and operation helpers. The lowerer resolves the body import to
 # generated Main immediately after this prefix. Context 10 supplies one domain.
 symbol local function Memory_call in .text
+symbol local function Vector_view in .text
+symbol export function Windvale_owned_access in .text
 symbol export function Windvale_owned_entry in .text
+symbol export function Windvale_owned_grow in .text
 symbol export function Windvale_owned_release in .text
 symbol export function Windvale_owned_split in .text
 symbol export function Windvale_owned_vector in .text
@@ -304,7 +307,221 @@ move r9 rsp
 add_i32 r9 32
 load_memory_u64 rax r15 none 1 120
 call_register rax
+load_memory_u64 rdx rsp none 1 80
+load_memory_u32 r8d rsp none 1 76
 add_i32 rsp 128
+pop r12
+return
+end define
+
+# Validate a scalar Vector header against its complete physical charge.
+# RAX handle -> EAX status, RDX backing, ECX length, R9D capacity.
+define Vector_view
+subtract_i32 rsp 40
+move_u32 ecx 10
+call Windvale_owned_release
+test eax eax
+branch not_equal Finished
+load_memory_u32 ecx rdx none 1 0
+load_memory_u32 r9d rdx none 1 4
+test r9d r9d
+branch equal Invalid
+compare_i32 r9d 2047
+branch above Invalid
+compare ecx r9d
+branch above Invalid
+move eax r9d
+shift_left eax 3
+add_i32 eax 39
+and_i32 eax -16
+compare eax r8d
+branch not_equal Invalid
+xor eax eax
+jump_label Finished
+label Invalid
+move_u32 eax 1
+label Finished
+add_i32 rsp 40
+return
+end define
+
+# ECX selects length (0), indexed scalar copy (1), or append (2).
+# RAX owns the Vector, RDX carries index/value, R8 points to append Result.
+# Append uses the checked canonical ten-cell Result layout, including the
+# nested Collection_failure.Capacity_exhausted and the original scalar value.
+define Windvale_owned_access
+push r12
+push r13
+push rbx
+subtract_i32 rsp 32
+move r12 r8
+move r13 rdx
+move ebx ecx
+call Vector_view
+test eax eax
+branch not_equal Finished
+test ebx ebx
+branch equal Length
+compare_i32 ebx 1
+branch not_equal Append
+compare r13 rcx
+branch above_equal Invalid
+load_memory_u64 rdx rdx r13 8 8
+jump_label Success
+label Length
+move edx ecx
+jump_label Success
+label Append
+compare ecx r9d
+branch above_equal Full
+store_memory_u64 rdx rcx 8 8 r13
+add_i32 ecx 1
+store_memory_u32 rdx none 1 0 ecx
+xor eax eax
+store_memory_u64 r12 none 1 0 rax
+store_memory_u64 r12 none 1 16 rax
+jump_label Success
+label Full
+move_u32 eax 1
+store_memory_u64 r12 none 1 0 rax
+move rax r12
+add_i32 rax 32
+store_memory_u64 r12 none 1 16 rax
+add_i32 rax 32
+store_memory_u64 r12 none 1 32 rax
+store_memory_u64 r12 none 1 48 r13
+move_u32 eax 2
+store_memory_u64 r12 none 1 64 rax
+store_memory_u64 r12 none 1 80 r9
+label Success
+xor eax eax
+jump_label Finished
+label Invalid
+move_u32 eax 1
+label Finished
+add_i32 rsp 32
+pop rbx
+pop r13
+pop r12
+return
+end define
+
+# RAX points to the owning local, R9 borrows the funding budget, RDX is the
+# new maximum, and R8 is Result<unit,Allocation_failure> backing (five cells).
+define Windvale_owned_grow
+push r12
+push r13
+push rbx
+push rbp
+push rsi
+push rdi
+subtract_i32 rsp 136
+move r12 r8
+move r13 r9
+move rbx rax
+move rsi rdx
+load_memory_u64 rax rbx none 1 0
+call Vector_view
+test eax eax
+branch not_equal Invalid
+compare rsi r9
+branch below_equal Invalid
+move edi ecx
+call Memory_call
+test eax eax
+branch not_equal Invalid
+load_memory_u64 rbp rsp none 1 112
+move_u32 edx 4294967295
+move rax rdx
+shift_left rdx 32
+or rdx rax
+move rax rsi
+shift_right rax 61
+test rax rax
+branch not_equal Target_limit
+move rdx rsi
+shift_left rdx 3
+add_i32 rdx 39
+branch below Overflow
+and_i32 rdx -16
+store_memory_u64 r12 none 1 48 rdx
+compare_i32 rsi 2047
+branch above Target_limit
+xor eax eax
+store_memory_u64 rsp none 1 112 rax
+move_u32 eax 11
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rax rbx none 1 0
+store_memory_u64 rsp none 1 56 rax
+move eax esi
+shift_left eax 3
+add_i32 eax 8
+store_memory_u32 rsp none 1 44 eax
+store_memory_u32 rsp none 1 68 eax
+move_u32 eax 16
+store_memory_u32 rsp none 1 64 eax
+move eax edi
+shift_left eax 3
+add_i32 eax 8
+store_memory_u32 rsp none 1 120 eax
+load_memory_u64 r8 r15 none 1 112
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r15 none 1 120
+call_register rax
+test eax eax
+branch equal Valid
+compare_i32 eax 2
+branch equal Exhausted
+compare_i32 eax 3
+branch equal Fragmented
+compare_i32 eax 6
+branch not_equal Invalid
+move_u32 eax 3
+jump_label Failure
+label Exhausted
+move_u32 eax 1
+jump_label Failure
+label Fragmented
+move_u32 eax 4
+jump_label Failure
+label Overflow
+move_u32 edx 4294967295
+move rax rdx
+shift_left rdx 32
+or rdx rax
+label Target_limit
+store_memory_u64 r12 none 1 48 rdx
+move_u32 eax 2
+label Failure
+store_memory_u64 r12 none 1 32 rax
+store_memory_u64 r12 none 1 64 rbp
+move_u32 eax 1
+store_memory_u64 r12 none 1 0 rax
+move rax r12
+add_i32 rax 32
+store_memory_u64 r12 none 1 16 rax
+jump_label Success
+label Valid
+load_memory_u64 rax rsp none 1 56
+store_memory_u64 rbx none 1 0 rax
+load_memory_u64 rdx rsp none 1 80
+store_memory_u32 rdx none 1 4 esi
+xor eax eax
+store_memory_u64 r12 none 1 0 rax
+store_memory_u64 r12 none 1 16 rax
+label Success
+xor eax eax
+jump_label Finished
+label Invalid
+move_u32 eax 1
+label Finished
+add_i32 rsp 136
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+pop r13
 pop r12
 return
 end define

@@ -29,26 +29,37 @@ export async function Runˉownedˉstorageˉcases(Context) {
     }
     const Oracle = await Readˉbudgetˉoracle(Context);
     const Cases = [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle)];
-    for (const [Index, Case] of Cases.entries()) {
-        process.stdout.write(`native owned storage step=execute item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
-        const Prefix = join(Work, `Owned-${Case.Name}`);
-        if (Buffer.byteLength(Case.Source) > 131_072) throw new Error('Owned storage fixture exceeds its source limit.');
-        const Source = Prefix + '.wva', Object = Prefix + '.wvo', Image = Prefix + '.bin';
-        const Application = Prefix + (Target === 'windows' ? '.exe' : '.elf');
-        await writeFile(Source, Case.Source);
-        await Requireˉsuccess(Tool('Assemble-Wva'), [Source, Object], `owned-${Case.Name}-assemble`);
-        const Linked = await Requireˉsuccess(Tool('Link-Wvo'), ['0', 'Main', Image, Object, ...Objects], `owned-${Case.Name}-link`);
-        const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
-        if (Entry === null) throw new Error('Owned storage test entry point is missing.');
-        await Requireˉsuccess(Tool('Package-Console'), [`${Target}-x64-console-v1`, Image, Entry[1], Application], `owned-${Case.Name}-package`);
-        const Start = performance.now();
-        const Result = await Runˉprocess(Application, [], 30_000, `owned-${Case.Name}-execute`);
-        if (Result.Code !== 42 || Result.Exceeded || Result.Timedˉout || Result.Output !== '') {
-            throw new Error(`Owned storage ${Case.Name} failed: code=${Result.Code}, output=${Result.Output}.`);
+    // Two independent fixtures bound concurrent tool memory. Drain both workers
+    // on failure before the owner removes their shared temporary directory.
+    let Next = 0;
+    let Failure = null;
+    async function Worker() {
+        while (Failure === null && Next < Cases.length) {
+            const Index = Next++, Case = Cases[Index];
+            try {
+                process.stdout.write(`native owned storage step=execute item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
+                const Prefix = join(Work, `Owned-${Case.Name}`);
+                if (Buffer.byteLength(Case.Source) > 131_072) throw new Error('Owned storage fixture exceeds its source limit.');
+                const Source = Prefix + '.wva', Object = Prefix + '.wvo', Image = Prefix + '.bin';
+                const Application = Prefix + (Target === 'windows' ? '.exe' : '.elf');
+                await writeFile(Source, Case.Source);
+                await Requireˉsuccess(Tool('Assemble-Wva'), [Source, Object], `owned-${Case.Name}-assemble`);
+                const Linked = await Requireˉsuccess(Tool('Link-Wvo'), ['0', 'Main', Image, Object, ...Objects], `owned-${Case.Name}-link`);
+                const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
+                if (Entry === null) throw new Error('Owned storage test entry point is missing.');
+                await Requireˉsuccess(Tool('Package-Console'), [`${Target}-x64-console-v1`, Image, Entry[1], Application], `owned-${Case.Name}-package`);
+                const Start = performance.now();
+                const Result = await Runˉprocess(Application, [], 30_000, `owned-${Case.Name}-execute`);
+                if (Result.Code !== 42 || Result.Exceeded || Result.Timedˉout || Result.Output !== '') {
+                    throw new Error(`Owned storage ${Case.Name} failed: code=${Result.Code}, output=${Result.Output}.`);
+                }
+                process.stdout.write(`native owned storage case=${Case.Name} status=Passed elapsed-ms=${Math.round(performance.now() - Start)}\n`);
+            } catch (Error) { Failure ??= Error; }
         }
-        process.stdout.write(`native owned storage case=${Case.Name} status=Passed elapsed-ms=${Math.round(performance.now() - Start)}\n`);
     }
-    process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=12 accounting-states=12 budgeted-metadata-bytes=5816 stress-iterations=32768 stress-arena=64 stress-peak-charge=48\n`);
+    await Promise.all([Worker(), Worker()]);
+    if (Failure !== null) throw Failure;
+    process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=18 accounting-states=14 budgeted-metadata-bytes=5816 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
     return Cases.length;
 }
 

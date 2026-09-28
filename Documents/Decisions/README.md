@@ -14,7 +14,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Implemented | 502 |
 | Proposed | 4 |
 | Qualified | 95 |
-| Recorded | 10 |
+| Recorded | 11 |
 | Superseded | 14 |
 
 ## Open or unclassified records
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0970: use explicit replacement for native Vector growth](0970-Use-Explicit-Replacement-For-Native-Vector-Growth.md) | Recorded |
 | [Decision 0969: connect native Vector scope lifetimes to owned storage](0969-Connect-Native-Vector-Scope-Lifetimes-To-Owned-Storage.md) | Recorded |
 | [Decision 0968: thread owned budgets through collection helpers](0968-Thread-Owned-Budgets-Through-Collection-Helpers.md) | Implemented |
 | [Decision 0967: admit Copy record collection elements](0967-Admit-Copy-Record-Collection-Elements.md) | Implemented |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0948: reuse development-owner results across unrelated source trees](0948-Reuse-Development-Owner-Results-Across-Unrelated-Source-Trees.md) | Implemented |
 | [Decision 0947: treat complete qualification as one evidence graph](0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md) | Implemented |
 | [Decision 0946: delegate portable database reproducibility to toolchain owners](0946-Delegate-Portable-Database-Reproducibility-To-Toolchain-Owners.md) | Implemented |
-| [Decision 0945: separate database behavior from cross-target packaging](0945-Separate-Database-Behavior-From-Cross-Target-Packaging.md) | Implemented |
 
 ## Superseded or historical records
 
