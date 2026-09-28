@@ -69,7 +69,7 @@ foreach ($Fragment in @(
     'name: Validate qualification selection',
     "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
     "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'",
-    'uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0',
+    'uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0',
     'node-version: 24',
     './Tools/Verify/Verify-Verification-Plan.ps1'
 )) {
@@ -174,7 +174,7 @@ foreach ($Job in $DevelopmentJobs) {
         $Block.Contains(
             '${{ runner.temp }}/windvale-development-timing-analysis.json') -and
         $Block.Contains(
-            'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2') -and
+            'uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1') -and
         $Block.Contains('if-no-files-found: warn') -and
         $Block.Contains('retention-days: 14')
     ) "Development job '$Job' does not retain nonblocking structured timing evidence."
@@ -203,9 +203,9 @@ foreach ($Job in $DevelopmentJobs) {
         "Development job '$Job' does not pin Node.js 24."
     Assert-Workflow (
         $Block.Contains(
-            'uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5') -and
+            'uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0') -and
         $Block.Contains(
-            'uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5') -and
+            'uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0') -and
         $Block.Contains(
             "if: `${{ always() }}")
     ) "Development job '$Job' does not pin the accepted restore/save checkpoint actions."
@@ -280,7 +280,7 @@ foreach ($Job in @('windows-native-suite', 'linux-native-suite')) {
     }
     Assert-Workflow (
         $Block.Contains(
-            'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2') -and
+            'uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1') -and
         $Block.Contains('if-no-files-found: warn') -and
         $Block.Contains('retention-days: 30')
     ) "Qualification job '$Job' does not retain its structured owner result."
