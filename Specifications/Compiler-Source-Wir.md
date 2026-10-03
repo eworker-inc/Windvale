@@ -52,7 +52,7 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.9` through `1.36`
+The catalog selects the even WVIR minor in the current `1.9` through candidate `1.38`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
@@ -79,7 +79,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through `36` selected by the features below |
+| 6 | 2 | Minor version `9` through candidate `38` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -156,6 +156,29 @@ WVIR 1.35/1.36 selects indexed Vector borrowing, requires operation `192`, and
 may contain earlier operations. Lower minors reject operation `192`. These
 versions inherit the 56-byte non-specialized or 64-byte specialized header and
 the function-type catalog; no section entry changes size.
+
+Candidate WVIR 1.37/1.38 selects scalar Vector replacement or append through
+an exclusive Vector parameter under
+[Decision 0973](../Documents/Decisions/0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md).
+It requires operation `193` or `194`; lower minors reject both. Earlier
+operations remain valid and section entry sizes remain unchanged. Minor 37 has
+the 56-byte header; minor 38 carries the existing generic catalog in the
+64-byte header.
+
+Operation `193` carries the original Vector slot in `Target`, its exact Vector
+shape in `Auxiliary`, two operands in `u64` index/replacement order, and an exact
+scalar result shape. The admitted element shapes are `1`, `2`, `3`, `4`, `7`
+and `8` (`i32`, `u8`, `u32`, `bool`, `i64`, `u64`). Its slot must be a live
+mutable owned Vector or an exclusive Vector parameter. Operation `194` keeps
+operation `173`'s one-element fallible append layout and exact
+`Result<unit, Vectorˉappendˉfailure<T>>`, but requires an exclusive parameter
+slot. Plain-local append retains operation `173`. Independent validation reconstructs the slot's exact
+mode, live owner, element identity and borrow exclusions; projected payload
+slots and immutable parameters do not acquire mutation rights.
+
+This representation does not add mutable element views, borrowed growth or
+general last-use borrowing. A direct indexed borrow still freezes its source
+owner conservatively for the remaining function.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 

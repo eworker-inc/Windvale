@@ -738,11 +738,13 @@ if Operation == 189u32 { return Compilerˉsourceˉwvbˉlowˉbyte(223u32); }
 if Operation == 190u32 { return Compilerˉsourceˉwvbˉlowˉbyte(224u32); }
 if Operation == 191u32 { return Compilerˉsourceˉwvbˉlowˉbyte(225u32); }
 if Operation == 192u32 { return Compilerˉsourceˉwvbˉlowˉbyte(227u32); }
+if Operation == 193u32 { return Compilerˉsourceˉwvbˉlowˉbyte(228u32); }
+if Operation == 194u32 { return Compilerˉsourceˉwvbˉlowˉbyte(208u32); }
 return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
 if Operation >= 1u32 {
-if Operation <= 192u32 { return true; }
+if Operation <= 194u32 { return true; }
 }
 return false;
 }
@@ -810,7 +812,9 @@ if Operation == 188u32 { Opcodeˉbytes = 13u32; }
 if Operation == 189u32 { Opcodeˉbytes = 13u32; }
 if Operation == 190u32 { Opcodeˉbytes = 13u32; }
 if Operation == 191u32 { Opcodeˉbytes = 13u32; }
-if Operation == 192u32 { Opcodeˉbytes = 9u32; }
+if Operation == 192u32 || Operation == 193u32 || Operation == 194u32 {
+Opcodeˉbytes = 9u32;
+}
 var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
 if Shape != 0u32 { Result = Result + 5u32; }
 return Result;
@@ -3939,7 +3943,8 @@ Slotˉrevisions = Compilerˉsourceˉwvbˉvectorˉborrowˉset(Slotˉrevisions, Sl
 }
 Slot = Slot + 1u32;
 }
-if (Kind == 8u32 || Kind == 170u32 || Kind == 173u32 || Kind == 174u32 || Kind == 175u32) &&
+if (Kind == 8u32 || Kind == 170u32 || Kind == 173u32 ||
+Kind == 174u32 || Kind == 175u32 || Kind == 193u32 || Kind == 194u32) &&
 Target < Slotˉcount {
 Slotˉrevisions = Compilerˉsourceˉwvbˉvectorˉborrowˉset(Slotˉrevisions, Target, Index + 1u32);
 Slotˉaccesses = Compilerˉsourceˉwvbˉvectorˉborrowˉset(Slotˉaccesses, Target, Index + 1u32);
@@ -3991,7 +3996,8 @@ let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
 let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
 let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
 let Operands: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
-if Operation == 169u32 || Operation == 170u32 || Operation == 192u32 {
+if Operation == 169u32 || Operation == 170u32 ||
+Operation == 192u32 || Operation == 193u32 {
 let Plannedˉvector: u32 =
 Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
 Auxiliary, Symbols, Orders
@@ -4000,7 +4006,10 @@ if (Target < Parameters && Operation == 170u32) ||
 Target >= Parameters + Locals ||
 Plannedˉvector < 327680u32 ||
 Plannedˉvector >= 393216u32 ||
-(Operation == 192u32 && Operands != 1u32) {
+(Operation == 192u32 && Operands != 1u32) ||
+(Operation == 193u32 && (Operands != 2u32 ||
+(Shape != 1u32 && Shape != 2u32 && Shape != 3u32 &&
+Shape != 4u32 && Shape != 7u32 && Shape != 8u32))) {
 return false;
 }
 if Operation == 170u32 {
@@ -4036,7 +4045,7 @@ Plannedˉvectorˉresult >= 262144u32 {
 return false;
 }
 }
-if Operation == 173u32 {
+if Operation == 173u32 || Operation == 194u32 {
 let Plannedˉappendˉresult: u32 =
 Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
 Shape, Symbols, Orders
@@ -4045,7 +4054,9 @@ let Plannedˉappendˉvector: u32 =
 Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
 Auxiliary, Symbols, Orders
 );
-if Target < Parameters || Target >= Parameters + Locals ||
+if (Operation == 173u32 && Target < Parameters) ||
+(Operation == 194u32 && Target >= Parameters) ||
+Target >= Parameters + Locals ||
 Operands != 1u32 || Plannedˉappendˉresult < 196608u32 ||
 Plannedˉappendˉresult >= 262144u32 ||
 Plannedˉappendˉvector < 327680u32 ||
@@ -4394,7 +4405,8 @@ Globalˉoperation
 );
 }
 }
-if ((Operation >= 169u32 && Operation <= 175u32) || Operation == 192u32) &&
+if ((Operation >= 169u32 && Operation <= 175u32) ||
+(Operation >= 192u32 && Operation <= 194u32)) &&
 !Compilerˉsourceˉwvbˉvectorˉoperationˉisˉvalid(
 Wir, Function, Operationˉentry, Symbols, Orders
 ) {
@@ -4452,7 +4464,7 @@ Globalˉoperation
 );
 }
 if Operation != 171u32 && Operation != 172u32 &&
-Operation != 173u32 && Operation != 180u32 &&
+Operation != 173u32 && Operation != 194u32 && Operation != 180u32 &&
 Operation != 181u32 && Operation != 182u32 &&
 Operation != 183u32 && Operation != 184u32 &&
 Operation != 186u32 && Operation != 187u32 &&
@@ -4864,7 +4876,7 @@ Plan: Compilerˉsourceˉwvbˉvectorˉborrowˉplan
 ) -> Compilerˉsourceˉwvbˉvectorˉborrowˉplan {
 if !Plan.Valid { return Plan; }
 let Minor: u32 = Bytesˉreadˉu16ˉlittle(Wir, 6u32);
-if (Minor != 35u32 && Minor != 36u32) || !Foundation.Hasˉborrow {
+if (Minor < 35u32 || Minor > 38u32) || !Foundation.Hasˉborrow {
 return Plan;
 }
 let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
@@ -4914,8 +4926,9 @@ var Firstˉexclusive: u32 = 4294967295u32;
 var Scanˉoperation: u32 = 0u32;
 while Scanˉoperation < Operationˉcount {
 let Scanˉentry: u32 = Operations + (Firstˉoperation + Scanˉoperation) * 28u32;
-var Exclusive: bool = false;
-if Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 4u32) == 62u32 {
+let Scanˉkind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 4u32);
+var Exclusive: bool = Scanˉkind == 193u32 || Scanˉkind == 194u32;
+if Scanˉkind == 62u32 {
 let Callˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Wir, Scanˉentry + 20u32);
 let Callˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Wir, Scanˉentry + 16u32);
 let Callˉcount: u32 = Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 6u32);
@@ -5106,7 +5119,8 @@ let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Current + 4u32);
 var Collection: u32 = 0u32;
 if Kind == 167u32 || Kind == 168u32 {
 Collection = Bytesˉreadˉu32ˉlittle(Wir, Current + 20u32);
-} else if Kind == 169u32 || Kind == 170u32 || Kind == 173u32 || Kind == 192u32 {
+} else if Kind == 169u32 || Kind == 170u32 || Kind == 173u32 ||
+Kind == 192u32 || Kind == 193u32 || Kind == 194u32 {
 Collection = Bytesˉreadˉu32ˉlittle(Wir, Current + 24u32);
 } else if Kind == 172u32 {
 Collection = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
@@ -5163,9 +5177,31 @@ let End: u32 = Operation + Bytesˉreadˉu32ˉlittle(Wir, Directory + 16u32);
 while Operation < End {
 let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir,
 Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) + Operation * 28u32 + 4u32);
-if Kind == 171u32 || Kind == 172u32 || Kind == 173u32 || Kind == 175u32 { return true; }
+if Kind == 171u32 || Kind == 172u32 || Kind == 173u32 ||
+Kind == 175u32 || Kind == 193u32 || Kind == 194u32 { return true; }
 Operation = Operation + 1u32;
 }
+}
+Index = Index + 1u32;
+}
+return false;
+}
+fn Compilerˉsourceˉwvbˉmoduleˉhasˉvectorˉmutation(
+Wir: bytes,
+Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+let Functions: Compilerˉsourceˉwvbˉsymbolˉorder = Compilerˉsourceˉwvbˉfunctionˉorder(Orders);
+var Index: u32 = 0u32;
+while Index < Bytesˉlength(Functions.Entries) / 4u32 {
+let Entry: u32 = Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
+Compilerˉsourceˉwvbˉorderedˉsymbol(Functions, Index) * 48u32;
+var Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32);
+let End: u32 = Operation + Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
+while Operation < End {
+let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir,
+Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) + Operation * 28u32 + 4u32);
+if Kind == 193u32 || Kind == 194u32 { return true; }
+Operation = Operation + 1u32;
 }
 Index = Index + 1u32;
 }
@@ -5713,8 +5749,10 @@ Shape, Symbols, Orders
 );
 }
 }
-if Operation == 192u32 {
-Result = Bytesˉconcat(Result, Compilerˉsourceˉwvbˉinstructionˉu32(227u8, Target));
+if Operation == 192u32 || Operation == 193u32 {
+Result = Bytesˉconcat(Result, Compilerˉsourceˉwvbˉinstructionˉbytesˉu32(
+Compilerˉsourceˉwvbˉopcode(Operation), Target
+));
 Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(
 Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(Auxiliary, Symbols, Orders) - 327680u32
 ));
@@ -5743,7 +5781,7 @@ Shape, Symbols, Orders
 )
 );
 }
-if Operation == 173u32 {
+if Operation == 173u32 || Operation == 194u32 {
 Result = Bytesˉconcat(Result, Bytesˉfromˉu8(208u8));
 Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
 Result = Bytesˉconcat(
@@ -6336,7 +6374,8 @@ Symbols
 ) {
 return true;
 }
-if (Operation == 169u32 || Operation == 170u32 || Operation == 192u32) &&
+if (Operation == 169u32 || Operation == 170u32 ||
+Operation == 192u32 || Operation == 193u32 || Operation == 194u32) &&
 Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
 Bytesˉreadˉu32ˉlittle(
 Wir, Operationˉentry + 24u32
@@ -6926,7 +6965,7 @@ Features = Features | 4096u32;
 if Operationˉkind == 172u32 {
 Features = Features | 8192u32;
 }
-if Operationˉkind == 173u32 {
+if Operationˉkind == 173u32 || Operationˉkind == 194u32 {
 Features = Features | 16384u32;
 }
 if Operationˉkind == 175u32 {
@@ -7765,6 +7804,9 @@ if (Features & WVB_VECTOR_INDEXED_BORROW_FEATURE) != 0u32 {
 Wvbˉminor = 41u32;
 }
 if Collectionˉownerˉmodule { Wvbˉminor = 42u32; }
+if Compilerˉsourceˉwvbˉmoduleˉhasˉvectorˉmutation(
+Wirˉsummary.Directory, Emissionˉorders
+) { Wvbˉminor = 43u32; }
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
 Bytecode = Bytesˉconcat(

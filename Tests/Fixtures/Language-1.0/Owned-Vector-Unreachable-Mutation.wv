@@ -1,0 +1,21 @@
+#!wv/1 en@1
+module Ownedˉvectorˉunreachableˉmutation;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉresult as Results;
+
+fn Unused(Values: borrow mut Collections.Vector<i32>) -> i32 {
+    let Outcome: Results.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+        Collections.Vectorˉappend::<i32>(borrow mut Values, 42);
+    return match Outcome {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<i32>(borrow mut Values, 0u64, 43)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+export fn Main() -> i32 { return 42; }

@@ -15,7 +15,21 @@ export async function Prepareˉownedˉhelpers(Context) {
             [join(Context.Repository, 'Tools/Native/Build-Current-Split-Project-Wvb.mjs'), '--prepared-compiler-only',
                 join(Context.Repository, 'Projects/Tests/Windvale-Native-Test-Owned-Vector-Helpers.wvproj'), Path], 'owned-helper-build');
     }
-    return readFile(Path);
+    const Scalarˉpath = Context.Scalarˉhelperˉproduct?.Path ?? join(Context.Work, 'Owned-Vector-Scalar-Mutation.wvb');
+    if (Context.Scalarˉhelperˉproduct) {
+        if ((await stat(Scalarˉpath)).size > 1_048_576 ||
+            createHash('sha256').update(await readFile(Scalarˉpath)).digest('hex') !== Context.Scalarˉhelperˉproduct.Sha256) {
+            throw new Error('Supplied scalar mutation identity differs.');
+        }
+    } else {
+        await Context.Requireˉsuccess(process.execPath,
+            [join(Context.Repository, 'Tools/Native/Build-Current-Split-Project-Wvb.mjs'), '--prepared-compiler-only',
+                join(Context.Repository, 'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scalar-Mutation.wvproj'), Scalarˉpath],
+            'owned-scalar-mutation-build');
+    }
+    const Scalar = await readFile(Scalarˉpath);
+    if (Scalar.readUInt16LE(6) !== 43) throw new Error('Scalar mutation did not select WVB 1.43.');
+    return { Input: await readFile(Path), Scalar };
 }
 
 function Word(Value) { const Result = Buffer.alloc(4); Result.writeUInt32LE(Value); return Result; }
@@ -39,7 +53,7 @@ function Inspect(Input) {
     if (Count > 65) throw new Error('Helper function count exceeds fixture bound.');
     const Sizes = new Map([[1,5],[2,2],[4,5],[5,5],[8,2],[9,5],[48,5],[49,5],[64,5],
         [104,5],[105,5],[106,9],[128,9],[129,9],[151,9],[152,9],[153,9],
-        [196,9],[202,5],[205,5],[206,9],[207,9],[208,9],[209,13],[227,9]]);
+        [196,9],[202,5],[205,5],[206,9],[207,9],[208,9],[209,13],[226,9],[227,9],[228,9]]);
     for (let Index = 0; Index < Count; Index++) {
         const Start = Cursor, Nameˉlength = Input.readUInt32LE(Cursor); Cursor += 4;
         const Name = Input.subarray(Cursor, Cursor + Nameˉlength).toString('utf8'); Cursor += Nameˉlength;
@@ -89,28 +103,72 @@ function Extraˉfunctions(Input, Count) {
     return Section(Section(Input, 5, Buffer.concat(Bodies)), 4, Buffer.concat(Entries));
 }
 
-function Appendˉhelper(Input, Parameter, Return, Body) {
+function Appendˉhelper(Input, Parameter, Return, Body, Maximumˉstack = 1) {
     const { Sections, Functions } = Inspect(Input), Table = Sections.get(4), Code = Sections.get(5);
     const Name = Buffer.from('Transfer');
     const Entry = Buffer.concat([Word(Name.length), Name, Word(1), Parameter, Return,
-        Word(0), Word(Code.Length), Word(Body.length), Word(1)]);
+        Word(0), Word(Code.Length), Word(Body.length), Word(Maximumˉstack)]);
     return Section(Section(Input, 5, Buffer.concat([Input.subarray(Code.Start, Code.Start + Code.Length), Body])), 4,
         Buffer.concat([Word(Functions.length + 1), Input.subarray(Table.Start + 4, Table.Start + Table.Length), Entry]));
 }
 
+export function Buildˉvectorˉmutationˉrejections(Input) {
+    const { Sections, Functions } = Inspect(Input);
+    const Mutate = Functions.find(Item => Item.Name === 'Mutateˉvalue');
+    const Append = Functions.find(Item => Item.Name === 'Append');
+    const Length = Functions.find(Item => Item.Name === 'Borrowˉlength');
+    const Replacement = Mutate?.Operations.find(([Opcode]) => Opcode === 228)?.[1];
+    const Parameterˉlength = Length?.Operations.find(([Opcode]) => Opcode === 226)?.[1];
+    if (Replacement === undefined || Parameterˉlength === undefined || Append === undefined) {
+        throw new Error('Mutation rejection fixture controls differ.');
+    }
+    return [
+        ['old-mutation-minor', Value => { Value.writeUInt16LE(42, 6); }],
+        ['immutable-parameter-replace', Value => { Value[Mutate.Locals[0].Start] = 26; }],
+        ['immutable-parameter-append', Value => { Value[Append.Locals[0].Start] = 26; }],
+        ['replace-target-out-of-range', Value => { Value.writeUInt32LE(Mutate.Locals.length, Replacement + 1); }],
+        ['replace-wrong-vector-type', Value => { Value.writeUInt32LE(Input.readUInt32LE(Sections.get(7).Start), Replacement + 5); }],
+        ['replace-wrong-index', Value => { Value[Mutate.Locals[1].Start] = 1; }],
+        ['replace-wrong-element', Value => { Value[Mutate.Locals[2].Start] = 2; }],
+        ['parameter-length-target', Value => { Value.writeUInt32LE(Length.Locals.length, Parameterˉlength + 1); }],
+        ['replacement-invalidates-held-loan', Value => {
+            const Shape = Mutate.Locals[0];
+            const Mutableˉshape = Value.subarray(Shape.Start, Shape.Start + Shape.Length);
+            const Vectorˉidentity = Value.subarray(Replacement + 5, Replacement + 9);
+            return Appendˉhelper(Value, Mutableˉshape, Buffer.from([1]), Buffer.concat([
+                Buffer.from([129]), Buffer.alloc(8), Buffer.from([227]), Word(0), Vectorˉidentity,
+                Buffer.from([129]), Buffer.alloc(8), Buffer.from([1, 44, 0, 0, 0, 228]),
+                Word(0), Vectorˉidentity, Buffer.from([16, 81]),
+            ]), 3);
+        }],
+        ['truncated-replacement', Value => {
+            const Start = Sections.get(5).Start + Mutate.Offset;
+            return Replaceˉbody(Value, Mutate, Value.subarray(Start, Replacement + 8));
+        }],
+    ];
+}
+
 export async function Runˉownedˉhelpers(Context, Lowerer) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
-    const Input = await Prepareˉownedˉhelpers(Context), { Sections, Functions } = Inspect(Input);
-    if (Input.readUInt16LE(6) !== 42 || Functions.map(Item => Item.Name).join(',') !== 'Borrow,Borrowˉvalue,Construct,Consume,Forward,Main') {
+    const { Input, Scalar } = await Prepareˉownedˉhelpers(Context), { Sections, Functions } = Inspect(Input);
+    if (Input.readUInt16LE(6) !== 43 || Functions.map(Item => Item.Name).join(',') !==
+        'Append,Borrow,Borrowˉlength,Borrowˉvalue,Construct,Consume,Forward,Main,Mutate,Mutateˉvalue') {
         throw new Error('Owned helper source workload differs.');
     }
-    const [Borrow, Borrowˉvalue, Construct, Consume, Forward, Main] = Functions;
+    const [Append, Borrow, Borrowˉlength, Borrowˉvalue, Construct, Consume, Forward, Main, Mutate, Mutateˉvalue] = Functions;
     const Capacity = Construct.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
     const Budget = Main.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
     const Constructorˉcall = Main.Operations.find(([Opcode, At]) => Opcode === 64 && Input.readUInt32LE(At + 1) === Construct.Index)[1];
     const Recursiveˉcall = Forward.Operations.find(([Opcode]) => Opcode === 64)[1];
     const Drop = Consume.Operations.find(([Opcode]) => Opcode === 80)[1];
-    const Borrowˉindex = Consume.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
+    const Borrowˉindex = Consume.Operations.find(([Opcode, At]) => Opcode === 129 && Input.readBigUInt64LE(At + 1) === 0n)[1] + 1;
+    const Replaceˉindex = Consume.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
+    const Replacement = Mutateˉvalue.Operations.find(([Opcode]) => Opcode === 228)?.[1];
+    const Parameterˉlength = Borrowˉlength.Operations.find(([Opcode]) => Opcode === 226)?.[1];
+    const Parameterˉappend = Append.Operations.find(([Opcode]) => Opcode === 208)?.[1];
+    if (Replacement === undefined || Parameterˉlength === undefined || Parameterˉappend === undefined) {
+        throw new Error('Owned helper mutation operations differ.');
+    }
     const Iterations = Main.Operations.find(([Opcode, At]) => Opcode === 1 && Input.readInt32LE(At + 1) === 1000)?.[1];
     if (Iterations === undefined) throw new Error('Helper iteration limit differs.');
     const Borrowˉshape = Input.subarray(Borrow.Locals[2].Start, Borrow.Locals[2].Start + Borrow.Locals[2].Length);
@@ -119,36 +177,50 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
     Vectorˉshape[0] = 23;
     const Resultˉshape = Input.subarray(Construct.Return.Start, Construct.Return.Start + Construct.Return.Length);
     const Cases = [
-        { Name: 'single-borrow-and-release', Result: 42, Peak: 32, Generation: 2,
+        { Name: 'single-mutation-and-release', Result: 42, Peak: 48, Generation: 2,
             Change: Value => { Value.writeInt32LE(1, Iterations + 1); } },
-        { Name: 'nested-recursive-transfer', Result: 42, Peak: 32, Generation: 2000 },
-        { Name: 'sustained-borrow-and-release', Result: 42, Peak: 32, Generation: 65536, Fuel: 100000000,
+        { Name: 'nested-mutation-and-transfer', Result: 42, Peak: 48, Generation: 2000 },
+        { Name: 'sustained-mutation-and-release', Result: 42, Peak: 48, Generation: 65536, Fuel: 100000000,
             Change: Value => { Value.writeInt32LE(32768, Iterations + 1); } },
-        { Name: 'mutable-borrowed-read', Result: 42, Peak: 32, Change: Value => {
+        { Name: 'mutable-borrowed-read', Result: 42, Peak: 48, Change: Value => {
             Value[Borrow.Locals[2].Start] = 27;
             Value[Borrowˉvalue.Locals[0].Start] = 27;
         } },
-        { Name: 'result-parameter-and-return', Result: 42, Peak: 32, Change: Value => {
+        { Name: 'result-parameter-and-return', Result: 42, Peak: 48, Change: Value => {
             const Extended = Appendˉhelper(Value, Resultˉshape, Resultˉshape, Buffer.from([205, 0, 0, 0, 0, 81]));
             const { Sections: Current, Functions: Entries } = Inspect(Extended), First = Entries[Construct.Index], Code = Current.get(5);
             return Replaceˉbody(Extended, First, Buffer.concat([
                 Extended.subarray(Code.Start + First.Offset, Code.Start + First.Offset + First.Length - 1),
                 Buffer.concat([Buffer.from([64]), Word(Functions.length), Buffer.from([81])])]));
         } },
-        { Name: 'maximum-function-count', Result: 42, Peak: 32, Change: Value => Extraˉfunctions(Value, 64) },
+        { Name: 'maximum-function-count', Result: 42, Peak: 48, Change: Value => Extraˉfunctions(Value, 64) },
+        { Name: 'six-scalar-mutations', Result: 42, Peak: 32, Generation: 12, Input: Scalar },
         { Name: 'constructor-refusal', Result: 2, Peak: 0, Change: Value => { Value.writeBigUInt64LE(16n, Budget); } },
         { Name: 'physical-refusal', Result: 2, Peak: 0, Arena: 16 },
         { Name: 'invalid-constructor-cleanup', Status: 5, Peak: 0, Change: Value => { Value.writeBigUInt64LE(0n, Capacity); } },
-        { Name: 'recursive-depth-cleanup', Status: 3, Peak: 32, Depth: 3 },
-        { Name: 'nested-fuel-cleanup', Status: 2, Peak: 32, Fuel: 100 },
-        { Name: 'borrowed-read-bounds-cleanup', Status: 5, Peak: 32,
-            Change: Value => { Value.writeBigUInt64LE(1n, Borrowˉindex); } },
+        { Name: 'recursive-depth-cleanup', Status: 3, Peak: 48, Depth: 3 },
+        { Name: 'nested-fuel-cleanup', Status: 2, Peak: 48, Fuel: 100 },
+        { Name: 'borrowed-read-bounds-cleanup', Status: 5, Peak: 48,
+            Change: Value => { Value.writeBigUInt64LE(2n, Borrowˉindex); } },
+        { Name: 'replacement-bounds-cleanup', Status: 5, Peak: 48,
+            Change: Value => { Value.writeBigUInt64LE(2n, Replaceˉindex); } },
+        { Name: 'replacement-wide-index-cleanup', Status: 5, Peak: 48,
+            Change: Value => { Value.writeBigUInt64LE(4294967296n, Replaceˉindex); } },
+        { Name: 'empty-replacement-cleanup', Status: 5, Peak: 48,
+            Change: Value => {
+                Value.writeUInt32LE(2, Consume.Metadata + 8);
+                return Replaceˉbody(Value, Consume, Buffer.concat([
+                Buffer.from([129]), Buffer.alloc(8), Buffer.from([1, 44, 0, 0, 0, 228]),
+                Word(2), Value.subarray(Replacement + 5, Replacement + 9),
+                Buffer.from([205, 2, 0, 0, 0, 80, 81]),
+                ]));
+            } },
     ];
     const Objects = ['Owned', 'Allocator', 'Budget-Validation', 'Budgeted'].map(Name => join(Work, `${Name}.wvo`));
     const Tool = Name => join(Repository, `Tools/Native/${Name}.${Target === 'windows' ? 'cmd' : 'sh'}`);
     for (const [Index, Case] of Cases.entries()) {
         process.stdout.write(`native owned helpers step=execute item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
-        const Prefix = join(Work, `Helper-${Case.Name}`), Value = Buffer.from(Input), Changed = Case.Change?.(Value);
+        const Prefix = join(Work, `Helper-${Case.Name}`), Value = Buffer.from(Case.Input ?? Input), Changed = Case.Change?.(Value);
         await writeFile(Prefix + '.wvb', Buffer.isBuffer(Changed) ? Changed : Value);
         const Lowered = await Requireˉsuccess(Lowerer, [Prefix + '.wvb', Prefix + '.wvo'], `helper-${Case.Name}-lower`);
         if (!/^native x64 status=Valid abi=24 /u.test(Lowered.Output)) throw new Error(`Helper lowering differs: ${Lowered.Output}`);
@@ -181,6 +253,7 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
         process.stdout.write(`native owned helpers case=${Case.Name} status=Passed elapsed-ms=${Math.round(performance.now() - Start)}\n`);
     }
     const Rejections = [
+        ...Buildˉvectorˉmutationˉrejections(Input),
         ['call-entry', Value => { Value.writeUInt32LE(Main.Index, Constructorˉcall + 1); }],
         ['missing-target', Value => { Value.writeUInt32LE(Functions.length, Recursiveˉcall + 1); }],
         ['wrong-parameter', Value => { Value[Forward.Locals[0].Start] = 2; }],
@@ -220,6 +293,6 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
         }
     }
     const Count = Cases.length + Rejections.length;
-    process.stdout.write(`native owned helpers status=Passed cases=${Count} executions=${Cases.length} rejections=${Rejections.length} iterations=1,1000,32768 arena-bytes=64 peak-charge=32 metadata-bytes=5816 abi=24\n`);
+    process.stdout.write(`native owned helpers status=Passed cases=${Count} executions=${Cases.length} rejections=${Rejections.length} iterations=1,1000,32768 arena-bytes=64 peak-charge=48 metadata-bytes=5816 abi=24\n`);
     return { Cases: Count, Valid: Cases.length, Malformed: Rejections.length, Executions: Cases.length };
 }

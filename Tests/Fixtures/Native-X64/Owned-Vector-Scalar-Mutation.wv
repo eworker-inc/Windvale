@@ -1,0 +1,237 @@
+#!wv/1 en@1
+module Nativeˉownedˉvectorˉscalarˉmutation;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
+
+fn MutateˉI32(Values: borrow mut Collections.Vector<i32>, Initial: i32, Replacement: i32) -> i32 {
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+        Collections.Vectorˉappend::<i32>(borrow mut Values, Initial);
+    return match Appended {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<i32>(borrow mut Values, 0u64, Replacement)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+fn ReadˉI32(Values: borrow Collections.Vector<i32>) -> i32 {
+    return Collections.Vectorˉborrowˉat::<i32>(borrow Values, 0u64);
+}
+
+fn CheckˉI32(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i32>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Owned: Collections.Vector<i32> = Values;
+            let Prior: i32 = MutateˉI32(borrow mut Owned, -2147483647, 2147483647);
+            var Result: i32 = 42;
+            if Prior != -2147483647 { Result = 2; }
+            if ReadˉI32(borrow Owned) != 2147483647 { Result = 3; }
+            if Collections.Vectorˉlength(borrow Owned) != 1u64 { Result = 4; }
+            using Resource = Owned { }
+            Result
+        }
+    };
+}
+
+fn MutateˉU8(Values: borrow mut Collections.Vector<u8>, Initial: u8, Replacement: u8) -> u8 {
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<u8> > =
+        Collections.Vectorˉappend::<u8>(borrow mut Values, Initial);
+    return match Appended {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<u8>(borrow mut Values, 0u64, Replacement)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+fn ReadˉU8(Values: borrow Collections.Vector<u8>) -> u8 {
+    return Collections.Vectorˉborrowˉat::<u8>(borrow Values, 0u64);
+}
+
+fn CheckˉU8(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<u8>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<u8>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Owned: Collections.Vector<u8> = Values;
+            let Prior: u8 = MutateˉU8(borrow mut Owned, 255u8, 0u8);
+            var Result: i32 = 42;
+            if Prior != 255u8 { Result = 2; }
+            if ReadˉU8(borrow Owned) != 0u8 { Result = 3; }
+            if Collections.Vectorˉlength(borrow Owned) != 1u64 { Result = 4; }
+            using Resource = Owned { }
+            Result
+        }
+    };
+}
+
+fn MutateˉU32(Values: borrow mut Collections.Vector<u32>, Initial: u32, Replacement: u32) -> u32 {
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<u32> > =
+        Collections.Vectorˉappend::<u32>(borrow mut Values, Initial);
+    return match Appended {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<u32>(borrow mut Values, 0u64, Replacement)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+fn ReadˉU32(Values: borrow Collections.Vector<u32>) -> u32 {
+    return Collections.Vectorˉborrowˉat::<u32>(borrow Values, 0u64);
+}
+
+fn CheckˉU32(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<u32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<u32>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Owned: Collections.Vector<u32> = Values;
+            let Prior: u32 = MutateˉU32(borrow mut Owned, 4294967295u32, 2147483648u32);
+            var Result: i32 = 42;
+            if Prior != 4294967295u32 { Result = 2; }
+            if ReadˉU32(borrow Owned) != 2147483648u32 { Result = 3; }
+            if Collections.Vectorˉlength(borrow Owned) != 1u64 { Result = 4; }
+            using Resource = Owned { }
+            Result
+        }
+    };
+}
+
+fn MutateˉBool(Values: borrow mut Collections.Vector<bool>, Initial: bool, Replacement: bool) -> bool {
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<bool> > =
+        Collections.Vectorˉappend::<bool>(borrow mut Values, Initial);
+    return match Appended {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<bool>(borrow mut Values, 0u64, Replacement)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+fn ReadˉBool(Values: borrow Collections.Vector<bool>) -> bool {
+    return Collections.Vectorˉborrowˉat::<bool>(borrow Values, 0u64);
+}
+
+fn CheckˉBool(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<bool>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<bool>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Owned: Collections.Vector<bool> = Values;
+            let Prior: bool = MutateˉBool(borrow mut Owned, true, false);
+            var Result: i32 = 42;
+            if Prior != true { Result = 2; }
+            if ReadˉBool(borrow Owned) != false { Result = 3; }
+            if Collections.Vectorˉlength(borrow Owned) != 1u64 { Result = 4; }
+            using Resource = Owned { }
+            Result
+        }
+    };
+}
+
+fn MutateˉI64(Values: borrow mut Collections.Vector<i64>, Initial: i64, Replacement: i64) -> i64 {
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<i64> > =
+        Collections.Vectorˉappend::<i64>(borrow mut Values, Initial);
+    return match Appended {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<i64>(borrow mut Values, 0u64, Replacement)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+fn ReadˉI64(Values: borrow Collections.Vector<i64>) -> i64 {
+    return Collections.Vectorˉborrowˉat::<i64>(borrow Values, 0u64);
+}
+
+fn CheckˉI64(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<i64>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i64>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Owned: Collections.Vector<i64> = Values;
+            let Prior: i64 = MutateˉI64(borrow mut Owned, -9223372036854775807i64, 9223372036854775807i64);
+            var Result: i32 = 42;
+            if Prior != -9223372036854775807i64 { Result = 2; }
+            if ReadˉI64(borrow Owned) != 9223372036854775807i64 { Result = 3; }
+            if Collections.Vectorˉlength(borrow Owned) != 1u64 { Result = 4; }
+            using Resource = Owned { }
+            Result
+        }
+    };
+}
+
+fn MutateˉU64(Values: borrow mut Collections.Vector<u64>, Initial: u64, Replacement: u64) -> u64 {
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<u64> > =
+        Collections.Vectorˉappend::<u64>(borrow mut Values, Initial);
+    return match Appended {
+        case Results.Result.Valid { Value: Accepted } {
+            Collections.Vectorˉreplace::<u64>(borrow mut Values, 0u64, Replacement)
+        }
+        case Results.Result.Failure { Error: Refused } { Refused.Value }
+    };
+}
+
+fn ReadˉU64(Values: borrow Collections.Vector<u64>) -> u64 {
+    return Collections.Vectorˉborrowˉat::<u64>(borrow Values, 0u64);
+}
+
+fn CheckˉU64(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<u64>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<u64>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Owned: Collections.Vector<u64> = Values;
+            let Prior: u64 = MutateˉU64(borrow mut Owned, 18446744073709551615u64, 9223372036854775809u64);
+            var Result: i32 = 42;
+            if Prior != 18446744073709551615u64 { Result = 2; }
+            if ReadˉU64(borrow Owned) != 9223372036854775809u64 { Result = 3; }
+            if Collections.Vectorˉlength(borrow Owned) != 1u64 { Result = 4; }
+            using Resource = Owned { }
+            Result
+        }
+    };
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    var Index: u32 = 0u32;
+    while Index < 6u32 {
+        let Child: Results.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure> =
+            Memory.Split(borrow mut Parent, 32u64, 0u32);
+        let Observed: i32 = match Child {
+            case Results.Result.Failure { Error: Refused } { 5 }
+            case Results.Result.Valid { Value: Reservation } {
+                if Index == 0u32 {
+                    CheckˉI32(Reservation)
+                } else if Index == 1u32 {
+                    CheckˉU8(Reservation)
+                } else if Index == 2u32 {
+                    CheckˉU32(Reservation)
+                } else if Index == 3u32 {
+                    CheckˉBool(Reservation)
+                } else if Index == 4u32 {
+                    CheckˉI64(Reservation)
+                } else {
+                    CheckˉU64(Reservation)
+                }
+            }
+        };
+        if Observed != 42 { return Observed; }
+        Index = Index + 1u32;
+    }
+    return 42;
+}

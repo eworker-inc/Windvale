@@ -5,8 +5,8 @@ import { join } from 'node:path';
 
 // Extends the existing native owner. The accounting oracle uses a prepared
 // compiler or an explicitly supplied, digest-checked WVB product.
-export async function Runˉownedˉstorageˉcases(Context) {
-    const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
+export async function Prepareˉownedˉstorageˉobjects(Context) {
+    const { Repository, Work, Target, Requireˉsuccess } = Context;
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
     const Objects = [];
@@ -27,6 +27,14 @@ export async function Runˉownedˉstorageˉcases(Context) {
         await Requireˉsuccess(Tool('Check-Wvo'), [Object], `owned-${Name}-validate`);
         Objects.push(Object);
     }
+    return Objects;
+}
+
+export async function Runˉownedˉstorageˉcases(Context) {
+    const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
+    const Extension = Target === 'windows' ? 'cmd' : 'sh';
+    const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
+    const Objects = await Prepareˉownedˉstorageˉobjects(Context);
     const Oracle = await Readˉbudgetˉoracle(Context);
     const Cases = [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle)];
     // Two independent fixtures bound concurrent tool memory. Drain both workers

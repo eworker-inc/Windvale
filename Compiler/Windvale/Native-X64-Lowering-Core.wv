@@ -1360,7 +1360,8 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 213u8 { return 13u32; }
     if Opcode == 196u8 { return 9u32; }
     if Opcode == 205u8 { return 5u32; }
-    if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 227u8 { return 9u32; }
+    if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 ||
+        Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8 { return 9u32; }
     if Opcode == 209u8 { return 13u32; }
     if Opcode == 202u8 { return 5u32; }
     if Opcode == 220u8 { return 13u32; }
@@ -2004,7 +2005,8 @@ fn Compilerˉnativeˉx64ˉanalyzeˉnominalˉvalueˉinstruction(
         Stack = Bytesˉslice(Stack, 0u32, Depth);
         Bodyˉbytes = Bodyˉbytes + Ownedˉcollections.Operationˉbytes(Opcode);
     }
-    if Opcode == 195u8 || Opcode == 202u8 || Opcode == 208u8 || Opcode == 209u8 || Opcode == 227u8 {
+    if Opcode == 195u8 || Opcode == 202u8 || Opcode == 208u8 ||
+        Opcode == 209u8 || Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8 {
         let Collection: Ownedˉcollections.Analysis = Ownedˉcollections.Analyze(Input, Instructionˉoffset, Opcode, Localˉtypeˉidentities, Types, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
         if !Collection.Valid { return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input); }
         Stack = Collection.Stack;

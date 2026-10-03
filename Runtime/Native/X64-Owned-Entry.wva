@@ -345,8 +345,9 @@ add_i32 rsp 40
 return
 end define
 
-# ECX selects length (0), indexed scalar copy (1), or append (2).
-# RAX owns the Vector, RDX carries index/value, R8 points to append Result.
+# ECX selects length (0), indexed scalar copy (1), append (2), or replace (3).
+# RAX holds the Vector handle, RDX carries index/value, and R8 carries the
+# append Result address or replacement scalar. Reads/replacement return RDX.
 # Append uses the checked canonical ten-cell Result layout, including the
 # nested Collection_failure.Capacity_exhausted and the original scalar value.
 define Windvale_owned_access
@@ -363,7 +364,18 @@ branch not_equal Finished
 test ebx ebx
 branch equal Length
 compare_i32 ebx 1
-branch not_equal Append
+branch equal Indexed
+compare_i32 ebx 2
+branch equal Append
+compare_i32 ebx 3
+branch not_equal Invalid
+compare r13 rcx
+branch above_equal Invalid
+load_memory_u64 rcx rdx r13 8 8
+store_memory_u64 rdx r13 8 8 r12
+move rdx rcx
+jump_label Success
+label Indexed
 compare r13 rcx
 branch above_equal Invalid
 load_memory_u64 rdx rdx r13 8 8

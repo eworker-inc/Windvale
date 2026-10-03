@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.41 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing, candidate WVB 1.40 adds read-only Vector parameter access and the projected-Vector bridge, and candidate WVB 1.41 adds immutable scalar Vector indexed borrowing as specified below; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.43 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing, candidate WVB 1.40 adds read-only Vector parameter access and the projected-Vector bridge, and candidate WVB 1.41 adds immutable scalar Vector indexed borrowing as specified below. Candidate WVB 1.42 adds Copy-record collection and budget-helper composition; candidate 1.43 adds scalar replacement and append through exclusive Vector parameters. Other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -1704,6 +1704,31 @@ source-to-execution evidence. Automatic CI execution of this selection remains
 open. Paired Linux containers use Windows-produced native images; neither
 independent reconstruction, native E3 lowering, installed promotion, nor broader
 qualification follows from this checkpoint.
+
+## Candidate exclusive scalar Vector mutation
+
+Candidate WVIR operations `193` and `194` lower to WVB 1.43 under
+[Decision 0973](../Documents/Decisions/0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md).
+Replacement emits its ordered `u64` index and scalar replacement, then the
+nine-byte `E4` instruction naming the exact owner slot and kind-5 Vector type.
+The produced value is the previous scalar. Exclusive-parameter append keeps
+the existing `D0` encoding and exact fallible append Result. Plain-local append
+keeps its earlier version and slot rules.
+
+The target must be a live mutable owned Vector or an exclusive Vector
+parameter. Only `i32`, `bool`, `u8`, `u32`, `i64` and `u64` elements are admitted.
+The source validator reconstructs parameter mode, element shape, availability
+and loan exclusions independently. The bytecode emitter selects minor 43 only
+when these operations occur in its emitted reachable functions; a source set
+containing an unused mutation helper still emits the earlier required version.
+The complete bytecode reader checks that distinguishing feature again.
+
+The [bytecode contract](Seed-Bytecode.md#candidate-wvb-143-exclusive-scalar-vector-mutation)
+owns bounds, failure and loan rules. Selected source-to-interpreter and native
+storage checks use the existing owners. Direct indexed read-through retains
+the source validator's conservative owner lifetime restriction; mutable element
+views, borrowed growth, arbitrary owner aggregates, installed promotion and
+independent qualification remain open.
 
 ## Expansion path
 

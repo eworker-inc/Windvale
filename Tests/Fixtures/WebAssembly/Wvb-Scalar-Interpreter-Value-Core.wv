@@ -741,7 +741,7 @@ export fn Prepareˉborrowˉstep(
     // Candidate task envelopes retain their existing capability checks and
     // task dispatch. Borrow preparation never grants a privileged operation.
     let Taskˉrequest: bool = Requestˉmajor == 6u32 &&
-        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32;
+        (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Module, 6u32) == 43u32);
     if (Requestˉmajor != 1u32 && !Taskˉrequest) ||
         (Payloadˉlength >= 220u32 && Payloadˉlength <= 224u32) ||
         (!Taskˉrequest && (Payloadˉlength == 65u32 ||

@@ -3,15 +3,16 @@
 ## Status
 
 Candidate x64 compiler/runtime integration for bounded WVB 1.24, 1.25, 1.27,
-1.41 and scalar-collection 1.42 subsets.
+1.41 and scalar-collection 1.42/1.43 subsets.
 The current source lowerer emits **ABI 24**, with **execution context 10**,
-for that subset. Source signatures and WVB bytes are unchanged. ABI 22/23,
+for that subset. Frozen source signatures are unchanged; WVB 1.43 versions
+the new scalar mutation operations. ABI 22/23,
 their consumers and pinned bootstrap products retain their recorded behavior.
 This path has a dedicated test caller; normal installed launchers do not yet
 construct context 10. It is not installed qualification or complete Libraries 1.0.
 
 Reserved scalar Vectors now own physical storage and a canonical allocation
-lease. Append and indexed scalar reads use that backing directly. Explicit
+lease. Append, indexed scalar reads and replacement use that backing directly. Explicit
 growth reserves replacement storage before releasing the old allocation.
 An explicit scope release returns the storage and parent budget credit.
 Normal return and terminal traps tear down the enclosing execution domain.
@@ -35,7 +36,8 @@ owner release (`CD` immediately followed by `50`). Vector elements are `i32`,
 Vectors containing records or resource-owning values are rejected.
 
 The additional operations are unit constants (`C3`), length (`CA`), append
-(`D0`), reserved growth (`D1`) and indexed borrowed scalar reads (`E3`). Unit
+(`D0`), reserved growth (`D1`), parameter length (`E2`), indexed borrowed
+scalar reads (`E3`) and scalar replacement (`E4`). Unit
 uses its exact shape 20 identity; it is not interchangeable with an integer.
 Append uses the canonical `Result<unit, Vectorˉappendˉfailure<T>>`; growth uses
 `Result<unit, Allocationˉfailure>`. Native admission checks their exact layouts.
@@ -74,12 +76,17 @@ Borrowed helpers do not release the caller's owner on ordinary return; the
 caller can explicitly release it after the call completes. Returning a borrowed
 parameter as an owner, taking it or releasing it remains invalid.
 
+Scalar replacement through an exclusive parameter updates the caller's retained
+backing and returns the old value. WVB 1.43 also permits append through that
+parameter; earlier minors retain their non-parameter append rule. Parameter
+length observes the handle without moving its owner. Mutation accepts neither
+an immutable parameter nor a projected borrowed payload. The complete verifier
+rejects mutation while an indexed element loan remains live.
+
 Growth through a borrowed helper remains rejected: replacement must update
 the caller's owning slot, while this calling convention passes a handle value.
-Append through a borrowed parameter remains outside the source, complete WVB
-verifier and native execution subset.
-Parameter length (`E2`) is not yet integrated. The receiver-retaining length
-operation (`CA`) does not gain a temporary-loan drop through this change.
+Mutable element views are not implemented. The receiver-retaining length
+operation (`CA`) retains its existing loan behavior.
 Other borrowed helper parameters, bytes/text values, aggregate drops,
 arbitrary owner-bearing records, freeze, sharing, hosted capabilities and WVB
 1.29 remain unsupported. WVB 1.42 Copy-record collection elements also reject;
@@ -146,6 +153,11 @@ Append within capacity writes one scalar cell and increments length without
 allocating. A full Vector returns `Capacityˉexhausted` with its maximum and the
 original input value, preserving length and contents. Indexed reads require
 `index < length`; an out-of-range index is a terminal invalid-limit failure.
+Replacement applies the same full-width index check before either reading or
+writing. It returns the prior scalar and writes one cell without changing the
+handle, length, capacity, lease or charge. The private access selector is `3`;
+RAX carries the handle, RDX the index and R8 the replacement, with the previous
+cell returned in RDX. This does not change ABI 24/context 10.
 
 Growth requires a strictly larger positive capacity. It borrows both the Vector
 and funding budget. The complete replacement charge must fit the funding
@@ -190,20 +202,34 @@ snapshots for ordinary refusals.
 
 The [helper workload](../Tests/Fixtures/Native-X64/Owned-Vector-Helpers.wv)
 constructs a Vector in a helper, returns its allocation Result, transfers the
-Vector through recursive calls, appends in its owning caller, forwards an
-immutable borrow through two helpers, reads it and releases it in
-the caller. A bytecode variation reads through exclusive mutable parameters.
+Vector through recursive calls, appends in its owning caller and exclusive
+helpers, replaces through nested exclusive helpers, observes parameter length,
+forwards an immutable borrow, reads it and releases it in the caller. A bytecode
+variation reads through exclusive mutable parameters.
 Its one, 1,000 and 32,768 iteration cases must fit the same 64-byte arena and
-32-byte peak charge, with zero live charge at completion. Main is last in the function directory; the
+48-byte peak charge, with zero live charge at completion. Main is not first in the function directory; the
 Vector travels through a stack argument as well as a return. Checks cover the
 64-function boundary, allocation refusal, nested fuel/depth failure, entry
 recursion rejection, copied owners and a helper retaining an owner at return.
-The borrowed-read bounds trap must reclaim the same domain. Malformed helper
+Borrowed-read and replacement bounds traps must reclaim the same domain. Malformed helper
 cases reject mutation through an immutable parameter, ownership escape and
 release of a borrowed Vector.
 
-Preparation includes seven products: lowerer, borrow probe, budget oracle,
-scope, growth, append-refusal and helper source fixtures. The behavior phase reuses them. Explicit
+The [six-scalar workload](../Tests/Fixtures/Native-X64/Owned-Vector-Scalar-Mutation.wv)
+checks the old and updated values for every admitted scalar kind, including
+signed limits and the high half of `u32`/`u64`. Its six sequential allocations
+must peak at 32 charged bytes and finish with zero live storage. These are
+bounded native storage checks, separate from interpreter guest accounting or
+process peak-memory measurements.
+
+Preparation includes eight products: lowerer, borrow probe, budget oracle,
+scope, growth, append-refusal, helper and six-scalar fixtures. The behavior phase reuses them. Explicit
 digest-checked products may be supplied with `--lowerer`, `--borrow-probe`,
-`--budget-oracle`, `--owned-vector`, `--owned-growth`, `--owned-append` and `--owned-helpers`
+`--budget-oracle`, `--owned-vector`, `--owned-growth`, `--owned-append`, `--owned-helpers`
+and `--owned-scalar-helpers`
 to the existing native owner.
+Its `--owned-helper-memory` selection checks only helper mutation, transfers,
+refusal, bounds and cleanup with a digest-checked lowerer. The existing
+memory-budget execution owner adds `--vector-mutation-products` to check the
+same bytecode on another host without rebuilding a compiler. Neither selection
+is independent compiler reconstruction or full cross-host qualification.

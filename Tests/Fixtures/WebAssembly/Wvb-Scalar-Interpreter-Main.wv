@@ -324,7 +324,7 @@ fn Readˉfunctionˉdirectory(
             ));
             var Borrowedˉpayload: bool = false;
             if Shapeˉkind == 37u32 {
-                if (Moduleˉminor != 39u32 && Moduleˉminor != 40u32 && (Moduleˉminor != 41u32 && Moduleˉminor != 42u32)) || Functionˉcursor + 1u32 >= Functionsˉend {
+                if (Moduleˉminor != 39u32 && Moduleˉminor != 40u32 && (Moduleˉminor != 41u32 && (Moduleˉminor != 42u32 && Moduleˉminor != 43u32))) || Functionˉcursor + 1u32 >= Functionsˉend {
                     return Invalidˉfunctionˉdirectory(Module);
                 }
                 Functionˉcursor = Functionˉcursor + 1u32;
@@ -337,7 +337,7 @@ fn Readˉfunctionˉdirectory(
                     Moduleˉminor == 35u32 || Moduleˉminor == 36u32 ||
                     Moduleˉminor == 37u32 || Moduleˉminor == 38u32 ||
                     (Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || Moduleˉminor == 41u32 ||
-                        (Moduleˉminor == 42u32 && Requestˉmajor != 6u32)) {
+                        ((Moduleˉminor == 42u32 || Moduleˉminor == 43u32) && Requestˉmajor != 6u32)) {
                     if Functionˉindex == Mainˉindex {
                         if Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                             Mainˉhasˉmemoryˉbudget {
@@ -346,7 +346,7 @@ fn Readˉfunctionˉdirectory(
                         Mainˉhasˉmemoryˉbudget = true;
                     }
                 } else if Moduleˉminor == 32u32 ||
-                    (Moduleˉminor == 42u32 && Requestˉmajor == 6u32) {
+                    ((Moduleˉminor == 42u32 || Moduleˉminor == 43u32) && Requestˉmajor == 6u32) {
                     if Functionˉindex == Mainˉindex {
                         if Parameterˉcount != 2u32 || Shapeˉindex != 0u32 ||
                             Mainˉhasˉmemoryˉbudget {
@@ -365,7 +365,7 @@ fn Readˉfunctionˉdirectory(
                 }
             }
             if (Moduleˉminor == 32u32 ||
-                    (Moduleˉminor == 42u32 && Requestˉmajor == 6u32)) &&
+                    ((Moduleˉminor == 42u32 || Moduleˉminor == 43u32) && Requestˉmajor == 6u32)) &&
                 Functionˉindex == Mainˉindex && Parameterˉcount == 2u32 &&
                 Shapeˉindex == 1u32 && Shapeˉkind == 7u32 {
                 Mainˉhasˉoperationˉcontext = true;
@@ -478,7 +478,7 @@ fn Readˉfunctionˉdirectory(
             ));
             var Borrowedˉlocal: bool = false;
             if Shapeˉkind == 37u32 {
-                if (Moduleˉminor != 39u32 && Moduleˉminor != 40u32 && (Moduleˉminor != 41u32 && Moduleˉminor != 42u32)) || Functionˉcursor + 1u32 >= Functionsˉend {
+                if (Moduleˉminor != 39u32 && Moduleˉminor != 40u32 && (Moduleˉminor != 41u32 && (Moduleˉminor != 42u32 && Moduleˉminor != 43u32))) || Functionˉcursor + 1u32 >= Functionsˉend {
                     return Invalidˉfunctionˉdirectory(Module);
                 }
                 Functionˉcursor = Functionˉcursor + 1u32;
@@ -496,7 +496,7 @@ fn Readˉfunctionˉdirectory(
                     (Moduleˉminor != 34u32 && Moduleˉminor != 33u32 &&
                         Moduleˉminor != 35u32 && Moduleˉminor != 36u32 &&
                         Moduleˉminor != 37u32 && Moduleˉminor != 38u32 &&
-                        (Moduleˉminor != 39u32 && Moduleˉminor != 40u32 && (Moduleˉminor != 41u32 && Moduleˉminor != 42u32)) && Moduleˉminor != 32u32 &&
+                        (Moduleˉminor != 39u32 && Moduleˉminor != 40u32 && (Moduleˉminor != 41u32 && (Moduleˉminor != 42u32 && Moduleˉminor != 43u32))) && Moduleˉminor != 32u32 &&
                         (Moduleˉminor < 23u32 || Moduleˉminor > 28u32 ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget))) ||
@@ -522,7 +522,7 @@ fn Readˉfunctionˉdirectory(
                 Nominalˉtoken = Nominalˉtoken + 1u32;
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
-            if Borrowedˉlocal || ((Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || (Moduleˉminor == 41u32 || Moduleˉminor == 42u32)) && Shapeˉkind == 29u32) {
+            if Borrowedˉlocal || ((Moduleˉminor == 39u32 || Moduleˉminor == 40u32 || (Moduleˉminor == 41u32 || (Moduleˉminor == 42u32 || Moduleˉminor == 43u32))) && Shapeˉkind == 29u32) {
                 Shapeˉkind = Shapeˉkind + 64u32;
             }
             Localˉshapes = Bytesˉconcat(
@@ -583,7 +583,7 @@ fn Readˉfunctionˉdirectory(
                     return Invalidˉfunctionˉdirectory(Module);
                 }
             } else if Requestˉmajor == 6u32 &&
-                (Moduleˉminor == 32u32 || Moduleˉminor == 42u32) &&
+                (Moduleˉminor == 32u32 || (Moduleˉminor == 42u32 || Moduleˉminor == 43u32)) &&
                 Mainˉhasˉmemoryˉbudget && Mainˉhasˉoperationˉcontext {
                 if Parameterˉcount != 2u32 || Returnˉkind != 1u32 {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -604,7 +604,8 @@ fn Readˉfunctionˉdirectory(
             Code + Functionˉcodeˉoffset,
             Functionˉcodeˉlength,
             Moduleˉminor,
-            Requestˉmajor
+            Requestˉmajor,
+            Parameterˉcount
         );
         let Scanned: u32 = Encodedˉscan & 524287u32;
         let Scannedˉversionˉfeature: u32 = Encodedˉscan >> 19u32;
@@ -627,7 +628,8 @@ fn Readˉfunctionˉdirectory(
             Borrowedˉbudgetˉparameterˉcount == 0u32) ||
         ((Moduleˉminor == 33u32 || Moduleˉminor == 35u32 ||
             Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 || Moduleˉminor == 39u32 || Moduleˉminor == 41u32) &&
+            Moduleˉminor == 38u32 || Moduleˉminor == 39u32 ||
+            Moduleˉminor == 41u32 || Moduleˉminor == 43u32) &&
             Versionˉfeatureˉinstructions == 0u32) ||
         (Moduleˉminor == 40u32 && Versionˉfeatureˉinstructions == 0u32 &&
             !Hasˉprojectedˉvector) {
@@ -4119,7 +4121,7 @@ fn Executeˉlocal(
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 &&
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 &&
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) != 38u32 &&
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32) {
+                (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32)) {
             return Localˉexecution(
                 false, true, Empty, Empty, Empty, Empty, Empty, Producedˉkind
             );
@@ -5809,6 +5811,59 @@ fn Executeˉaggregate(
     );
 }
 
+record Vectorˉaccessˉexecution {
+    Valid: bool;
+    Status: u32;
+    Heap: bytes;
+    Stack: bytes;
+    Kind: u32;
+}
+
+fn Executeˉvectorˉaccess(
+    Module: bytes, Typeˉoffsets: bytes, Typeˉcount: u32,
+    Payload: u32, Opcode: u32, Stack: bytes,
+    Heap: bytes, Heapˉallocations: bytes, Heapˉallocationˉcount: u32,
+    Functionˉshapeˉoffsets: bytes, Localˉshapes: bytes, Locals: bytes,
+    Functionˉindex: u32, Functionˉcursor: u32, Functionˉframeˉmetadata: bytes,
+    Recordˉmetadata: bytes
+) -> Vectorˉaccessˉexecution {
+    let Invalid: Vectorˉaccessˉexecution = Vectorˉaccessˉexecution(false, 0u32, Heap, Stack, 0u32);
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
+    if Minor < 40u32 || Minor > 43u32 || Opcode < 226u32 || Opcode > 228u32 ||
+        (Opcode == 227u32 && Minor < 41u32) || (Opcode == 228u32 && Minor != 43u32) {
+        return Invalid;
+    }
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    let Vectorˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+    if Slot >= Functionˉcursor / 8u32 || Vectorˉtype >= Typeˉcount { return Invalid; }
+    let Shape: u32 = Bytesˉreadˉu32ˉlittle(Functionˉshapeˉoffsets, Functionˉindex * 4u32) + Slot * 8u32;
+    let Kind: u32 = Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape);
+    if Borrowˉframes.Valueˉkind(Kind) != 23u32 ||
+        Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape + 4u32) != Vectorˉtype + 1u32 {
+        return Invalid;
+    }
+    let Value: bytes = Bytesˉslice(Locals, Slot * 8u32, 8u32);
+    if Opcode == 226u32 {
+        if Kind != 23u32 || Slot >= Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata, Functionˉindex * 8u32) { return Invalid; }
+        let Length: Collections.Collectionˉaccessˉstate = Collections.Collectionˉlengthˉchecked(
+            Heap, Heapˉallocations, Heapˉallocationˉcount, Value, Vectorˉtype, Stack);
+        return Vectorˉaccessˉexecution(Length.Valid, Length.Status, Heap, Length.Stack, Length.Kind);
+    }
+    if Opcode == 227u32 {
+        let Read: Collections.Collectionˉaccessˉstate = Collections.Collectionˉborrowˉchecked(
+            Module, Typeˉoffsets, Typeˉcount, Recordˉmetadata,
+            Heap, Heapˉallocations, Heapˉallocationˉcount, Value, Vectorˉtype, Stack);
+        return Vectorˉaccessˉexecution(Read.Valid, Read.Status, Heap, Read.Stack, Read.Kind);
+    }
+    // Complete verification proves the exclusive parameter mode and scalar
+    // stack shapes; the collection leaf rechecks the live handle and full index.
+    let Replaced: Collections.Collectionˉreplacementˉstate = Collections.Collectionˉreplaceˉchecked(
+        Module, Typeˉoffsets, Typeˉcount, Recordˉmetadata,
+        Heap, Heapˉallocations, Heapˉallocationˉcount, Value, Vectorˉtype, Stack);
+    return Vectorˉaccessˉexecution(Replaced.Valid, Replaced.Status, Replaced.Heap, Replaced.Stack, 0u32);
+}
+
 fn Executeˉextended(
     Module: bytes,
     Typeˉoffsets: bytes,
@@ -5858,7 +5913,7 @@ fn Executeˉextended(
         (Payloadˉlength > 80u32 && Payloadˉlength < 96u32) ||
         (Payloadˉlength > 125u32 && Payloadˉlength < 151u32) ||
         (Payloadˉlength > 153u32 && Payloadˉlength < 196u32) ||
-        Payloadˉlength > 227u32 {
+        Payloadˉlength > 228u32 {
         return Extendedˉexecution(
             true, false, Initialˉstack, 0u32, Empty, false, Empty,
             Initialˉheap, Initialˉrecordˉmetadata, Initialˉrecords,
@@ -5947,83 +6002,26 @@ fn Executeˉextended(
         Mainˉfound = true;
     }
 
-    if Payloadˉlength == 226u32 {
-        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32)) { return Invalid; }
-        let Parameter: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
-        let Vectorˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
-        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-            Functionˉframeˉmetadata, Functionˉindex * 8u32);
-        if Parameter >= Parameterˉcount || Parameter >= Functionˉcursor / 8u32 ||
-            Vectorˉtype >= Typeˉcount { return Invalid; }
-        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
-            Functionˉshapeˉoffsets, Functionˉindex * 4u32) + Parameter * 8u32;
-        if Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape) != 23u32 ||
-            Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape + 4u32) != Vectorˉtype + 1u32 {
-            return Invalid;
-        }
-        let Value: bytes = Bytesˉslice(Locals, Parameter * 8u32, 8u32);
-        if !Collections.Collectionˉbackingˉvalid(
-            Heap, Heapˉallocations, Heapˉallocationˉcount, Value) ||
-            Collections.Collectionˉtype(Heap, Value) != Vectorˉtype {
-            return Invalid;
-        }
-        Stack = Bytesˉconcat(Stack, Bytesˉconcat(
-            Bytesˉfromˉu32ˉlittle(Collections.Collectionˉlength(Heap, Value)),
-            Bytesˉfromˉu32ˉlittle(0u32)));
-        Stackˉconsumed = 0u32;
-        Stackˉproduced = true;
-        Stackˉproducedˉkind = 0u32;
-        Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
-        Mainˉfound = true;
-    }
-
-    if Payloadˉlength == 227u32 {
-        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32) || Bytesˉlength(Stack) < 8u32 {
-            return Invalid;
-        }
-        let Indexedˉslot: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
-        let Indexedˉvectorˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
-        if Indexedˉslot >= Functionˉcursor / 8u32 || Indexedˉvectorˉtype >= Typeˉcount { return Invalid; }
-        let Indexedˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-            Functionˉshapeˉoffsets, Functionˉindex * 4u32) + Indexedˉslot * 8u32;
-        if Borrowˉframes.Valueˉkind(Bytesˉreadˉu32ˉlittle(Localˉshapes, Indexedˉshape)) != 23u32 ||
-            Bytesˉreadˉu32ˉlittle(Localˉshapes, Indexedˉshape + 4u32) != Indexedˉvectorˉtype + 1u32 {
-            return Invalid;
-        }
-        let Indexedˉelementˉshape: u32 = Collections.Collectionˉelementˉshape(
-            Module, Typeˉoffsets, Typeˉcount, Indexedˉvectorˉtype, 5u32);
-        if !Collections.Collectionˉexecutableˉelement(Module, Indexedˉelementˉshape) { return Invalid; }
-        let Indexedˉvalue: bytes = Bytesˉslice(Locals, Indexedˉslot * 8u32, 8u32);
-        if !Collections.Collectionˉbackingˉvalid(
-            Heap, Heapˉallocations, Heapˉallocationˉcount, Indexedˉvalue) ||
-            Collections.Collectionˉtype(Heap, Indexedˉvalue) != Indexedˉvectorˉtype {
-            return Invalid;
-        }
-        let Indexedˉstackˉlength: u32 = Bytesˉlength(Stack);
-        let Indexedˉlow: u32 = Bytesˉreadˉu32ˉlittle(Stack, Indexedˉstackˉlength - 8u32);
-        let Indexedˉhigh: u32 = Bytesˉreadˉu32ˉlittle(Stack, Indexedˉstackˉlength - 4u32);
-        Stack = Bytesˉslice(Stack, 0u32, Indexedˉstackˉlength - 8u32);
-        // Test the full u64 and current count before reading any element cell.
-        if Indexedˉhigh != 0u32 || Indexedˉlow >= Collections.Collectionˉlength(Heap, Indexedˉvalue) {
-            Sectionˉkind = 3008u32;
-        } else {
-            let Indexedˉselected: bytes = Collections.Collectionˉelement(Heap, Indexedˉvalue, Indexedˉlow);
-            if !Collections.Collectionˉelementˉvalueˉvalid(
-                Module, Indexedˉelementˉshape, Typeˉoffsets, Typeˉcount, Recordˉmetadata, Indexedˉselected
-            ) { return Invalid; }
-            Stack = Bytesˉconcat(Stack, Indexedˉselected);
-        }
-        Stackˉconsumed = 1u32;
+    if Payloadˉlength >= 226u32 && Payloadˉlength <= 228u32 {
+        let Access: Vectorˉaccessˉexecution = Executeˉvectorˉaccess(
+            Module, Typeˉoffsets, Typeˉcount, Payload, Payloadˉlength, Stack,
+            Heap, Heapˉallocations, Heapˉallocationˉcount,
+            Functionˉshapeˉoffsets, Localˉshapes, Locals,
+            Functionˉindex, Functionˉcursor, Functionˉframeˉmetadata, Recordˉmetadata);
+        if !Access.Valid { return Invalid; }
+        Heap = Access.Heap;
+        Stack = Access.Stack;
+        Sectionˉkind = Access.Status;
+        Stackˉconsumed = Payloadˉlength - 226u32;
         Stackˉproduced = Sectionˉkind == 0u32;
-        Stackˉproducedˉkind = 0u32;
-        if Bytesˉreadˉu8(Module, Indexedˉelementˉshape) == 7u8 { Stackˉproducedˉkind = 2u32; }
+        Stackˉproducedˉkind = Access.Kind;
         Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
         Mainˉfound = true;
     }
 
     if Payloadˉlength == 206u32 {
         if !Mainˉhasˉmemoryˉbudget ||
-            (Functionˉindex != Mainˉindex && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32) {
+            (Functionˉindex != Mainˉindex && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32)) {
             return Invalid;
         }
         let Budgetˉresult: Memoryˉbudgetˉexecution =
@@ -6053,9 +6051,9 @@ fn Executeˉextended(
     if Payloadˉlength == 207u32 {
         let Vectorˉmoduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
         if ((Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 28u32) &&
-                (Vectorˉmoduleˉminor != 39u32 && Vectorˉmoduleˉminor != 40u32 && (Vectorˉmoduleˉminor != 41u32 && Vectorˉmoduleˉminor != 42u32))) ||
+                (Vectorˉmoduleˉminor != 39u32 && Vectorˉmoduleˉminor != 40u32 && (Vectorˉmoduleˉminor != 41u32 && (Vectorˉmoduleˉminor != 42u32 && Vectorˉmoduleˉminor != 43u32)))) ||
             !Mainˉhasˉmemoryˉbudget ||
-            (Functionˉindex != Mainˉindex && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32) {
+            (Functionˉindex != Mainˉindex && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32)) {
             return Invalid;
         }
         let Vectorˉresult: Vectorˉconstructˉexecution =
@@ -6087,9 +6085,9 @@ fn Executeˉextended(
         if ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 25u32 ||
             Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) &&
             Bytesˉreadˉu16ˉlittle(Module, 6u32) != 40u32 &&
-            (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32)) ||
+            (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32))) ||
             !Mainˉhasˉmemoryˉbudget ||
-            (Functionˉindex != Mainˉindex && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32) {
+            (Functionˉindex != Mainˉindex && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32)) {
             return Invalid;
         }
         let Appendˉexpectedˉvectorˉtype: u32 = Vectorˉlocalˉtype(
@@ -6120,9 +6118,9 @@ fn Executeˉextended(
     if Payloadˉlength == 209u32 {
         if ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 27u32 ||
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) &&
-                (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32)) ||
+                (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32))) ||
             !Mainˉhasˉmemoryˉbudget ||
-            (Functionˉindex != Mainˉindex && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32) {
+            (Functionˉindex != Mainˉindex && (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Module, 6u32) != 43u32)) {
             return Invalid;
         }
         let Growˉexpectedˉvectorˉtype: u32 = Vectorˉlocalˉtype(
@@ -6131,7 +6129,7 @@ fn Executeˉextended(
             Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32)
         );
         if Growˉexpectedˉvectorˉtype == 4294967295u32 { return Invalid; }
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32 {
+        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Module, 6u32) == 43u32) {
             // Consumed result wrappers can still retain a backing descriptor.
             // Sweep them with the active frame rooted before checking exclusive
             // growth; live record cells remain reachable through the Vector.
@@ -8965,7 +8963,7 @@ export fn Main(Request: bytes) -> bytes {
     let Maximumˉcallˉdepth: u32 = Parsed.Maximumˉcallˉdepth;
     let Module: bytes = Parsed.Module;
     let Moduleˉminor: u32 = Parsed.Moduleˉminor;
-    let Foundationˉborrowˉmodule: bool = Moduleˉminor >= 39u32 && Moduleˉminor <= 42u32;
+    let Foundationˉborrowˉmodule: bool = Moduleˉminor >= 39u32 && Moduleˉminor <= 43u32;
     let Guestˉinput: bytes = Parsed.Guestˉinput;
     let Data: u32 = Parsed.Data;
     let Functions: u32 = Parsed.Functions;
@@ -9850,7 +9848,8 @@ export fn Main(Request: bytes) -> bytes {
                     Returnˉcollection.Releasedˉdescriptors
                 );
             }
-            if Moduleˉminor == 42u32 && Mainˉhasˉmemoryˉbudget {
+            // Request admission has already bounded the module minor to 43.
+            if Moduleˉminor >= 42u32 && Mainˉhasˉmemoryˉbudget {
                 Memoryˉbudgetˉstate = Returningˉbudgetˉstate(
                     Module, Typeˉoffsets, Records, Recordˉmetadata, Stack,
                     Stackˉbudgetˉflags, Frames, Functionˉcount,

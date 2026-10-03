@@ -70,7 +70,7 @@ fn Hˉborrowˉpayloadˉkind(Kind: u32) -> bool {
 fn Hˉborrowˉpayloadˉsupported(Input: bytes, Kind: u32) -> bool {
     return Hˉborrowˉpayloadˉkind(Kind) &&
         (Kind != 23u32 || (Bytesˉlength(Input) >= 8u32 &&
-            (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32))));
+            (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32)))));
 }
 
 fn Hˉborrowedˉvalue(Kind: u32) -> bool {
@@ -85,7 +85,7 @@ fn Hˉexactˉvalueˉmatches(Input: bytes, Types: u32, Expectedˉkind: u32,
 
 fn Hˉeffectiveˉminor(Input: bytes) -> u32 {
     let Declared: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
-    if Declared == 38u32 || Declared == 39u32 || Declared == 40u32 || (Declared == 41u32 || Declared == 42u32) { return 37u32; }
+    if Declared == 38u32 || Declared == 39u32 || Declared == 40u32 || (Declared == 41u32 || Declared == 42u32 || Declared == 43u32) { return 37u32; }
     return Declared;
 }
 
@@ -2054,7 +2054,7 @@ export fn Hˉvariant(
     let Variantˉkind: u32 = U32ˉfromˉu8(
         Bytesˉreadˉu8(Resultˉstack, Variantˉoffset)
     );
-    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) &&
+    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) &&
         (Variantˉkind == 75u32 || Variantˉkind == 139u32);
     if Variantˉkind != 11u32 && Variantˉkind != 28u32 &&
         Variantˉkind != 29u32 && Variantˉkind != 32u32 &&
@@ -2149,7 +2149,7 @@ fn Hˉvariantˉfield(
     let Variantˉkind: u32 = U32ˉfromˉu8(
         Bytesˉreadˉu8(Stack, Variantˉoffset)
     );
-    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) &&
+    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) &&
         (Variantˉkind == 75u32 || Variantˉkind == 139u32);
     if (Variantˉkind != 11u32 && Variantˉkind != 28u32 &&
         Variantˉkind != 29u32 && Variantˉkind != 32u32 &&
@@ -2313,7 +2313,7 @@ export fn Hˉrecord(
     }
     let Sourceˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
     let Sourceˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Sourceˉoffset));
-    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) && Sourceˉkind == 71u32;
+    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) && Sourceˉkind == 71u32;
     if Sourceˉkind != 7u32 && !Borrowed {
         return Hˉoperationˉfailure(Stack, Depth);
     }
@@ -2467,8 +2467,16 @@ fn Hˉcollectionˉelementˉisˉsupported(Input: bytes, Types: u32, Element: byte
         (Kind >= 14u32 && Kind <= 20u32) {
         return true;
     }
-    return Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 && Kind == 7u32 &&
+    return (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32) && Kind == 7u32 &&
         Hˉreadˉthroughˉshape(Input, Types, Kind, Bytesˉreadˉu32ˉlittle(Element, 1u32), true);
+}
+
+fn Hˉcollectionˉelementˉisˉscalar(Element: bytes) -> bool {
+    if Bytesˉlength(Element) != 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Element, 1u32) != 0u32 { return false; }
+    let Kind: u8 = Bytesˉreadˉu8(Element, 0u32);
+    return Kind == 1u8 || Kind == 2u8 || Kind == 4u8 ||
+        Kind == 5u8 || Kind == 9u8 || Kind == 10u8;
 }
 
 fn Hˉcollection(
@@ -2687,7 +2695,7 @@ fn Hˉcollectionˉorˉarray(
     }
     let Arrayˉoffset: u32 = Indexˉoffset - 5u32;
     let Arrayˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Arrayˉoffset));
-    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) && Arrayˉkind == 86u32;
+    let Borrowed: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) && Arrayˉkind == 86u32;
     if Arrayˉkind != 22u32 && !Borrowed {
         return Hˉoperationˉfailure(Stack, Depth);
     }
@@ -2821,7 +2829,7 @@ fn Hˉreadˉthroughˉshape(Input: bytes, Types: u32, Kind: u32, Nominal: u32, Co
 
 fn Hˉvalueˉmatches(Input: bytes, Types: u32, Expected: u32, Actual: u32, Nominal: u32) -> bool {
     if Expected == Actual { return true; }
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32)) || Expected >= 64u32 ||
+    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32))) || Expected >= 64u32 ||
         Actual != Expected + 64u32 { return false; }
     return Hˉreadˉthroughˉshape(Input, Types, Expected, Nominal, false);
 }
@@ -2908,7 +2916,7 @@ export fn Hˉcall(
         let Expectedˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Parameters, Parameter + 1u32);
         var Expectedˉkind: u32 = Declaredˉkind;
         if Declaredˉkind >= 64u32 {
-            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32)) {
+            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32))) {
                 return Hˉoperationˉfailure(Stack, Depth);
             }
         } else {
@@ -2934,7 +2942,7 @@ export fn Hˉcall(
         // This direct-call bridge observes a Foundation Vector payload without
         // erasing its caller-side loan or granting value/exclusive transfer.
         var Borrowedˉvectorˉargument: bool =
-            (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) &&
+            (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) &&
             Declaredˉkind == 26u32 && Actualˉkind == 87u32;
         if Borrowedˉvectorˉargument {
             let Borrowedˉvectorˉtypes: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
@@ -3048,7 +3056,7 @@ fn Hˉindirectˉcall(
     let Callableˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
     let Callableˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Callableˉoffset));
     // Invocation observes the loan; it does not copy a frame-owned callable.
-    let Borrowedˉcallable: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) &&
+    let Borrowedˉcallable: bool = (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) &&
         Callableˉkind == 99u32;
     if (Callableˉkind != 35u32 && !Borrowedˉcallable) ||
         Bytesˉreadˉu32ˉlittle(Resultˉstack, Callableˉoffset + 1u32) != Callableˉtype {
@@ -3610,7 +3618,7 @@ fn Hˉforeignˉcallˉoperation(
     );
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
     let Declaredˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
-    if (Declaredˉminor != 38u32 && Declaredˉminor != 39u32 && Declaredˉminor != 40u32 && (Declaredˉminor != 41u32 && Declaredˉminor != 42u32)) || Binding != 1u32 ||
+    if (Declaredˉminor != 38u32 && Declaredˉminor != 39u32 && Declaredˉminor != 40u32 && (Declaredˉminor != 41u32 && Declaredˉminor != 42u32 && Declaredˉminor != 43u32)) || Binding != 1u32 ||
         Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount || Depth < 3u32 ||
         !Hˉunsafeˉscratchˉisˉexact(
             Input, Types, Typeˉcount, Pointerˉtype
@@ -3930,7 +3938,7 @@ fn Hˉvectorˉindexedˉborrow(
     let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 1u32
     );
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32) ||
+    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32)) ||
         Cursor > Functionˉcodeˉlength || Functionˉcodeˉlength - Cursor < 9u32 ||
         Localˉindex >= Parameterˉcount + Localˉcount || Depth == 0u32 {
         return Hˉoperationˉfailure(Stack, Depth);
@@ -3957,6 +3965,69 @@ fn Hˉvectorˉindexedˉborrow(
         Bytesˉreadˉu32ˉlittle(Indexedˉelement, 1u32));
 }
 
+fn Hˉvectorˉreplace(
+    Input: bytes, Functionˉcode: u32, Functionˉcodeˉlength: u32,
+    Cursor: u32, Types: u32, Localˉshapes: bytes,
+    Parameterˉcount: u32, Localˉcount: u32, Stack: bytes, Depth: u32
+) -> Hˉoperationˉstate {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32 ||
+        Cursor > Functionˉcodeˉlength || Functionˉcodeˉlength - Cursor < 9u32 ||
+        Depth < 2u32 || Bytesˉlength(Stack) != Depth * 5u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 1u32);
+    let Nominal: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 5u32);
+    if Slot >= Parameterˉcount + Localˉcount ||
+        Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types) {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Kind: u8 = Bytesˉreadˉu8(Localˉshapes, Slot * 5u32);
+    if (Kind != 23u8 && Kind != 27u8) ||
+        (Kind == 27u8 && Slot >= Parameterˉcount) ||
+        Bytesˉreadˉu32ˉlittle(Localˉshapes, Slot * 5u32 + 1u32) != Nominal {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Element: bytes = Hˉcollectionˉdescriptor(Input, Types, Nominal, 5u32);
+    if !Hˉcollectionˉelementˉisˉscalar(Element) {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Elementˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Element, 0u32));
+    if !Hˉexactˉvalueˉmatches(Input, Types, Elementˉkind, 0u32,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Stack, (Depth - 1u32) * 5u32)),
+            Bytesˉreadˉu32ˉlittle(Stack, (Depth - 1u32) * 5u32 + 1u32)) ||
+        !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Stack, (Depth - 2u32) * 5u32)),
+            Bytesˉreadˉu32ˉlittle(Stack, (Depth - 2u32) * 5u32 + 1u32)) {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    return Hˉoperationˉstate(true, Bytesˉslice(Stack, 0u32, (Depth - 2u32) * 5u32),
+        Depth - 2u32, true, Elementˉkind, 0u32);
+}
+
+fn Hˉvectorˉparameterˉlength(
+    Input: bytes, Functionˉcode: u32, Functionˉcodeˉlength: u32,
+    Cursor: u32, Types: u32, Localˉshapes: bytes,
+    Parameterˉcount: u32, Stack: bytes, Depth: u32
+) -> Hˉoperationˉstate {
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 1u32);
+    if Minor < 40u32 || Minor > 43u32 || Slot >= Parameterˉcount ||
+        Functionˉcodeˉlength - Cursor < 9u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Kind: u8 = Bytesˉreadˉu8(Localˉshapes, Slot * 5u32);
+    let Nominal: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 5u32);
+    if (Kind != 23u8 && Kind != 26u8 && Kind != 27u8) ||
+        Bytesˉreadˉu32ˉlittle(Localˉshapes, Slot * 5u32 + 1u32) != Nominal ||
+        Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types) {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    if Bytesˉreadˉu8(Input, Hˉtypeˉat(Input, Types, Nominal)) != 5u8 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    return Hˉoperationˉstate(true, Stack, Depth, true, 10u32, 0u32);
+}
+
 fn Hˉlocalˉoperation(
     Input: bytes,
     Minor: u32,
@@ -3981,22 +4052,13 @@ fn Hˉlocalˉoperation(
         return Hˉvectorˉindexedˉborrow(Input, Functionˉcode, Functionˉcodeˉlength,
             Cursor, Types, Localˉshapes, Parameterˉcount, Localˉcount, Stack, Depth);
     }
-    if Bytesˉreadˉu8(Input, Functionˉcode + Cursor) == 226u8 {
-        if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32)) ||
-            Localˉindex >= Parameterˉcount || Functionˉcodeˉlength - Cursor < 9u32 {
-            return Hˉoperationˉfailure(Stack, Depth);
-        }
-        let Kind: u8 = Bytesˉreadˉu8(Localˉshapes, Localˉindex * 5u32);
-        let Nominal: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 5u32);
-        if (Kind != 23u8 && Kind != 26u8 && Kind != 27u8) ||
-            Bytesˉreadˉu32ˉlittle(Localˉshapes, Localˉindex * 5u32 + 1u32) != Nominal ||
-            Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types) {
-            return Hˉoperationˉfailure(Stack, Depth);
-        }
-        if Bytesˉreadˉu8(Input, Hˉtypeˉat(Input, Types, Nominal)) != 5u8 {
-            return Hˉoperationˉfailure(Stack, Depth);
-        }
-        return Hˉoperationˉstate(true, Stack, Depth, true, 10u32, 0u32);
+    if Opcode == 228u32 {
+        return Hˉvectorˉreplace(Input, Functionˉcode, Functionˉcodeˉlength,
+            Cursor, Types, Localˉshapes, Parameterˉcount, Localˉcount, Stack, Depth);
+    }
+    if Opcode == 226u32 {
+        return Hˉvectorˉparameterˉlength(Input, Functionˉcode, Functionˉcodeˉlength,
+            Cursor, Types, Localˉshapes, Parameterˉcount, Stack, Depth);
     }
     if Localˉindex >= Parameterˉcount + Localˉcount {
         return Hˉoperationˉfailure(Stack, Depth);
@@ -4080,7 +4142,7 @@ fn Hˉlocalˉoperation(
             var Expectedˉborrowˉkind: u32 = 28u32;
             if Localˉkind == 11u32 { Expectedˉborrowˉkind = 29u32; }
             if Localˉkind == 22u32 { Expectedˉborrowˉkind = 30u32; }
-            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) &&
+            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) &&
                 Borrowˉkind == Localˉkind + 64u32 {
                 Expectedˉborrowˉkind = Borrowˉkind;
             }
@@ -4379,9 +4441,10 @@ fn Hˉlocalˉoperation(
         let Appendˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
             Input, Functionˉcode + Cursor + 5u32
         );
+        let Borrowedˉappend: bool = Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 &&
+            Localˉindex < Parameterˉcount && Localˉkind == 27u32;
         if (Minor < 25u32 || Minor > 37u32) ||
-            Localˉindex < Parameterˉcount ||
-            Localˉkind != 23u32 ||
+            (!Borrowedˉappend && (Localˉindex < Parameterˉcount || Localˉkind != 23u32)) ||
             !Hˉvectorˉappendˉresultˉisˉexact(
                 Input, Types, Typeˉcount,
                 Appendˉresultˉtype, Localˉnominal
@@ -4391,6 +4454,9 @@ fn Hˉlocalˉoperation(
         let Appendˉelement: bytes = Hˉcollectionˉdescriptor(
             Input, Types, Localˉnominal, 5u32
         );
+        if Borrowedˉappend && !Hˉcollectionˉelementˉisˉscalar(Appendˉelement) {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
         Popˉcount = 1u32;
         Firstˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Appendˉelement, 0u32));
         Firstˉnominal = Bytesˉreadˉu32ˉlittle(Appendˉelement, 1u32);
@@ -4520,7 +4586,7 @@ fn Hˉlocalˉoperationˉdispatch(
     let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 1u32
     );
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) &&
+    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) &&
         Localˉindex < Parameterˉcount + Localˉcount {
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Localˉshapes, Localˉindex * 5u32));
         let Nominal: u32 = Bytesˉreadˉu32ˉlittle(Localˉshapes, Localˉindex * 5u32 + 1u32);
@@ -4582,7 +4648,8 @@ fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
     if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
         (Opcode >= 151u32 && Opcode <= 153u32) || Opcode == 196u32 ||
         Opcode == 201u32 || Opcode == 206u32 || Opcode == 207u32 ||
-        Opcode == 208u32 || Opcode == 211u32 || Opcode == 221u32 || Opcode == 226u32 || Opcode == 227u32 {
+        Opcode == 208u32 || Opcode == 211u32 || Opcode == 221u32 ||
+        Opcode == 226u32 || Opcode == 227u32 || Opcode == 228u32 {
         return 9u32;
     }
     if Opcode == 209u32 || Opcode == 213u32 || Opcode == 216u32 ||
@@ -4811,7 +4878,7 @@ fn Hˉexclusiveˉvectorˉfunctions(Input: bytes, Functions: u32, End: u32,
 }
 
 fn Hˉneedsˉloanˉflow(Input: bytes, Code: u32, Length: u32, Shapes: bytes) -> bool {
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32)) { return false; }
+    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32))) { return false; }
     var Slot: u32 = 0u32;
     while Slot < Bytesˉlength(Shapes) / 5u32 {
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Shapes, Slot * 5u32));
@@ -4821,7 +4888,7 @@ fn Hˉneedsˉloanˉflow(Input: bytes, Code: u32, Length: u32, Shapes: bytes) -> 
     var Cursor: u32 = 0u32;
     while Cursor < Length {
         let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Code + Cursor));
-        if Opcode == 225u32 || Opcode == 227u32 { return true; }
+        if Opcode == 225u32 || Opcode == 227u32 || Opcode == 228u32 { return true; }
         let Width: u32 = Hˉinstructionˉwidth(Input, Code, Cursor, Opcode);
         if Width == 0u32 || Width > Length - Cursor { return true; }
         Cursor = Cursor + Width;
@@ -4868,7 +4935,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
     if Functionˉcount > 4096u32 { return Invalid; }
     if Codeˉlength > 4194304u32 { return Invalid; }
     var Foundationˉtypes: bytes = Invalid;
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32)) {
+    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32))) {
         Foundationˉtypes = Hˉfoundationˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types));
     }
     var Functionˉindex: u32 = 0u32;
@@ -4876,7 +4943,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
     var Aggregateˉinstructions: u32 = 0u32;
     var Loanˉwork: u32 = 16777216u32;
     var Exclusiveˉvectorˉfunctions: bytes = Invalid;
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32) {
+    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32)) {
         Exclusiveˉvectorˉfunctions = Hˉexclusiveˉvectorˉfunctions(Input,
             Functions, Functionsˉend, Types, Minor);
         if Bytesˉlength(Exclusiveˉvectorˉfunctions) != Functionˉcount { return Invalid; }
@@ -5074,7 +5141,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             if Opcode == 4u32 || Opcode == 5u32 ||
                 Opcode == 205u32 || Opcode == 206u32 || Opcode == 207u32 ||
                 Opcode == 208u32 || Opcode == 209u32 || Opcode == 210u32 ||
-                Opcode == 221u32 || Opcode == 225u32 || Opcode == 226u32 || Opcode == 227u32 {
+                Opcode == 221u32 || Opcode == 225u32 || Opcode == 226u32 ||
+                Opcode == 227u32 || Opcode == 228u32 {
                 let Localˉstate: Hˉoperationˉstate =
                     Hˉlocalˉoperationˉdispatch(
                     Input,
@@ -5652,7 +5720,8 @@ fn Iˉownedˉcontrolˉisˉvalid(
         if Ownedˉopcode == 4u32 || Ownedˉopcode == 5u32 ||
             Ownedˉopcode == 205u32 || Ownedˉopcode == 210u32 ||
             Ownedˉopcode == 221u32 || Ownedˉopcode == 222u32 ||
-            Ownedˉopcode == 223u32 || Ownedˉopcode == 226u32 || Ownedˉopcode == 227u32 {
+            Ownedˉopcode == 223u32 || Ownedˉopcode == 226u32 ||
+            Ownedˉopcode == 227u32 || Ownedˉopcode == 228u32 {
             let Ownedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Functionˉcode + Ownedˉcursor + 1u32
             );
@@ -5676,7 +5745,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
                 if Ownedˉopcode == 4u32 || Ownedˉopcode == 205u32 ||
                     Ownedˉopcode == 210u32 || Ownedˉopcode == 221u32 ||
                     Ownedˉopcode == 222u32 || Ownedˉopcode == 223u32 ||
-                    Ownedˉopcode == 226u32 || Ownedˉopcode == 227u32 {
+                    Ownedˉopcode == 226u32 || Ownedˉopcode == 227u32 || Ownedˉopcode == 228u32 {
                     var Ownedˉavailable: bool = false;
                     if Ownedˉrank < 32u32 {
                         Ownedˉavailable = ((Ownedˉavailableˉlow >>
@@ -5739,8 +5808,11 @@ fn Iˉownedˉcontrolˉisˉvalid(
                 }
             }
         }
+        let Ownedˉborrowedˉappend: bool = Ownedˉopcode == 208u32 &&
+            Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 &&
+            Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Ownedˉcursor + 1u32) < Parameterˉcount;
         if Ownedˉopcode == 206u32 || Ownedˉopcode == 207u32 ||
-            Ownedˉopcode == 208u32 || Ownedˉopcode == 209u32 {
+            (Ownedˉopcode == 208u32 && !Ownedˉborrowedˉappend) || Ownedˉopcode == 209u32 {
             let Ownedˉparent: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Functionˉcode + Ownedˉcursor + 1u32
             );
@@ -6096,7 +6168,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             Controlˉfunctionˉinstructions =
                 Controlˉfunctionˉinstructions + 1u32;
             if Controlˉopcode == 205u32 || Controlˉopcode == 206u32 ||
-                Controlˉopcode == 207u32 || Controlˉopcode == 226u32 || Controlˉopcode == 227u32 {
+                Controlˉopcode == 207u32 || Controlˉopcode == 226u32 ||
+                Controlˉopcode == 227u32 || Controlˉopcode == 228u32 {
                 // Parameter reads must also prove that a by-value owner is live.
                 Controlˉhasˉtake = true;
             }
@@ -6134,7 +6207,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             }
         }
         if Controlˉhasˉfoundationˉborrow {
-            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32)) { return Controlˉinvalid; }
+            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32))) { return Controlˉinvalid; }
             let Foundationˉflow: Foundationˉowners.Flowˉresult = Foundationˉowners.Check(
                 Input, Controlˉfunctionˉcode, Controlˉfunctionˉcodeˉlength,
                 Controlˉlocalˉshapes, Controlˉparameterˉcount,

@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { Runˉdevelopmentˉcommand as Executeˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
+import { Verifyˉvectorˉmutationˉproducts } from './Vector-Mutation-Execution-Cases.mjs';
 import { createHash } from 'node:crypto';
 import {
     copyFileSync,
@@ -79,6 +80,8 @@ const Foundationˉownedˉonly = process.argv.length === 10 &&
     process.argv[2] === '--foundation-owned-payloads';
 const Vectorˉparameterˉonly = process.argv.length === 10 &&
     process.argv[2] === '--vector-parameter-reads';
+const Vectorˉmutationˉproductsˉonly = process.argv.length === 8 &&
+    process.argv[2] === '--vector-mutation-products';
 const Recordˉvectorˉonly = process.argv.length === 10 &&
     process.argv[2] === '--record-vector-elements';
 const Vectorˉintegrationˉonly = (process.argv.length === 3 || process.argv.length === 5) &&
@@ -102,7 +105,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-owners';
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
-const Developmentˉonly = Recordˉvectorˉonly || Vectorˉintegrationˉonly || Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
+const Developmentˉonly = Vectorˉmutationˉproductsˉonly || Recordˉvectorˉonly || Vectorˉintegrationˉonly || Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if ((Foundationˉonly || Vectorˉintegrationˉonly) && process.argv.length >= 5) {
@@ -138,6 +141,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-source-ownership <admitter> <validator> <analyzer> <emitter> <target.wvtd>|' +
         '--foundation-owned-payloads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--vector-parameter-reads <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
+        '--vector-mutation-products <verifier> <runner> <helpers.wvb> <scalars.wvb> <unreachable.wvb>|' +
         '--record-vector-elements <admitter> <validator> <analyzer> <emitter> <target.wvtd> <verifier> <runner>|' +
         '--vector-borrow-integration [--maximum-seconds <seconds>] [--prepared-compiler-only]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
@@ -236,7 +240,10 @@ async function Runˉdevelopmentˉcommand(...Arguments) {
 async function Main() {
     let Primaryˉfailure = null;
     try {
-        if (Recordˉvectorˉonly) {
+        if (Vectorˉmutationˉproductsˉonly) {
+            const [Verifier, Runner, ...Paths] = process.argv.slice(3).map(Value => path.resolve(Value));
+            await Runˉvectorˉmutationˉproducts(Verifier, Runner, Paths);
+        } else if (Recordˉvectorˉonly) {
             await Verifyˉrecordˉvectorˉelements(...process.argv.slice(3).map(Value => path.resolve(Value)));
         } else if (Vectorˉintegrationˉonly) {
             await Runˉvectorˉborrowˉintegration();
@@ -306,11 +313,14 @@ async function Main() {
     if (Vectorˉintegrationˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Vector borrow integration exceeded its total budget during cleanup.', 124);
-        process.stdout.write('native Vector borrow integration status=Passed cases=537 ' +
-            'components=388 vector-groups=80 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
+        process.stdout.write('native Vector borrow integration status=Passed cases=553 ' +
+            'components=388 vector-groups=96 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
             `qualification=false elapsed-ms=${Elapsed}\n`);
     }
-    if (Developmentˉonly && !Recordˉvectorˉonly && !Vectorˉintegrationˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
+    if (Vectorˉmutationˉproductsˉonly && Date.now() - Started > Maximumˉrunˉmilliseconds) {
+        Reject('Vector mutation verification exceeded its total budget during cleanup.', 124);
+    }
+    if (Developmentˉonly && !Vectorˉmutationˉproductsˉonly && !Recordˉvectorˉonly && !Vectorˉintegrationˉonly && !Vectorˉparameterˉonly && !Foundationˉownedˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) {
             Reject('The focused Foundation borrow development budget expired during cleanup.', 124);
@@ -1904,10 +1914,35 @@ export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     }
     const Payloads = await Verifyˉvectorˉpayloadˉborrows(Arguments, Verifier, Runner);
     const Indexed = await Verifyˉvectorˉindexedˉborrows(Arguments, Verifier, Runner);
+    const Mutationˉpaths = [];
+    for (const [Name, Area] of [['Owned-Vector-Helpers', 'Native-X64'],
+        ['Owned-Vector-Scalar-Mutation', 'Native-X64'], ['Owned-Vector-Unreachable-Mutation', 'Language-1.0']]) {
+        const Input = path.join(Repositoryˉroot, 'Tests/Fixtures', Area, Name + '.wv');
+        let First = null;
+        for (const Generation of ['a', 'b']) {
+            const Output = path.join(Work, Name + '-mutation-' + Generation + '.wvb');
+            await Runˉnode(Name + '-mutation-' + Generation, 'Run-Split-Compiler.mjs', Arguments(Input, Output));
+            const Payload = readFileSync(Output);
+            if (Generation === 'a') { First = Payload; Mutationˉpaths.push(Output); }
+            else if (!First.equals(Payload)) Reject('Vector mutation publication is not deterministic: ' + Name);
+        }
+    }
+    const Mutationsˉexecuted = await Runˉvectorˉmutationˉproducts(Verifier, Runner, Mutationˉpaths);
     process.stdout.write(`native Vector parameter reads status=Passed reads=${Reads.length} malformed=${Mutations.length} source-rejections=${Invalidˉsources.length} ` +
         `payload-cases=${Payloads.cases} payload-malformed=${Payloads.malformed} payload-source-rejections=${Payloads.rejections} ` +
         `indexed-cases=${Indexed.cases} indexed-malformed=${Indexed.malformed} indexed-source-rejections=${Indexed.rejections} indexed-bounds=${Indexed.bounds} ` +
+        `mutation-cases=${Mutationsˉexecuted.Cases} mutation-malformed=${Mutationsˉexecuted.Malformed} mutation-bounds=${Mutationsˉexecuted.Bounds} ` +
         `wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)} qualification=false elapsed-ms=${Date.now() - Started}\n`);
+}
+
+async function Runˉvectorˉmutationˉproducts(Verifier, Runner, Paths) {
+    return Verifyˉvectorˉmutationˉproducts({ Work, Verifier, Runner,
+        Requireˉfile: Requireˉordinaryˉfile, Run,
+        Runˉprocess: (Tool, Arguments) => Runˉdevelopmentˉcommand(Tool, Arguments,
+            Developmentˉdeadline, false, MAXIMUM_DIAGNOSTIC_BYTES),
+        Parseˉsections, Parseˉfunction, Parseˉentries: Parseˉfunctionˉentries,
+        Instructionˉwidth: Wvbˉinstructionˉwidthˉat,
+    }, Paths);
 }
 
 async function Verifyˉrecordˉvectorˉelements(Admitter, Authenticator, Analyzer, Emitter, Target, Verifier, Runner) {
@@ -4415,7 +4450,7 @@ function Requireˉnativeˉfunctionˉlimits(Bytes) {
 
 function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {
     const Opcode = Bytes[Cursor];
-    if (Opcode === 226 || Opcode === 227) return 9;
+    if (Opcode === 226 || Opcode === 227 || Opcode === 228) return 9;
     if (Opcode === 225) return 13;
     if (Opcode === 192) return Bytes[Cursor + 2] === 0 ? 5 : 3;
     if (Opcode === 193) return Bytes[Cursor + 1] === 0 ? 6 : 2;

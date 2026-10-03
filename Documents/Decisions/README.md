@@ -12,7 +12,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | --- | ---: |
 | Accepted | 354 |
 | Implemented | 502 |
-| Proposed | 4 |
+| Proposed | 5 |
 | Qualified | 95 |
 | Recorded | 13 |
 | Superseded | 14 |
@@ -23,6 +23,7 @@ The normalized status is a search aid derived from the opening status. The copie
 - [Decision 0893: authenticate production source-analysis ingress](0893-Authenticate-Production-Source-Analysis-Ingress.md) — Proposed
 - [Decision 0895: bind authenticated foreign declarations in a private compiler phase](0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) — Proposed
 - [Decision 0923: carry bound Foreign facts to typed lowering](0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md) — Proposed
+- [Decision 0973: connect exclusive Vector mutation to owned storage](0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) — Proposed
 
 ## Duplicated legacy numbers
 
@@ -47,6 +48,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0973: connect exclusive Vector mutation to owned storage](0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) | Proposed |
 | [Decision 0972: pass native Vector borrows to helpers](0972-Pass-Native-Vector-Borrows-To-Helpers.md) | Recorded |
 | [Decision 0971: transfer native owned storage through helpers](0971-Transfer-Native-Owned-Storage-Through-Helpers.md) | Recorded |
 | [Decision 0970: use explicit replacement for native Vector growth](0970-Use-Explicit-Replacement-For-Native-Vector-Growth.md) | Recorded |
@@ -71,7 +73,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0951: coalesce complete database bundles in development](0951-Coalesce-Complete-Database-Bundles-In-Development.md) | Implemented |
 | [Decision 0950: bundle compatible database ancestor cases](0950-Bundle-Compatible-Database-Ancestor-Cases.md) | Implemented |
 | [Decision 0949: balance qualification shards by declared cost](0949-Balance-Qualification-Shards-By-Declared-Cost.md) | Implemented |
-| [Decision 0948: reuse development-owner results across unrelated source trees](0948-Reuse-Development-Owner-Results-Across-Unrelated-Source-Trees.md) | Implemented |
 
 ## Superseded or historical records
 

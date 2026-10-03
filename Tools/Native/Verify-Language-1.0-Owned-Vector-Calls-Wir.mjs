@@ -142,6 +142,21 @@ const Cases = [
             'failure-module=0 related-module=0 function=9 offset=521 ' +
             'line=22 column=11\n',
     },
+    {
+        name: 'owned-vector-borrowed-mutation',
+        fixture: '../Native-X64/Owned-Vector-Helpers.wv',
+        valid: true,
+    },
+    {
+        name: 'owned-vector-scalar-mutation',
+        fixture: '../Native-X64/Owned-Vector-Scalar-Mutation.wv',
+        valid: true,
+    },
+    {
+        name: 'owned-vector-unreachable-mutation',
+        fixture: 'Owned-Vector-Unreachable-Mutation.wv',
+        valid: true,
+    },
 ];
 
 const Created = [];
@@ -152,7 +167,9 @@ try {
     let Positiveˉcalls = 0;
     let Aggregateˉwvbˉbytes = 0;
     let Aggregateˉwvbˉsha256 = '';
-    for (const Case of Cases) {
+    let Mutationˉrejections = 0;
+    for (const [Index, Case] of Cases.entries()) {
+        process.stdout.write(`owned Vector WVIR step=case item=${Index + 1}/${Cases.length} case=${Case.name}\n`);
         const Fixture = path.join(Fixtureˉroot, Case.fixture);
         const Prefix = path.join(Work, Case.name);
         const Input = `${Prefix}-input.wvss`;
@@ -254,10 +271,49 @@ try {
             Aggregateˉwvbˉsha256 = createHash('sha256')
                 .update(Productˉbytes).digest('hex');
         }
+        if (Case.name === 'owned-vector-scalar-mutation') {
+            Inspectˉmutationˉwvir(Wirˉbytes, [1, 2, 3, 4, 7, 8]);
+            if (Productˉbytes.readUInt16LE(6) !== 43) {
+                Reject('Scalar Vector mutation did not select WVB 1.43.');
+            }
+        }
+        if (Case.name === 'owned-vector-unreachable-mutation') {
+            Inspectˉmutationˉwvir(Wirˉbytes);
+            if (Productˉbytes.readUInt16LE(6) === 43) {
+                Reject('Unreachable Vector mutation selected WVB 1.43.');
+            }
+        }
+        if (Case.name === 'owned-vector-borrowed-mutation') {
+            const Mutation = Inspectˉmutationˉwvir(Wirˉbytes);
+            if (Productˉbytes.readUInt16LE(6) !== 43) {
+                Reject('Borrowed Vector mutation did not select WVB 1.43.');
+            }
+            const Rejections = [
+                ['old-mutation-minor', Value => Value.writeUInt16LE(Mutation.minor - 2, 6)],
+                ['replace-operand-count', Value => Value.writeUInt16LE(1, Mutation.replace + 6)],
+                ['replace-result-shape', Value => Value.writeUInt32LE(8, Mutation.replace + 8)],
+                ['replace-scalar-target', Value => Value.writeUInt32LE(1, Mutation.replace + 20)],
+                ['parameter-append-as-owner', Value => Value.writeUInt16LE(173, Mutation.append + 4)],
+            ];
+            for (const [Name, Change] of Rejections) {
+                const Invalidˉwir = `${Prefix}-${Name}.wvir`;
+                const Invalidˉproduct = `${Prefix}-${Name}.wvb`;
+                Created.push(Invalidˉwir, Invalidˉproduct);
+                const Value = Buffer.from(Wirˉbytes);
+                Change(Value);
+                writeFileSync(Invalidˉwir, Value, { flag: 'wx' });
+                Requireˉrejection(
+                    Run(Emitter, [Analyzedˉsource, Manifest, Bindings, Invalidˉwir, Invalidˉproduct]),
+                    INVALID_WIR, `${Name} WVIR boundary`, Invalidˉproduct,
+                );
+                Mutationˉrejections += 1;
+            }
+        }
     }
     process.stdout.write(
         'language 1 owned Vector calls and joins WVIR status=Passed ' +
-        `cases=${Cases.length} calls=${Positiveˉcalls} ` +
+        `cases=${Cases.length + Mutationˉrejections} calls=${Positiveˉcalls} ` +
+        `mutation-rejections=${Mutationˉrejections} ` +
         `wvir-bytes=${Positiveˉwvirˉbytes} ` +
         `wvb-bytes=${Positiveˉwvbˉbytes} ` +
         `wvb-sha256=${Positiveˉwvbˉsha256} ` +
@@ -345,6 +401,38 @@ function Inspectˉownedˉcallˉwvir(Input) {
         );
     }
     return { bytes: Input.length, calls: Calls };
+}
+
+function Inspectˉmutationˉwvir(Input, Expectedˉshapes = [1]) {
+    const Minor = Input.readUInt16LE(6);
+    if (Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
+        Input.readUInt16LE(4) !== 1 || ![37, 38].includes(Minor) ||
+        Input.readUInt32LE(12) !== 48 || Input.readUInt32LE(20) !== 28 ||
+        Input.readUInt32LE(28) !== 28 || Input.readUInt32LE(36) !== 4 ||
+        Input.readUInt32LE(44) !== 4) {
+        Reject('Borrowed Vector mutation did not select bounded WVIR 1.37/1.38.');
+    }
+    const Header = Minor === 37 ? 56 : 64;
+    const Operations = Input.readUInt32LE(24);
+    const Start = Header + Input.readUInt32LE(8) * 48 + Input.readUInt32LE(16) * 28;
+    if (Operations > 4096 || Start + Operations * 28 > Input.length) {
+        Reject('The borrowed Vector mutation operation directory exceeds its bound.');
+    }
+    const Replacements = [], Appends = [];
+    for (let Index = 0; Index < Operations; Index += 1) {
+        const Entry = Start + Index * 28;
+        const Kind = Input.readUInt16LE(Entry + 4);
+        if (Kind === 193) Replacements.push(Entry);
+        if (Kind === 194) Appends.push(Entry);
+    }
+    const Shapes = Replacements.map(Entry => Input.readUInt32LE(Entry + 8)).sort((Left, Right) => Left - Right);
+    if (Replacements.length !== Expectedˉshapes.length || Appends.length !== Expectedˉshapes.length ||
+        Shapes.join(',') !== Expectedˉshapes.join(',') ||
+        Replacements.some(Entry => Input.readUInt16LE(Entry + 6) !== 2 || Input.readUInt32LE(Entry + 20) !== 0) ||
+        Appends.some(Entry => Input.readUInt16LE(Entry + 6) !== 1 || Input.readUInt32LE(Entry + 20) !== 0)) {
+        Reject('The exact borrowed Vector replacement and append operations differ.');
+    }
+    return { minor: Minor, replace: Replacements[0], append: Appends[0] };
 }
 
 function Requireˉownedˉcallˉproduct(Result, Product) {

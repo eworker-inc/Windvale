@@ -1,5 +1,5 @@
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
-import { Runˉownedˉstorageˉcases } from './Native-Owned-Storage-Cases.mjs';
+import { Prepareˉownedˉstorageˉobjects, Runˉownedˉstorageˉcases } from './Native-Owned-Storage-Cases.mjs';
 import { Prepareˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
 import { Prepareˉownedˉvector, Runˉownedˉvectorˉcases } from './Native-Owned-Vector-Cases.mjs';
 import { Prepareˉvectorˉaccess, Runˉvectorˉaccess } from './Native-Owned-Vector-Access-Cases.mjs';
@@ -21,7 +21,8 @@ let Vectorˉproduct = null;
 let Growthˉproduct = null;
 let Appendˉproduct = null;
 let Helperˉproduct = null;
-while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append', '--owned-helpers'].includes(process.argv.at(-3))) {
+let Scalarˉhelperˉproduct = null;
+while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append', '--owned-helpers', '--owned-scalar-helpers'].includes(process.argv.at(-3))) {
     if (!/^[0-9a-f]{64}$/u.test(process.argv.at(-1))) Usage();
     const Product = { Path: resolve(process.argv.at(-2)), Sha256: process.argv.at(-1) };
     if (process.argv.at(-3) === '--budget-oracle') {
@@ -36,6 +37,9 @@ while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append',
     } else if (process.argv.at(-3) === '--owned-helpers') {
         if (Helperˉproduct !== null) Usage();
         Helperˉproduct = Product;
+    } else if (process.argv.at(-3) === '--owned-scalar-helpers') {
+        if (Scalarˉhelperˉproduct !== null) Usage();
+        Scalarˉhelperˉproduct = Product;
     } else {
         if (Appendˉproduct !== null) Usage();
         Appendˉproduct = Product;
@@ -66,9 +70,10 @@ const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
 const Ownedˉonly = process.argv[4] === '--owned-storage';
 if (Ownedˉonly) Ownerˉdeadline = Date.now() + 600_000;
 const Recordˉonly = process.argv.length === 8 && process.argv[7] === '--record-return-memory';
-if (process.argv.length === 8 && !Recordˉonly) Usage();
+const Helperˉonly = process.argv.length === 8 && process.argv[7] === '--owned-helper-memory';
+if (process.argv.length === 8 && !Recordˉonly && !Helperˉonly) Usage();
 if (process.argv.length === 5 && !Borrowˉonly && !Ownedˉonly) Usage();
-const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10 || Recordˉonly;
+const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10 || Recordˉonly || Helperˉonly;
 if (Suppliedˉlowerer && Ownerˉdeadline === null) Ownerˉdeadline = Date.now() + 600_000;
 const Suppliedˉborrowˉprobe = process.argv.length === 10;
 if (Suppliedˉlowerer && (process.argv[4] !== '--lowerer' ||
@@ -119,6 +124,15 @@ const Work = await realpath(await mkdtemp(join(
 )));
 let Preserveˉwork = false;
 try {
+    if (Helperˉonly) {
+        const Lowerer = await Readˉsuppliedˉlowerer();
+        const Context = { Repository: Repositoryˉroot, Work, Target, Requireˉsuccess,
+            Runˉprocess, Helperˉproduct, Scalarˉhelperˉproduct };
+        await Prepareˉownedˉstorageˉobjects(Context);
+        const Cases = await Runˉownedˉhelpers(Context, Lowerer);
+        process.stdout.write(`native owned helper memory selection status=Passed cases=${Cases.Cases} ` +
+            `executions=${Cases.Executions} malformed=${Cases.Malformed} host=${Target} qualification=false\n`);
+    } else {
     const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
         Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct,
     }) : 0;
@@ -146,16 +160,7 @@ try {
     const Lowerer = Suppliedˉlowerer ? resolve(process.argv[5]) :
         join(Work, `Native-Lowerer.${Nativeˉextension}`);
     if (Suppliedˉlowerer) {
-        const Metadata = await stat(Lowerer);
-        if (!Metadata.isFile() || Metadata.size > 67_108_864) {
-            Reject('The supplied native lowerer is not a bounded ordinary file.');
-        }
-        const Bytes = await readFile(Lowerer);
-        if (Bytes.length > 67_108_864 ||
-            createHash('sha256').update(Bytes).digest('hex') !== process.argv[6]) {
-            Reject('The supplied native lowerer identity differs.');
-        }
-        process.stdout.write(`native unsafe write pointer lowering step=compiler-reuse sha256=${process.argv[6]}\n`);
+        await Readˉsuppliedˉlowerer();
     } else {
     process.stdout.write(
         'native unsafe write pointer lowering step=compiler-build status=Started\n',
@@ -180,8 +185,8 @@ try {
         await Prepareˉbudgetˉoracle({ Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Oracleˉproduct });
         await Prepareˉownedˉvector({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Vectorˉproduct });
         await Prepareˉvectorˉaccess({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Growthˉproduct, Appendˉproduct });
-        await Prepareˉownedˉhelpers({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Helperˉproduct });
-        process.stdout.write('native x64 lowering preparation status=Ready products=7 behavior-cases=0\n');
+        await Prepareˉownedˉhelpers({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Helperˉproduct, Scalarˉhelperˉproduct });
+        process.stdout.write('native x64 lowering preparation status=Ready products=8 behavior-cases=0\n');
     } else {
     const Recordˉcases = await Runˉrecordˉreturnˉmemory(Lowerer);
     if (!Recordˉonly) {
@@ -192,7 +197,7 @@ try {
         Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Growthˉproduct, Appendˉproduct,
     }, Lowerer);
     const Helperˉcases = await Runˉownedˉhelpers({
-        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Helperˉproduct,
+        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Helperˉproduct, Scalarˉhelperˉproduct,
     }, Lowerer);
     await Runˉoptionˉu64(Lowerer);
     await Runˉframeˉinitialization(Lowerer);
@@ -461,12 +466,28 @@ try {
     }
     }
     }
+    }
 } catch (Error) {
     Preserveˉwork = Error.cleanupUncertain === true;
     process.stderr.write(`${Error.message}\n`);
     process.exitCode = Error.exitCode ?? 1;
 } finally {
     if (!Preserveˉwork) await Removeˉwork(Work);
+}
+
+async function Readˉsuppliedˉlowerer() {
+    const Lowerer = resolve(process.argv[5]);
+    const Metadata = await stat(Lowerer);
+    if (!Metadata.isFile() || Metadata.size < 1 || Metadata.size > 67_108_864) {
+        Reject('The supplied native lowerer is not a bounded ordinary file.');
+    }
+    const Bytes = await readFile(Lowerer);
+    if (Bytes.length > 67_108_864 ||
+        createHash('sha256').update(Bytes).digest('hex') !== process.argv[6]) {
+        Reject('The supplied native lowerer identity differs.');
+    }
+    process.stdout.write(`native unsafe write pointer lowering step=compiler-reuse sha256=${process.argv[6]}\n`);
+    return Lowerer;
 }
 
 async function Verifyˉsourceˉclosures() {
@@ -1264,9 +1285,10 @@ function Usage() {
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
         '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|' +
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
-        '--lowerer <application> <sha256> [--record-return-memory|--borrow-probe <wvb> <sha256>]] ' +
+        '--lowerer <application> <sha256> [--record-return-memory|--owned-helper-memory|--borrow-probe <wvb> <sha256>]] ' +
         '[--budget-oracle <wvb> <sha256>] [--owned-vector <wvb> <sha256>] ' +
-        '[--owned-growth <wvb> <sha256>] [--owned-append <wvb> <sha256>] [--owned-helpers <wvb> <sha256>]\n',
+        '[--owned-growth <wvb> <sha256>] [--owned-append <wvb> <sha256>] ' +
+        '[--owned-helpers <wvb> <sha256>] [--owned-scalar-helpers <wvb> <sha256>]\n',
     );
     process.exit(64);
 }

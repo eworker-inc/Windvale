@@ -1557,7 +1557,7 @@ fn Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(
         return First == 83u32 || First == 86u32;
     }
     if Query.Nameˉlength == 15u32 {
-        return First == 66u32 || First == 82u32;
+        return First == 66u32 || First == 82u32 || First == 86u32;
     }
     if Query.Nameˉlength == 16u32 { return First == 83u32; }
     if Query.Nameˉlength == 17u32 { return First == 86u32; }
@@ -1926,6 +1926,17 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
         return Compilerˉsourceˉbindingˉmatch(
             true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
             Vectorˉborrowˉatˉmodule.Index, 2u32, 192u32
+        );
+    }
+    let Vectorˉreplaceˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 14u32
+        );
+    if Vectorˉreplaceˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Vectorˉreplaceˉmodule.Index, 3u32, 193u32
         );
     }
     let Memoryˉsplitˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =

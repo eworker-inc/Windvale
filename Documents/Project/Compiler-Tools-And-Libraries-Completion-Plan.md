@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-10-02
+> Last reviewed: 2026-10-03
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -96,10 +96,13 @@ connects scalar Vector reservation, append, indexed reads, explicit replacement
 growth, owned helper transfers and cleanup to that storage and accounting.
 [Decision 0972](../Decisions/0972-Pass-Native-Vector-Borrows-To-Helpers.md) adds
 borrowed Vector helper parameters for scalar reads and nested forwarding, so an
-owning caller can release its Vector after the loan ends. Borrowed append and
-growth, mutable indexed access, parameter length, normal launchers and arbitrary
-owner aggregates remain open. Complete those lifetimes before migrating
-interpreter working buffers or closing the memory gate.
+owning caller can release its Vector after the loan ends.
+[Decision 0973](../Decisions/0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md)
+adds candidate scalar replacement, exclusive-parameter append and parameter
+length on that same storage path. Mutable element views, borrowed growth,
+general last-use borrowing, normal launchers and arbitrary owner aggregates
+remain open. Complete those lifetimes before migrating interpreter working
+buffers or closing the memory gate.
 
 Work proceeds through these gates, preserving existing qualified contracts:
 

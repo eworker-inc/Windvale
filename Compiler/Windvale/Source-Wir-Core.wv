@@ -275,6 +275,8 @@ const WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER: u32 = 189u32;
 const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
 const WIR_OPERATION_FOUNDATION_VALUE_BORROW: u32 = 191u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT: u32 = 192u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_REPLACE: u32 = 193u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND: u32 = 194u32;
 // Callable-only identities are replaced before typed-WIR publication.
 const COMPILER_SOURCE_INTRINSIC_FOUNDATION_OPTION_IS_PRESENT: u32 =
     4026531841u32;
@@ -2737,18 +2739,25 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
             );
         }
         if Callable.Directoryˉentry ==
-                WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+                WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
+            Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
             var Indexedˉparameterˉshape: u32 = 0u32;
             var Indexedˉparameterˉmode: u32 =
                 Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE;
-            if Argument == 1u32 {
-                Indexedˉparameterˉshape = 8u32;
+            var Indexedˉresultˉmode: u32 =
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE;
+            if Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
+                Indexedˉparameterˉmode = Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE;
+                Indexedˉresultˉmode = Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+            }
+            if Argument != 0u32 {
+                if Argument == 1u32 { Indexedˉparameterˉshape = 8u32; }
                 Indexedˉparameterˉmode = Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
             }
             return Compilerˉsourceˉwirˉsignature(
                 Indexedˉparameterˉshape, 0u32, Compilerˉsourceˉwirˉsentinel(), 0u32,
                 Indexedˉparameterˉmode,
-                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE
+                Indexedˉresultˉmode
             );
         }
         if Callable.Directoryˉentry ==
@@ -9417,7 +9426,7 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉgrowˉcall(
     );
 }
 
-fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
+fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉindexedˉcall(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -9427,6 +9436,7 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
     Source: bytes,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
     Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch,
+    Operation: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     let Vectorˉargument: Compilerˉsourceˉwirˉtaskˉargument =
@@ -9435,11 +9445,19 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
         Compilerˉsourceˉwirˉtaskˉargumentˉat(Source, Expression, 1u32, "Index");
     let Ownerˉexpression: Sourceˉbodies.Compilerˉsourceˉexpression =
         Compilerˉsourceˉwirˉtaskˉargumentˉexpression(Source, Vectorˉargument);
-    if Expression.Items != 2u32 || !Vectorˉargument.Found ||
-        !Indexˉargument.Found || Vectorˉargument.Mode !=
-            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE ||
+    let Replace: bool = Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE;
+    var Arguments: u32 = 2u32;
+    var Borrowˉmode: u32 = Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE;
+    if Replace {
+        Arguments = 3u32;
+        Borrowˉmode = Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE;
+    }
+    if Expression.Items != Arguments || !Vectorˉargument.Found ||
+        !Indexˉargument.Found || Vectorˉargument.Mode != Borrowˉmode ||
         Indexˉargument.Mode != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE ||
-        Ownerˉexpression.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
+        Ownerˉexpression.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name ||
+        (Replace && !Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
+            Bindingˉpayload, Bindingˉfirst, Bindingˉentries, Source, Ownerˉexpression)) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
@@ -9460,7 +9478,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
             Owner.Shape, Catalog
         ) || !Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
                 Input, Scan, Symbols, Catalog, Element
-            ) {
+            ) || (Replace && Element != 1u32 && Element != 2u32 && Element != 3u32 &&
+                Element != 4u32 && Element != 7u32 && Element != 8u32) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
@@ -9494,8 +9513,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
             );
         }
     }
-    // The owner is a name, so only the index evaluates code. Its exact u64
-    // value is evaluated once; the operation retains the owner, never takes it.
+    // Argument expressions evaluate once in source order. The operation
+    // observes or mutates the backing without transferring the Vector owner.
     let Index: Compilerˉsourceˉwirˉvalue =
         Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
             Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
@@ -9511,37 +9530,64 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
         );
     }
-    // No argument may mutate or transfer the borrowed owner while evaluating
-    // the index. Direct observations are safe; forwarding the owner from the
-    // index expression is conservatively excluded in this first profile.
+    var Result: Compilerˉsourceˉwirˉvalue = Index;
+    var Operands: bytes = Compilerˉsourceˉwirˉoneˉoperand(Index.Temporary);
+    if Replace {
+        let Valueˉargument: Compilerˉsourceˉwirˉtaskˉargument =
+            Compilerˉsourceˉwirˉtaskˉargumentˉat(Source, Expression, 2u32, "Replacement");
+        if !Valueˉargument.Found || Valueˉargument.Mode !=
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Index), Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module, Expression.Offset, Expression.Line, Expression.Column);
+        }
+        Result = Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
+            Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+            Source, Valueˉargument.Valueˉoffset, Valueˉargument.Valueˉline,
+            Valueˉargument.Valueˉcolumn, Valueˉargument.Valueˉoffset + Valueˉargument.Valueˉlength,
+            Element, Compilerˉsourceˉwirˉvalueˉbuild(Index));
+        if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
+        if Result.Shape != Element {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Result), Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module, Expression.Offset, Expression.Line, Expression.Column);
+        }
+        Operands = Bytesˉconcat(Operands, Compilerˉsourceˉwirˉoneˉoperand(Result.Temporary));
+    }
+    // A borrowed owner cannot be transferred or mutated while later arguments
+    // evaluate. An exclusive loan also excludes direct observations there.
     let Indexˉoperations: bytes = Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
-        Index.Operationˉpayload, Index.Operationˉpending
+        Result.Operationˉpayload, Result.Operationˉpending
     );
     // Operation IDs are global; the retained payload starts at this function.
     if Build.Operations < Build.Functionˉfirstˉoperation ||
-        Index.Functionˉfirstˉoperation != Build.Functionˉfirstˉoperation ||
-        Index.Operations < Build.Operations ||
+        Result.Functionˉfirstˉoperation != Build.Functionˉfirstˉoperation ||
+        Result.Operations < Build.Operations ||
         Bytesˉlength(Indexˉoperations) % 28u32 != 0u32 ||
-        Index.Operations - Build.Functionˉfirstˉoperation !=
+        Result.Operations - Build.Functionˉfirstˉoperation !=
             Bytesˉlength(Indexˉoperations) / 28u32 {
         return Compilerˉsourceˉwirˉfailureˉvalue(
-            Compilerˉsourceˉwirˉvalueˉbuild(Index),
+            Compilerˉsourceˉwirˉvalueˉbuild(Result),
             Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
         );
     }
     var Indexˉoperation: u32 = Build.Operations;
-    while Indexˉoperation < Index.Operations {
+    while Indexˉoperation < Result.Operations {
         let Entry: u32 = (Indexˉoperation - Build.Functionˉfirstˉoperation) * 28u32;
         let Kind: u32 = Bytesˉreadˉu16ˉlittle(Indexˉoperations, Entry + 4u32);
         if Bytesˉreadˉu32ˉlittle(Indexˉoperations, Entry + 20u32) == Owner.Slot &&
             (Kind == WIR_OPERATION_LOAD_LOCAL || Kind == WIR_OPERATION_STORE_LOCAL ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
-                Kind == WIR_OPERATION_RELEASE_LOCAL) {
+                Kind == WIR_OPERATION_RELEASE_LOCAL ||
+                (Replace && (Kind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+                    Kind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT))) {
             return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Index),
+                Compilerˉsourceˉwirˉvalueˉbuild(Result),
                 Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
                 Callable.Module, Expression.Offset, Expression.Line, Expression.Column
             );
@@ -9549,9 +9595,7 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
         Indexˉoperation = Indexˉoperation + 1u32;
     }
     return Compilerˉsourceˉwirˉemit(
-        Compilerˉsourceˉwirˉvalueˉbuild(Index),
-        WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT, Element,
-        Compilerˉsourceˉwirˉoneˉoperand(Index.Temporary),
+        Compilerˉsourceˉwirˉvalueˉbuild(Result), Operation, Element, Operands,
         Owner.Slot, Owner.Shape, Expression.Offset, Expression.Length
     );
 }
@@ -9570,10 +9614,11 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
     Expectedˉshape: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
-    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
-        return Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉborrowˉat(
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
+        Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
+        return Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉindexedˉcall(
             Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-            Source, Expression, Callable, Build
+            Source, Expression, Callable, Operation, Build
         );
     }
     if Operation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
@@ -9841,8 +9886,7 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
                 Appendˉvectorˉexpression.Valueˉlength,
                 Appendˉvectorˉexpression.Offset
             );
-        if !Appendˉvector.Found || Appendˉvector.Kind ==
-                Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter ||
+        if !Appendˉvector.Found ||
             !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
                 Appendˉvector.Shape, Appendˉcatalog
             ) ||
@@ -9908,9 +9952,22 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
                 Appendˉvalueˉexpression.Column
             );
         }
+        var Appendˉoperation: u32 = WIR_OPERATION_FOUNDATION_VECTOR_APPEND;
+        if Appendˉvector.Kind == Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter {
+            if Appendˉelement != 1u32 && Appendˉelement != 2u32 &&
+                Appendˉelement != 3u32 && Appendˉelement != 4u32 &&
+                Appendˉelement != 7u32 && Appendˉelement != 8u32 {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
+                    Callable.Module, Expression.Offset,
+                    Expression.Line, Expression.Column
+                );
+            }
+            Appendˉoperation = WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND;
+        }
         return Compilerˉsourceˉwirˉemit(
             Compilerˉsourceˉwirˉvalueˉbuild(Appendˉvalue),
-            WIR_OPERATION_FOUNDATION_VECTOR_APPEND,
+            Appendˉoperation,
             Expectedˉshape,
             Compilerˉsourceˉwirˉoneˉoperand(Appendˉvalue.Temporary),
             Appendˉvector.Slot, Appendˉvector.Shape,
@@ -11994,6 +12051,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic &&
         (Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
             Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
+            Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
             Callable.Directoryˉentry == WIR_OPERATION_PLATFORM_SOURCE_LENGTH ||
             Callable.Directoryˉentry ==
                 WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
@@ -16098,6 +16156,7 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     var Hasˉforeignˉcall: bool = false;
     var Hasˉfoundationˉvalueˉborrow: bool = false;
     var Hasˉvectorˉborrowˉat: bool = false;
+    var Hasˉvectorˉmutation: bool = false;
     let Operationˉpayload: bytes =
         Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
             Build.Operationˉpayload, Build.Operationˉpending
@@ -16152,11 +16211,19 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
         if Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
             Hasˉvectorˉborrowˉat = true;
         }
+        if Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
+            Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
+            Hasˉvectorˉmutation = true;
+        }
         Operationˉindex = Operationˉindex + 1u32;
     }
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    if Hasˉvectorˉborrowˉat && Instances > 0u32 {
+    if Hasˉvectorˉmutation && Instances > 0u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(38u32));
+    } else if Hasˉvectorˉmutation {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(37u32));
+    } else if Hasˉvectorˉborrowˉat && Instances > 0u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(36u32));
     } else if Hasˉvectorˉborrowˉat {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(35u32));
@@ -16229,7 +16296,7 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     }
     if Functionˉtypeˉinstances > 0u32 || Hasˉtask ||
         Hasˉunsafeˉscratch || Hasˉforeignˉcall ||
-        Hasˉfoundationˉvalueˉborrow || Hasˉvectorˉborrowˉat {
+        Hasˉfoundationˉvalueˉborrow || Hasˉvectorˉborrowˉat || Hasˉvectorˉmutation {
         var Functionˉtypeˉbytes: u32 = 0u32;
         if Functionˉtypeˉinstances > 0u32 {
             Functionˉtypeˉbytes = Bytesˉlength(

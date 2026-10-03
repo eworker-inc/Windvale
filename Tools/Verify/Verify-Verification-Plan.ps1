@@ -355,6 +355,8 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
+            'Tools/Native/Vector-Mutation-Execution-Cases.mjs',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Unreachable-Mutation.wv',
             'Tools/Native/Verify-Language-1.0-Async-Call-Await.mjs',
             'Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
             'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
@@ -1247,9 +1249,11 @@ $NativeCases = @(
             'Tests/Fixtures/Native-X64/Owned-Vector-Scope.wv',
             'Tests/Fixtures/Native-X64/Owned-Vector-Growth.wv',
             'Tests/Fixtures/Native-X64/Owned-Vector-Helpers.wv',
+            'Tests/Fixtures/Native-X64/Owned-Vector-Scalar-Mutation.wv',
             'Tests/Fixtures/Native-X64/Owned-Vector-Append-Refusal.wv',
             'Projects/Tests/Windvale-Native-Test-Owned-Vector-Growth.wvproj',
             'Projects/Tests/Windvale-Native-Test-Owned-Vector-Helpers.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scalar-Mutation.wvproj',
             'Projects/Tests/Windvale-Native-Test-Owned-Vector-Append-Refusal.wvproj',
             'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scope.wvproj',
             'Runtime/Native/X64-Memory-Budget-Validation.wva',
@@ -5413,7 +5417,7 @@ $QualificationPipelineExpected = @{
     'Verify-Wvo' = '10|33'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|99'
+    'Run-Split-Compiler' = '3|100'
     # The split owner's optional maintained diagnostic fixture reuses admission.
     # These are static call sites, not additional default qualification cases.
     'Run-Authenticated-Source-Admission' = '3|34'
@@ -6069,7 +6073,7 @@ foreach ($Path in $VectorBorrowIntegrationPaths) {
         $IntegrationPlan.MaximumSeconds -ne (3600 + $CacheOwnerPlan.MaximumSeconds) -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentExpectedSeconds -ne 900 -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentMaximumSeconds -ne 3600 -or
-        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 537 -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 553 -or
         $IntegrationPlan.UseFoundationBorrowPlanDevelopment -or
         $IntegrationPlan.UseFoundationBorrowDirectoryDevelopment -or
         $IntegrationPlan.UseFoundationBorrowOwnerDevelopment -or
@@ -6106,7 +6110,7 @@ foreach ($Boundary in @(
 foreach ($Fragment in @(
     '$NativePlan.UseVectorBorrowIntegrationDevelopment',
     "@('--vector-borrow-integration', '--maximum-seconds', '3600')",
-    'mode=vector-borrow-integration cases=537 expected-seconds=900 maximum-seconds=3600',
+    'mode=vector-borrow-integration cases=553 expected-seconds=900 maximum-seconds=3600',
     'cold-duration-measured=false',
     'No cold product acquisition was started and no passing evidence was recorded.'
 )) {

@@ -453,7 +453,7 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                     "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.$OwnerExtension")
                 $OwnerArguments = @('--vector-borrow-integration', '--maximum-seconds', '3600')
                 $OwnerMessage = ('Native owner language-1-memory-budget-split-execution ' +
-                    'mode=vector-borrow-integration cases=537 expected-seconds=900 maximum-seconds=3600 ' +
+                    'mode=vector-borrow-integration cases=553 expected-seconds=900 maximum-seconds=3600 ' +
                     'cold-duration-measured=false')
             } elseif ($Suite -eq 'language-1-memory-budget-split-execution' -and
                 $Plan.Scope -eq 'development' -and

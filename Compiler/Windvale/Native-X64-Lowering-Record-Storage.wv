@@ -30,6 +30,12 @@ record Scratchˉblockˉallocation {
     Nextˉeventˉoffset: u32;
 }
 
+record Scalarˉresourceˉstate {
+    Valid: bool;
+    Stack: bytes;
+    Depth: u32;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -162,7 +168,8 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 3u8 { return 5u32; }
     if Opcode == 4u8 { return 5u32; }
     if Opcode == 205u8 { return 5u32; }
-    if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 227u8 { return 9u32; }
+    if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 ||
+        Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8 { return 9u32; }
     if Opcode == 209u8 { return 13u32; }
     if Opcode == 202u8 { return 5u32; }
     if Opcode == 5u8 { return 5u32; }
@@ -723,6 +730,24 @@ fn Buildˉstorage(
     );
 }
 
+fn Scalarˉresourceˉoperation(Opcode: u8) -> bool {
+    return Opcode == 195u8 || Opcode == 202u8 || Opcode == 221u8 ||
+        Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8;
+}
+
+fn Scalarˉresourceˉread(Opcode: u8, Stack: bytes, Depth: u32)
+    -> Scalarˉresourceˉstate {
+    if Opcode == 202u8 || Opcode == 227u8 {
+        if Depth == 0u32 { return Scalarˉresourceˉstate(false, Stack, Depth); }
+    }
+    if Opcode == 227u8 { return Scalarˉresourceˉstate(true, Stack, Depth); }
+    if Opcode == 228u8 {
+        if Depth < 2u32 { return Scalarˉresourceˉstate(false, Stack, Depth); }
+        return Scalarˉresourceˉstate(true, Popˉrecords(Stack, Depth - 1u32), Depth - 1u32);
+    }
+    return Scalarˉresourceˉstate(true, Pushˉscalar(Stack), Depth + 1u32);
+}
+
 export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Input: bytes,
     Codeˉoffset: u32,
@@ -1138,12 +1163,11 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
             Handled = true;
         }
-        if Opcode == 195u8 || Opcode == 202u8 {
-            if Opcode == 202u8 && Depth == 0u32 { return Invalid(Input); }
-            Stackˉrecords = Pushˉscalar(Stackˉrecords); Depth = Depth + 1u32; Handled = true;
-        }
-        if Opcode == 227u8 {
-            if Depth == 0u32 { return Invalid(Input); }
+        if Scalarˉresourceˉoperation(Opcode) {
+            let Resource: Scalarˉresourceˉstate = Scalarˉresourceˉread(Opcode, Stackˉrecords, Depth);
+            if !Resource.Valid { return Invalid(Input); }
+            Stackˉrecords = Resource.Stack;
+            Depth = Resource.Depth;
             Handled = true;
         }
         if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 || Opcode == 220u8 {
@@ -1190,12 +1214,6 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 )
             );
             Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
-            Depth = Depth + 1u32;
-            Handled = true;
-        }
-
-        if Opcode == 221u8 {
-            Stackˉrecords = Pushˉscalar(Stackˉrecords);
             Depth = Depth + 1u32;
             Handled = true;
         }

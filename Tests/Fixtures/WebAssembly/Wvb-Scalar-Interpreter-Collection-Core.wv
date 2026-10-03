@@ -4,6 +4,19 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
+export record Collectionˉreplacementˉstate {
+    Valid: bool;
+    Status: u32;
+    Heap: bytes;
+    Stack: bytes;
+}
+
+export record Collectionˉaccessˉstate {
+    Valid: bool;
+    Status: u32;
+    Stack: bytes;
+    Kind: u32;
+}
 
 export fn Collectionˉelementˉshape(
     Module: bytes,
@@ -57,7 +70,7 @@ export fn Collectionˉexecutableˉelement(Module: bytes, Shape: u32) -> bool {
     if Collectionˉscalarˉelement(Module, Shape) { return true; }
     return Bytesˉlength(Module) >= 8u32 && Shape < Bytesˉlength(Module) &&
         Bytesˉlength(Module) - Shape >= 5u32 &&
-        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32 &&
+        (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 42u32 || Bytesˉreadˉu16ˉlittle(Module, 6u32) == 43u32) &&
         Bytesˉreadˉu8(Module, Shape) == 7u8;
 }
 
@@ -189,6 +202,46 @@ export fn Collectionˉlength(Heap: bytes, Value: bytes) -> u32 {
     );
 }
 
+export fn Collectionˉlengthˉchecked(
+    Heap: bytes, Allocations: bytes, Allocationˉcount: u32,
+    Value: bytes, Vectorˉtype: u32, Stack: bytes
+) -> Collectionˉaccessˉstate {
+    if !Collectionˉbackingˉvalid(Heap, Allocations, Allocationˉcount, Value) ||
+        Collectionˉtype(Heap, Value) != Vectorˉtype {
+        return Collectionˉaccessˉstate(false, 0u32, Stack, 0u32);
+    }
+    let Length: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Collectionˉlength(Heap, Value)), Bytesˉfromˉu32ˉlittle(0u32));
+    return Collectionˉaccessˉstate(true, 0u32, Bytesˉconcat(Stack, Length), 0u32);
+}
+
+export fn Collectionˉborrowˉchecked(
+    Module: bytes, Typeˉoffsets: bytes, Typeˉcount: u32, Recordˉmetadata: bytes,
+    Heap: bytes, Allocations: bytes, Allocationˉcount: u32,
+    Value: bytes, Vectorˉtype: u32, Stack: bytes
+) -> Collectionˉaccessˉstate {
+    let Invalid: Collectionˉaccessˉstate = Collectionˉaccessˉstate(false, 0u32, Stack, 0u32);
+    if Bytesˉlength(Stack) < 8u32 { return Invalid; }
+    let Shape: u32 = Collectionˉelementˉshape(Module, Typeˉoffsets, Typeˉcount, Vectorˉtype, 5u32);
+    if !Collectionˉexecutableˉelement(Module, Shape) ||
+        !Collectionˉbackingˉvalid(Heap, Allocations, Allocationˉcount, Value) ||
+        Collectionˉtype(Heap, Value) != Vectorˉtype { return Invalid; }
+    let Length: u32 = Bytesˉlength(Stack);
+    let Index: u32 = Bytesˉreadˉu32ˉlittle(Stack, Length - 8u32);
+    let High: u32 = Bytesˉreadˉu32ˉlittle(Stack, Length - 4u32);
+    let Remaining: bytes = Bytesˉslice(Stack, 0u32, Length - 8u32);
+    if High != 0u32 || Index >= Collectionˉlength(Heap, Value) {
+        return Collectionˉaccessˉstate(true, 3008u32, Remaining, 0u32);
+    }
+    let Selected: bytes = Collectionˉelement(Heap, Value, Index);
+    if !Collectionˉelementˉvalueˉvalid(
+        Module, Shape, Typeˉoffsets, Typeˉcount, Recordˉmetadata, Selected
+    ) { return Invalid; }
+    var Kind: u32 = 0u32;
+    if Bytesˉreadˉu8(Module, Shape) == 7u8 { Kind = 2u32; }
+    return Collectionˉaccessˉstate(true, 0u32, Bytesˉconcat(Remaining, Selected), Kind);
+}
+
 export fn Collectionˉappend(
     Heap: bytes,
     Value: bytes,
@@ -222,6 +275,55 @@ export fn Collectionˉappend(
         );
     }
     return Result;
+}
+
+export fn Collectionˉreplace(
+    Heap: bytes, Value: bytes, Index: u32, Element: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Heap, 0u32, 0u32);
+    if Bytesˉlength(Element) != 8u32 || Bytesˉlength(Value) != 8u32 { return Empty; }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Offset > Bytesˉlength(Heap) || Length > Bytesˉlength(Heap) - Offset ||
+        Length < 8u32 || Index >= Bytesˉreadˉu32ˉlittle(Heap, Offset) ||
+        Index >= (Length - 8u32) / 8u32 { return Empty; }
+    let Cell: u32 = Offset + 8u32 + Index * 8u32;
+    let Suffix: u32 = Cell + 8u32;
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Heap, 0u32, Cell), Element),
+        Bytesˉslice(Heap, Suffix, Bytesˉlength(Heap) - Suffix));
+}
+
+export fn Collectionˉreplaceˉchecked(
+    Module: bytes, Typeˉoffsets: bytes, Typeˉcount: u32, Recordˉmetadata: bytes,
+    Heap: bytes, Allocations: bytes, Allocationˉcount: u32,
+    Value: bytes, Vectorˉtype: u32, Stack: bytes
+) -> Collectionˉreplacementˉstate {
+    let Invalid: Collectionˉreplacementˉstate = Collectionˉreplacementˉstate(false, 0u32, Heap, Stack);
+    if Bytesˉlength(Stack) < 16u32 { return Invalid; }
+    let Elementˉshape: u32 = Collectionˉelementˉshape(Module, Typeˉoffsets, Typeˉcount, Vectorˉtype, 5u32);
+    if Elementˉshape >= Bytesˉlength(Module) { return Invalid; }
+    let Kind: u8 = Bytesˉreadˉu8(Module, Elementˉshape);
+    if Kind != 1u8 && Kind != 2u8 && Kind != 4u8 &&
+        Kind != 5u8 && Kind != 9u8 && Kind != 10u8 { return Invalid; }
+    if !Collectionˉbackingˉvalid(Heap, Allocations, Allocationˉcount, Value) ||
+        Collectionˉtype(Heap, Value) != Vectorˉtype { return Invalid; }
+    let Length: u32 = Bytesˉlength(Stack);
+    let Index: u32 = Bytesˉreadˉu32ˉlittle(Stack, Length - 16u32);
+    let Indexˉhigh: u32 = Bytesˉreadˉu32ˉlittle(Stack, Length - 12u32);
+    let Replacement: bytes = Bytesˉslice(Stack, Length - 8u32, 8u32);
+    if !Collectionˉelementˉvalueˉvalid(
+        Module, Elementˉshape, Typeˉoffsets, Typeˉcount, Recordˉmetadata, Replacement
+    ) { return Invalid; }
+    let Remaining: bytes = Bytesˉslice(Stack, 0u32, Length - 16u32);
+    if Indexˉhigh != 0u32 || Index >= Collectionˉlength(Heap, Value) {
+        return Collectionˉreplacementˉstate(true, 3008u32, Heap, Remaining);
+    }
+    let Prior: bytes = Collectionˉelement(Heap, Value, Index);
+    let Replaced: bytes = Collectionˉreplace(Heap, Value, Index, Replacement);
+    if Bytesˉlength(Replaced) != Bytesˉlength(Heap) || !Collectionˉelementˉvalueˉvalid(
+        Module, Elementˉshape, Typeˉoffsets, Typeˉcount, Recordˉmetadata, Prior
+    ) { return Invalid; }
+    return Collectionˉreplacementˉstate(true, 0u32, Replaced, Bytesˉconcat(Remaining, Prior));
 }
 
 export fn Collectionˉgrownˉbacking(

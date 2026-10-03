@@ -217,6 +217,8 @@ const WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER: u32 = 189u32;
 const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
 const WIR_OPERATION_FOUNDATION_VALUE_BORROW: u32 = 191u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT: u32 = 192u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_REPLACE: u32 = 193u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND: u32 = 194u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WIR_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
@@ -2190,7 +2192,13 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 170u32 { return Shape != 0u32; }
     if Operation == 171u32 { return Shape != 0u32; }
     if Operation == 172u32 { return Shape != 0u32; }
-    if Operation == 173u32 { return Shape != 0u32; }
+    if Operation == 173u32 || Operation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
+        return Shape != 0u32;
+    }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
+        return Shape == 1u32 || Shape == 2u32 || Shape == 3u32 || Shape == 4u32 ||
+            Shape == 7u32 || Shape == 8u32;
+    }
     if Operation == 174u32 { return Shape == 0u32; }
     if Operation == 175u32 { return Shape != 0u32; }
     if Operation == 176u32 { return Shape == 8u32; }
@@ -2339,7 +2347,10 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT { return Count == 1u32; }
     if Operation == 171u32 { return Count == 2u32; }
     if Operation == 172u32 { return Count == 1u32; }
-    if Operation == 173u32 { return Count == 1u32; }
+    if Operation == 173u32 || Operation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
+        return Count == 1u32;
+    }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE { return Count == 2u32; }
     if Operation == 174u32 { return Count == 0u32; }
     if Operation == 175u32 { return Count == 1u32; }
     if Operation == 176u32 { return Count == 0u32; }
@@ -2543,7 +2554,14 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
     if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
         return Index == 0u32 && Shape == 8u32;
     }
-    if Operation == 173u32 { return Index == 0u32 && Shape != 0u32; }
+    if Operation == 173u32 || Operation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
+        return Index == 0u32 && Shape != 0u32;
+    }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
+        if Index == 0u32 { return Shape == 8u32; }
+        return Index == 1u32 && (Shape == 1u32 || Shape == 2u32 || Shape == 3u32 ||
+            Shape == 4u32 || Shape == 7u32 || Shape == 8u32);
+    }
     if Operation == 175u32 { return Index == 0u32 && Shape == 8u32; }
     if Operation == WIR_OPERATION_CALL_INDIRECT {
         if Index == 0u32 {
@@ -3428,7 +3446,7 @@ export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
         if Index == 0u32 { return Target; }
         return 8u32;
     }
-    if Operation == 173u32 {
+    if Operation == 173u32 || Operation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
         if Index != 0u32 ||
             !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
                 Typeˉcatalog, Auxiliary, 11u32
@@ -3438,6 +3456,16 @@ export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
         return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
                 Typeˉcatalog, Auxiliary, 0u32
             );
+    }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
+        if Index == 0u32 { return 8u32; }
+        if Index != 1u32 ||
+            !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
+                Typeˉcatalog, Auxiliary, 11u32) {
+            return 0u32;
+        }
+        return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+            Typeˉcatalog, Auxiliary, 0u32);
     }
     if Operation == 62u32 {
         if Target >= Sourceˉbindings.Compilerˉsourceˉbindingsˉrangesˉcount(
@@ -4608,7 +4636,7 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
                 Growˉresultˉlayout.Shape, Growˉfailure.Module
             );
     }
-    if Operation == 173u32 {
+    if Operation == 173u32 || Operation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
         if Operandˉcount != 1u32 ||
             !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
                 Typeˉcatalog, Auxiliary, 11u32
@@ -4619,6 +4647,12 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
                     Typeˉcatalog, Auxiliary, 0u32
                 );
+        if Operation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND &&
+            Appendˉvectorˉelement != 1u32 && Appendˉvectorˉelement != 2u32 &&
+            Appendˉvectorˉelement != 3u32 && Appendˉvectorˉelement != 4u32 &&
+            Appendˉvectorˉelement != 7u32 && Appendˉvectorˉelement != 8u32 {
+            return false;
+        }
         if !(Genericˉlayouts.Compilerˉsourceˉgenericˉcollectionˉelementˉisˉsupported(
             Input, Scan, Symbols, Typeˉcatalog, Appendˉvectorˉelement
         )) {
@@ -4638,10 +4672,14 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             ) == Appendˉvectorˉelement;
     }
     if Operation == 169u32 || Operation == 170u32 ||
-        Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+        Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
+        Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
         var Expectedˉoperands: u32 = 0u32;
         if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
             Expectedˉoperands = 1u32;
+        }
+        if Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
+            Expectedˉoperands = 2u32;
         }
         if Operandˉcount != Expectedˉoperands ||
             !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
@@ -4659,7 +4697,8 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             return false;
         }
         if Operation == 169u32 { return Shape == 8u32; }
-        if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+        if Operation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
+            Operation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE {
             return Shape == Vectorˉelement;
         }
         return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
@@ -6091,6 +6130,8 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
             (Kind == WIR_OPERATION_STORE_LOCAL ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
                 Kind == WIR_OPERATION_RELEASE_LOCAL ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
                 Kind == WIR_OPERATION_TASK_AWAIT ||
@@ -6102,6 +6143,8 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
             (Kind == WIR_OPERATION_STORE_LOCAL ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
                 Kind == WIR_OPERATION_RELEASE_LOCAL ||
                 Kind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED) {
             return Invalid;
@@ -6702,6 +6745,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+                Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
+                Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
                 Operationˉkind ==
                     WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
@@ -6713,12 +6758,15 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                 let Readˉonly: bool =
                     Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
                     Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT;
+                let Mutableˉparameter: bool = Operationˉtarget < Range.Parameters &&
+                    (Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
+                        Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND);
                 let Projectedˉowner: bool = Readˉonly &&
                     Borrowˉprovenance.Hasˉborrow && Bytesˉreadˉu8(
                         Borrowˉprovenance.Slotˉstate, Operationˉtarget
                     ) == 1u8;
                 if Collectionˉstate != 1u8 &&
-                    !(Readˉonly && Operationˉtarget < Range.Parameters &&
+                    !((Readˉonly || Mutableˉparameter) && Operationˉtarget < Range.Parameters &&
                         Collectionˉstate == 2u8) && !Projectedˉowner {
                     return false;
                 }
@@ -6962,6 +7010,8 @@ fn Compilerˉsourceˉwirˉdynamicˉoperandˉshapeˉisˉvalid(
         Operationˉkind == WIR_OPERATION_CALL_INDIRECT ||
         Operationˉkind == 65u32 || Operationˉkind == 165u32 ||
         Operationˉkind == 166u32 ||
+        Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
+        Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
         Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
         return Operandˉshape ==
             Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
@@ -7219,7 +7269,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
+        if Operationˉkind > WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
             return false;
         }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
@@ -7362,9 +7412,13 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         }
         if Operationˉkind == 169u32 || Operationˉkind == 170u32 ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
             if (Operationˉtarget < Range.Parameters && Operationˉkind != 169u32 &&
-                    Operationˉkind != WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT) ||
+                    Operationˉkind != WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT &&
+                    Operationˉkind != WIR_OPERATION_FOUNDATION_VECTOR_REPLACE &&
+                    Operationˉkind != WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND) ||
                 Operationˉtarget >= Range.Parameters + Range.Locals {
                 return false;
             }
@@ -7373,6 +7427,16 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                     Bindings, Symbolˉentries, Function, Operationˉtarget
                 );
             if Vectorˉlocalˉshape != Operationˉauxiliary { return false; }
+        }
+        if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
+            if !Compilerˉsourceˉwirˉmutableˉborrowˉslotˉisˉvalid(
+                    Input, Scan, Symbols, Bindings, Function,
+                    Range.Parameters, Operationˉtarget) ||
+                (Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND &&
+                    Operationˉtarget >= Range.Parameters) {
+                return false;
+            }
         }
         if Operationˉkind ==
                 WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH {
@@ -7460,6 +7524,8 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
             if Operationˉtarget == Consumedˉvectorˉslot { return false; }
         }
@@ -7778,18 +7844,19 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 36u32 { return false; }
+    if Minor < 9u32 || Minor > 38u32 { return false; }
     if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32 ||
             Minor == 16u32 || Minor == 17u32 || Minor == 19u32 ||
             Minor == 21u32 || Minor == 23u32 || Minor == 25u32 ||
             Minor == 27u32 || Minor == 29u32 || Minor == 31u32 ||
-            Minor == 33u32 || Minor == 35u32) &&
+            Minor == 33u32 || Minor == 35u32 || Minor == 37u32) &&
         Directoryˉlength < 56u32 {
         return false;
     }
     if (Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
             Minor == 24u32 || Minor == 26u32 || Minor == 28u32 ||
-            Minor == 30u32 || Minor == 32u32 || Minor == 34u32 || Minor == 36u32) &&
+            Minor == 30u32 || Minor == 32u32 || Minor == 34u32 ||
+            Minor == 36u32 || Minor == 38u32) &&
         Directoryˉlength < 64u32 { return false; }
     let Functionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
     if Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 48u32 { return false; }
@@ -7832,13 +7899,13 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Minor == 14u32 || Minor == 16u32 || Minor == 18u32 ||
         Minor == 20u32 || Minor == 22u32 || Minor == 24u32 ||
         Minor == 26u32 || Minor == 28u32 || Minor == 30u32 ||
-        Minor == 32u32 || Minor == 34u32 || Minor == 36u32;
+        Minor == 32u32 || Minor == 34u32 || Minor == 36u32 || Minor == 38u32;
     var Hasˉfunctionˉtypes: bool = false;
     if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 ||
             Minor == 15u32 || Minor == 17u32 || Minor == 19u32 ||
             Minor == 21u32 || Minor == 23u32 || Minor == 25u32 ||
             Minor == 27u32 || Minor == 29u32 || Minor == 31u32 ||
-            Minor == 33u32 || Minor == 35u32 {
+            Minor == 33u32 || Minor == 35u32 || Minor == 37u32 {
         var Expectedˉfunctions: u32 = Symbolˉentries;
         if Hasˉsyntheticˉclosures {
             if Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉbaseˉfunctions(
@@ -7953,6 +8020,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Hasˉforeignˉcall: bool = false;
     var Hasˉfoundationˉvalueˉborrow: bool = false;
     var Hasˉvectorˉborrowˉat: bool = false;
+    var Hasˉvectorˉmutation: bool = false;
     var Closureˉtargets: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Nextˉfunctionˉtype: u32 = 0u32;
     var Operationˉscan: u32 = 0u32;
@@ -8067,6 +8135,10 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         if Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_BORROW_AT {
             Hasˉvectorˉborrowˉat = true;
         }
+        if Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_REPLACE ||
+            Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_PARAMETER_APPEND {
+            Hasˉvectorˉmutation = true;
+        }
         Operationˉscan = Operationˉscan + 1u32;
     }
     if Hasˉsyntheticˉclosures &&
@@ -8107,6 +8179,10 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     if Minor <= 32u32 && Hasˉfoundationˉvalueˉborrow { return false; }
     if Minor <= 34u32 && Hasˉvectorˉborrowˉat { return false; }
     if (Minor == 35u32 || Minor == 36u32) && !Hasˉvectorˉborrowˉat {
+        return false;
+    }
+    if Minor <= 36u32 && Hasˉvectorˉmutation { return false; }
+    if (Minor == 37u32 || Minor == 38u32) && !Hasˉvectorˉmutation {
         return false;
     }
     if (Minor == 33u32 || Minor == 34u32) &&

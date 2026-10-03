@@ -132,7 +132,8 @@ export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
     let Takesˉowner: bool = Opcode == 205u32 || Opcode == 207u32 ||
         Opcode == 214u32 || Opcode == 217u32 || Opcode == 219u32 ||
         Opcode == 220u32 || Opcode == 222u32;
-    if Opcode == 5u32 || Takesˉowner || Opcode == 208u32 || Opcode == 209u32 {
+    if Opcode == 5u32 || Takesˉowner || Opcode == 208u32 ||
+        Opcode == 209u32 || Opcode == 228u32 {
         let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
         if Local >= Bytesˉlength(Trace.Map) / 4u32 {
             return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);

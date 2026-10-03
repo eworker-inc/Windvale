@@ -1358,6 +1358,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
+    if ($Stem -eq 'Vector-Mutation-Execution-Cases') {
+        Add-Suite 'language-1-memory-budget-split-execution'
+        return
+    }
     if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases',
         'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
@@ -2421,6 +2425,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Asymmetric-Join.wv',
         'Tests/Fixtures/Language-1.0/Owned-Vector-Loop-Invariant-Wir.wv',
         'Tests/Fixtures/Language-1.0/Owned-Vector-Loop-State-Mismatch.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Unreachable-Mutation.wv',
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Duplicate-Move.wv',
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Field-Move.wv',
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Mutable-Borrow-From-Let.wv',
@@ -2524,9 +2529,11 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Native-X64/Owned-Vector-Scope.wv',
         'Tests/Fixtures/Native-X64/Owned-Vector-Growth.wv',
         'Tests/Fixtures/Native-X64/Owned-Vector-Helpers.wv',
+        'Tests/Fixtures/Native-X64/Owned-Vector-Scalar-Mutation.wv',
         'Tests/Fixtures/Native-X64/Owned-Vector-Append-Refusal.wv',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Growth.wvproj',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Helpers.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scalar-Mutation.wvproj',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Append-Refusal.wvproj',
         'Projects/Tests/Windvale-Native-Test-Owned-Vector-Scope.wvproj',
         'Runtime/Native/X64-Memory-Budget-Validation.wva',
@@ -4990,7 +4997,7 @@ $UseVectorBorrowIntegrationDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -a
 # Current-product acquisition can exceed the automatic 15-minute CI job budget.
 $VectorBorrowIntegrationDevelopmentExpectedSeconds = [long]900
 $VectorBorrowIntegrationDevelopmentMaximumSeconds = [long]3600
-$VectorBorrowIntegrationDevelopmentCaseCount = 537
+$VectorBorrowIntegrationDevelopmentCaseCount = 553
 if ($UseVectorBorrowIntegrationDevelopment) {
     $VectorBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'

@@ -223,11 +223,15 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         var Isˉtracked: bool = Borrowˉkind == 0u8 && Type == 10u8 &&
             (Identity == 25u32 || (Identity >= 2147483648u32 &&
                 Identity != 4294967295u32));
-        if Borrowˉkind == 0u8 && Identity < Typeˉcount &&
+        // Scalar identities share numeric values with nominal table indices.
+        // Only record/variant shapes can carry a tracked Result identity.
+        if Borrowˉkind == 0u8 && Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) &&
+            Identity < Typeˉcount &&
             Bytesˉreadˉu8(Scratchˉresultˉtypes, Identity) == 1u8 {
             Isˉtracked = true;
         }
         if Local < Parameters && Borrowˉkind == 28u8 &&
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) &&
             Identity < Typeˉcount && Bytesˉreadˉu8(
                 Scratchˉresultˉtypes, Identity
             ) == 1u8 {
@@ -585,12 +589,15 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 return false;
             }
         }
-        if Opcode == 208u8 || Opcode == 209u8 || Opcode == 227u8 {
+        if Opcode == 208u8 || Opcode == 209u8 ||
+            Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8 {
             let Vectorˉowner: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
             if Vectorˉowner >= Locals { return false; }
             let Vectorˉborrow: u8 = Readˉborrowˉkind(Localˉborrowˉkinds, Vectorˉowner);
             if Vectorˉowner < Parameters && (Vectorˉborrow == 26u8 || Vectorˉborrow == 27u8) {
-                if Opcode != 227u8 { return false; }
+                if Opcode != 226u8 && Opcode != 227u8 &&
+                    !(Vectorˉborrow == 27u8 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 &&
+                        (Opcode == 208u8 || Opcode == 228u8)) { return false; }
             } else if Bytesˉreadˉu8(Tracked, Vectorˉowner) != 1u8 ||
                 !Available(Availableˉlow, Availableˉhigh, Bytesˉreadˉu32ˉlittle(Ranks, Vectorˉowner * 4u32)) { return false; }
         }
