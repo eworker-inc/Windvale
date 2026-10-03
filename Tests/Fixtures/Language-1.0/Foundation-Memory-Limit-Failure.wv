@@ -1,0 +1,49 @@
+#!wv/1 en@1
+module Foundationˉmemoryˉlimitˉfailureˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+
+fn Check(Requested: u64, Maximum: u64) -> Result.Result<unit, Memory.Limitˉfailure> {
+    if Requested > Maximum {
+        return Result.Result.Failure<unit, Memory.Limitˉfailure> {
+            Error: Memory.Limitˉfailure.Maximumˉexceeded {
+                Requested: Requested,
+                Maximum: Maximum,
+            },
+        };
+    }
+    return Result.Result.Valid<unit, Memory.Limitˉfailure> { Value: () };
+}
+
+fn Forward(Requested: u64, Maximum: u64) -> Result.Result<unit, Memory.Limitˉfailure> {
+    try Check(Requested, Maximum);
+    return Result.Result.Valid<unit, Memory.Limitˉfailure> { Value: () };
+}
+
+fn Observe(Error: Memory.Limitˉfailure) -> u64 {
+    return match Error {
+        case Memory.Limitˉfailure.Maximumˉexceeded {
+            Requested: Requested,
+            Maximum: Maximum,
+        } { Requested - Maximum }
+        case Memory.Limitˉfailure.Arithmeticˉoverflow { 42u64 }
+    };
+}
+
+fn Observeˉoutcome(Outcome: Result.Result<unit, Memory.Limitˉfailure>) -> u64 {
+    return match Outcome {
+        case Result.Result.Valid { Value: _ } { 0u64 }
+        case Result.Result.Failure { Error: Error } { Observe(Error) }
+    };
+}
+
+export fn Main() -> i32 {
+    if Observeˉoutcome(Forward(4294967297u64, 4294967296u64)) != 1u64 { return 1; }
+    if Observeˉoutcome(Forward(4294967296u64, 4294967296u64)) != 0u64 { return 2; }
+    if Observe(Memory.Limitˉfailure.Arithmeticˉoverflow {}) != 42u64 { return 3; }
+    return 42;
+}

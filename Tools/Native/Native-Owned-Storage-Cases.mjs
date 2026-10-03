@@ -1,6 +1,7 @@
 import { Buildˉstorageˉfixture } from './Native-Storage-Fixture.mjs';
 import { Buildˉownedˉdomainˉcases } from './Native-Owned-Domain-Cases.mjs';
 import { Buildˉbudgetedˉstorageˉcases, Readˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
+import { Buildˉsharedˉstorageˉcases } from './Native-Shared-Storage-Cases.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -16,7 +17,8 @@ export async function Prepareˉownedˉstorageˉobjects(Context) {
         ['Allocator', 'Compiler/Native/Allocator/Descriptor-Allocator.wva'],
         ['Budget-Validation', 'Runtime/Native/X64-Memory-Budget-Validation.wva'],
         ['Budgeted', 'Runtime/Native/X64-Budgeted-Storage.wva'],
-        ['Domain', 'Runtime/Native/X64-Owned-Domain.wva'],
+        ...(Context.Sharedˉonly ? [] : [['Domain', 'Runtime/Native/X64-Owned-Domain.wva']]),
+        ...(Context.Includeˉshared || Context.Sharedˉonly ? [['Shared', 'Runtime/Native/X64-Shared-Storage.wva']] : []),
     ]) {
         process.stdout.write(`native owned storage step=assemble leaf=${Name}\n`);
         const Object = join(Work, `${Name}.wvo`);
@@ -36,10 +38,12 @@ export async function Runˉownedˉstorageˉcases(Context) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
-    const Objects = await Prepareˉownedˉstorageˉobjects(Context);
-    const Oracle = Context.Domainˉonly ? null : await Readˉbudgetˉoracle(Context);
-    const Cases = [...(Context.Domainˉonly ? [] : [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle)]),
-        ...Buildˉownedˉdomainˉcases()];
+    const Objects = await Prepareˉownedˉstorageˉobjects({ ...Context, Includeˉshared: !Context.Domainˉonly });
+    const Oracle = Context.Domainˉonly || Context.Sharedˉonly ? null : await Readˉbudgetˉoracle(Context);
+    const Sharedˉcases = Context.Domainˉonly ? [] : Buildˉsharedˉstorageˉcases();
+    const Cases = Context.Sharedˉonly ? Sharedˉcases :
+        [...(Context.Domainˉonly ? [] : [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle),
+            ...Sharedˉcases]), ...Buildˉownedˉdomainˉcases()];
     // Two independent fixtures bound concurrent tool memory. Drain both workers
     // on failure before the owner removes their shared temporary directory.
     let Next = 0;
@@ -71,10 +75,12 @@ export async function Runˉownedˉstorageˉcases(Context) {
     }
     await Promise.all([Worker(), Worker()]);
     if (Failure !== null) throw Failure;
-    if (Context.Domainˉonly) {
+    if (Context.Sharedˉonly) {
+        process.stdout.write(`native shared storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 request-bytes=128 iterations=1,1000,32768 stress-arena=64 stress-peak-charge=48 metadata-bytes=7928 workers=2 qualification=false\n`);
+    } else if (Context.Domainˉonly) {
         process.stdout.write(`native owned domain status=Passed cases=${Cases.length} metadata-bytes=5952 request-bytes=112 pairs=15 snapshot-bytes=6144 workers=2 qualification=false\n`);
     } else {
-        process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=18 domain-cases=7 accounting-states=14 budgeted-metadata-bytes=5816 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
+        process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=18 domain-cases=7 shared-storage-cases=${Sharedˉcases.length} accounting-states=14 budgeted-metadata-bytes=5816 shared-metadata-bytes=7928 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
     }
     return Cases.length;
 }

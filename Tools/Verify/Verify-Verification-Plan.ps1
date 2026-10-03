@@ -1246,6 +1246,8 @@ $NativeCases = @(
             'Runtime/Native/X64-Owned-Domain.wva',
             'Specifications/Windvale-Native-Owned-Domain.md',
             'Runtime/Native/X64-Budgeted-Storage.wva',
+            'Runtime/Native/X64-Shared-Storage.wva',
+            'Specifications/Windvale-Native-Shared-Storage.md',
             'Runtime/Native/X64-Owned-Entry.wva',
             'Runtime/Native/X64-Owned-Frame-Cleanup.wva',
             'Specifications/Windvale-Native-Owned-Collections.md',
@@ -1267,6 +1269,7 @@ $NativeCases = @(
             'Tools/Native/Native-Owned-Storage-Cases.mjs',
             'Tools/Native/Native-Owned-Domain-Cases.mjs',
             'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
+            'Tools/Native/Native-Shared-Storage-Cases.mjs',
             'Tools/Native/Native-Owned-Vector-Cases.mjs',
             'Tools/Native/Native-Owned-Vector-Access-Cases.mjs',
             'Tools/Native/Native-Owned-Helper-Cases.mjs',
@@ -5111,8 +5114,27 @@ $NativeCases = @(
         VerifyPlan = $false
         LibraryDevelopment = $true
         LibraryTarget = 'foundation-values'
-        ExpectedSeconds = 900
-        MaximumSeconds = 1800
+        ExpectedSeconds = 180
+        MaximumSeconds = 240
+    },
+    @{
+        Name = 'Foundation canonical limit failure library target'
+        Paths = @(
+            'Libraries/Foundation/Memory/Memory.wv',
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure.wvproj',
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj',
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj',
+            'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure.wv',
+            'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure-Wrong-Field.wv',
+            'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure-Lookalike.wv'
+        )
+        Suites = @('libraries')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryDevelopment = $true
+        LibraryTarget = 'foundation-values'
+        ExpectedSeconds = 180
+        MaximumSeconds = 240
     },
     @{
         Name = 'library development target manifest'
@@ -6318,6 +6340,58 @@ foreach ($OwnerPath in @(
         throw "The focused Foundation owner-flow plan differs for '$OwnerPath'."
     }
 }
+foreach ($SharedPath in @(
+    'Runtime/Native/X64-Shared-Storage.wva',
+    'Tools/Native/Native-Shared-Storage-Cases.mjs'
+)) {
+    $SharedPlan = & $NativePlanner -ChangedPath $SharedPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$SharedPlan.UseNativeSharedStorageDevelopment -or
+        $SharedPlan.ExpectedSeconds -ne 540 -or $SharedPlan.MaximumSeconds -ne 600 -or
+        $SharedPlan.Suites.Count -ne 1 -or $SharedPlan.Gaps.Count -ne 0) {
+        throw "The focused shared-storage plan differs for '$SharedPath'."
+    }
+}
+$MixedSharedPlan = & $NativePlanner -ChangedPath @(
+    'Runtime/Native/X64-Shared-Storage.wva',
+    'Compiler/Windvale/Native-X64-Lowering-Core.wv'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($MixedSharedPlan.UseNativeSharedStorageDevelopment) {
+    throw 'Private shared-storage routing suppressed compiler lowering coverage.'
+}
+$FoundationCompanionPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Native/Library-Foundation-Value-Cases.mjs',
+    'Tools/Native/Test-Libraries.cmd', 'Tools/Native/Test-Libraries.sh',
+    'Libraries/Foundation/Memory/Memory.wv'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$FoundationCompanionPlan.UseFoundationLibraryDevelopment -or
+    !$FoundationCompanionPlan.UseLibraryDevelopment -or
+    $FoundationCompanionPlan.LibraryDevelopmentTarget -ne 'foundation-values' -or
+    $FoundationCompanionPlan.ExpectedSeconds -ne 180 -or
+    $FoundationCompanionPlan.MaximumSeconds -ne 240) {
+    throw 'Foundation value helper and wrapper companions lost their focused plan.'
+}
+$MixedFoundationPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Native/Library-Foundation-Value-Cases.mjs',
+    'Tools/Native/Test-Libraries.cmd', 'Libraries/Models/Scripted-Model-Provider.wv'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($MixedFoundationPlan.UseFoundationLibraryDevelopment -or
+    $MixedFoundationPlan.LibraryDevelopmentTarget -ne 'all') {
+    throw 'Foundation value routing suppressed another maintained library target.'
+}
+$LibraryWrapperPlan = & $NativePlanner -ChangedPath 'Tools/Native/Test-Libraries.cmd' `
+    -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($LibraryWrapperPlan.UseFoundationLibraryDevelopment -or
+    $LibraryWrapperPlan.LibraryDevelopmentTarget -ne 'all') {
+    throw 'An unrelated library wrapper edit became Foundation-only verification.'
+}
+foreach ($Marker in @('--shared-storage', 'if ($NativePlan.UseFoundationLibraryDevelopment) {',
+    '--prepare-only --deadline-ms $FoundationPreparationDeadline',
+    '--prepare --deadline-ms $FoundationVerifierDeadline')) {
+    if (!$ChangedVerification.Contains($Marker, [StringComparison]::Ordinal)) {
+        throw "Shared storage/Foundation dispatch lost '$Marker'."
+    }
+}
 foreach ($VerifierPath in @(
     'Tools/Native/Verify-Wvb.mjs',
     'Tools/Native/Current-Wvb-Verification-Cases.mjs'
@@ -7510,7 +7584,7 @@ foreach ($OwnerContract in $OsX64OwnerContracts) {
 $LibraryTargetPlan = Join-Path $RepositoryRoot `
     'Tests/Native/Library-Development-Targets.txt'
 $LibraryTargetLines = @(Get-Content -LiteralPath $LibraryTargetPlan)
-if ($LibraryTargetLines.Count -ne 31 -or
+if ($LibraryTargetLines.Count -ne 34 -or
     $LibraryTargetLines[0] -ne 'windvale-library-development-targets 1') {
     throw 'The library development-target inventory differs.'
 }
@@ -7530,6 +7604,11 @@ foreach ($Line in @($LibraryTargetLines | Select-Object -Skip 1)) {
             'Projects/Libraries/', [StringComparison]::Ordinal) -or
         $Fields[2].EndsWith('-Import-Smoke.wvproj', [StringComparison]::Ordinal)) {
         'project'
+    } elseif ($Fields[2] -in @(
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj',
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj'
+        )) {
+        'negative'
     } elseif ($Fields[2].StartsWith(
             'Projects/Tests/', [StringComparison]::Ordinal)) {
         'conformance'
@@ -7560,6 +7639,9 @@ foreach ($Line in @($LibraryTargetLines | Select-Object -Skip 1)) {
 }
 $ExpectedLibraryTargetProjects = [string[]]@(
     'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj',
+    'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure.wvproj',
+    'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj',
+    'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj',
     'Projects/Libraries/Windvale-Library-Resource-Store.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Storage-Geometry.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Storage-Page.wvproj',
@@ -7602,8 +7684,8 @@ if (!$LibraryTargetNames.SetEquals([string[]]@(
     )) -or
     !$LibraryTargetProjects.SetEquals($ExpectedLibraryTargetProjects) -or
     $LibraryTargetKindCounts.project -ne 19 -or
-    $LibraryTargetKindCounts.conformance -ne 9 -or
-    $LibraryTargetKindCounts.negative -ne 2) {
+    $LibraryTargetKindCounts.conformance -ne 10 -or
+    $LibraryTargetKindCounts.negative -ne 4) {
     throw 'The library development-target names or evidence totals differ.'
 }
 $LibraryWindowsOwner = Get-Content -Raw -LiteralPath (

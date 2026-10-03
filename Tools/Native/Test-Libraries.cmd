@@ -26,6 +26,9 @@ set "Result=1"
 
 if defined DevelopmentTarget goto :development
 
+call :foundation_values
+if errorlevel 1 goto :cleanup
+
 for %%P in (
     Windvale-Library-Resource-Store
     Windvale-Library-Database-Storage-Geometry
@@ -95,11 +98,17 @@ for %%N in (
     if exist "%TemporaryDirectory%\%%N.wvb" goto :cleanup
 )
 
-echo native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
+echo native libraries status=Passed projects=19 conformance-builds=10 negative=4 cases=33
 set "Result=0"
 goto :cleanup
 
 :development
+if /i "%DevelopmentTarget%"=="foundation-values" (
+    call :foundation_values
+    if errorlevel 1 goto :cleanup
+    set "Result=0"
+    goto :cleanup
+)
 set "TargetPlan=%RepositoryRoot%\Tests\Native\Library-Development-Targets.txt"
 if not exist "%TargetPlan%" (
     >&2 echo Missing library development-target manifest.
@@ -162,6 +171,10 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if not errorlevel 1 set "DevelopmentFailed=1"
 if exist "%TemporaryDirectory%\development-%DevelopmentCases%.wvb" set "DevelopmentFailed=1"
 exit /b 0
+
+:foundation_values
+node "%RepositoryRoot%\Tools\Native\Library-Foundation-Value-Cases.mjs"
+exit /b %ERRORLEVEL%
 
 :cleanup
 if exist "%TemporaryDirectory%\." (

@@ -1,0 +1,23 @@
+#!wv/1 en@1
+module Foundationˉmemoryˉlimitˉfailureˉlookalike;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+
+variant Limitˉfailure {
+    Maximumˉexceeded(Requested: u64, Maximum: u64);
+    Arithmeticˉoverflow;
+}
+
+fn Observe(Error: Memory.Limitˉfailure) -> i32 {
+    return 42;
+}
+
+export fn Main() -> i32 {
+    return Observe(Limitˉfailure.Maximumˉexceeded {
+        Requested: 4294967297u64,
+        Maximum: 4294967296u64,
+    });
+}

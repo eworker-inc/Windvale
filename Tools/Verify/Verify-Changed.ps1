@@ -188,7 +188,8 @@ if ($PreparationOnly) {
             --prepare-only --maximum-seconds $PreparationMaximumSeconds
         if ($LASTEXITCODE -ne 0) { throw "Native preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
     }
-    if ($NativePlan.Suites -contains 'native-x64-lowering-development') {
+    if ($NativePlan.Suites -contains 'native-x64-lowering-development' -and
+        !$NativePlan.UseNativeSharedStorageDevelopment) {
         $RemainingSeconds = [int][Math]::Floor($PreparationMaximumSeconds - ([DateTime]::UtcNow - $VerificationStartedUtc).TotalSeconds)
         if ($RemainingSeconds -lt 30) { throw 'The shared preparation deadline is exhausted; completed caches remain reusable.' }
         $HostTarget = if ($IsWindows -or [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) { 'windows' } else { 'linux' }
@@ -213,7 +214,23 @@ if ($PreparationOnly) {
             --prepare-current-verifier --maximum-seconds $RemainingSeconds
         if ($LASTEXITCODE -ne 0) { throw "Current verifier preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
     }
-    if (!$NativePlan.UseOwnedConsoleDevelopment -and !$NativePlan.UseCurrentVerifierDevelopment -and @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
+    if ($NativePlan.UseFoundationLibraryDevelopment) {
+        $RemainingSeconds = [int][Math]::Floor($PreparationMaximumSeconds - ([DateTime]::UtcNow - $VerificationStartedUtc).TotalSeconds)
+        if ($RemainingSeconds -lt 60) { throw 'The shared preparation deadline is exhausted; completed caches remain reusable.' }
+        $FoundationPreparationDeadline = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + [long]$RemainingSeconds * 1000
+        Write-Host "Preparation owner=libraries target=foundation-values maximum-seconds=$RemainingSeconds behavior-cases=0"
+        & node (Join-Path $RepositoryRoot 'Tools/Native/Build-Current-Split-Project-Wvb.mjs') `
+            --prepare-only --deadline-ms $FoundationPreparationDeadline
+        if ($LASTEXITCODE -ne 0) { throw "Foundation compiler preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
+        $FoundationVerifierDeadline = [Math]::Min($FoundationPreparationDeadline, [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + 600000)
+        & node (Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvb.mjs') `
+            --prepare --deadline-ms $FoundationVerifierDeadline
+        if ($LASTEXITCODE -ne 0) { throw "Foundation verifier preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
+    }
+    if (!$NativePlan.UseOwnedConsoleDevelopment -and !$NativePlan.UseCurrentVerifierDevelopment -and
+        !$NativePlan.UseFoundationLibraryDevelopment -and
+        !$NativePlan.UseNativeSharedStorageDevelopment -and
+        @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
         Write-Host 'Native preparation status=NotRequired selected-preparation-owners=0'
     }
     return
@@ -390,12 +407,20 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $OwnerArguments += '-AllowLongRun'
             }
             $OwnerMessage = $null
-            if ($Suite -eq 'native-x64-lowering-development' -and $UsePreparedProducts) {
+            if ($Suite -eq 'native-x64-lowering-development' -and $UsePreparedProducts -and
+                !$NativePlan.UseNativeSharedStorageDevelopment) {
                 $OwnerCommand = 'node'
                 $HostTarget = if ($IsWindowsHost) { 'windows' } else { 'linux' }
                 $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'),
                     $HostTarget, $RepositoryRoot, '--prepared-products-only', '--maximum-seconds', '600')
-                $OwnerMessage = 'Native owner native-x64-lowering-development mode=prepared-products cases=123 maximum-seconds=600'
+                $OwnerMessage = 'Native owner native-x64-lowering-development mode=prepared-products maximum-seconds=600'
+            }
+            if ($Suite -eq 'native-x64-lowering-development' -and $NativePlan.UseNativeSharedStorageDevelopment) {
+                $OwnerCommand = 'node'
+                $HostTarget = if ($IsWindowsHost) { 'windows' } else { 'linux' }
+                $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'),
+                    $HostTarget, $RepositoryRoot, '--shared-storage')
+                $OwnerMessage = 'Native owner native-x64-lowering-development mode=shared-storage cases=17 expected-seconds=540 maximum-seconds=600 compiler-construction=Forbidden'
             }
             if ($Suite -eq 'language-1-authenticated-foreign-binding' -and $UsePreparedProducts) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
@@ -598,7 +623,7 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $LibraryTarget = $NativePlan.LibraryDevelopmentTarget
                 $OwnerArguments = @('--development-target', $LibraryTarget)
                 $LibraryExpectedSeconds = if ($LibraryTarget -eq 'foundation-values') {
-                    900
+                    180
                 } else {
                     300
                 }

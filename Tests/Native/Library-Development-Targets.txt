@@ -1,5 +1,8 @@
 windvale-library-development-targets 1
 foundation-values|conformance|Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj
+foundation-values|conformance|Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure.wvproj
+foundation-values|negative|Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj
+foundation-values|negative|Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj
 resource-store|project|Projects/Libraries/Windvale-Library-Resource-Store.wvproj
 resource-store|project|Projects/Libraries/Windvale-Library-Hosted-Resource-Store.wvproj
 storage-geometry|project|Projects/Libraries/Windvale-Library-Database-Storage-Geometry.wvproj

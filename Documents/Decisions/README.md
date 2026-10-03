@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 355 |
+| Accepted | 356 |
 | Implemented | 502 |
 | Proposed | 7 |
 | Qualified | 95 |
@@ -50,6 +50,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0977: Add native reserved byte builders and shared storage](0977-Add-Native-Reserved-Byte-Builders-And-Shared-Storage.md) | Accepted |
 | [Decision 0976: Focus Windvale 1.0 on the language and essential libraries](0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md) | Accepted |
 | [Decision 0975: Launch owned-storage console applications](0975-Launch-Owned-Storage-Console-Applications.md) | Proposed |
 | [Decision 0974: Construct fresh native owned-storage domains](0974-Construct-Fresh-Native-Owned-Storage-Domains.md) | Proposed |
@@ -74,7 +75,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0955: add a bounded language front-door development checkpoint](0955-Add-A-Bounded-Language-Front-Door-Development-Checkpoint.md) | Implemented |
 | [Decision 0954: balance qualification shards by paired-host timings](0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md) | Qualified |
 | [Decision 0953: bundle the root-split and depth-two database cases](0953-Bundle-The-Root-Split-And-Depth-Two-Database-Cases.md) | Implemented |
-| [Decision 0952: rank and trial overlapping database products](0952-Rank-And-Trial-Overlapping-Database-Products.md) | Implemented |
 
 ## Superseded or historical records
 

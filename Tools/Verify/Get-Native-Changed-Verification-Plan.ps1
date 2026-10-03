@@ -116,7 +116,7 @@ $LibraryDevelopmentTargetNames =
 $LibraryDevelopmentTargetProjects =
     [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $LibraryDevelopmentKindCounts = @{ project = 0; conformance = 0; negative = 0 }
-if ($LibraryDevelopmentLines.Count -ne 31 -or
+if ($LibraryDevelopmentLines.Count -ne 34 -or
     $LibraryDevelopmentLines[0] -ne 'windvale-library-development-targets 1') {
     $LibraryDevelopmentEligible = $false
 }
@@ -136,6 +136,11 @@ foreach ($Line in @($LibraryDevelopmentLines | Select-Object -Skip 1)) {
             'Projects/Libraries/', [StringComparison]::Ordinal) -or
         $Fields[2].EndsWith('-Import-Smoke.wvproj', [StringComparison]::Ordinal)) {
         'project'
+    } elseif ($Fields[2] -in @(
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj',
+            'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj'
+        )) {
+        'negative'
     } elseif ($Fields[2].StartsWith(
             'Projects/Tests/', [StringComparison]::Ordinal)) {
         'conformance'
@@ -182,11 +187,12 @@ if (!$LibraryDevelopmentTargetNames.SetEquals([string[]]@(
         'storage-geometry'
     )) -or
     $LibraryDevelopmentKindCounts.project -ne 19 -or
-    $LibraryDevelopmentKindCounts.conformance -ne 9 -or
-    $LibraryDevelopmentKindCounts.negative -ne 2) {
+    $LibraryDevelopmentKindCounts.conformance -ne 10 -or
+    $LibraryDevelopmentKindCounts.negative -ne 4) {
     $LibraryDevelopmentEligible = $false
 }
 $LibraryDevelopmentContractTargets = @{
+    'Tools/Native/Library-Foundation-Value-Cases.mjs' = 'foundation-values'
     'Specifications/Read-Only-Directory-Capability.md' = 'read-only-wvdb'
     'Specifications/Random-Access-Storage-Capability.md' = 'page-storage'
     'Specifications/Windvale-Database-Durable-Commit.md' = 'durability'
@@ -1362,8 +1368,12 @@ function Add-Native-Tool-Suite {
         Add-Suite 'language-1-memory-budget-split-execution'
         return
     }
+    if ($Stem -eq 'Library-Foundation-Value-Cases') {
+        Add-Suite 'libraries'
+        return
+    }
     if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases', 'Native-Owned-Domain-Cases',
-        'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
+        'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Shared-Storage-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -2516,6 +2526,15 @@ foreach ($Path in $Paths) {
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
         Add-Suite 'language-1-memory-budget-split-execution'
+    } elseif ($Path -in @(
+        'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure.wvproj',
+        'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj',
+        'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj',
+        'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure.wv',
+        'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure-Wrong-Field.wv',
+        'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure-Lookalike.wv'
+    )) {
+        Add-Suite 'libraries'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
@@ -2567,6 +2586,8 @@ foreach ($Path in $Paths) {
         'Runtime/Native/X64-Owned-Domain.wva',
         'Specifications/Windvale-Native-Owned-Domain.md',
         'Runtime/Native/X64-Budgeted-Storage.wva',
+        'Runtime/Native/X64-Shared-Storage.wva',
+        'Specifications/Windvale-Native-Shared-Storage.md',
         'Runtime/Native/X64-Owned-Entry.wva',
         'Runtime/Native/X64-Owned-Frame-Cleanup.wva',
         'Specifications/Windvale-Native-Owned-Collections.md',
@@ -4908,6 +4929,63 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 # Documentation routing has already excluded executable and frozen contracts.
 # Keep every other path: owner routing alone is not a complete dependency proof.
 $FocusedDevelopmentPaths = @($Paths | Where-Object { !$DocumentationOnlyPaths.Contains($_) })
+$FoundationLibraryDevelopmentInputs = @(
+    'Libraries/Foundation/Memory/Memory.wv',
+    'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj',
+    'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure.wvproj',
+    'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Wrong-Field.wvproj',
+    'Projects/Tests/Language-1.0-Foundation-Memory-Limit-Failure-Lookalike.wvproj',
+    'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure-Wrong-Field.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Memory-Limit-Failure-Lookalike.wv',
+    'Tools/Native/Library-Foundation-Value-Cases.mjs',
+    'Tools/Native/Test-Libraries.cmd',
+    'Tools/Native/Test-Libraries.sh',
+    'Tests/Native/Library-Development-Targets.txt'
+)
+$RelevantLibraryPaths = @($FocusedDevelopmentPaths | Where-Object {
+    $_.StartsWith('Libraries/', [StringComparison]::Ordinal) -or
+    $_.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal) -or
+    $_.StartsWith('Tests/Fixtures/Libraries/', [StringComparison]::Ordinal) -or
+    $LibraryDevelopmentTargetsByPath.ContainsKey($_) -or
+    $_ -cin $FoundationLibraryDevelopmentInputs
+})
+if ($FocusedDevelopmentPaths -ccontains 'Tools/Native/Library-Foundation-Value-Cases.mjs' -and
+    @($RelevantLibraryPaths | Where-Object { $_ -cnotin $FoundationLibraryDevelopmentInputs }).Count -eq 0) {
+    $LibraryDevelopmentRequiresAllTargets = $false
+    $SelectedLibraryDevelopmentTargets.Clear()
+    $null = $SelectedLibraryDevelopmentTargets.Add('foundation-values')
+}
+$NativeSharedStorageDevelopmentInputs = @(
+    'Runtime/Native/X64-Shared-Storage.wva',
+    'Runtime/Native/X64-Budgeted-Storage.wva',
+    'Specifications/Windvale-Native-Shared-Storage.md',
+    'Specifications/Windvale-Native-Budgeted-Storage.md',
+    'Tools/Native/Native-Shared-Storage-Cases.mjs',
+    'Tools/Native/Native-Owned-Storage-Cases.mjs',
+    'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
+    'Tests/Native/Verification-Owners.txt',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
+    'Tools/Verify/Verify-GitHub-Native-Qualification.ps1',
+    '.github/workflows/verify.yml'
+)
+$UseNativeSharedStorageDevelopment = $SelectedSuites.Contains('native-x64-lowering-development') -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cin @('Runtime/Native/X64-Shared-Storage.wva', 'Tools/Native/Native-Shared-Storage-Cases.mjs')
+    }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cnotin $NativeSharedStorageDevelopmentInputs -and
+        $_ -cnotin $FoundationLibraryDevelopmentInputs
+    }).Count -eq 0
+if ($UseNativeSharedStorageDevelopment) {
+    $StorageOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'native-x64-lowering-development'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $StorageOwner.ExpectedSeconds + 540)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $StorageOwner.MaximumSeconds + 600)
+}
 $UseCurrentVerifierDevelopment = $SelectedSuites.Contains('language-1-production-admission-ingress') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs') }).Count -gt 0 -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $CurrentVerifierDevelopmentInputs }).Count -eq 0
@@ -5435,15 +5513,17 @@ if (!$LibraryDevelopmentRequiresAllTargets -and
     $SelectedLibraryDevelopmentTargets.Count -eq 1) {
     $LibraryDevelopmentTarget = @($SelectedLibraryDevelopmentTargets)[0]
 }
+$UseFoundationLibraryDevelopment = $SelectedSuites.Contains('libraries') -and
+    $LibraryDevelopmentEligible -and $LibraryDevelopmentTarget -eq 'foundation-values'
 if ($SelectedSuites.Contains('libraries') -and
     $LibraryDevelopmentTarget -eq 'foundation-values') {
     $LibraryOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'libraries'
     })[0]
     $SelectedExpectedSeconds = [long](
-        $SelectedExpectedSeconds - $LibraryOwner.ExpectedSeconds + 900)
+        $SelectedExpectedSeconds - $LibraryOwner.ExpectedSeconds + 180)
     $SelectedMaximumSeconds = [long](
-        $SelectedMaximumSeconds - $LibraryOwner.MaximumSeconds + 1800)
+        $SelectedMaximumSeconds - $LibraryOwner.MaximumSeconds + 240)
 }
 $SourceContainmentDevelopmentMode = if (
     $SelectedSuites.Contains('source-containment') -and
@@ -5532,6 +5612,8 @@ if (!$Quiet) {
     }
     Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
     Write-Host "Library development target: $LibraryDevelopmentTarget"
+    Write-Host "Foundation library prepared development: $($UseFoundationLibraryDevelopment.ToString().ToLowerInvariant())"
+    Write-Host "Native shared-storage development: $($UseNativeSharedStorageDevelopment.ToString().ToLowerInvariant())"
     Write-Host "Database storage development checkpoint: $((
         $SelectedSuites.Contains('database-storage') -and
         $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
@@ -5582,6 +5664,8 @@ if ($PassThru) {
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
         UseCurrentVerifierDevelopment = $UseCurrentVerifierDevelopment
+        UseNativeSharedStorageDevelopment = $UseNativeSharedStorageDevelopment
+        UseFoundationLibraryDevelopment = $UseFoundationLibraryDevelopment
         UseOwnedConsoleDevelopment = $UseOwnedConsoleDevelopment
         UseProject4LauncherDevelopment = $UseProject4LauncherDevelopment
         UseProject4PublisherCacheDevelopment = $UseProject4PublisherCacheDevelopment

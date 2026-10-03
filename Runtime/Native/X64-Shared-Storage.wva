@@ -1,0 +1,912 @@
+windvale-assembly 1
+
+# Runtime-private reserved bytes and immutable shares over one budgeted domain.
+# R8=2112-byte state, R9=128-byte request; serialized mapped disjoint extents.
+# Version, fields, bounds and statuses: Windvale-Native-Shared-Storage.md.
+# No allocation outside the existing budgeted/physical owner; no host calls.
+symbol local function Request_reset in .text
+symbol export function Windvale_shared_storage in .text
+symbol import function Windvale_budgeted_storage
+section code .text align 16
+define Windvale_shared_storage
+test r8 r8
+branch equal Invalid_pointer
+test_i32 r8 15
+branch not_equal Invalid_pointer
+test r9 r9
+branch equal Invalid_pointer
+test_i32 r9 7
+branch not_equal Invalid_pointer
+# Check every extent against the bounded callee stack before saved-register writes.
+move rax r8
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+move_u32 ecx 2112
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_Shared
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_Shared
+move rax r9
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 7
+branch not_equal Invalid_pointer
+move_u32 ecx 128
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_Request
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_Request
+load_memory_u64 rax r8 none 1 16
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+move_u32 ecx 1088
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_Budgeted
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_Budgeted
+load_memory_u64 rax r8 none 1 16
+load_memory_u64 rax rax none 1 16
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+move_u32 ecx 2112
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_Physical
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_Physical
+load_memory_u64 rax r8 none 1 16
+load_memory_u64 rax rax none 1 24
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 7
+branch not_equal Invalid_pointer
+move_u32 ecx 2616
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_Accounting
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_Accounting
+load_memory_u64 rax r8 none 1 16
+load_memory_u64 rax rax none 1 16
+load_memory_u32 ecx rax none 1 40
+load_memory_u64 rax rax none 1 32
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_Arena
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_Arena
+
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 6
+branch not_equal Safe_source
+load_memory_u64 rcx r9 none 1 48
+test rcx rcx
+branch equal Safe_source
+compare_i32 rcx 4194304
+branch above Invalid_pointer
+load_memory_u64 rax r9 none 1 56
+test rax rax
+branch equal Invalid_pointer
+add rcx rax
+branch below Invalid_pointer
+move rdx rsp
+subtract_i32 rdx 8192
+branch below Invalid_pointer
+compare rcx rdx
+branch below_equal Safe_source
+move rdx rsp
+add_i32 rdx 8
+branch below Invalid_pointer
+compare rax rdx
+branch below Invalid_pointer
+label Safe_source
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+push r10
+push r11
+# Shadow32, budget request96, extent pairs112, decimal20 and bounded scratch.
+subtract_i32 rsp 376
+move r12 r8
+move r13 r9
+load_memory_u64 r14 r12 none 1 16
+load_memory_u64 r15 r14 none 1 16
+store_memory_u64 rsp none 1 128 r12
+move_u32 eax 2112
+store_memory_u64 rsp none 1 136 rax
+store_memory_u64 rsp none 1 144 r13
+move_u32 eax 128
+store_memory_u64 rsp none 1 152 rax
+store_memory_u64 rsp none 1 160 r14
+move_u32 eax 1088
+store_memory_u64 rsp none 1 168 rax
+store_memory_u64 rsp none 1 176 r15
+move_u32 eax 2112
+store_memory_u64 rsp none 1 184 rax
+load_memory_u64 rax r14 none 1 24
+store_memory_u64 rsp none 1 192 rax
+move_u32 eax 2616
+store_memory_u64 rsp none 1 200 rax
+load_memory_u64 rax r15 none 1 32
+store_memory_u64 rsp none 1 208 rax
+load_memory_u32 eax r15 none 1 40
+store_memory_u64 rsp none 1 216 rax
+move_u32 ebp 224
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 6
+branch not_equal Extent_start
+load_memory_u64 rax r13 none 1 48
+test rax rax
+branch equal Extent_start
+store_memory_u64 rsp none 1 232 rax
+load_memory_u64 rax r13 none 1 56
+store_memory_u64 rsp none 1 224 rax
+move_u32 ebp 240
+label Extent_start
+move_u32 esi 128
+label Extent
+load_memory_u64 rax rsp rsi 1 0
+load_memory_u64 rcx rsp rsi 1 8
+add rcx rax
+branch below Invalid_extent
+store_memory_u64 rsp rsi 1 8 rcx
+move_u32 edi 128
+label Extent_pair
+compare edi esi
+branch above_equal Extent_next
+load_memory_u64 rdx rsp rdi 1 0
+compare rdx rcx
+branch above_equal Extent_pair_next
+load_memory_u64 rdx rsp rdi 1 8
+compare rax rdx
+branch below Invalid_extent
+label Extent_pair_next
+add_i32 edi 16
+jump_label Extent_pair
+label Extent_next
+add_i32 esi 16
+compare esi ebp
+branch below Extent
+
+load_memory_u32 eax r13 none 1 0
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax r13 none 1 4
+compare_i32 eax 128
+branch not_equal Invalid
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 13
+branch above Invalid
+load_memory_u32 eax r13 none 1 12
+test eax eax
+branch not_equal Invalid
+move_u32 ecx 64
+label Request_outputs
+load_memory_u64 rax r13 rcx 1 0
+test rax rax
+branch not_equal Invalid
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Request_outputs
+load_memory_u32 eax r12 none 1 4
+compare_i32 eax 1
+branch not_equal Corrupt
+load_memory_u32 eax r12 none 1 8
+compare_i32 eax 2112
+branch not_equal Corrupt
+load_memory_u32 eax r12 none 1 12
+compare_i32 eax 64
+branch not_equal Corrupt
+load_memory_u64 rax r12 none 1 24
+test rax rax
+branch equal Corrupt
+load_memory_u64 rcx r14 none 1 32
+compare rax rcx
+branch not_equal Corrupt
+load_memory_u64 rcx r13 none 1 16
+compare rax rcx
+branch not_equal Stale
+load_memory_u32 eax r12 none 1 32
+compare_i32 eax 1
+branch above Corrupt
+move_u32 ecx 36
+label State_reserved
+load_memory_u32 eax r12 rcx 1 0
+test eax eax
+branch not_equal Corrupt
+add_i32 ecx 4
+compare_i32 ecx 64
+branch below State_reserved
+load_memory_u32 eax r13 none 1 8
+test eax eax
+branch equal Initial_header
+load_memory_u32 eax r12 none 1 0
+compare_i32 eax 1397970519
+branch not_equal Corrupt
+load_memory_u32 eax r12 none 1 32
+test eax eax
+branch not_equal Closed
+jump_label Request_fields
+label Initial_header
+load_memory_u32 eax r12 none 1 0
+load_memory_u32 ecx r12 none 1 32
+or eax ecx
+test eax eax
+branch not_equal Invalid
+label Request_fields
+load_memory_u32 eax r13 none 1 8
+test eax eax
+branch equal Empty_fields
+compare_i32 eax 11
+branch above_equal High_fields
+compare_i32 eax 1
+branch equal Reserve_fields
+load_memory_u64 rcx r13 none 1 32
+test rcx rcx
+branch not_equal Invalid
+compare_i32 eax 6
+branch equal Span_fields
+compare_i32 eax 10
+branch equal View_fields
+load_memory_u64 rcx r13 none 1 48
+load_memory_u64 rdx r13 none 1 56
+or rcx rdx
+test rcx rcx
+branch not_equal Invalid
+compare_i32 eax 7
+branch above_equal No_arguments
+load_memory_u64 rcx r13 none 1 40
+compare_i32 eax 2
+branch not_equal U32_argument
+compare_i32 rcx 255
+branch above Invalid
+jump_label Owner_fields
+label U32_argument
+compare_i32 eax 3
+branch not_equal Owner_fields
+move rdx rcx
+shift_right rdx 32
+test rdx rdx
+branch not_equal Invalid
+jump_label Owner_fields
+label High_fields
+compare_i32 eax 13
+branch not_equal Empty_fields
+load_memory_u64 rcx r13 none 1 32
+test rcx rcx
+branch not_equal Invalid
+jump_label Owner_fields
+label View_fields
+load_memory_u64 rcx r13 none 1 56
+test rcx rcx
+branch not_equal Invalid
+jump_label Owner_fields
+label Reserve_fields
+load_memory_u64 rcx r13 none 1 24
+load_memory_u64 rdx r13 none 1 48
+or rcx rdx
+load_memory_u64 rdx r13 none 1 56
+or rcx rdx
+test rcx rcx
+branch not_equal Invalid
+jump_label Lower_validate
+label Span_fields
+load_memory_u64 rcx r13 none 1 40
+test rcx rcx
+branch not_equal Invalid
+load_memory_u64 rcx r13 none 1 48
+test rcx rcx
+branch not_equal Owner_fields
+load_memory_u64 rcx r13 none 1 56
+test rcx rcx
+branch not_equal Invalid
+jump_label Owner_fields
+label No_arguments
+load_memory_u64 rcx r13 none 1 40
+test rcx rcx
+branch not_equal Invalid
+label Owner_fields
+load_memory_u64 rcx r13 none 1 24
+test rcx rcx
+branch equal Stale
+jump_label Lower_validate
+label Empty_fields
+load_memory_u64 rax r13 none 1 24
+load_memory_u64 rcx r13 none 1 32
+or rax rcx
+load_memory_u64 rcx r13 none 1 40
+or rax rcx
+load_memory_u64 rcx r13 none 1 48
+or rax rcx
+load_memory_u64 rcx r13 none 1 56
+or rax rcx
+test rax rax
+branch not_equal Invalid
+label Lower_validate
+call Request_reset
+move_u32 eax 12
+store_memory_u32 rsp none 1 40 eax
+call Windvale_budgeted_storage
+test eax eax
+branch not_equal Corrupt
+
+# Lower validation proves physical extents, generations, distinct leases and charge.
+# Shared validation visits exactly64 entries without replaying the lower validator.
+xor esi esi
+label Slots
+move ebx esi
+shift_left ebx 5
+add_i32 ebx 64
+add rbx r12
+load_memory_u64 rax rbx none 1 0
+test rax rax
+branch not_equal Live
+load_memory_u64 rcx rbx none 1 8
+load_memory_u64 rdx rbx none 1 16
+or rcx rdx
+load_memory_u64 rdx rbx none 1 24
+or rcx rdx
+test rcx rcx
+branch not_equal Corrupt
+jump_label Slot_next
+label Live
+load_memory_u32 ecx r13 none 1 8
+test ecx ecx
+branch equal Corrupt
+move ecx esi
+shift_left ecx 4
+add_i32 ecx 64
+load_memory_u64 rdx r14 rcx 1 0
+compare rax rdx
+branch not_equal Corrupt
+load_memory_u32 ecx rbx none 1 8
+test ecx ecx
+branch equal Corrupt
+load_memory_u32 edx rbx none 1 12
+compare_i32 edx 1
+branch equal Builder_slot
+compare_i32 edx 2
+branch not_equal Corrupt
+jump_label Slot_lengths
+label Builder_slot
+compare_i32 ecx 1
+branch not_equal Corrupt
+label Slot_lengths
+load_memory_u32 eax rbx none 1 16
+load_memory_u32 ecx rbx none 1 20
+compare eax ecx
+branch above Corrupt
+compare_i32 ecx 4194304
+branch above Corrupt
+load_memory_u64 rax rbx none 1 24
+test rax rax
+branch not_equal Corrupt
+test ecx ecx
+branch not_equal Physical_capacity
+move_u32 ecx 1
+label Physical_capacity
+move eax esi
+shift_left eax 5
+add_i32 eax 64
+add rax r15
+load_memory_u32 edx rax none 1 8
+compare ecx edx
+branch not_equal Corrupt
+load_memory_u32 edx rax none 1 12
+compare ecx edx
+branch not_equal Corrupt
+load_memory_u32 edx rax none 1 20
+compare_i32 edx 16
+branch not_equal Corrupt
+label Slot_next
+add_i32 esi 1
+compare_i32 esi 64
+branch below Slots
+load_memory_u32 eax r13 none 1 8
+test eax eax
+branch equal Initialize
+compare_i32 eax 1
+branch equal Reserve
+compare_i32 eax 11
+branch equal Teardown
+compare_i32 eax 12
+branch equal Success
+load_memory_u32 eax r13 none 1 24
+subtract_i32 eax 1
+branch below Stale
+compare_i32 eax 64
+branch above_equal Stale
+move ecx eax
+shift_left ecx 5
+add_i32 ecx 64
+move rbx r12
+add rbx rcx
+load_memory_u64 rcx r13 none 1 24
+load_memory_u64 rdx rbx none 1 0
+compare rcx rdx
+branch not_equal Stale
+# Physical data pointer is checked by the lower validator.
+load_memory_u32 eax r13 none 1 24
+subtract_i32 eax 1
+shift_left eax 5
+add_i32 eax 64
+add rax r15
+load_memory_u32 edi rax none 1 4
+subtract_i32 edi 1
+load_memory_u64 rdx r15 none 1 32
+add rdi rdx
+add_i32 rdi 16
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 9
+branch equal Release
+load_memory_u32 ecx rbx none 1 12
+compare_i32 eax 8
+branch equal Immutable
+compare_i32 eax 10
+branch equal Immutable
+compare_i32 ecx 1
+branch not_equal Stale
+compare_i32 eax 7
+branch equal Freeze
+compare_i32 eax 13
+branch equal Shared_append
+compare_i32 eax 6
+branch equal Span_append
+compare_i32 eax 5
+branch equal Decimal
+move ebp eax
+compare_i32 eax 2
+branch equal One_byte
+compare_i32 eax 3
+branch equal Four_bytes
+move_u32 ebp 8
+jump_label Integer_append
+label One_byte
+move_u32 ebp 1
+jump_label Integer_append
+label Four_bytes
+move_u32 ebp 4
+label Integer_append
+load_memory_u64 rsi r13 none 1 40
+jump_label Append_check_integer
+
+label Initialize
+move_u32 eax 1397970519
+store_memory_u32 r12 none 1 0 eax
+jump_label Success
+
+label Reserve
+# Query proves a live owned odd-generation budget before target refusal can consume it.
+call Request_reset
+move_u32 eax 8
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rax r13 none 1 32
+store_memory_u64 rsp none 1 96 rax
+call Windvale_budgeted_storage
+test eax eax
+branch not_equal Status
+load_memory_u64 rax rsp none 1 112
+store_memory_u64 rsp none 1 304 rax
+load_memory_u64 rbp r13 none 1 40
+test rbp rbp
+branch not_equal Reserve_charge
+move_u32 ebp 1
+label Reserve_charge
+move rax rbp
+add_i32 rax 31
+branch below Charge_saturate
+and_i32 rax -16
+store_memory_u64 rsp none 1 296 rax
+compare_i32 rbp 4194304
+branch above Target_refusal
+call Request_reset
+move_u32 eax 1
+store_memory_u32 rsp none 1 40 eax
+store_memory_u32 rsp none 1 44 ebp
+store_memory_u32 rsp none 1 68 ebp
+move_u32 eax 16
+store_memory_u32 rsp none 1 64 eax
+load_memory_u64 rax r13 none 1 32
+store_memory_u64 rsp none 1 96 rax
+call Windvale_budgeted_storage
+test eax eax
+branch equal Reserve_publish
+compare_i32 eax 2
+branch equal Allocation_refusal
+compare_i32 eax 3
+branch equal Allocation_refusal
+compare_i32 eax 6
+branch equal Allocation_refusal
+compare_i32 eax 8
+branch not_equal Status
+jump_label Allocation_refusal
+label Charge_saturate
+move_u32 eax 4294967295
+move rcx rax
+shift_left rax 32
+or rax rcx
+store_memory_u64 rsp none 1 296 rax
+label Target_refusal
+move_u32 eax 8
+label Allocation_refusal
+store_memory_u32 rsp none 1 312 eax
+call Request_reset
+move_u32 eax 7
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rax r13 none 1 32
+store_memory_u64 rsp none 1 96 rax
+call Windvale_budgeted_storage
+test eax eax
+branch not_equal Invariant
+load_memory_u64 rax rsp none 1 296
+store_memory_u64 r13 none 1 104 rax
+load_memory_u64 rax rsp none 1 304
+store_memory_u64 r13 none 1 112 rax
+load_memory_u32 eax rsp none 1 312
+jump_label Status
+label Reserve_publish
+load_memory_u32 eax rsp none 1 56
+subtract_i32 eax 1
+shift_left eax 5
+add_i32 eax 64
+move rbx r12
+add rbx rax
+load_memory_u64 rax rsp none 1 56
+store_memory_u64 rbx none 1 0 rax
+store_memory_u64 r13 none 1 24 rax
+move_u32 eax 1
+store_memory_u32 rbx none 1 8 eax
+store_memory_u32 rbx none 1 12 eax
+load_memory_u32 eax r13 none 1 40
+store_memory_u32 rbx none 1 20 eax
+load_memory_u64 rdi rsp none 1 80
+load_memory_u64 rax rsp none 1 296
+store_memory_u64 r13 none 1 104 rax
+load_memory_u64 rax rsp none 1 304
+store_memory_u64 r13 none 1 112 rax
+jump_label Publish
+
+label Decimal
+# Twenty reversed ASCII digits; software divide-by-ten takes64 steps per digit.
+load_memory_u64 rsi r13 none 1 40
+xor ebp ebp
+label Decimal_digit
+move rax rsi
+xor edx edx
+xor esi esi
+move_u32 ecx 64
+label Decimal_divide
+shift_left edx 1
+shift_left rax 1
+branch above_equal Decimal_no_bit
+add_i32 edx 1
+label Decimal_no_bit
+shift_left rsi 1
+compare_i32 edx 10
+branch below Decimal_bit
+subtract_i32 edx 10
+or_i32 rsi 1
+label Decimal_bit
+subtract_i32 ecx 1
+branch not_equal Decimal_divide
+add_i32 edx 48
+store_memory_u8 rsp rbp 1 256 dl
+add_i32 ebp 1
+test rsi rsi
+branch not_equal Decimal_digit
+jump_label Append_check_decimal
+label Span_append
+load_memory_u64 rbp r13 none 1 48
+load_memory_u64 rsi r13 none 1 56
+jump_label Append_check_copy
+label Shared_append
+load_memory_u32 eax r13 none 1 40
+subtract_i32 eax 1
+branch below Stale
+compare_i32 eax 64
+branch above_equal Stale
+shift_left eax 5
+add_i32 eax 64
+move rdx r12
+add rdx rax
+load_memory_u64 rcx r13 none 1 40
+load_memory_u64 rax rdx none 1 0
+compare rax rcx
+branch not_equal Stale
+load_memory_u32 eax rdx none 1 12
+compare_i32 eax 2
+branch not_equal Stale
+load_memory_u64 rax r13 none 1 48
+load_memory_u64 rbp r13 none 1 56
+add rax rbp
+branch below Limit
+load_memory_u32 ecx rdx none 1 16
+compare rax rcx
+branch above Limit
+load_memory_u32 eax r13 none 1 40
+subtract_i32 eax 1
+shift_left eax 5
+add_i32 eax 64
+add rax r15
+load_memory_u32 esi rax none 1 4
+subtract_i32 esi 1
+load_memory_u64 rax r15 none 1 32
+add rsi rax
+add_i32 rsi 16
+load_memory_u64 rax r13 none 1 48
+add rsi rax
+jump_label Append_check_copy
+label Append_check_integer
+move_u32 edx 0
+jump_label Append_check
+label Append_check_decimal
+move_u32 edx 1
+jump_label Append_check
+label Append_check_copy
+move_u32 edx 2
+label Append_check
+load_memory_u32 ecx rbx none 1 16
+move rax rcx
+add rax rbp
+branch below Limit
+load_memory_u32 r8d rbx none 1 20
+compare rax r8
+branch above Limit
+add rdi rcx
+compare_i32 edx 1
+branch equal Decimal_copy
+compare_i32 edx 2
+branch equal Span_copy
+xor ecx ecx
+label Integer_copy
+store_memory_u8 rdi rcx 1 0 sil
+shift_right rsi 8
+add_i32 ecx 1
+compare ecx ebp
+branch below Integer_copy
+jump_label Append_commit
+label Decimal_copy
+move edx ebp
+xor ecx ecx
+label Decimal_copy_digit
+subtract_i32 edx 1
+load_memory_u8 al rsp rdx 1 256
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+test edx edx
+branch not_equal Decimal_copy_digit
+jump_label Append_commit
+label Span_copy
+xor ecx ecx
+label Span_copy_byte
+compare rcx rbp
+branch above_equal Append_commit
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Span_copy_byte
+label Append_commit
+load_memory_u32 ecx rbx none 1 16
+add ebp ecx
+store_memory_u32 rbx none 1 16 ebp
+subtract rdi rcx
+jump_label Publish
+
+label Freeze
+move_u32 eax 2
+store_memory_u32 rbx none 1 12 eax
+jump_label Publish
+label Immutable
+compare_i32 ecx 2
+branch not_equal Stale
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 8
+branch not_equal View
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax -1
+branch equal Unavailable
+add_i32 eax 1
+store_memory_u32 rbx none 1 8 eax
+jump_label Publish
+label View
+load_memory_u64 rax r13 none 1 40
+load_memory_u64 rcx r13 none 1 48
+add rax rcx
+branch below Limit
+load_memory_u32 ecx rbx none 1 16
+compare rax rcx
+branch above Limit
+load_memory_u64 rax r13 none 1 40
+add rdi rax
+jump_label Publish
+label Release
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 1
+branch equal Release_last
+subtract_i32 eax 1
+store_memory_u32 rbx none 1 8 eax
+jump_label Success
+label Release_last
+call Request_reset
+move_u32 eax 9
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rax rbx none 1 0
+store_memory_u64 rsp none 1 56 rax
+call Windvale_budgeted_storage
+test eax eax
+branch not_equal Invariant
+xor eax eax
+store_memory_u64 rbx none 1 0 rax
+store_memory_u64 rbx none 1 8 rax
+store_memory_u64 rbx none 1 16 rax
+store_memory_u64 rbx none 1 24 rax
+jump_label Success
+label Teardown
+call Request_reset
+move_u32 eax 5
+store_memory_u32 rsp none 1 40 eax
+call Windvale_budgeted_storage
+test eax eax
+branch not_equal Invariant
+xor eax eax
+move_u32 ecx 64
+label Teardown_slots
+store_memory_u64 r12 rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 2112
+branch below Teardown_slots
+move_u32 eax 1
+store_memory_u32 r12 none 1 32 eax
+jump_label Success
+label Publish
+store_memory_u64 r13 none 1 72 rdi
+load_memory_u32 eax rbx none 1 20
+store_memory_u64 r13 none 1 88 rax
+test eax eax
+branch not_equal Publish_charge
+move_u32 eax 1
+label Publish_charge
+add_i32 eax 31
+and_i32 eax -16
+store_memory_u32 r13 none 1 68 eax
+load_memory_u32 eax rbx none 1 8
+store_memory_u32 r13 none 1 96 eax
+load_memory_u32 eax rbx none 1 16
+load_memory_u32 ecx r13 none 1 8
+compare_i32 ecx 10
+branch not_equal Publish_length
+load_memory_u64 rax r13 none 1 48
+label Publish_length
+store_memory_u64 r13 none 1 80 rax
+label Success
+xor eax eax
+jump_label Status
+label Invalid
+move_u32 eax 1
+jump_label Status
+label Stale
+move_u32 eax 4
+jump_label Status
+label Corrupt
+move_u32 eax 5
+jump_label Status
+label Unavailable
+move_u32 eax 6
+jump_label Status
+label Limit
+move_u32 eax 7
+jump_label Status
+label Closed
+move_u32 eax 9
+label Status
+store_memory_u32 r13 none 1 64 eax
+label Finish
+add_i32 rsp 376
+pop r11
+pop r10
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+label Invalid_extent
+move_u32 eax 1
+jump_label Finish
+label Invalid_pointer
+move_u32 eax 1
+return
+label Invariant
+# Serialized complete preflight makes local release/teardown infallible.
+trap
+jump_label Invariant
+end define
+define Request_reset
+move r9 rsp
+add_i32 r9 40
+xor eax eax
+xor ecx ecx
+label Clear
+store_memory_u64 r9 rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 96
+branch below Clear
+move_u32 eax 1
+store_memory_u32 r9 none 1 0 eax
+move_u32 eax 96
+store_memory_u32 r9 none 1 4 eax
+load_memory_u64 rax r12 none 1 24
+store_memory_u64 r9 none 1 16 rax
+move r8 r14
+return
+end define
+end section

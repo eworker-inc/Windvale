@@ -87,6 +87,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native retirement test suite (historical)](../Windvale-Native-Retirement-Test-Suite.md) | Documented |
 | [Windvale native service-bundle materialization](../Windvale-Native-Service-Bundle-Materialization.md) | Documented |
 | [Windvale native service-table construction](../Windvale-Native-Service-Table-Construction.md) | Documented |
+| [Windvale native shared storage](../Windvale-Native-Shared-Storage.md) | Candidate |
 | [Windvale native source-to-AOT composition](../Windvale-Native-Source-To-Aot-Composition.md) | Candidate |
 | [Windvale native source-to-WVB front door](../Windvale-Native-Source-To-Wvb-Front-Door.md) | Candidate |
 | [Windvale native streaming SHA-256 evidence](../Windvale-Native-Streaming-Sha256-Evidence.md) | Documented |

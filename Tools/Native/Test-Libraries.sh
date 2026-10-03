@@ -12,6 +12,10 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
+if [[ $development_target == 'foundation-values' ]]; then
+    node "$script_directory/Library-Foundation-Value-Cases.mjs"
+    exit $?
+fi
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-libraries.XXXXXXXX") || exit 1
 cleanup() {
@@ -90,6 +94,8 @@ if [[ -n $development_target ]]; then
     exit 0
 fi
 
+node "$script_directory/Library-Foundation-Value-Cases.mjs" || exit $?
+
 library_projects=(
     Windvale-Library-Resource-Store
     Windvale-Library-Database-Storage-Geometry
@@ -161,4 +167,4 @@ for project in "${negative_projects[@]}"; do
     [[ ! -e "$temporary_directory/$project.wvb" ]] || exit 1
 done
 
-echo 'native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29'
+echo 'native libraries status=Passed projects=19 conformance-builds=10 negative=4 cases=33'

@@ -15,6 +15,14 @@ authority library;
 // policy; fixed budgets refuse deterministically. This module does not publish
 // forgeable record substitutes or private token/lease representations.
 
+export variant Limitˉfailure {
+    Maximumˉexceeded(
+        Requested: u64,
+        Maximum: u64,
+    );
+    Arithmeticˉoverflow;
+}
+
 export enum Allocationˉreason: u8 {
     Budgetˉexhausted = 1u8;
     Targetˉunaddressable = 2u8;

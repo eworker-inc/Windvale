@@ -120,7 +120,7 @@ load_memory_u32 eax r13 none 1 4
 compare_i32 eax 96
 branch not_equal Invalid
 load_memory_u32 eax r13 none 1 8
-compare_i32 eax 11
+compare_i32 eax 12
 branch above Invalid
 load_memory_u64 rax r13 none 1 40
 load_memory_u64 rcx r13 none 1 48
@@ -281,6 +281,8 @@ branch not_equal Corrupt
 load_memory_u32 eax r13 none 1 8
 test eax eax
 branch equal Initialize
+compare_i32 eax 12
+branch equal Empty_request
 compare_i32 eax 5
 branch equal Teardown
 compare_i32 eax 1
@@ -814,6 +816,8 @@ or rax rcx
 test rax rax
 branch not_equal Invalid
 load_memory_u32 eax r13 none 1 8
+compare_i32 eax 12
+branch equal Success
 test eax eax
 branch not_equal Invoke_teardown
 move_u32 eax 1396856663

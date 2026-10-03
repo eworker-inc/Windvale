@@ -106,7 +106,7 @@ lease. An active accounting lease whose owner has been released may remain
 without backing while children survive; it is not an owned live lease.
 
 The first 64 request bytes use the physical-request fields with these changes:
-size at +4 is **96**, operation at +8 is 0 through 11, and the physical maximum
+size at +4 is **96**, operation at +8 is 0 through 12, and the physical maximum
 field at +56 is always zero. The adapter computes authority from the budget,
 rather than trusting a caller-supplied byte maximum. The tail is:
 
@@ -121,7 +121,7 @@ rather than trusting a caller-supplied byte maximum. The tail is:
 Reserve requires zero handle, lease metadata and result fields. Success publishes
 the physical handle at +24, charge at +44, borrowed pointer at +48 and complete
 lease at +64. Operations 2 through 4 require both the matching physical
-handle and the exact 28-byte lease. Initialize and teardown require all
+handle and the exact 28-byte lease. Initialize, teardown and validation require all
 operation-specific fields to be zero. All other unused fields remain zero as
 in the physical contract.
 
@@ -175,6 +175,13 @@ in the physical contract.
     new child lease and binding, then release and credit the old pair. Success
     publishes the replacement handle, charge and pointer at +24/+44/+48. The
     borrowed budget token remains unchanged; no lease metadata is published.
+12. **Validate complete domain:** require zero operation-specific fields and
+    run the full existing physical, accounting and binding preflight without
+    changing either domain. This additive runtime-private operation is selected
+    by [Decision 0977](../Documents/Decisions/0977-Add-Native-Reserved-Byte-Builders-And-Shared-Storage.md)
+    for the candidate [shared-storage adapter](Windvale-Native-Shared-Storage.md).
+    It works when no budget or backing owner remains. Previously pinned
+    artifacts retain their recorded operation set; no public ABI changes here.
 
 Replacement advances an inactive nonroot accounting slot exactly as a split
 followed by lease construction would, skipping slots whose next even generation
