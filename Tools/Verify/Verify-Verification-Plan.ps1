@@ -6330,6 +6330,8 @@ foreach ($PreparationMarker in @(
 }
 
 foreach ($PublisherPath in @(
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
     'Tools/Native/Bind-Current-Publisher-Host-Imports.mjs',
     'Tools/Native/Build-Current-Publisher-Binding.mjs',
@@ -6348,6 +6350,21 @@ foreach ($PublisherPath in @(
         $PublisherPlan.Gaps.Count -ne 0) {
         throw "The current-source publisher selection differs for '$PublisherPath'."
     }
+}
+$PublisherWorkflowPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Native/Materialize-Current-Publisher-Executable.mjs',
+    'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.cmd',
+    'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$PublisherWorkflowPlan.UsePublisherCurrentSourceDevelopment -or
+    $PublisherWorkflowPlan.Suites.Count -ne 1 -or
+    $PublisherWorkflowPlan.Suites[0] -cne 'hosted-verifier-publisher-files' -or
+    $PublisherWorkflowPlan.ExpectedSeconds -ne 300 -or
+    $PublisherWorkflowPlan.MaximumSeconds -ne 600 -or
+    $PublisherWorkflowPlan.Gaps.Count -ne 0) {
+    throw 'Publisher workflow companions lost their bounded current-source selection.'
 }
 foreach ($CurrentObjectPath in @(
     'Tools/Native/Build-Current-Publisher-Object-Tools.mjs',

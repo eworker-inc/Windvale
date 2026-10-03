@@ -456,6 +456,8 @@ check_bounded "$test_directory/Current-Publisher-Linux-Final-Host-Imports.wvci" 
 node -e "const fs=require('node:fs'); const b=fs.readFileSync(process.argv[1]); if (b.length < 4 || b[0] !== 0x7f || b[1] !== 0x45 || b[2] !== 0x4c || b[3] !== 0x46) process.exit(1);" \
     "$test_directory/Current-Publisher.elf" || fail
 phase='current-source publisher Linux executable smoke'
+# Raw materialization produces bytes; this direct test owns execution permission.
+chmod 700 -- "$test_directory/Current-Publisher.elf" || fail
 metadata_wvb_candidate="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Metadata.wvb"
 check_file "$metadata_wvb_candidate" 369 \
     94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa \

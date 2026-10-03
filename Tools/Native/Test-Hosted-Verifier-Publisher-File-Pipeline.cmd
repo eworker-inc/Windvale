@@ -16,7 +16,9 @@ set "PromoterCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publish
 set "WvbPublisherCandidate=%RepositoryRoot%\Artifacts\Native-Wvb-Publisher-Candidate"
 set "PublisherTools=%Construction%\windows-x64"
 set "VerifierCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-Candidate\windows-x64-wvverify.exe"
-set "OriginalTemp=%TEMP%"
+set "OriginalTemp="
+for /f "delims=" %%T in ('node -e "process.stdout.write(require('node:fs').realpathSync.native(require('node:os').tmpdir()))"') do set "OriginalTemp=%%T"
+if not defined OriginalTemp exit /b 1
 :allocate
 set "TestDirectory=%OriginalTemp%\windvale-publisher-file-test-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate

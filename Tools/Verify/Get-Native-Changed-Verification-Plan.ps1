@@ -4939,11 +4939,15 @@ $FoundationBorrowOwnerInputs = @(
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )
 $PublisherCurrentSourceInputs = @(
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
     'Tools/Native/Bind-Current-Publisher-Host-Imports.mjs',
     'Tools/Native/Build-Current-Publisher-Binding.mjs',
     'Tools/Native/Materialize-Current-Publisher-Executable.mjs',
     'Tools/Native/Plan-Current-Publisher-Linkage.mjs',
+    'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.cmd',
+    'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh',
     'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
@@ -4954,7 +4958,16 @@ $PublisherCurrentSourceInputs = @(
 )
 $UsePublisherCurrentSourceDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('hosted-verifier-publisher-files') -and
-    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCurrentSourceInputs }).Count -eq 0
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCurrentSourceInputs }).Count -eq 0 -and
+    (
+        @($FocusedDevelopmentPaths | Where-Object {
+            $_ -cin @(
+                'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.cmd',
+                'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh'
+            )
+        }).Count -eq 0 -or
+        $FocusedDevelopmentPaths -ccontains 'Tools/Native/Materialize-Current-Publisher-Executable.mjs'
+    )
 $UsePublisherCurrentObjectDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('hosted-verifier-publisher-files') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCurrentObjectInputs }).Count -eq 0

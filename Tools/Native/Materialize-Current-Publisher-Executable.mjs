@@ -1250,7 +1250,10 @@ async function Main() {
     );
 
     const layout = BuildLayout(target, objects.objectsByRole, image, linkageTarget);
-    const temporaryDirectory = await mkdtemp(path.join(tmpdir(), 'windvale-current-publisher-materialize-'));
+    const Temporaryˉroot = await RequireCanonicalDirectory(
+        await realpath(tmpdir()), 'current publisher temporary root',
+    );
+    const temporaryDirectory = await mkdtemp(path.join(Temporaryˉroot, 'windvale-current-publisher-materialize-'));
     try {
         const provisionalImage = MaterializeNativeImage(layout, image, null);
         const provisionalPrefix = path.join(temporaryDirectory, 'Provisional-Image');
@@ -1298,6 +1301,11 @@ async function Main() {
             `host-imports-sha256=${finalHostImports.sha256}\n`,
         );
     } finally {
+        if (!SamePath(path.dirname(temporaryDirectory), Temporaryˉroot) ||
+            !path.basename(temporaryDirectory).startsWith('windvale-current-publisher-materialize-')) {
+            Reject('Refusing to remove an unowned publisher materialization directory.');
+        }
+        await RequireCanonicalDirectory(temporaryDirectory, 'publisher materialization directory');
         await rm(temporaryDirectory, { recursive: true, force: true });
     }
 }
