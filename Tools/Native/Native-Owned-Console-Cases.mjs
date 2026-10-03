@@ -1,9 +1,10 @@
 import { Acquireˉcurrentˉwvbˉpublisher } from './Current-Wvb-Publisher-Core.mjs';
+import { Prepareˉassemblyˉobjectˉcache, Acquireˉassemblyˉobject } from './Native-Assembly-Object-Cache-Core.mjs';
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { Getˉcurrentˉsplitˉcompilerˉkey } from './Current-Split-Compiler-Cache-Core.mjs';
 import { Readˉboundedˉhostedˉfile } from './Native-Hosted-Application-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
-import { chmod, lstat, readFile, writeFile } from 'node:fs/promises';
+import { chmod, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 const RUNTIME = [
@@ -184,6 +185,88 @@ function Mutations(Input, Windows) {
     return { Cases, Data, Fields, Native, Startup };
 }
 
+async function Assemblyˉcacheˉcases(Work, Deadline, Pass) {
+    const Root = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Mode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    const Private = join(Work, 'Assembly-Cache-Cases');
+    await mkdir(Private);
+    const Source = join(Private, 'Example.wva');
+    const Text = Value => `windvale-assembly 1\nsymbol export function Main in .text\n` +
+        `section code .text align 16\ndefine Main\nmove_u32 eax ${Value}\nreturn\nend define\nend section\n`;
+    const Absent = async Path => await lstat(Path).catch(Error => {
+        if (Error.code === 'ENOENT') return null;
+        throw Error;
+    }) === null;
+    const Refused = async (Action, Message, Code = 1) => {
+        try { await Action(); }
+        catch (Error) {
+            Require(Error.exitCode === Code && Error.message.includes(Message), 'Assembly cache refusal differs: ' + Error.message);
+            return;
+        }
+        throw new Error('Assembly cache accepted a refused request.');
+    };
+    try {
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = join(Private, 'Cache');
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = 'invalid';
+        await Refused(() => Prepareˉassemblyˉobjectˉcache(Deadline), 'must be absent or 1');
+        Pass('assembly-cache-mode');
+        await writeFile(Source, Text(42), { flag: 'wx' });
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+        const Prepared = await Prepareˉassemblyˉobjectˉcache(Deadline);
+        const Missing = join(Private, 'Missing.wvo');
+        await Refused(() => Acquireˉassemblyˉobject(Prepared, Source, Missing), 'Prepared assembly object missing', 64);
+        Require(await Absent(Missing) && (await readdir(Prepared.Family)).length === 0,
+            'Prepared assembly miss started construction.');
+        Pass('assembly-cache-prepared-miss');
+        delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        const Context = await Prepareˉassemblyˉobjectˉcache(Deadline);
+        const Cold = join(Private, 'Cold.wvo');
+        const First = await Acquireˉassemblyˉobject(Context, Source, Cold);
+        Require(First.Status === 'Created', 'Cold assembly object was not constructed.');
+        const Bytes = await readFile(Cold);
+        Pass('assembly-cache-cold-admission');
+        const Warm = join(Private, 'Warm.wvo');
+        const Second = await Acquireˉassemblyˉobject(Prepared, Source, Warm);
+        Require(Second.Status === 'Hit' && Second.Key === First.Key && Bytes.equals(await readFile(Warm)),
+            'Prepared assembly reuse changed object bytes.');
+        Pass('assembly-cache-prepared-hit');
+        await writeFile(Source, Text(43));
+        await Refused(First.Requireˉunchanged, 'Assembly source changed');
+        const Edited = join(Private, 'Edited.wvo');
+        const Third = await Acquireˉassemblyˉobject(Context, Source, Edited);
+        Require(Third.Status === 'Created' && Third.Key !== First.Key && !Bytes.equals(await readFile(Edited)),
+            'Assembly source edit reused stale bytes.');
+        Pass('assembly-cache-source-invalidation');
+        await writeFile(join(Context.Family, Third.Key, 'Checkpoint.json'), '\n', { flag: 'a' });
+        const Corrupt = join(Private, 'Corrupt.wvo');
+        await Refused(() => Acquireˉassemblyˉobject(Context, Source, Corrupt), 'Assembly checkpoint record differs');
+        Require(await Absent(Corrupt) && Bytes.equals(await readFile(Cold)), 'Corrupt assembly reuse mutated an output.');
+        Pass('assembly-cache-corrupt-refusal');
+        await writeFile(Source, 'windvale-assembly 999\n');
+        const Malformed = join(Private, 'Malformed.wvo');
+        await Refused(() => Acquireˉassemblyˉobject(Context, Source, Malformed), 'Assembly assemble failed');
+        Require(await Absent(Malformed) && (await readdir(Context.Family)).length === 2,
+            'Malformed assembly left a checkpoint or construction directory.');
+        Pass('assembly-cache-malformed-cleanup');
+        await Refused(() => Acquireˉassemblyˉobject(Context, Source, Cold), 'requires a new output');
+        Require(Bytes.equals(await readFile(Cold)), 'Existing assembly output was changed.');
+        Pass('assembly-cache-output-preservation');
+        await writeFile(Source, Buffer.alloc(1_048_577));
+        const Oversized = join(Private, 'Oversized.wvo');
+        try { await Acquireˉassemblyˉobject(Context, Source, Oversized); throw new Error('Oversized assembly was accepted.'); }
+        catch (Error) { Require(Error.message.includes('not a bounded ordinary file'), 'Oversized assembly refusal differs.'); }
+        Require(await Absent(Oversized) && (await readdir(Context.Family)).length === 2,
+            'Oversized assembly started construction.');
+        Pass('assembly-cache-source-bound');
+        await Context.Requireˉunchanged();
+    } finally {
+        if (Root === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Root;
+        if (Mode === undefined) delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        else process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = Mode;
+    }
+}
+
 export async function Runˉownedˉconsoleˉcases(Repository, Work, Deadline, Prepareˉonly = false) {
     const Windows = process.platform === 'win32';
     const Extension = Windows ? '.exe' : '.elf';
@@ -240,13 +323,21 @@ export async function Runˉownedˉconsoleˉcases(Repository, Work, Deadline, Pre
     await Node('verifier-materialize', 'Build-Cached-Segmented-Hosted-Wvb.mjs', ['--deadline-ms', String(Deadline),'2',Paths[1],Verifier]);
     const Publisher = await Acquireˉcurrentˉwvbˉpublisher(Paths[2], join(Work, 'Publisher' + Extension),
         await Getˉcurrentˉsplitˉcompilerˉkey(), Tool, Node);
+    const Assemblyˉcontext = await Prepareˉassemblyˉobjectˉcache(Deadline);
+    const Objects = [];
+    for (const [Index, Source] of RUNTIME.entries()) {
+        const Object = join(Work, 'Runtime-' + Index + '.wvo');
+        await Acquireˉassemblyˉobject(Assemblyˉcontext, join(Repository, Source), Object);
+        Objects.push(Object);
+    }
+    await Assemblyˉcontext.Requireˉunchanged();
+    const Lowererˉwvb = join(Work,'Lowerer.wvb'), Lowerer = join(Work,'Lowerer' + Extension);
+    await Node('lowerer-source-build','Build-Current-Split-Project-Wvb.mjs',
+        ['--prepared-compiler-only','--deadline-ms',String(Deadline),join(Repository,
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj'),Lowererˉwvb]);
+    await Node('lowerer-materialize','Build-Cached-Segmented-Hosted-Wvb.mjs',
+        ['--deadline-ms',String(Deadline),'7',Lowererˉwvb,Lowerer]);
     if (Prepareˉonly) {
-        const Lowerer = join(Work,'Lowerer.wvb');
-        await Node('lowerer-source-build','Build-Current-Split-Project-Wvb.mjs',
-            ['--prepared-compiler-only','--deadline-ms',String(Deadline),join(Repository,
-                'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj'),Lowerer]);
-        await Node('lowerer-materialize','Build-Cached-Segmented-Hosted-Wvb.mjs',
-            ['--deadline-ms',String(Deadline),'7',Lowerer,join(Work,'Lowerer' + Extension)]);
         process.stdout.write('owned console preparation status=Prepared behavior-cases=0\n');
         return 0;
     }
@@ -275,7 +366,7 @@ export async function Runˉownedˉconsoleˉcases(Repository, Work, Deadline, Pre
         await Acquireˉcurrentˉwvbˉpublisher(Paths[2],Missingˉpublisher,
             await Getˉcurrentˉsplitˉcompilerˉkey(),Tool,Node);
     } catch (Error) {
-        Require(Error.message === 'Prepared console publisher checkpoint missing; construction is forbidden.',
+        Require(Error.exitCode === 64 && /^Prepared segmented hosted product missing key=[0-9a-f]{64}\. /u.test(Error.message),
             'Prepared publisher refusal differs: ' + Error.message);
         Publisherˉrefused = true;
     } finally {
@@ -289,18 +380,20 @@ export async function Runˉownedˉconsoleˉcases(Repository, Work, Deadline, Pre
         throw Error;
     }) === null, 'Prepared publisher refusal constructed an executable.');
     Pass('prepared-publisher-miss');
+    await Assemblyˉcacheˉcases(Work, Deadline, Pass);
     const Empty = join(Work, 'Empty.bin');
     await writeFile(Empty, Buffer.alloc(0), { flag: 'wx' });
-    const Objects = [];
-    for (const [Index, Source] of RUNTIME.entries()) {
-        const Object = join(Work, 'Runtime-' + Index + '.wvo');
-        await Tool('assemble-' + basename(Source), 'Assemble-Wva', [join(Repository, Source), Object]);
-        Objects.push(Object);
-    }
     const Programs = [];
     for (const [Index, Name] of ['Scope','Growth','Mutation'].entries()) {
         const Object = join(Work, Name + '.wvo');
-        await Node('lower-' + Name, 'Lower-Wvb-To-Wvo.mjs', ['--current',Paths[Index + 3],Object]);
+        await Run('lower-' + Name, Lowerer, [Paths[Index + 3],Object]);
+        if (Index === 0) {
+            const Ordinaryˉobject = join(Work, 'Ordinary-Lowering.wvo');
+            await Node('ordinary-lowering','Lower-Wvb-To-Wvo.mjs',['--current',Paths[3],Ordinaryˉobject]);
+            Require((await readFile(Object)).equals(await readFile(Ordinaryˉobject)),
+                'Reused lowerer differs from the ordinary command.');
+            Pass('lowerer-front-door-bytes');
+        }
         const Renamed = join(Work, Name + '-body.wvo');
         await Tool('rename-' + Name, 'Rename-Wvo-Export', [Object,'Main','Native_main',Renamed]);
         const Image = join(Work, Name + '.bin');
@@ -380,7 +473,7 @@ export async function Runˉownedˉconsoleˉcases(Repository, Work, Deadline, Pre
     for (const Case of Auditˉcases) {
         const Prefix = join(Work,Case.Name), Value = Buffer.from(Case.Path ? await readFile(Case.Path) : Scope); Case.Change?.(Value);
         await writeFile(Prefix + '.wvb',Value);
-        await Node('lower-' + Case.Name,'Lower-Wvb-To-Wvo.mjs',['--current',Prefix + '.wvb',Prefix + '.wvo']);
+        await Run('lower-' + Case.Name,Lowerer,[Prefix + '.wvb',Prefix + '.wvo']);
         await writeFile(Prefix + '.wva',Audit(Case.Status,Case.Result));
         await Tool('audit-' + Case.Name,'Assemble-Wva',[Prefix + '.wva',Prefix + '-audit.wvo']);
         await Tool('link-' + Case.Name,'Link-Wvo',['0','Windvale_owned_console_entry',Prefix + '.bin',...Objects,Prefix + '-audit.wvo',Prefix + '.wvo']);

@@ -147,10 +147,20 @@ and native tools separately using the
 The 120-second packaging limit above assumes those tools are prepared; it is
 not a cold preparation budget.
 
+Owned-console preparation also assembles and checks the six shared runtime
+objects. Packaging reuses them from the `native-assembly-objects-v1` cache only
+when the source bytes, pinned assembler and object checker, cache implementation,
+Node executable and host identity match. A source edit selects a new checkpoint;
+the linker still validates every materialized object. Source input is bounded to
+1 MiB and each object to 4 MiB. Missing objects may be built during ordinary
+packaging; prepared-product mode refuses them before assembly. Corrupt
+checkpoints fail without reconstruction or publication.
+
 `WINDVALE_PREPARED_PRODUCTS_ONLY=1` is for execution with already prepared
 products. It refuses a missing transactional publisher as well as other missing
-products, without construction. An invalid setting or corrupt checkpoint is an
-error. This mode can also refuse a new application product; ordinary source-edit
+products, including these runtime objects, without construction. An invalid
+setting or corrupt checkpoint is an error. This mode can also refuse a new
+application product; ordinary source-edit
 builds use the prepared compiler while allowing the requested product to compile.
 It is not a substitute for an explicitly bounded preparation phase.
 

@@ -215,22 +215,35 @@ pre-delivery consumer status. Its active text is below 2,000 words.
 
 ### Ordinary owned-console baseline
 
-At source revision `8c19c1f2d13aba7ab1dab53bbc0b986e921ba1bf`, the maintained
-`Owned-Vector-Scope.wv` workload performs 1,000 scalar-Vector reserve/release
-cycles and returns `42`. With prepared Windows x64 products, three unchanged
-Project 4 builds took 4.1, 4.0 and 4.3 seconds. Ordinary WVB verification took
-0.25 seconds, current native lowering 3.4 seconds, owned-console packaging
-50.9 seconds and execution 0.33 seconds. The ordinary WVB runner refused this
-memory-budget entry under its `portable-main-i32` profile; the owned launcher
-supplied the budget and returned the expected result. The
+On 3 October 2026, the maintained `Owned-Vector-Scope.wv` workload was copied
+to a private development project and its final result changed from `42` to `43`,
+retaining its 1,000 scalar-Vector reserve/release cycles. The source builds used
+the prepared compiler at revision `77757eb8cdb0a42c3eff5cebedae6d88bebbbb47`.
+Both hosts produced identical edited WVB and native WVO; an invalid source edit
+preserved the last output, and restoring the valid source reproduced its bytes.
+
+| Measured step | Windows x64 | Real Debian x64 |
+| --- | ---: | ---: |
+| Changed source to WVB | 8.4 s | 75.3 s |
+| Current native lowering | 4.7 s | 60.5 s |
+| Repeated packaging with cached runtime objects | 8.3 / 7.5 s | 64.7 / 55.9 s |
+
+Owned-console packaging now retains the six assembled runtime objects under
+their exact source and producer identities. Preparing those objects took
+46.7 seconds on Windows and 51.5 seconds on Debian. The repeated packaging
+measurements above forbid compiler, publisher and runtime-object construction;
+both applications execute with the expected `43`. Windows application bytes
+also match the prior uncached packaging of this edited workload. Earlier warm
+Windows packaging took 50.9 seconds at revision `8c19c1f2`; Debian's first
+uncached run reached its packaging deadline, so it supplies no completed
+before/after timing. The
 [source-to-WVB runbook](../Runbooks/Native-Source-To-Wvb.md#current-owned-memory-console-development)
 owns the commands and preparation boundary.
 
-These are warm measurements of an unchanged small program, not cold compiler
-construction or a representative compiler-edit baseline. Peak process memory
-was not measured. They do not close the ordinary-development phase or the
-memory completion gate. Measure changed application source, an affected compiler
-component and the corresponding Debian workflow before closing that phase.
+These are focused source-edit and packaging measurements using prepared tools.
+Peak process memory was not measured. They do not close the ordinary-development
+phase or the memory completion gate. Measure an affected compiler component and
+reduce the remaining Debian wrapper overhead before closing that phase.
 
 CI already requests cache saving after failure. Its remaining preparation work
 must finish or checkpoint before the enclosing 15-minute job is cancelled.

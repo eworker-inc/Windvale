@@ -6327,6 +6327,7 @@ $OwnedConsolePaths = @(
     'Tools/Native/Package-Console.cmd',
     'Tools/Native/Package-Console.sh',
     'Tools/Native/Native-Owned-Console-Cases.mjs',
+    'Tools/Native/Native-Assembly-Object-Cache-Core.mjs',
     'Tools/Native/Test-Console-Packager-Source-Reconstruction.mjs',
     'Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd',
     'Tools/Native/Test-Console-Packager-Source-Reconstruction.sh',

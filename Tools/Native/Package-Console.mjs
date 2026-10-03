@@ -4,6 +4,7 @@ import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { Acquireˉcurrentˉwvbˉpublisher } from './Current-Wvb-Publisher-Core.mjs';
+import { Prepareˉassemblyˉobjectˉcache, Acquireˉassemblyˉobject } from './Native-Assembly-Object-Cache-Core.mjs';
 import { Isˉsameˉhostedˉpath, Readˉboundedˉhostedˉfile } from './Native-Hosted-Application-Cache-Core.mjs';
 import {
     Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
@@ -84,12 +85,17 @@ async function Main() {
             join(REPOSITORY, 'Linker/Startup', Name + '.wva')),
         ...['Assemble-Wva', 'Rename-Wvo-Export', 'Link-Wvo'].map(Name => join(NATIVE, Name + WRAPPER)),
         join(NATIVE, 'Current-Wvb-Publisher-Core.mjs'),
+        join(NATIVE, 'Native-Assembly-Object-Cache-Core.mjs'),
         join(NATIVE, 'Build-Cached-Segmented-Hosted-Wvb.mjs'),
     ]);
     const Requests = await Promise.all([PACKAGER_PROJECT, PUBLISHER_PROJECT].map(Project =>
         Getˉnativeˉprojectˉcacheˉrequest(Context, Project)));
+    const Assemblyˉcontext = Owned ? await Prepareˉassemblyˉobjectˉcache(Workˉdeadline) : null;
+    const Assemblyˉrequests = [];
     const Requireˉunchanged = async () => {
         await Promise.all(Requests.map(Requireˉnativeˉprojectˉcacheˉrequestˉunchanged));
+        await Promise.all(Assemblyˉrequests.map(Request => Request.Requireˉunchanged()));
+        if (Assemblyˉcontext !== null) await Assemblyˉcontext.Requireˉunchanged();
         await Compiler.Requireˉunchanged();
         if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Key ||
             !Payload.equals(await Readˉboundedˉhostedˉfile(Input, 'console native input', MAXIMUM_NATIVE_BYTES))) {
@@ -139,7 +145,7 @@ async function Main() {
             const Objects = [];
             for (const [Index, Source] of RUNTIME_SOURCES.entries()) {
                 const Leaf = join(Work, `Runtime-${Index}.wvo`);
-                await Runˉnative('assemble-' + basename(Source, '.wva'), 'Assemble-Wva', [join(REPOSITORY, Source), Leaf]);
+                Assemblyˉrequests.push(await Acquireˉassemblyˉobject(Assemblyˉcontext, join(REPOSITORY, Source), Leaf));
                 Objects.push(Leaf);
             }
             const Linked = await Runˉnative('link-owned-entry', 'Link-Wvo', [
