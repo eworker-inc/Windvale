@@ -104,6 +104,14 @@ general last-use borrowing, normal launchers and arbitrary owner aggregates
 remain open. Complete those lifetimes before migrating interpreter working
 buffers or closing the memory gate.
 
+The candidate [fresh-domain constructor](../../Specifications/Windvale-Native-Owned-Domain.md)
+now initializes the physical allocator, canonical root budget, binding adapter
+and context 10 through one checked request. It rejects overlapping or previously
+used metadata and preserves bytes on failure. The next launcher task is an
+explicit container layout and ordinary startup using that constructor, followed
+by normal success/trap cleanup and paired host checks. This component does not
+qualify a launcher or reduce interpreter working storage.
+
 Work proceeds through these gates, preserving existing qualified contracts:
 
 1. Carry descriptor and aggregate ownership through the current Windvale

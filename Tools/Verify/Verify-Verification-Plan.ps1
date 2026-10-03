@@ -1243,6 +1243,8 @@ $NativeCases = @(
         Name = 'Runtime-private native owned storage routing'
         Paths = @(
             'Runtime/Native/X64-Owned-Storage.wva',
+            'Runtime/Native/X64-Owned-Domain.wva',
+            'Specifications/Windvale-Native-Owned-Domain.md',
             'Runtime/Native/X64-Budgeted-Storage.wva',
             'Runtime/Native/X64-Owned-Entry.wva',
             'Specifications/Windvale-Native-Owned-Collections.md',
@@ -1260,6 +1262,7 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Owned-Storage.md',
             'Specifications/Windvale-Native-Budgeted-Storage.md',
             'Tools/Native/Native-Owned-Storage-Cases.mjs',
+            'Tools/Native/Native-Owned-Domain-Cases.mjs',
             'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
             'Tools/Native/Native-Owned-Vector-Cases.mjs',
             'Tools/Native/Native-Owned-Vector-Access-Cases.mjs',

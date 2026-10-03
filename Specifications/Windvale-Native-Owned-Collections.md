@@ -116,6 +116,12 @@ extents remain mapped for the complete invocation. The context and generated
 stack frames must also be disjoint from those extents. Provider pointers and
 complete extents are trusted caller preconditions, never source authority.
 
+The candidate [fresh-domain constructor](Windvale-Native-Owned-Domain.md)
+now checks and initializes these states from one bounded private request,
+then publishes context 10. It refuses nonzero metadata and restores the
+supplied bytes if initialization fails. Normal launchers still need an explicit
+mapped layout and startup integration; a constructor alone does not close that gate.
+
 At entry the wrapper validates the current root budget token (identity 1,
 generation 1) through the adapter. Main receives that canonical opaque token,
 not the historical packed remaining-byte/child counters. Budget and Vector

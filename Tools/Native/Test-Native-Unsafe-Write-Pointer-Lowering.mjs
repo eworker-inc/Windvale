@@ -67,7 +67,8 @@ if (Prepareˉonly || Preparedˉonly) {
 if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7 && process.argv.length !== 8 && process.argv.length !== 10) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
 const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
-const Ownedˉonly = process.argv[4] === '--owned-storage';
+const Domainˉonly = process.argv[4] === '--owned-domain';
+const Ownedˉonly = process.argv[4] === '--owned-storage' || Domainˉonly;
 if (Ownedˉonly) Ownerˉdeadline = Date.now() + 600_000;
 const Recordˉonly = process.argv.length === 8 && process.argv[7] === '--record-return-memory';
 const Helperˉonly = process.argv.length === 8 && process.argv[7] === '--owned-helper-memory';
@@ -134,7 +135,7 @@ try {
             `executions=${Cases.Executions} malformed=${Cases.Malformed} host=${Target} qualification=false\n`);
     } else {
     const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
-        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct,
+        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct, Domainˉonly,
     }) : 0;
     if (!Ownedˉonly) {
     await Verifyˉsourceˉclosures();
@@ -1283,7 +1284,7 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
-        '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|' +
+        '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|--owned-domain|' +
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
         '--lowerer <application> <sha256> [--record-return-memory|--owned-helper-memory|--borrow-probe <wvb> <sha256>]] ' +
         '[--budget-oracle <wvb> <sha256>] [--owned-vector <wvb> <sha256>] ' +

@@ -1362,7 +1362,7 @@ function Add-Native-Tool-Suite {
         Add-Suite 'language-1-memory-budget-split-execution'
         return
     }
-    if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases',
+    if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases', 'Native-Owned-Domain-Cases',
         'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
         return
@@ -2523,6 +2523,8 @@ foreach ($Path in $Paths) {
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
         'Tests/Native/X64-Paper-Buffer-Source.wva',
         'Runtime/Native/X64-Owned-Storage.wva',
+        'Runtime/Native/X64-Owned-Domain.wva',
+        'Specifications/Windvale-Native-Owned-Domain.md',
         'Runtime/Native/X64-Budgeted-Storage.wva',
         'Runtime/Native/X64-Owned-Entry.wva',
         'Specifications/Windvale-Native-Owned-Collections.md',
