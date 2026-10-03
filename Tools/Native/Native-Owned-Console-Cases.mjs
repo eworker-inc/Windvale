@@ -206,7 +206,11 @@ async function Assemblyˉcacheˉcases(Work, Deadline, Pass) {
         throw new Error('Assembly cache accepted a refused request.');
     };
     try {
-        process.env.WINDVALE_NATIVE_CACHE_ROOT = join(Private, 'Cache');
+        const Base = join(Private, 'Cache');
+        const Familyˉlength = join(Base, 'native-assembly-objects-v1',
+            process.platform === 'win32' ? 'windows-x64' : 'linux-x64').length;
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = join(Base,
+            'Path-'.padEnd(Math.max(5, 160 - Familyˉlength - 1), 'x'));
         process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = 'invalid';
         await Refused(() => Prepareˉassemblyˉobjectˉcache(Deadline), 'must be absent or 1');
         Pass('assembly-cache-mode');

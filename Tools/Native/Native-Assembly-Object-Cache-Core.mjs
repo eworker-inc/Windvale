@@ -157,7 +157,10 @@ export async function Acquireˉassemblyˉobject(Context, Sourceˉpath, Output) {
     const Existing = await lstat(Destination).catch(Error => { if (Error.code === 'ENOENT') return null; throw Error; });
     if (Existing === null) {
         if (Context.Prepared) Reject(`Prepared assembly object missing key=${Key}; prepare owned-console tools separately.`, 64);
-        const Temporary = join(Context.Family, `.new-${Key}-${process.pid}-${randomBytes(16).toString('hex')}`);
+        // Keep private tool paths inside the bootstrap assembler's Windows
+        // path profile; the final checkpoint still carries the complete key.
+        const Name = `.new-${process.pid}-${randomBytes(16).toString('hex')}`;
+        const Temporary = join(Context.Family, Name);
         await mkdir(Temporary);
         try {
             const Snapshot = join(Temporary, 'Source.wva'), Product = join(Temporary, 'Product.wvo');
@@ -185,7 +188,7 @@ export async function Acquireˉassemblyˉobject(Context, Sourceˉpath, Output) {
                 if (!Winner.equals(Object)) Reject('Concurrent assembly outputs differ.');
             }
         } finally {
-            if (dirname(Temporary) !== Context.Family || !basename(Temporary).startsWith(`.new-${Key}-`)) {
+            if (dirname(Temporary) !== Context.Family || basename(Temporary) !== Name) {
                 Reject('Refusing to remove an unowned assembly cache directory.');
             }
             if (await lstat(Temporary).catch(Error => { if (Error.code === 'ENOENT') return null; throw Error; }) !== null) {
