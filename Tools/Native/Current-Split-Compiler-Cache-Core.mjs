@@ -346,7 +346,7 @@ export async function Constructˉcurrentˉsplitˉcompiler(
     const Results = await Promise.allSettled([
         (async () => {
             await Runˉnative('stage1-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-                '7', Analyzerˉwvb, Analyzer, '--development-cache',
+                '8', Analyzerˉwvb, Analyzer, '--development-cache',
             ]);
             await Runˉnode('stage1-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
                 'analyzer', Analyzer, Analyzerˉidentity,

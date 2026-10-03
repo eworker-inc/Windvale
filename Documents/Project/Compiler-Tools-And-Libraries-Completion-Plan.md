@@ -2,7 +2,7 @@
 
 > Status: Current delivery milestones; wider library catalog remains proposed
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-28
+> Last reviewed: 2026-10-02
 
 The maintained package parser now uses canonical `Option<u64>` and immutable
 payload borrowing through ordinary project build, safe publication, and
@@ -87,10 +87,19 @@ with 2,112 bytes of fixed metadata. The
 joins it to canonical budget/lease accounting: refusal preserves both domains,
 release credits parents, and teardown clears all owned storage and accounting.
 Its metadata totals 5,816 bytes and its repeated-credit workload returns the
-parent reservation to zero through 32,768 cycles. Generated collections and
-interpreter state still need integration. Carry owned cleanup through the
-compiler next; existing consumer process-memory measurements remain unchanged
+parent reservation to zero through 32,768 cycles. Interpreter state still needs
+integration; existing consumer process-memory measurements remain unchanged
 by this runtime connection alone.
+
+The candidate [native collection path](../../Specifications/Windvale-Native-Owned-Collections.md)
+connects scalar Vector reservation, append, indexed reads, explicit replacement
+growth, owned helper transfers and cleanup to that storage and accounting.
+[Decision 0972](../Decisions/0972-Pass-Native-Vector-Borrows-To-Helpers.md) adds
+borrowed Vector helper parameters for scalar reads and nested forwarding, so an
+owning caller can release its Vector after the loan ends. Borrowed append and
+growth, mutable indexed access, parameter length, normal launchers and arbitrary
+owner aggregates remain open. Complete those lifetimes before migrating
+interpreter working buffers or closing the memory gate.
 
 Work proceeds through these gates, preserving existing qualified contracts:
 

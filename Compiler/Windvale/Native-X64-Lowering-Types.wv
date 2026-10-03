@@ -256,7 +256,7 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
     if Kind == 20u8 {
         return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, 5u8, 20u32, 0u8);
     }
-    if Kind == 23u8 {
+    if Kind == 23u8 || Kind == 26u8 || Kind == 27u8 {
         // Shape readers also accept isolated descriptors, without a WVB header.
         // Version admission belongs to the enclosing type-table reader.
         if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
@@ -264,8 +264,10 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
         if Compilerˉnativeˉx64ˉtypeˉkind(Types, Vectorˉindex) != 5u8 {
             return Invalidˉshape();
         }
+        var Vectorˉborrowˉkind: u8 = 0u8;
+        if Kind != 23u8 { Vectorˉborrowˉkind = Kind; }
         return Compilerˉnativeˉx64ˉshape(
-            true, Cursor + 5u32, 10u8, 2147483648u32 + Vectorˉindex, 0u8);
+            true, Cursor + 5u32, 10u8, 2147483648u32 + Vectorˉindex, Vectorˉborrowˉkind);
     }
     if Kind == 25u8 || Kind == 36u8 {
         var Budgetˉborrowˉkind: u8 = 0u8;
@@ -331,6 +333,8 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
         !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
     if Kind == 20u8 && !Compilerˉnativeˉx64ˉownedˉminor(Minor) { return Invalidˉshape(); }
+    if (Kind == 26u8 || Kind == 27u8) &&
+        (Minor < 26u32 || !Compilerˉnativeˉx64ˉownedˉminor(Minor)) { return Invalidˉshape(); }
     if Kind == 29u8 {
         if Minor != 39u32 || !Rangeˉisˉvalid(Limit, Cursor, 5u32) {
             return Invalidˉshape();

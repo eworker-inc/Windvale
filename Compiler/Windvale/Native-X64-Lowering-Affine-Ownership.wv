@@ -49,6 +49,24 @@ fn Readˉborrowˉkind(Localˉborrowˉkinds: bytes, Local: u32) -> u8 {
     return Bytesˉreadˉu8(Localˉborrowˉkinds, Local);
 }
 
+fn Vectorˉborrowˉcallˉfollows(
+    Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
+    Instructions: bytes, Start: u32
+) -> bool {
+    // Complete WVB verification already proves the argument's loan and alias
+    // safety. This native subset permits only a bounded direct-call sequence.
+    var Cursor: u32 = Start;
+    var Loads: u32 = 0u32;
+    while Cursor < Codeˉlength {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Opcode == 64u8 { return true; }
+        if Opcode != 4u8 || Loads >= 64u32 { return false; }
+        Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
+        Loads = Loads + 1u32;
+    }
+    return false;
+}
+
 fn Available(Low: u32, High: u32, Rank: u32) -> bool {
     if Rank >= 64u32 { return false; }
     if Rank < 32u32 { return ((Low >> Rank) & 1u32) == 1u32; }
@@ -389,16 +407,24 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     } else if Bytesˉreadˉu8(
                             Localˉtypes, Targetˉlocal
                         ) == 10u8 {
-                        if Observerˉopcode != 5u8 { return false; }
-                        let Viewˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
-                            Input, Codeˉoffset + Observer + 1u32
-                        );
-                        if Viewˉlocal < Parameters || Viewˉlocal >= Locals ||
-                            Bytesˉreadˉu8(Localˉtypes, Viewˉlocal) != 10u8 ||
-                            Bytesˉreadˉu32ˉlittle(
-                                Localˉtypeˉidentities, Viewˉlocal * 4u32
-                            ) != 36u32 {
-                            return false;
+                        var Vectorˉcall: bool = false;
+                        if Ownedˉmodule && Targetˉidentity >= 2147483648u32 &&
+                            Targetˉidentity != 4294967295u32 {
+                            Vectorˉcall = Vectorˉborrowˉcallˉfollows(
+                                Input, Codeˉoffset, Codeˉlength, Instructions, Observer);
+                        }
+                        if !Vectorˉcall {
+                            if Observerˉopcode != 5u8 { return false; }
+                            let Viewˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                                Input, Codeˉoffset + Observer + 1u32
+                            );
+                            if Viewˉlocal < Parameters || Viewˉlocal >= Locals ||
+                                Bytesˉreadˉu8(Localˉtypes, Viewˉlocal) != 10u8 ||
+                                Bytesˉreadˉu32ˉlittle(
+                                    Localˉtypeˉidentities, Viewˉlocal * 4u32
+                                ) != 36u32 {
+                                return false;
+                            }
                         }
                     } else {
                         var Borrowˉisˉvalid: bool = false;
@@ -561,7 +587,11 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         }
         if Opcode == 208u8 || Opcode == 209u8 || Opcode == 227u8 {
             let Vectorˉowner: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
-            if Vectorˉowner >= Locals || Bytesˉreadˉu8(Tracked, Vectorˉowner) != 1u8 ||
+            if Vectorˉowner >= Locals { return false; }
+            let Vectorˉborrow: u8 = Readˉborrowˉkind(Localˉborrowˉkinds, Vectorˉowner);
+            if Vectorˉowner < Parameters && (Vectorˉborrow == 26u8 || Vectorˉborrow == 27u8) {
+                if Opcode != 227u8 { return false; }
+            } else if Bytesˉreadˉu8(Tracked, Vectorˉowner) != 1u8 ||
                 !Available(Availableˉlow, Availableˉhigh, Bytesˉreadˉu32ˉlittle(Ranks, Vectorˉowner * 4u32)) { return false; }
         }
         if Opcode == 206u8 || Opcode == 209u8 {

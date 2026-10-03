@@ -1475,8 +1475,14 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
         const Peer = new Promise(Resolve => { Release = Resolve; });
         const Packagingˉfailure = ['verifier-failure', 'runner-failure', 'both-failures', 'verifier-timeout', 'mixed-failures',
             'components-failure'].includes(Mode);
-        const Timer = setTimeout(() => { Announce(); Announceˉcomponent(); Release(); }, 2_000);
-        const Deadline = Date.now() + 30_000;
+        let Barrierˉexpired = false;
+        // Filesystem preparation shares the acquisition deadline; it must not
+        // exhaust a shorter timer before the packaging workers can arrive.
+        const Deadline = Date.now() + FAILURE_TIMEOUT_MILLISECONDS;
+        const Timer = setTimeout(() => {
+            Barrierˉexpired = true;
+            Announce(); Announceˉcomponent(); Release();
+        }, FAILURE_TIMEOUT_MILLISECONDS);
         let Outputˉdirectory;
         const Run = async (Label, Command, Arguments, Boundary) => {
             Assert.equal(Command, process.execPath);
@@ -1591,10 +1597,14 @@ async function Verifyˉfoundationˉtestˉproducts(Testˉroot) {
         }).then(Value => { Settled = true; return { Value }; }, Error => { Settled = true; return { Error }; });
         try {
             if (Packagingˉfailure) {
-                await Ready;
+                await Promise.race([Ready, Acquisition.then(Result => {
+                    if (Result.Error) throw Result.Error;
+                })]);
+                Assert.equal(Barrierˉexpired, false, 'Foundation packaging arrival deadline expired.');
                 Assert.equal(Arrivals, 2, 'Foundation packaging branches were serialized.');
                 if (Mode === 'components-failure') {
                     await Componentˉready;
+                    Assert.equal(Barrierˉexpired, false, 'Foundation component arrival deadline expired.');
                     Assert.equal(Calls.length, 6, 'The third package did not reuse an available leaf.');
                 }
                 // Allow the failing branch to report without releasing its live peer.
@@ -1924,7 +1934,11 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
         let Announce;
         const Ready = new Promise(Resolve => { Announce = Resolve; });
         const Peer = new Promise(Resolve => { Release = Resolve; });
-        const Timer = setTimeout(() => { Announce(); Release(); }, 2_000);
+        let Barrierˉexpired = false;
+        const Timer = setTimeout(() => {
+            Barrierˉexpired = true;
+            Announce(); Release();
+        }, FAILURE_TIMEOUT_MILLISECONDS);
         const Run = async (Label, Name, Arguments) => {
             Assert.equal(Calls.includes(Label), false);
             Calls.push(Label);
@@ -1951,8 +1965,7 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                 if (Name === 'Package-Segmented-Compiler-Wvb') {
                     Assert.equal(Arguments.length, 4);
                     Assert.equal(Arguments[3], '--development-cache');
-                    Assert.equal(Arguments[0], Label === 'pinned-analyzer-package' ||
-                        Label === 'stage1-analyzer-package' ? '7' : '8');
+                    Assert.equal(Arguments[0], Label === 'pinned-analyzer-package' ? '7' : '8');
                     await readFile(Arguments[1]);
                     await writeFile(Arguments[2], Buffer.from(Label), { mode: 0o755 });
                 } else if (Name === 'Write-Split-Compiler-Producer-Identity.mjs') {
@@ -1989,7 +2002,10 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
             .then(() => { Settled = true; return null; }, Error => { Settled = true; return Error; });
         try {
             if (Mode !== 'preparation-failure') {
-                await Ready;
+                await Promise.race([Ready, Construction.then(Failure => {
+                    if (Failure) throw Failure;
+                })]);
+                Assert.equal(Barrierˉexpired, false, 'Compiler branch arrival deadline expired.');
                 Assert.equal(Arrivals, 2, 'The independent compiler branches were serialized.');
                 await new Promise(Resolve => setImmediate(Resolve));
                 if (Mode !== 'both-failures') {

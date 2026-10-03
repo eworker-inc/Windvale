@@ -14,7 +14,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Implemented | 502 |
 | Proposed | 4 |
 | Qualified | 95 |
-| Recorded | 12 |
+| Recorded | 13 |
 | Superseded | 14 |
 
 ## Open or unclassified records
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0972: pass native Vector borrows to helpers](0972-Pass-Native-Vector-Borrows-To-Helpers.md) | Recorded |
 | [Decision 0971: transfer native owned storage through helpers](0971-Transfer-Native-Owned-Storage-Through-Helpers.md) | Recorded |
 | [Decision 0970: use explicit replacement for native Vector growth](0970-Use-Explicit-Replacement-For-Native-Vector-Growth.md) | Recorded |
 | [Decision 0969: connect native Vector scope lifetimes to owned storage](0969-Connect-Native-Vector-Scope-Lifetimes-To-Owned-Storage.md) | Recorded |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0950: bundle compatible database ancestor cases](0950-Bundle-Compatible-Database-Ancestor-Cases.md) | Implemented |
 | [Decision 0949: balance qualification shards by declared cost](0949-Balance-Qualification-Shards-By-Declared-Cost.md) | Implemented |
 | [Decision 0948: reuse development-owner results across unrelated source trees](0948-Reuse-Development-Owner-Results-Across-Unrelated-Source-Trees.md) | Implemented |
-| [Decision 0947: treat complete qualification as one evidence graph](0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md) | Implemented |
 
 ## Superseded or historical records
 

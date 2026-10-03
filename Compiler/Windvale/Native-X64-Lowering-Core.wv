@@ -658,6 +658,9 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     var Parameterˉborrowˉkinds: bytes =
         Compilerˉnativeˉx64ˉempty(Input);
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Borrowˉmetadata: bool =
+        (Moduleˉminor >= 34u32 && Moduleˉminor <= 39u32) ||
+        Ownedˉcollections.Minorˉisˉsupported(Moduleˉminor);
     var Parameter: u32 = 0u32;
     while Parameter < Parameters {
         let Parameterˉshape: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
@@ -672,7 +675,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if Ownedˉcollections.Minorˉisˉsupported(Moduleˉminor) &&
-            (!Ownedˉcollections.Shapeˉisˉsupported(Parameterˉshape) || Parameterˉshape.Borrowˉkind != 0u8) {
+            !Ownedˉcollections.Parameterˉisˉsupported(Parameterˉshape) {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(
@@ -688,9 +691,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
             Parameterˉtypeˉidentities,
             Bytesˉfromˉu32ˉlittle(Parameterˉshape.Identity)
         );
-        if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
-            Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 || Moduleˉminor == 39u32 {
+        if Borrowˉmetadata {
             Parameterˉborrowˉkinds = Bytesˉconcat(
                 Parameterˉborrowˉkinds,
                 Bytesˉfromˉu8(Parameterˉshape.Borrowˉkind)
@@ -782,9 +783,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
             Declaredˉtypeˉidentities,
             Bytesˉfromˉu32ˉlittle(Localˉshape.Identity)
         );
-        if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
-            Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 || Moduleˉminor == 39u32 {
+        if Borrowˉmetadata {
             Declaredˉborrowˉkinds = Bytesˉconcat(
                 Declaredˉborrowˉkinds,
                 Bytesˉfromˉu8(Localˉshape.Borrowˉkind)
@@ -804,9 +803,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     if Codeˉlength > 131072u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     if Maximumˉstack > 1024u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     var Localˉborrowˉkinds: bytes = Compilerˉnativeˉx64ˉempty(Input);
-    if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
-        Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-        Moduleˉminor == 38u32 || Moduleˉminor == 39u32 {
+    if Borrowˉmetadata {
         Localˉborrowˉkinds = Bytesˉconcat(
             Parameterˉborrowˉkinds,
             Declaredˉborrowˉkinds

@@ -8,6 +8,15 @@ import Foundationˉcollections as Collections;
 import Foundationˉmemory as Memory;
 import Foundationˉresult as Results;
 
+fn Borrow(First: i32, Second: i32, Values: borrow Collections.Vector<i32>, Index: u64) -> i32 {
+    if First + Second != 42 { return 4; }
+    return Borrowˉvalue(borrow Values, Index);
+}
+
+fn Borrowˉvalue(Values: borrow Collections.Vector<i32>, Index: u64) -> i32 {
+    return Collections.Vectorˉborrowˉat::<i32>(borrow Values, Index);
+}
+
 fn Construct(Budget: Memory.Memoryˉbudget) -> Results.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> {
     return Collections.Vectorˉconstructˉreserved::<i32>(Budget, 1u64);
 }
@@ -21,12 +30,15 @@ fn Forward(First: i32, Second: i32, Values: Collections.Vector<i32>, Remaining: 
 
 fn Consume(First: i32, Second: i32, Values: Collections.Vector<i32>) -> i32 {
     var Owned: Collections.Vector<i32> = Values;
-    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<i32> > = Collections.Vectorˉappend::<i32>(borrow mut Owned, First + Second);
-    using Resource = Owned { }
-    return match Appended {
-        case Results.Result.Valid { Value: Accepted } { First + Second }
+    let Appended: Results.Result<unit, Collections.Vectorˉappendˉfailure<i32> > =
+        Collections.Vectorˉappend::<i32>(borrow mut Owned, First + Second);
+    var Observed: i32 = match Appended {
+        case Results.Result.Valid { Value: Accepted } { 42 }
         case Results.Result.Failure { Error: Failure } { 3 }
     };
+    if Observed == 42 { Observed = Borrow(First, Second, borrow Owned, 0u64); }
+    using Resource = Owned { }
+    return Observed;
 }
 
 export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {

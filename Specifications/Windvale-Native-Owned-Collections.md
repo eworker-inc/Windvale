@@ -63,7 +63,24 @@ depend on a constructor appearing in the same function. At most 64 owned local
 slots are tracked per function. Terminal helper traps unwind to Main's wrapper
 and reclaim the execution domain. Returned owners remain live in the caller.
 
-Helper parameters do not yet admit borrows; bytes/text values, aggregate drops,
+Borrowed scalar Vector helper parameters use the existing WVB shapes 26
+(immutable) and 27 (exclusive mutable) in admitted minor versions at least 1.26.
+Both pass the owner's generation-checked handle without moving its allocation
+lease. Indexed scalar reads accept either parameter. The complete WVB verifier
+proves the call's lifetime
+and alias exclusions before native admission. The native owner-load restriction
+permits only a direct call preceded by at most 64 remaining local loads.
+Borrowed helpers do not release the caller's owner on ordinary return; the
+caller can explicitly release it after the call completes. Returning a borrowed
+parameter as an owner, taking it or releasing it remains invalid.
+
+Growth through a borrowed helper remains rejected: replacement must update
+the caller's owning slot, while this calling convention passes a handle value.
+Append through a borrowed parameter remains outside the source, complete WVB
+verifier and native execution subset.
+Parameter length (`E2`) is not yet integrated. The receiver-retaining length
+operation (`CA`) does not gain a temporary-loan drop through this change.
+Other borrowed helper parameters, bytes/text values, aggregate drops,
 arbitrary owner-bearing records, freeze, sharing, hosted capabilities and WVB
 1.29 remain unsupported. WVB 1.42 Copy-record collection elements also reject;
 admission of scalar helpers does not admit that version's entire vocabulary.
@@ -173,12 +190,17 @@ snapshots for ordinary refusals.
 
 The [helper workload](../Tests/Fixtures/Native-X64/Owned-Vector-Helpers.wv)
 constructs a Vector in a helper, returns its allocation Result, transfers the
-Vector through recursive calls, appends in a separate helper and releases it.
-Its 1,000 iterations fit the same 64-byte arena and 32-byte peak charge, with
-zero live charge at completion. Main is last in the function directory; the
+Vector through recursive calls, appends in its owning caller, forwards an
+immutable borrow through two helpers, reads it and releases it in
+the caller. A bytecode variation reads through exclusive mutable parameters.
+Its one, 1,000 and 32,768 iteration cases must fit the same 64-byte arena and
+32-byte peak charge, with zero live charge at completion. Main is last in the function directory; the
 Vector travels through a stack argument as well as a return. Checks cover the
 64-function boundary, allocation refusal, nested fuel/depth failure, entry
 recursion rejection, copied owners and a helper retaining an owner at return.
+The borrowed-read bounds trap must reclaim the same domain. Malformed helper
+cases reject mutation through an immutable parameter, ownership escape and
+release of a borrowed Vector.
 
 Preparation includes seven products: lowerer, borrow probe, budget oracle,
 scope, growth, append-refusal and helper source fixtures. The behavior phase reuses them. Explicit

@@ -31,7 +31,7 @@ function Inspect(Input) {
     let Cursor = Table.Start + 4;
     function Shape() {
         const Start = Cursor, Kind = Input[Cursor++];
-        if ([7, 8, 11, 23, 28, 29, 35].includes(Kind)) Cursor += 4;
+        if ([7, 8, 11, 23, 26, 27, 28, 29, 35].includes(Kind)) Cursor += 4;
         else if (Kind === 37) Shape();
         return { Start, Length: Cursor - Start, Kind };
     }
@@ -101,24 +101,39 @@ function Appendˉhelper(Input, Parameter, Return, Body) {
 export async function Runˉownedˉhelpers(Context, Lowerer) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
     const Input = await Prepareˉownedˉhelpers(Context), { Sections, Functions } = Inspect(Input);
-    if (Input.readUInt16LE(6) !== 42 || Functions.map(Item => Item.Name).join(',') !== 'Construct,Consume,Forward,Main') {
+    if (Input.readUInt16LE(6) !== 42 || Functions.map(Item => Item.Name).join(',') !== 'Borrow,Borrowˉvalue,Construct,Consume,Forward,Main') {
         throw new Error('Owned helper source workload differs.');
     }
-    const [Construct, Consume, Forward, Main] = Functions;
+    const [Borrow, Borrowˉvalue, Construct, Consume, Forward, Main] = Functions;
     const Capacity = Construct.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
     const Budget = Main.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
     const Constructorˉcall = Main.Operations.find(([Opcode, At]) => Opcode === 64 && Input.readUInt32LE(At + 1) === Construct.Index)[1];
     const Recursiveˉcall = Forward.Operations.find(([Opcode]) => Opcode === 64)[1];
     const Drop = Consume.Operations.find(([Opcode]) => Opcode === 80)[1];
+    const Borrowˉindex = Consume.Operations.find(([Opcode]) => Opcode === 129)[1] + 1;
+    const Iterations = Main.Operations.find(([Opcode, At]) => Opcode === 1 && Input.readInt32LE(At + 1) === 1000)?.[1];
+    if (Iterations === undefined) throw new Error('Helper iteration limit differs.');
+    const Borrowˉshape = Input.subarray(Borrow.Locals[2].Start, Borrow.Locals[2].Start + Borrow.Locals[2].Length);
+    const Appendˉresult = Input.readUInt32LE(Consume.Operations.find(([Opcode]) => Opcode === 208)[1] + 5);
+    const Vectorˉshape = Buffer.from(Borrowˉshape);
+    Vectorˉshape[0] = 23;
     const Resultˉshape = Input.subarray(Construct.Return.Start, Construct.Return.Start + Construct.Return.Length);
     const Cases = [
+        { Name: 'single-borrow-and-release', Result: 42, Peak: 32, Generation: 2,
+            Change: Value => { Value.writeInt32LE(1, Iterations + 1); } },
         { Name: 'nested-recursive-transfer', Result: 42, Peak: 32, Generation: 2000 },
+        { Name: 'sustained-borrow-and-release', Result: 42, Peak: 32, Generation: 65536, Fuel: 100000000,
+            Change: Value => { Value.writeInt32LE(32768, Iterations + 1); } },
+        { Name: 'mutable-borrowed-read', Result: 42, Peak: 32, Change: Value => {
+            Value[Borrow.Locals[2].Start] = 27;
+            Value[Borrowˉvalue.Locals[0].Start] = 27;
+        } },
         { Name: 'result-parameter-and-return', Result: 42, Peak: 32, Change: Value => {
             const Extended = Appendˉhelper(Value, Resultˉshape, Resultˉshape, Buffer.from([205, 0, 0, 0, 0, 81]));
-            const { Sections: Current, Functions: Entries } = Inspect(Extended), First = Entries[0], Code = Current.get(5);
+            const { Sections: Current, Functions: Entries } = Inspect(Extended), First = Entries[Construct.Index], Code = Current.get(5);
             return Replaceˉbody(Extended, First, Buffer.concat([
                 Extended.subarray(Code.Start + First.Offset, Code.Start + First.Offset + First.Length - 1),
-                Buffer.from([64, 4, 0, 0, 0, 81])]));
+                Buffer.concat([Buffer.from([64]), Word(Functions.length), Buffer.from([81])])]));
         } },
         { Name: 'maximum-function-count', Result: 42, Peak: 32, Change: Value => Extraˉfunctions(Value, 64) },
         { Name: 'constructor-refusal', Result: 2, Peak: 0, Change: Value => { Value.writeBigUInt64LE(16n, Budget); } },
@@ -126,6 +141,8 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
         { Name: 'invalid-constructor-cleanup', Status: 5, Peak: 0, Change: Value => { Value.writeBigUInt64LE(0n, Capacity); } },
         { Name: 'recursive-depth-cleanup', Status: 3, Peak: 32, Depth: 3 },
         { Name: 'nested-fuel-cleanup', Status: 2, Peak: 32, Fuel: 100 },
+        { Name: 'borrowed-read-bounds-cleanup', Status: 5, Peak: 32,
+            Change: Value => { Value.writeBigUInt64LE(1n, Borrowˉindex); } },
     ];
     const Objects = ['Owned', 'Allocator', 'Budget-Validation', 'Budgeted'].map(Name => join(Work, `${Name}.wvo`));
     const Tool = Name => join(Repository, `Tools/Native/${Name}.${Target === 'windows' ? 'cmd' : 'sh'}`);
@@ -165,7 +182,7 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
     }
     const Rejections = [
         ['call-entry', Value => { Value.writeUInt32LE(Main.Index, Constructorˉcall + 1); }],
-        ['missing-target', Value => { Value.writeUInt32LE(4, Recursiveˉcall + 1); }],
+        ['missing-target', Value => { Value.writeUInt32LE(Functions.length, Recursiveˉcall + 1); }],
         ['wrong-parameter', Value => { Value[Forward.Locals[0].Start] = 2; }],
         ['copy-vector-parameter', Value => { Value[Forward.Operations.find(([Opcode]) => Opcode === 205)[1]] = 4; }],
         ['copy-result-return', Value => { Value[Construct.Operations.findLast(([Opcode]) => Opcode === 205)[1]] = 4; }],
@@ -173,6 +190,13 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
         ['helper-retains-result', Value => Appendˉhelper(Value, Resultˉshape, Buffer.from([1]), Buffer.from([1, 42, 0, 0, 0, 81]))],
         ['helper-bytes-parameter', Value => Appendˉhelper(Value, Buffer.from([6]), Buffer.from([6]), Buffer.from([4, 0, 0, 0, 0, 81]))],
         ['helper-borrow-parameter', Value => Appendˉhelper(Value, Buffer.from([37, 1]), Buffer.from([1]), Buffer.from([4, 0, 0, 0, 0, 81]))],
+        ['immutable-vector-mutation', Value => Appendˉhelper(Value, Borrowˉshape, Buffer.from([1]),
+            Buffer.concat([Buffer.from([1, 42, 0, 0, 0, 208]), Word(0), Word(Appendˉresult),
+                Buffer.from([80, 1, 42, 0, 0, 0, 81])]))],
+        ['borrowed-vector-return', Value => Appendˉhelper(Value, Borrowˉshape, Vectorˉshape,
+            Buffer.from([4, 0, 0, 0, 0, 81]))],
+        ['borrowed-vector-release', Value => Appendˉhelper(Value, Borrowˉshape, Buffer.from([1]),
+            Buffer.from([205, 0, 0, 0, 0, 80, 1, 42, 0, 0, 0, 81]))],
         ['helper-retains-vector', Value => {
             const Code = Sections.get(5), Start = Code.Start + Consume.Offset, End = Start + Consume.Length;
             const Body = Buffer.concat([Value.subarray(Start, Drop - 5), Value.subarray(Drop + 1, End)]);
@@ -195,6 +219,7 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
             throw new Error(`Owned helper rejection ${Name} differs: ${Result.Output}`);
         }
     }
-    process.stdout.write('native owned helpers status=Passed cases=20 executions=8 rejections=12 iterations=1000 arena-bytes=64 peak-charge=32 metadata-bytes=5816 abi=24\n');
-    return { Cases: 20, Valid: 8, Malformed: 12, Executions: 8 };
+    const Count = Cases.length + Rejections.length;
+    process.stdout.write(`native owned helpers status=Passed cases=${Count} executions=${Cases.length} rejections=${Rejections.length} iterations=1,1000,32768 arena-bytes=64 peak-charge=32 metadata-bytes=5816 abi=24\n`);
+    return { Cases: Count, Valid: Cases.length, Malformed: Rejections.length, Executions: Cases.length };
 }

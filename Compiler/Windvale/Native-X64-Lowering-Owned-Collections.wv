@@ -166,6 +166,14 @@ export fn Shapeˉisˉsupported(Shape: Types.Compilerˉnativeˉx64ˉshape) -> boo
         Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type));
 }
 
+export fn Parameterˉisˉsupported(Shape: Types.Compilerˉnativeˉx64ˉshape) -> bool {
+    if !Shapeˉisˉsupported(Shape) { return false; }
+    if Shape.Borrowˉkind == 0u8 { return true; }
+    return Shape.Type == 10u8 && Shape.Identity >= 2147483648u32 &&
+        Shape.Identity != 4294967295u32 &&
+        (Shape.Borrowˉkind == 26u8 || Shape.Borrowˉkind == 27u8);
+}
+
 fn Scalarˉrecord(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes, Index: u32) -> bool {
     if Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index) != 1u8 { return false; }
     var Field: u32 = 0u32;
