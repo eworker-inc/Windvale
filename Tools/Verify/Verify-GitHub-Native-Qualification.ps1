@@ -143,7 +143,7 @@ Assert-Workflow (!$Preparation.Contains('continue-on-error: true')) 'Required pr
 foreach ($Fragment in @(
     'preparation_required: ${{ steps.native-plan.outputs.preparation_required }}',
     'preparation_hosts: ${{ steps.native-plan.outputs.preparation_hosts }}',
-    "`$PreparationRequired = `$NativePlan.UseOwnedConsoleDevelopment -or @(`$NativePlan.Suites | Where-Object { `$_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -ne 0"
+    "`$PreparationRequired = `$NativePlan.UseOwnedConsoleDevelopment -or `$NativePlan.UseCurrentVerifierDevelopment -or @(`$NativePlan.Suites | Where-Object { `$_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -ne 0"
 )) {
     Assert-Workflow ($ClassificationBlock.Contains($Fragment)) "Preparation selection lacks '$Fragment'."
 }

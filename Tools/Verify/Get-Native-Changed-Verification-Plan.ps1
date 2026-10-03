@@ -1836,8 +1836,22 @@ $OwnedConsoleDevelopmentInputs = @(
     'Projects/Tests/Windvale-Native-Test-Owned-Console-Depth-Trap.wvproj',
     'Specifications/Windvale-Native-Owned-Console-Application.md'
 )
+$CurrentVerifierDevelopmentInputs = @(
+    'Tools/Native/Verify-Wvb.mjs',
+    'Tools/Native/Current-Wvb-Verification-Cases.mjs',
+    'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
+    'Tools/Verify/Verify-GitHub-Native-Qualification.ps1',
+    '.github/workflows/verify.yml'
+)
 foreach ($Path in $Paths) {
     $script:CurrentChangedPath = $Path
+    if ($Path -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs')) {
+        Add-Suite 'language-1-production-admission-ingress'
+        continue
+    }
     if ($Path -cin $OwnedConsoleDevelopmentInputs) {
         Add-Suite 'console-packager-source-reconstruction'
         continue
@@ -4894,6 +4908,14 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 # Documentation routing has already excluded executable and frozen contracts.
 # Keep every other path: owner routing alone is not a complete dependency proof.
 $FocusedDevelopmentPaths = @($Paths | Where-Object { !$DocumentationOnlyPaths.Contains($_) })
+$UseCurrentVerifierDevelopment = $SelectedSuites.Contains('language-1-production-admission-ingress') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs') }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $CurrentVerifierDevelopmentInputs }).Count -eq 0
+if ($UseCurrentVerifierDevelopment) {
+    $VerifierOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'language-1-production-admission-ingress')[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $VerifierOwner.ExpectedSeconds + 300)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $VerifierOwner.MaximumSeconds + 600)
+}
 $UseOwnedConsoleDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('console-packager-source-reconstruction') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cin $OwnedConsoleDevelopmentInputs }).Count -gt 0
@@ -5465,6 +5487,8 @@ if (!$Quiet) {
         $UsePublisherCurrentSourceDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-object development: ' +
         $UsePublisherCurrentObjectDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Current WVB verification development: ' +
+        $UseCurrentVerifierDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Project 4 launcher development: ' +
         $UseProject4LauncherDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Project 4 publisher cache development: ' +
@@ -5557,6 +5581,7 @@ if ($PassThru) {
         UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
+        UseCurrentVerifierDevelopment = $UseCurrentVerifierDevelopment
         UseOwnedConsoleDevelopment = $UseOwnedConsoleDevelopment
         UseProject4LauncherDevelopment = $UseProject4LauncherDevelopment
         UseProject4PublisherCacheDevelopment = $UseProject4PublisherCacheDevelopment

@@ -6318,6 +6318,56 @@ foreach ($OwnerPath in @(
         throw "The focused Foundation owner-flow plan differs for '$OwnerPath'."
     }
 }
+foreach ($VerifierPath in @(
+    'Tools/Native/Verify-Wvb.mjs',
+    'Tools/Native/Current-Wvb-Verification-Cases.mjs'
+)) {
+    $CurrentVerifierPlan = & $NativePlanner -ChangedPath $VerifierPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$CurrentVerifierPlan.UseCurrentVerifierDevelopment -or
+        $CurrentVerifierPlan.Suites.Count -ne 1 -or
+        $CurrentVerifierPlan.Suites[0] -cne 'language-1-production-admission-ingress' -or
+        $CurrentVerifierPlan.Gaps.Count -ne 0 -or
+        $CurrentVerifierPlan.ExpectedSeconds -ne 300 -or $CurrentVerifierPlan.MaximumSeconds -ne 600) {
+        throw "The current verifier selection differs for '$VerifierPath'."
+    }
+}
+$CurrentVerifierCompanionPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs',
+    'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
+    'Tools/Verify/Verify-Verification-Plan.ps1', '.github/workflows/verify.yml',
+    'Documents/Runbooks/Native-Source-To-Wvb.md'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$CurrentVerifierCompanionPlan.UseCurrentVerifierDevelopment -or
+    $CurrentVerifierCompanionPlan.Suites.Count -ne 1 -or $CurrentVerifierCompanionPlan.Gaps.Count -ne 0) {
+    throw 'Current verifier companions lost the focused command selection.'
+}
+$CurrentVerifierIntegrationPath = 'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv'
+$CurrentVerifierIntegrationPlan = & $NativePlanner -ChangedPath $CurrentVerifierIntegrationPath -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+$MixedCurrentVerifierPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Native/Verify-Wvb.mjs', $CurrentVerifierIntegrationPath
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($MixedCurrentVerifierPlan.UseCurrentVerifierDevelopment -or
+    $MixedCurrentVerifierPlan.Gaps.Count -ne 0 -or
+    @($CurrentVerifierIntegrationPlan.Suites | Where-Object { $_ -cnotin $MixedCurrentVerifierPlan.Suites }).Count -ne 0) {
+    throw 'The current verifier selection hid implementation evidence.'
+}
+foreach ($CurrentVerifierMarker in @(
+    "'--current-verifier'", 'if ($NativePlan.UseCurrentVerifierDevelopment) {',
+    '--prepare-current-verifier --maximum-seconds $RemainingSeconds'
+)) {
+    if (!$ChangedVerification.Contains($CurrentVerifierMarker, [StringComparison]::Ordinal)) {
+        throw "Current verifier dispatch lost '$CurrentVerifierMarker'."
+    }
+}
+$IngressSource = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs')
+if (!$IngressSource.Contains('await Runˉcurrentˉverificationˉcases(Verificationˉcontext);', [StringComparison]::Ordinal) -or
+    !$IngressSource.Contains('await Prepareˉcurrentˉverification(Verificationˉcontext, 600, false);', [StringComparison]::Ordinal)) {
+    throw 'The full production owner lost its current-command boundary.'
+}
+
 $OwnedConsolePaths = @(
     'Linker/Startup/Linux-X64-Owned-Console.wva',
     'Linker/Startup/Windows-X64-Owned-Console.wva',

@@ -17,6 +17,7 @@ import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Orderˉsplitˉprojectˉsourceˉpayloads } from './Split-Project-Source-Ordering-Core.mjs';
+import { Prepareˉcurrentˉverification, Runˉcurrentˉverificationˉcases } from './Current-Wvb-Verification-Cases.mjs';
 import {
     Acquireˉcurrentˉsplitˉcompiler, Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
 } from './Current-Split-Compiler-Cache-Core.mjs';
@@ -3460,6 +3461,16 @@ async function Runˉrepositoryˉsourceˉedition(Reader, Admitter, Authenticator,
 }
 
 async function Main() {
+    const Verificationˉcontext = { Run: Runˉbounded, Success: Requireˉsuccess, Clean: Requireˉcleanˉtermination };
+    if (process.argv.length === 5 && process.argv[2] === '--prepare-current-verifier' &&
+        process.argv[3] === '--maximum-seconds' && /^[1-9][0-9]*$/u.test(process.argv[4])) {
+        await Prepareˉcurrentˉverification(Verificationˉcontext, Number(process.argv[4]));
+        return;
+    }
+    if (process.argv.length === 3 && process.argv[2] === '--current-verifier') {
+        await Runˉcurrentˉverificationˉcases(Verificationˉcontext);
+        return;
+    }
     if ([6, 8].includes(process.argv.length) && process.argv[2] === '--repository-source-edition') {
         Require(process.argv.length === 6 || process.argv[6] === '--start-at', 'Expected --start-at <repository-project>.');
         await Runˉrepositoryˉsourceˉedition(...process.argv.slice(3, 6).map(Value => resolve(Value)), process.argv[7] ?? '');
@@ -3525,8 +3536,13 @@ async function Main() {
             'verifier-profile=2 runner-profile=5\n'
         );
         const Inputs = await Writeˉproductionˉinputs(Work);
+        // The current command extends the verifier boundary within ingress.
+        // Its leaf checks have their own summary, like the malformed-WVB checks;
+        // the terminal 40-case count retains the named ingress/project groups.
+        await Prepareˉcurrentˉverification(Verificationˉcontext, 600, false);
         process.stdout.write('START production admission ingress phase=execute item=3/4 cases=24\n');
         await Runˉproductionˉcases(Work, Products, Inputs);
+        await Runˉcurrentˉverificationˉcases(Verificationˉcontext);
         process.stdout.write('START production admission ingress phase=project4 item=4/4 cases=16\n');
         const Projectˉwork = join(Work, 'Project4');
         await mkdir(Projectˉwork);

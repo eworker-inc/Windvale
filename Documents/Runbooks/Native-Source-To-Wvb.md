@@ -81,7 +81,53 @@ common ancestor under Project 1's contained path rules. Do not use `..` or move 
 manifest to the root for convenience; a future workspace/reference layer will own
 cross-component organization without changing Project 1 containment.
 
-## Ordinary verification and inspection
+## Current-source verification
+
+Use the current Windvale verifier for forward Language 1.0 modules on Windows
+and Linux x64:
+
+```sh
+node Tools/Native/Verify-Wvb.mjs --current <module.wvb>
+```
+
+The verifier is built from
+[`Windvale-Compiler-Wvb-Verifier.wvproj`](../../Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj).
+Node coordinates validated cache products and bounded native execution; Windvale
+owns module admission. Ordinary verification requires prepared source and native
+verifier products. A missing product fails with an explicit preparation instruction
+instead of starting a compiler or verifier rebuild.
+
+First prepare the current compiler checkpoint using the
+[separate preparation procedure](Native-Tests.md#separate-current-compiler-preparation).
+Then prepare verifier products with a finite absolute deadline. In PowerShell:
+
+```powershell
+$VerifierDeadline = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + 600000
+node Tools/Native/Verify-Wvb.mjs --prepare --deadline-ms $VerifierDeadline
+```
+
+In Bash:
+
+```sh
+VerifierDeadline=$(node -p 'Date.now() + 600000')
+node Tools/Native/Verify-Wvb.mjs --prepare --deadline-ms "$VerifierDeadline"
+```
+
+Verifier preparation permits at most ten minutes and keeps compiler construction
+disabled. It builds or reuses the current verifier's WVB and profile-2 native
+application. It refuses inherited `WINDVALE_PREPARED_PRODUCTS_ONLY=1` rather than
+overriding the caller's prohibition on construction.
+
+Ordinary verification accepts an ordinary, non-linked input of 1 through
+16,777,216 bytes, verifies a private snapshot, checks that the source products
+and input remain unchanged, and cleans up its private directory. Its complete
+operation has a two-minute deadline. Success reports
+`wvb status=Valid profile=compiler-aligned`; bounded `INFO` activity lines may
+precede the result during a slow cache check. Malformed modules report an invalid
+phase and optional step. Admission does not establish an execution target,
+grant capabilities, or promote these development products to installed delivery.
+
+## Pinned bootstrap verification and inspection
 
 On Windows x64:
 
@@ -97,7 +143,10 @@ On Linux x64:
 ./Tools/Native/Inspect-Wvb.sh <module.wvb>
 ```
 
-Both routes verify the pinned native application before use. Inspection first asks
+These commands retain the historical pinned contract for their named bootstrap
+and qualification callers. They can reject a newer valid Language 1.0 module;
+use the current-source command above for forward verification. Both routes verify
+the pinned native application before use. Inspection first asks
 the semantic verifier to admit the exact input, then runs the read-only structural
 inspector. Neither route requires .NET or grants file-write authority. The retained
 Stage 0 CLI requires the separate recovery workspace described below.

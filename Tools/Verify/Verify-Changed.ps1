@@ -205,7 +205,15 @@ if ($PreparationOnly) {
             --prepare-only --maximum-seconds $RemainingSeconds
         if ($LASTEXITCODE -ne 0) { throw "Owned console preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
     }
-    if (!$NativePlan.UseOwnedConsoleDevelopment -and @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
+    if ($NativePlan.UseCurrentVerifierDevelopment) {
+        $RemainingSeconds = [int][Math]::Floor($PreparationMaximumSeconds - ([DateTime]::UtcNow - $VerificationStartedUtc).TotalSeconds)
+        if ($RemainingSeconds -lt 60) { throw 'The shared preparation deadline is exhausted; completed caches remain reusable.' }
+        Write-Host "Preparation owner=language-1-production-admission-ingress mode=current-verifier maximum-seconds=$RemainingSeconds"
+        & node (Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs') `
+            --prepare-current-verifier --maximum-seconds $RemainingSeconds
+        if ($LASTEXITCODE -ne 0) { throw "Current verifier preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
+    }
+    if (!$NativePlan.UseOwnedConsoleDevelopment -and !$NativePlan.UseCurrentVerifierDevelopment -and @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
         Write-Host 'Native preparation status=NotRequired selected-preparation-owners=0'
     }
     return
@@ -441,6 +449,11 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                     "Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.$OwnerExtension")
                 $OwnerArguments = @('--current-source')
                 $OwnerMessage = 'Native owner hosted-verifier-publisher-files mode=current-source cases=1 expected-seconds=60'
+            } elseif ($Suite -eq 'language-1-production-admission-ingress' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UseCurrentVerifierDevelopment) {
+                $OwnerCommand = 'node'
+                $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs'), '--current-verifier')
+                $OwnerMessage = 'Native owner language-1-production-admission-ingress mode=current-verifier cases=12 expected-seconds=300 maximum-seconds=600'
             } elseif ($Suite -eq 'language-1-production-admission-ingress' -and
                 $Plan.Scope -eq 'development' -and $NativePlan.UseProject4LauncherDevelopment) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
