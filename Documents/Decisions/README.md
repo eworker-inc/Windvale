@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 354 |
+| Accepted | 355 |
 | Implemented | 502 |
 | Proposed | 7 |
 | Qualified | 95 |
@@ -50,6 +50,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0976: Focus Windvale 1.0 on the language and essential libraries](0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md) | Accepted |
 | [Decision 0975: Launch owned-storage console applications](0975-Launch-Owned-Storage-Console-Applications.md) | Proposed |
 | [Decision 0974: Construct fresh native owned-storage domains](0974-Construct-Fresh-Native-Owned-Storage-Domains.md) | Proposed |
 | [Decision 0973: connect exclusive Vector mutation to owned storage](0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) | Proposed |
@@ -74,7 +75,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0954: balance qualification shards by paired-host timings](0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md) | Qualified |
 | [Decision 0953: bundle the root-split and depth-two database cases](0953-Bundle-The-Root-Split-And-Depth-Two-Database-Cases.md) | Implemented |
 | [Decision 0952: rank and trial overlapping database products](0952-Rank-And-Trial-Overlapping-Database-Products.md) | Implemented |
-| [Decision 0951: coalesce complete database bundles in development](0951-Coalesce-Complete-Database-Bundles-In-Development.md) | Implemented |
 
 ## Superseded or historical records
 

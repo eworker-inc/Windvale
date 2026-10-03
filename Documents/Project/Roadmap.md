@@ -1,13 +1,18 @@
 # Windvale development roadmap
 
-> Status: Current dependency plan for the direct Windvale 1.0 product
+> Status: Current language, toolchain and essential-library delivery plan
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-22
+> Last reviewed: 2026-10-03
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
 ended the earlier `v0.2.0` product plan. The signed `v0.1.0` preview remains the
 completed public foundation.
+
+The [language and essential-library scope decision](../Decisions/0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md)
+now makes a usable compiler, runtime and libraries the first delivery. WVDB and
+secondary applications are outside this critical path; the previous mandatory
+database/service bundle is superseded.
 
 This roadmap shows dependencies and completion gates. It is not an activity
 diary. Current implementation standing lives in [Progress](Progress.md), and
@@ -23,9 +28,9 @@ rhythm that reserves long runs for selected chunk and qualification gates.
 Windvale 1.0 is one useful and supportable Windows/Linux product built from:
 
 1. the implemented and qualified Language 1.0 contract;
-2. the required Foundation, Data, and Backend Libraries 1.0 profiles;
-3. a production-usable WVDB 1.0;
-4. immutable packages and supervised services with safe lifecycle operations;
+2. the selected essential libraries used by ordinary programs and the compiler;
+3. deterministic self-host reconstruction on Windows and real Debian;
+4. one ordinary toolchain and clean installations with safe package lifecycle;
 5. documented compatibility, migration, support, recovery, and security policy;
    and
 6. exact integrated qualification and signed distribution evidence.
@@ -35,7 +40,7 @@ and evidence, but it is not an undeclared blocker for the host product.
 
 ## Critical path
 
-### 1. Language 1.0 — complete
+### 1. Select one supported toolchain over the qualified language baseline
 
 Outcome: the frozen source design compiles through one authenticated,
 target-aware path into verified and executable representations on Windows and
@@ -43,7 +48,7 @@ Linux.
 
 The [Slice 8 qualification decision](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md)
 and [exact paired-host evidence](../Evidence/2026-09-04-Language-1.0-Slice-8-Qualification.json)
-close this gate for the frozen source design:
+close their exact compiler gate for the frozen source design:
 
 - every frozen source feature has compiler, diagnostic, malformed-input, and
   execution evidence;
@@ -60,14 +65,32 @@ recovery compiler, while the qualified Language 1.0 compiler is the forward
 path. A future language or WVB change must establish a new versioned contract
 and evidence rather than silently weakening this gate.
 
-### 2. Complete required Libraries 1.0 profiles
+This does not establish general native memory management, complete libraries or
+installed delivery. Trace ordinary commands to the tools they actually run and
+record current, required-bootstrap, superseded, recovery-only and parked paths
+in the [supported-toolchain map](Compiler-Tools-And-Libraries-Completion-Plan.md#supported-toolchain-and-retirement-map).
+Keep necessary construction inputs until their successors reproduce the tools.
 
-Outcome: ordinary applications can use stable bounded data and hosted services
-without inventing private contracts.
+### 2. Make ordinary development predictable
+
+Outcome: one selected compiler generation serves the normal build/verify/run
+path. Separate bounded preparation from ordinary execution, reuse products by
+complete input identity and preserve valid evidence. Missing preparation must
+name the required command rather than trigger hidden reconstruction.
+
+Measure a small program and affected compiler component before and after a
+workflow change. The [throughput plan](Verification-Throughput-Plan.md) owns
+feedback targets; broader optimization waits unless it obstructs delivery.
+
+### 3. Complete ownership-to-storage memory and essential libraries
+
+Outcome: ordinary programs and the toolchain use stable bounded values,
+collections, bytes/text and explicit host I/O, with correct reusable storage.
 
 Completion requires:
 
-- one accepted catalog for required Foundation, Data, and Backend APIs;
+- a finite essential API/target matrix reconciled with the accepted Foundation
+  registry and explicitly selected host boundaries;
 - explicit portability, platform, authority, and capability classification;
 - exact limits and failure behavior for each public operation;
 - at least one real consumer for every required profile; and
@@ -77,40 +100,20 @@ Completion requires:
 Library work follows Language 1.0 where new source semantics are required, but
 independent library contracts and consumers may advance in parallel.
 
-Immediate sequence:
+First connect unique mutable owners, shared immutable backing, borrowed
+lifetimes, budgets, allocation leases and deterministic release through the
+existing compiler/runtime. Cover aggregates, failure exits and terminal cleanup.
+Reclaim interpreter working storage separately from guest accounting.
+Fixed-live-state loops must stabilize within measured bounds.
 
-1. preserve the [completed package-parser delivery milestone](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing),
-   then deliver a maintained owned-resource consumer. The selected Package-Lock
-   typed-directory migration first needs record-element Vector storage/tracing,
-   budget threading, and scanner ownership; selected scalar indexed borrowing
-   already has paired-host evidence;
-2. complete wider owned-payload composition and exclusive borrowing as
-   separately scoped and verified deliverables;
-3. complete Option/Result take and mapping operations as separate deliverables;
-4. add primitive ordering, collection mutation and slicing, and bounded byte
-   construction; and
-5. migrate required real consumers and run one paired-host Libraries 1.0 gate.
+Use compiler parsing, symbol tables, interpreter state and output construction
+as maintained consumers. Required package functions remain supported; the typed
+Package-Lock migration is deferred. Preserve the
+[completed package-parser checkpoint](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing).
+Resolve draft APIs before dependent implementation rather than importing the
+whole Backend catalog into this gate.
 
-### 3. Complete WVDB 1.0
-
-Outcome: WVDB is a Windvale-owned database suitable for bounded production use,
-not only a collection of storage experiments.
-
-Completion requires:
-
-- normative entity, table, relationship, index, query, and transaction behavior;
-- bounded storage geometry, recovery, durability, and corruption handling;
-- complete full backup and restore before a production claim;
-- service, authentication/authorization boundary, observability, and safe
-  operational procedures;
-- compatibility and migration rules; and
-- conformance, hostile-input, performance, and memory evidence on both hosts.
-
-Follow the [WVDB 1.0 specification plan](WVDB-1.0-Specification-Plan.md). Existing
-database code is implementation evidence until it is reconciled with the 1.0
-contract.
-
-### 4. Integrate packages, services, and support
+### 4. Demonstrate self-hosting and installed use, then retire old paths
 
 Outcome: users can install, run, update, recover, roll back, and remove Windvale
 components without losing separately owned data or receiving undeclared
@@ -121,13 +124,19 @@ Completion requires:
 - immutable package and dependency identities;
 - signed release admission and offline verification;
 - separate application approval and rights-limited provider binding;
-- bounded service start, stop, restart, upgrade, rollback, and teardown;
+- deterministic compiler reconstruction from declared inputs on both hosts;
+- one selected current compiler/runtime generation in ordinary commands;
 - data ownership and migration rules;
 - stable command, diagnostic, support, and compatibility policy; and
 - Windows/Linux installers and recovery instructions tested from clean systems.
 
 The completed `v0.1.0` and offline package-lifecycle gates are foundations. Do
 not reopen them or rename their artifacts to simulate 1.0 completion.
+
+Retire superseded active implementations and compatibility only after their
+supported construction/execution dependencies are replaced. Secondary
+applications may break and be migrated later. Preserve immutable recovery and
+published evidence. Qualify a selected generation before installed promotion.
 
 ### 5. Run integrated qualification and release
 
@@ -136,7 +145,7 @@ needed for the `v1.0.0` claim.
 
 Completion requires:
 
-- the exact 1.0 language, library, database, package, service, and support gates
+- the exact 1.0 language, essential-library, toolchain, package and support gates
   are closed;
 - deterministic outputs and resource limits are checked on Windows and Linux;
 - security, malformed-input, recovery, upgrade, and compatibility cases pass;
@@ -147,13 +156,20 @@ Completion requires:
 Complete qualification runs once for the deliberately selected state. It is not
 a routine per-commit development test.
 
-## Parallel Windvale OS path
+## Deferred product lanes
+
+WVDB, broad Data/Backend catalogs, network/TLS/HTTP services, privileged service
+installation and secondary applications are deferred under the current scope.
+The [WVDB plan](WVDB-1.0-Specification-Plan.md) retains its accepted contracts
+and unfinished requirements; no new database slice is required now.
+
+### Windvale OS
 
 OS-1 advances one cleanly launched and supervised service/application
 composition while preserving the exact WVB portability proof already qualified
 across Windows, Linux, and the guest.
 
-The next sequence is:
+When OS work resumes, its separate sequence is:
 
 1. finish the source-owned fixed process-machine replacement and its live boot
    cutover;
@@ -168,8 +184,12 @@ The next sequence is:
 Pinned QEMU/Q35 remains the reproducible oracle. Physical, accelerated, or
 nested providers report separate evidence.
 
+No new OS slice is required before this host-toolchain delivery.
+
 ## Strategic and proposed lanes
 
+- [Windvale 2.0 ideas](Windvale-2.0-Ideas.md) are future proposals and do not
+  extend the current source contract or delivery gate.
 - The [2027 compute and efficiency program](Windvale-2027-Compute-Leadership-Roadmap.md)
   may contribute measured compiler, runtime, accelerator, networking, storage,
   and OS improvements. It does not create unmeasured performance claims or add
@@ -202,10 +222,11 @@ nested providers report separate evidence.
 Run the change-aware verifier once after a coherent edit:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly
 ```
 
-Use focused development owners for ordinary work. Run complete paired-host
+Execute one causal selection after reviewing cost. Use focused owners for
+ordinary work. Run complete paired-host
 qualification only for a selected release, promotion, bootstrap, security, ABI,
 or conformance state.
 

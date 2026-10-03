@@ -1,26 +1,27 @@
 # Windvale 1.0 product plan
 
-> Status: Current product target; implementation and qualification incomplete
+> Status: Current language and toolchain target; delivery and qualification incomplete
 > Authority: Informative; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-25
+> Last reviewed: 2026-10-03
 
 - Date: 2026-08-20
 - Status: Active product target; implementation and qualification incomplete
-- Direction: [Decision 0800](../Decisions/0800-Target-Windvale-1.0-Directly.md)
+- Direction: [Language and essential-library scope](../Decisions/0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md),
+  amending [Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
 - Language contract: [Language 1.0 freeze](../Decisions/0767-Freeze-Windvale-Language-1.0-Source.md)
 - Library program: [Windvale Libraries 1.0](Windvale-Libraries-1.0-Plan.md)
-- Database program: [WVDB 1.0](WVDB-1.0-Specification-Plan.md)
+- Deferred database program: [WVDB 1.0](WVDB-1.0-Specification-Plan.md)
 - Strategic performance program:
   [2027 compute leadership](Windvale-2027-Compute-Leadership-Roadmap.md)
 
 ## Product outcome
 
-Windvale 1.0 is one coherent, supported Windows and Linux host product built
-from Windvale's own language, compiler, verified execution contracts, reusable
-libraries, package system, and database. It should let a person install the
-toolchain, build and run bounded backend applications, store and recover useful
-data through WVDB, and inspect the authority and release evidence without a
-development checkout or a retired managed runtime.
+Windvale 1.0 should let a person install one supported toolchain, write ordinary
+Windvale programs using essential libraries, build and run them on Windows and
+Debian/Linux, and reconstruct the compiler from its declared inputs. The
+language, compiler and libraries are the first useful product. The compiler and
+its development tools are the primary maintained consumers; WVDB and secondary
+applications are outside this delivery's critical path.
 
 The next intended product tag is `v1.0.0`. There is no planned `v0.2.0` product
 release. The version is earned by the complete gate below; it is not a label for
@@ -35,13 +36,13 @@ units, not public product stages and not compatibility levels.
 The current dependency shape is:
 
 ```text
-frozen Language 1.0 contract
-  -> compiler/runtime/native implementation and conformance
-  -> required Libraries 1.0 contracts and providers
-  -> WVDB 1.0 and ordinary backend applications
+accepted Language 1.0 contract
+  -> current compiler/runtime and complete ownership-to-storage memory
+  -> essential libraries used by compiler and toolchain consumers
+  -> deterministic self-hosting and clean Windows/Debian installation
 
-package, installer, service, security, and operations work
-  -> makes every selected component installable and supportable
+explicit preparation, package, installer, security, and recovery work
+  -> makes the selected toolchain usable and supportable
 
 all required workstreams
   -> one cross-host Windvale 1.0 release gate
@@ -51,10 +52,10 @@ This is a dependency map, not a release sequence. A downstream specification can
 advance while an upstream implementation slice is still being completed, but
 qualification cannot claim behavior that the selected implementation lacks.
 
-The 2027 compute program is a cross-cutting optimization and evidence lane. Its
-qualified compiler, runtime, library, networking, storage, and database work may
-ship in 1.0, but complete accelerator and Windvale OS support does not become an
-automatic 1.0 gate without a later finite scope decision.
+The broader compute, database, service and OS programs retain their own
+contracts. They do not add automatic prerequisites to this language/toolchain
+delivery. Admit an enabling improvement only for a named supported dependency
+or a measured bottleneck.
 
 ## Required workstreams
 
@@ -65,10 +66,13 @@ implementation in the normal Windvale compiler and shared verified execution
 path. Compiler slice numbers describe that implementation work; they do not
 reopen the frozen design.
 
-The release gate requires exact source, diagnostics, package-data, ownership,
-concurrency, resource, WIR/WVB, interpreter/native, and Windows/Linux conformance
-for the selected 1.0 surface. A source-rule change requires a named defect or
-contradiction and a decision that updates the freeze deliberately.
+The [Slice 8 qualification](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md)
+establishes the compiler within its exact qualified scope and targets. General
+native memory management, complete libraries and installed promotion remain
+open. Finish unique mutable ownership, shared immutable backing, borrowed
+lifetimes, physical storage reuse, budgets, allocation leases and cleanup.
+Bound interpreter and compiler working storage independently of guest accounting.
+A source-rule change requires a named defect and a deliberate freeze amendment.
 
 [Decision 0802](../Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md)
 keeps native compilation direct: the compiler does not emit or parse textual
@@ -80,43 +84,33 @@ retain a documented reason plus exact differential evidence.
 
 ### Windvale Libraries 1.0
 
-Freeze and implement the required Foundation, Data, and Backend profile matrix.
-For the 1.0 host product this includes the bounded value and collection nucleus,
-text and binary data formats, validation, filesystem and storage access, time,
-entropy, cryptography and certificate handling, networking, secure streams,
-HTTP services/clients, service lifecycle, diagnostics, configuration, and the
-algorithms needed by WVDB and ordinary backend applications.
+Complete essential value, numeric/ordering, memory, collection, bytes/text and
+resource APIs, plus the explicit host file, directory and publication boundaries
+needed by programs and the toolchain. Use compiler parsing, symbol/analysis
+state, interpreter working state and bytecode/object output as maintained
+consumers. Required package admission and publication remain supported; a typed
+Package-Lock refactor or a database operation is not a mandatory memory consumer.
+
+The [completion matrix](Compiler-Tools-And-Libraries-1.0-Matrix.md) distinguishes
+accepted declarations, existing implementation and unresolved APIs. Reconcile
+the finite delivery profile against the accepted Foundation registry before
+qualification. An essential subset does not establish the complete suite.
 
 Each module must have exact public names, types, limits, capabilities, mutation
 completion behavior, portability scope, test oracles, and package identity.
-Optional System, UI, accelerator, model-provider, and specialized protocol
-profiles may ship when qualified but do not become implicit core requirements.
+Draft Data/Backend catalogs and broader hosted profiles remain proposed where
+their contracts have not been accepted. They are separate delivery work.
 
-### WVDB 1.0
-
-Complete the accepted shared database core, strict table profile, and basic typed
-relationship profile. The required product includes stable identity and catalog
-rules, scalar and structured values, schemas, primary and foreign/reference keys,
-constraints, ordered indexes, typed queries and results, snapshots and
-transactions, storage and reclamation, durability and integrity, full backup and
-restore, service sessions, authorization, limits, diagnostics, migration policy,
-operations, and conformance.
-
-Document, analytical, full-text, vector/semantic, and broader graph profiles
-remain explicit extensions unless a later 1.0 scope decision admits a finite
-subset. PostgreSQL, SQLite, MySQL/InnoDB, SQL Server, MongoDB, Neo4j, DuckDB, and
-other systems are research comparisons only, never compatibility or parity
-authorities.
-
-### Packages, installation, services, and release
+### Packages, installation, self-hosting, and release
 
 Integrate immutable packages, approvals, generations, activation, rollback,
 recoverable uninstall, and signed release admission into an ordinary installed
-product. Supply supported per-user toolchain installation and the explicitly
-privileged system-service path needed to run WVDB on Windows and Debian/Linux.
+product. Supply supported per-user toolchain installation on Windows and
+Debian/Linux, using the selected current compiler and runtime generation.
 
-The release must define safe install, upgrade, health, rollback, database-format
-admission, data preservation, service removal, offline verification, and recovery.
+The release must define safe install, upgrade, rollback, package-format admission,
+data preservation, uninstall, offline verification, and recovery. Demonstrate
+deterministic self-host reconstruction from declared inputs on both hosts.
 An official connected source may improve delivery, but downloaded and offline
 admission must select the same signed immutable objects. No transport location is
 an authority or artifact identity.
@@ -124,9 +118,23 @@ an authority or artifact identity.
 ### Security, operations, and evidence
 
 Close the public threat model for every shipped parser, binary format, provider,
-credential, package, service, and database boundary. Publish finite defaults and
+credential and package boundary. Publish finite defaults and
 configurable ceilings for input, memory, storage, concurrency, work, queues,
-deadlines, diagnostics, backup, and recovery.
+deadlines, diagnostics and recovery for the shipped surface.
+
+### Simplification and retirement
+
+Select one ordinary build, verify, run, inspect, assemble, link and package path.
+Keep expensive preparation explicit; reuse valid products by complete input
+identity and measure ordinary edit/build/run feedback.
+
+The [supported-toolchain map](Compiler-Tools-And-Libraries-Completion-Plan.md#supported-toolchain-and-retirement-map)
+classifies current, required-bootstrap, superseded, recovery-only and parked
+components. Retire superseded active source and compatibility after the
+supported paths no longer depend on them. Secondary applications may break and
+be migrated later. Preserve immutable release/recovery inputs and exact earlier
+evidence. Host orchestration remains an explicit dependency until Windvale can
+replace it usefully.
 
 The selected release state must have deterministic builds where promised,
 hostile-input coverage, interruption and crash evidence, bounded soak and
@@ -139,13 +147,14 @@ The `v1.0.0` tag waits until all of the following are true:
 
 | Gate | Required evidence |
 | --- | --- |
-| Contract | The selected Language, Libraries, WVDB, package, service, and support contracts are normative, versioned, internally consistent, and have explicit exclusions. |
-| Implementation | Every required contract has one owned implementation path; candidates and historical fixtures are reconciled or rejected. |
-| Usefulness | A clean Windows and Linux installation can build and run representative backend applications and create, query, transact, back up, restore, and operate a WVDB service. |
+| Contract | Accepted source semantics and a finite, versioned language/library/toolchain target matrix with exact inclusions, exclusions and limits. |
+| Implementation | One maintained implementation for every shipped promise, including ownership, accounting, storage reuse and bounded runtime working state. |
+| Usefulness | Clean Windows and Debian installations build and run ordinary library programs and the maintained compiler/toolchain consumers. |
+| Self-hosting | Declared bootstrap inputs reconstruct the selected Windvale compiler deterministically on both hosts. |
 | Safety and authority | Capabilities are exact and rights-limited; untrusted input is bounded; uncertain mutations, revocation, failure, teardown, and recovery are explicit. |
 | Compatibility | The 1.0 stability, support, deprecation, file-format, package, and migration promises are written before release. |
 | Qualification | The exact release commit and artifacts pass the selected Windows/Linux conformance, determinism, performance, memory, recovery, security, and release gates. |
-| Distribution | Signed source, tools, packages, installers, database artifacts, documentation, provenance, and offline verification evidence are published against one immutable tag. |
+| Distribution | Identified source, tools, libraries, installers, documentation, provenance, signed artifacts and offline verification support one immutable release. |
 
 Passing one row does not authorize the tag. Product progress should report each
 row independently and name gaps without translating a percentage into a
@@ -153,6 +162,9 @@ compatibility claim.
 
 ## Explicitly outside the automatic 1.0 gate
 
+- WVDB, secondary applications, the broad Data/Backend catalog, network/TLS/HTTP
+  services and privileged service installation;
+- browser/editor expansion, 2.0 proposals and complete 2027 compute goals;
 - a complete general-purpose Windvale OS, desktop, or broad hardware catalog;
 - wire, SQL, file, API, or behavioral compatibility with another database;
 - .NET, Java, ASP.NET, E-Worker, or another framework/runtime dependency;
@@ -161,8 +173,9 @@ compatibility claim.
   agent system, accelerator, or virtualization feature; and
 - preservation of obsolete development formats without a named migration case.
 
-These may advance independently and may ship when their own contracts qualify.
-They do not silently enlarge the Windvale 1.0 promise.
+These retain their own contracts and can be revisited after the usable language
+and libraries. A named required toolchain dependency may remain without
+reopening an entire deferred product lane.
 
 ## Existing versions and artifacts
 
@@ -175,14 +188,11 @@ an explicit release or format decision rather than renaming immutable bytes.
 
 ## Immediate planning work
 
-1. Keep the Language 1.0 implementation ledger synchronized with the frozen
-   contract and record only concrete freeze defects as design issues.
-2. Turn the Libraries 1.0 catalog into an accepted required/optional module and
-   conformance matrix.
-3. Continue WVDB 1.0 normative specifications from the accepted upper-layer
-   decisions through storage, durability, service, operations, and conformance.
-4. Reframe connected package, networking, and service work as reusable 1.0
-   foundations; remove the external-model gateway as an automatic release gate.
-5. Apply the accepted [1.x stability and support policy](Windvale-1.0-Stability-And-Support-Policy.md)
-   and finish the exact compatibility matrix, migration evidence, support-end
-   dates, and integrated qualification policy before selecting a release candidate.
+1. Finish the finite toolchain/dependency audit and make ordinary development
+   predictable, with explicit preparation and one supported generation.
+2. Complete ownership-to-storage memory and essential library APIs using the
+   compiler and tools as maintained consumers.
+3. Demonstrate self-hosting and clean-install use, promote the selected generation
+   after its exact qualification gate, then retire replaced active paths.
+4. Apply the accepted [1.x stability and support policy](Windvale-1.0-Stability-And-Support-Policy.md)
+   to the reconciled shipped API/target matrix before selecting a release candidate.

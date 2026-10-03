@@ -12,12 +12,24 @@ The longer-term ambition is an independently implementable specification and ref
 
 ## Project status
 
-Windvale Seed is under active pre-1.0 development and is not production-stable. The signed `v0.1.0` preview completed the project's initial feasibility phase; Windvale is now in full research and development. This README is the stable public overview; changing implementation detail belongs in the documents that own it:
+Windvale is under active pre-1.0 development. The signed `v0.1.0` preview
+completed the initial feasibility phase and remains the released baseline.
+The forward compiler implements the accepted Language 1.0 source contract
+within its qualified scope; general memory management, complete essential
+libraries and installed promotion remain unfinished.
+
+The current priority is one usable language, compiler/runtime and essential
+library set on Windows and Debian/Linux, with the compiler and its tools as
+maintained consumers. WVDB, secondary applications and broader OS/2.0 work are
+outside this delivery's critical path. The
+[completion plan](Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md)
+records the supported toolchain, remaining memory work and replacement gates.
+This README is the stable public overview; detailed standing lives with its owners:
 
 - [Progress dashboard](Documents/Project/Progress.md) — authoritative current implementation and qualification snapshot
 - [Development roadmap](Documents/Project/Roadmap.md) — forward product workstreams, dependencies, and completion gates
 - [Filesystem implementation plan](Documents/Project/Windvale-Filesystem-Implementation-Plan.md) — current host-adapter, FAT32-service, and boot-integration sequence
-- [Seed implementation](Documents/Architecture/Seed-Implementation.md) — component ownership and implemented boundaries
+- [Seed implementation](Documents/Architecture/Seed-Implementation.md) — historical bootstrap component ownership and boundaries
 - [Specification index](Specifications/README.md) — current language, format, runtime, native, and OS contracts
 - [Evidence index](Documents/Evidence/Index.md) — find one exact completed run, measurement, or artifact identity without loading a full archive
 
@@ -60,6 +72,11 @@ The [playground host specification](Specifications/Browser-Playground.md) define
 The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) and [playground exploration](Documents/Project/WebAssembly-Playground-Exploration.md) describe the implemented profiles, evidence, limits, and remaining cross-host/browser-hardening work. Those documents own the fast-changing backend detail.
 
 ## Quick start
+
+These installation commands use the released preview. Current Language 1.0
+development uses the separately prepared compiler described in the
+[native source build runbook](Documents/Runbooks/Native-Source-To-Wvb.md);
+the newer generation is not yet promoted into this installer.
 
 Install the Windvale 0.1.0 preview per user without administrator or root access.
 The bootstrap downloads the exact published installer, verifies its SHA-256,

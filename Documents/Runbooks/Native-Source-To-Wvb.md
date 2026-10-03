@@ -1,5 +1,9 @@
 # Native source-to-WVB runbook
 
+> Status: Current mixed pinned/bootstrap and Project 4 development workflow
+> Authority: Informative; linked contracts own admission and publication rules
+> Last reviewed: 2026-10-03
+
 This runbook owns the ordinary project source-to-verified-WVB workflow introduced
 by [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md).
 Its exact contract and non-claims are defined by the
@@ -24,7 +28,7 @@ On Linux x64, use Bash:
 If the output is omitted, it defaults beside the project with the same basename
 and a `.wvb` extension. The output directory must already exist.
 
-Both launchers use the qualified checked-in inventory under
+The Project 2/3 route uses the qualified checked-in inventory under
 [`Artifacts/Native-Front-Door/`](../../Artifacts/Native-Front-Door/Manifest.json).
 They verify both pinned host tools before execution, ask the native build driver to
 write a private caller-owned candidate, and invoke the native publisher only after
@@ -34,22 +38,25 @@ project, source set, compiler result, verifier result, or pre-replacement public
 attempt preserves an existing destination.
 
 Project 2 and Project 3 manifests use that pinned front-door route. A Project 4
-manifest is dispatched to the current development Project 4 helper, which acquires
+manifest is dispatched to the current development Project 4 helper, which reads
 the manifest reader, source admitter, source authenticator, foreign binder,
 analyzer, and emitter through the current split-compiler cache before invoking
-authenticated project compilation. That route rejects a pre-existing output path
-instead of replacing it and can perform cold cache construction. It is development
-evidence for the target-aware project path, not an installed-toolchain promotion
-or cross-host qualification claim.
+authenticated project compilation. Compiler construction is disabled: prepare
+the current checkpoint separately using the
+[native-test preparation procedure](Native-Tests.md#separate-current-compiler-preparation).
+A missing checkpoint gives an actionable refusal. The current-source publisher
+admits the candidate again and transactionally replaces an unaliased ordinary
+destination; publisher preparation may still be required. This is development
+evidence, not installed promotion or complete cross-host qualification.
 
 The project may identify at most 63 source modules. The launchers do not discover
 source files, install packages, infer imports, create output directories, package
 PE/ELF applications for the build result, or execute the result.
 
-## Forward-language candidate build
+## Pinned candidate build for older project manifests
 
-Source that uses post-freeze language features must opt into the unqualified
-current compiler candidate:
+These wrappers select a historical pinned candidate for Project 2/3 manifests.
+Project 4 dispatches to the prepared current-source helper described above:
 
 ```bat
 Tools\Native\Build-Current-Wvb.cmd <project.wvproj> [output.wvb]
@@ -62,10 +69,11 @@ Tools\Native\Build-Current-Wvb.cmd <project.wvproj> [output.wvb]
 This route binds the exact build driver under
 [`Artifacts/Native-Compiler-Reconstruction-Candidate/`](../../Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json)
 and uses its self-verified raw output contract. It is non-atomic development
-evidence, not a promotion or cross-host qualification claim; a failed write can
-leave an indeterminate destination. The WVDB Query package and current library
-verification use this route because the read-only directory facade consumes typed
-singleton capability references.
+evidence for the older manifest route, not a promotion or cross-host qualification
+claim; a failed write can leave an indeterminate destination. Do not use this
+pinned artifact's name as proof that it is the current Language 1.0 compiler.
+The [supported-toolchain map](../Project/Compiler-Tools-And-Libraries-Completion-Plan.md#supported-toolchain-and-retirement-map)
+owns its replacement conditions.
 
 Place a project manifest beside the component source it owns. Use a repository-root
 manifest only when one artifact genuinely spans components and therefore needs their

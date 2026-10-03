@@ -1,8 +1,8 @@
 # Windvale Libraries 1.0 plan
 
-> Status: Proposed suite catalog with an active Option/Result implementation goal
+> Status: Proposed wider suite; essential language/toolchain libraries are active
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-26
+> Last reviewed: 2026-10-03
 
 ## Status
 
@@ -29,84 +29,37 @@ decision number before publication.
 
 ## Active implementation goal
 
-The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
-coordinates this library sequence with compiler/runtime support, installed tools,
-real consumers, and testing at substantial chunk boundaries.
+The [language and essential-library scope decision](../Decisions/0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md)
+selects usable language/compiler/runtime delivery before database and application
+expansion. The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+orders the dependency audit, ordinary development workflow, ownership-to-storage
+memory, essential libraries and eventual installed promotion.
 
-Use the [1.0 completion matrix](Compiler-Tools-And-Libraries-1.0-Matrix.md) for
-the finite accepted/candidate inventory, required/optional distinctions,
-consumer dependencies and per-row completion evidence. In particular, the
-wider catalog below is not automatically accepted by the implementation goal.
+Use compiler lexing/parsing, symbol/analysis collections, interpreter working
+state and bytecode/object output as maintained consumers. Complete accepted
+value, numeric/ordering, memory, collection, bytes/text and resource APIs, plus
+explicit host file/directory/publication boundaries needed by the toolchain.
+The [completion matrix](Compiler-Tools-And-Libraries-1.0-Matrix.md) separates
+accepted declarations, existing implementation and unresolved public APIs.
 
-The maintained package parser now uses canonical `Option<u64>` and immutable
-borrowing through ordinary project build, safe publication, and Windows/Debian
-execution. Its [completed delivery gates](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing)
-cover the selected source closure, publication, and consumer behavior. Installed
-promotion and complete repository qualification remain separate.
+The package parser's selected immutable Option/Result borrowing checkpoint is
+[delivered](Compiler-Tools-And-Libraries-Completion-Plan.md#active-milestone-package-parser-with-immutable-borrowing).
+Retain package functionality needed for build, authentication and distribution.
+The typed Package-Lock directory is unfinished and deferred; it is no longer
+the mandatory memory-management consumer. Secondary applications may break
+when obsolete APIs are removed and can be migrated later.
 
-The selected owned-aggregate and reclamation prerequisite passes on Windows and
-Debian: nine source scenarios, including repeated successful allocation and
-refusal/release, retain exact ownership rejections. The
-[runtime evidence](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json)
-preserves that checkpoint's bounded shapes and target limits.
+The broad Data/Backend, network/TLS/HTTP, database, service and optional profiles
+below remain future catalog proposals where unaccepted. They do not become
+requirements for this language/toolchain delivery. Existing accepted contracts
+and exact historical evidence remain valid for their declared scopes.
 
-A focused candidate WVB 1.40 bridge now lets ordinary immutable helpers observe
-a raw Vector projected from an Option or either Result side without consuming
-it. Nine positive programs and nine malformed-bytecode cases pass on Windows and
-Debian with identical bytecode. Coverage includes `Option.Present` and `Option.Absent`, both
-Result sides and their unselected opposite projections, nonempty and empty
-Vectors, 128 allocation/borrow/release cycles, and repeated helper loops. A
-phantom-type Copy control checks that ownership follows stored fields, not an
-unused Vector type argument. The
-[projected-payload evidence](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json)
-owns exact host results and limits.
-
-Candidate WVB 1.42 adds Copy-record Vector and Sequence elements with source,
-complete-verifier and interpreter agreement. The
-[Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json)
-records seven deterministic positive programs and fifteen rejection groups on
-Windows and Debian, plus inherited borrowing, tracing and lifetime regressions.
-The [owned-budget helper implementation](../Decisions/0968-Thread-Owned-Budgets-Through-Collection-Helpers.md)
-now permits budget and collection operations outside Main in the candidate
-compiler, complete verifier and interpreter. Scanner ownership integration is
-still required for the typed Package-Lock directory. Wider collection APIs,
-native lowering and installed promotion remain open.
-
-A bounded internal budget collector now passes the existing accounting fixture
-on Windows and Debian: 54 cases cover live budgets and leases, stale generations,
-deferred parent release, malformed roots and capacity limits. The
-[accounting evidence](../Evidence/2026-09-25-Unreachable-Budget-Accounting.json)
-records identical bytecode across four compilations and measured execution.
-The subsequent helper implementation connects it to interpreter returns and
-gathers live caller, operand, returned-aggregate, task and allocation-lease roots
-before reclaiming unreferenced owners. The
-[development stabilization evidence](../Evidence/2026-09-26-Development-Stabilization.json)
-records focused Windows/Debian checks. The Package-Lock migration, native
-lowering and independent qualification remain open.
-
-Selecting and migrating a maintained owned-resource consumer remains a separate
-wider milestone, not a new requirement for the delivered package-parser gate.
-Consuming Vector extraction, arbitrary payload composition, native minor-40
-lowering, and installed promotion remain open; exclusive borrowing, take, and
-mapping follow separately. The broader library catalog remains a draft. This
-delivery split does not accept unreviewed API signatures or weaken the complete
-Libraries 1.0 gate.
-
-During implementation, use small diagnostic checks where needed. Once the
-chunk is coherent, inspect one combined verification plan, share construction
-products, and execute the affected behaviors on their required hosts. Preserve
-unaffected evidence after failures and rerun only dependencies invalidated by
-the fix. Do not restart broad verification for documentation, commits, or
-pushes. A run beyond the ordinary ten-minute local default has
-[standing maintainer approval](../../AGENTS.md#testing-and-verification).
-Announce its concrete command, expected cold duration, and finite maximum before
-execution, retain hard deadlines, and continue without another duration-approval
-request. This does not accept draft APIs or waive any evidence gate.
-
-The [verification throughput redesign](Verification-Throughput-Plan.md) remains
-supporting work with open performance targets; it does not block implementation
-until every verifier is fast. Commit coherent verified results and push them to
-both configured remotes, `origin` and `github`.
+Extend existing focused owners and preserve valid evidence. Before a selected
+compiler/runtime promotion, establish independent Windows/Debian reconstruction
+and qualification. Current memory candidates, broader ownership support and
+clean-install delivery still need work; completing one fixture cannot close a
+library row. Follow the handbook's bounded-run policy and push coherent verified
+changes to both configured remotes.
 
 ## Implementation checkpoint history
 
@@ -590,9 +543,12 @@ advance together. Fully independent versioning makes compiler-recognized Option
 and Result identities difficult to reason about. The hybrid keeps the language
 nucleus coherent and domain evolution focused.
 
-## Delivery phases
+## Proposed wider-suite delivery phases
 
-The phases are ordered by dependency and production usefulness. A phase may
+These phases describe the broader future suite, not the current language/toolchain
+critical path. Resume a selected family only for an accepted contract and named
+consumer under the active completion plan. The phases are ordered by dependency
+and production usefulness. A phase may
 deliver several small slices; it does not authorize empty scaffolding or one
 large merge.
 

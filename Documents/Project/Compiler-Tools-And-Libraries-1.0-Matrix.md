@@ -15,6 +15,14 @@ order. The [product plan](Windvale-1.0-Product-Plan.md) owns required host-produ
 outcomes, and the [library plan](Windvale-Libraries-1.0-Plan.md) owns proposed
 library organization. This inventory does not silently accept that proposal.
 
+The [language and essential-library scope decision](../Decisions/0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md)
+selects compiler/runtime/toolchain consumers first. Sections B and D are deferred
+catalogs. In section C, only the file/directory/publication boundaries needed by
+the toolchain are active; broader storage, network and security profiles remain
+deferred. Accepted Foundation declarations keep their contracts, but each
+delivery profile needs an exact inclusion/target mapping before qualification.
+WVDB and secondary application compatibility are not completion prerequisites.
+
 ## How a row closes
 
 For each row, record these six independent facts before marking it complete:
@@ -66,7 +74,7 @@ distribution lock and implementation/target mapping remain to be reconciled.
 | F03 `Foundationˉnumeric` | All registered integer/float conversion and reinterpretation families, strict floating operations and whole-u64 decimal parsing. | No complete canonical module/binding identified; compiler primitive support and Seed decimal parsing are different APIs. | Numeric/parser consumers; every declaration needs implementation and boundary/rounding/overflow evidence. Decimal128 requires the separate contract reconciliation below. |
 | F04 `Foundationˉordering` | Equality, deterministic total ordering and comparison protocol. | Existing byte/record comparison primitives are reusable, not a registry-conformance claim. | Package ordering and collection keys; exact equality/order laws, deterministic results and comparison-work bounds. |
 | F05 `Foundationˉmemory` | Budgets, allocation limits, ownership-return failures, and the registry's `Split` function. | [Memory source](../../Libraries/Foundation/Memory/Memory.wv); [owned-payload reclamation](../Evidence/2026-09-15-Owned-Payload-Runtime-Reclamation.json) proves selected paths. A candidate [native domain constructor](../../Specifications/Windvale-Native-Owned-Domain.md) creates the canonical root and physical/accounting states. The candidate [owned console launcher](../../Specifications/Windvale-Native-Owned-Console-Application.md) integrates that domain with ordinary ABI 24 Core application packaging and process exit. | Collection and parser consumers; complete registry mapping, exhaustion, release, stale/consumed budget rejection and measured bounds. Hosted launchers and installed qualification remain open. |
-| F06 `Foundationˉcollections` | Arrays, Vector, Sequence, slices, maps, sets, iterators and arenas. | [Collection source](../../Libraries/Foundation/Collections/Collections.wv) and compiler operations cover subsets. [Scalar indexed borrowing evidence](../Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json) covers selected scalar/enum access. [Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json) adds selected growth, freezing and reclamation. Candidate [exclusive scalar mutation](../Decisions/0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) connects six scalar replacement types and reserved parameter append to interpreter execution and native budgeted storage. | Complete generic `Vectorˉborrowˉat`, mutable element views, broader replacement, removal, all seven slice functions, Map/Set/Arena and Iterator families. Package/database consumers must prove borrow invalidation, capacity failures, iterator rules and teardown. Hosted launchers, independent reconstruction, installed qualification and automatic CI execution of the supplied-product indexed selection remain open. |
+| F06 `Foundationˉcollections` | Arrays, Vector, Sequence, slices, maps, sets, iterators and arenas. | [Collection source](../../Libraries/Foundation/Collections/Collections.wv) and compiler operations cover subsets. [Scalar indexed borrowing evidence](../Evidence/2026-09-22-Scalar-Vector-Indexed-Borrow.json) covers selected scalar/enum access. [Copy-record collection evidence](../Evidence/2026-09-25-Copy-Record-Collections.json) adds selected growth, freezing and reclamation. Candidate [exclusive scalar mutation](../Decisions/0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) connects six scalar replacement types and reserved parameter append to interpreter execution and native budgeted storage. | Complete generic `Vectorˉborrowˉat`, mutable element views, broader replacement, removal, all seven slice functions, Map/Set/Arena and Iterator families. Compiler/parser/interpreter consumers must prove borrow invalidation, capacity failures, iterator rules and teardown. Hosted launchers, independent reconstruction, installed qualification and automatic CI execution of the supplied-product indexed selection remain open. |
 | F07 `Foundationˉbytes` | Immutable bytes/ranges, buffers, reserved builders, registered endian/decimal appends and freeze. | Seed [byte construction](../../Foundation/Byte-Construction.wv) is reusable, not the registered budget-aware module. | Compiler, package and codecs; boundary/malformed inputs, builder ownership and deterministic output. |
 | F08 `Foundationˉtext` | Strict UTF-8 decoding, scalar observations/ranges, builders and formatting. | Existing compiler/runtime text support is not a complete canonical module. | Source diagnostics and data codecs; malformed UTF-8, limits, formatting determinism and allocation failures. |
 | F09 `Foundationˉresource` | Local-release protocol and mutation outcomes. | Compiler `using` support and [resource store](../../Libraries/Foundation/Resources/Resource-Store.wv) are distinct; the latter does not establish this whole module. | Resource-owning file/service consumers; release on every exit, exact partial/indeterminate completion and failure behavior. |
@@ -81,9 +89,11 @@ Existing verifier entry points include `language-1-front-door`,
 selectors and coverage before selecting a row's final gate; do not run their
 complete cold plans by default.
 
-## B. Required Data families; public APIs still candidate
+## B. Deferred Data families; public APIs still candidate
 
-The product requires data formats, validation and reusable algorithms. The
+These remain future library families rather than automatic language-delivery
+requirements. A digest or encoding leaf needed by the toolchain may stay active
+without admitting the whole profile. The
 [suite catalog](../../Specifications/Windvale-Libraries-1.0.md),
 [Backend API catalog](../../Specifications/Windvale-Backend-Libraries-1.0.md),
 and [binary-data profile](../../Specifications/Windvale-Binary-Data-1.0.md)
@@ -102,7 +112,7 @@ inventory, not authorization to implement its unresolved design choices.
 | D06 `Algorithmsˉsequence` | Candidate stable sort, selection/search/bounds facade; existing specialized algorithms are not one accepted public API. | Package ordering and database queries; simple oracle, deterministic comparison accounting, bounded memory and worst-case work. |
 | D07 `Securityˉdigest` | Reuse ordinary/streaming SHA-256 in `Foundation/`; settle public facade and exact size contract without cloning the implementation. | Packages and storage; golden/differential vectors, streaming length boundaries, deterministic bytes and allocation/work limits. |
 
-## C. Required hosted and security families; public APIs still candidate
+## C. Hosted and security families; select only required toolchain boundaries
 
 Hosted operations in these rows require provider identity, generation/revocation,
 denial, teardown, cancellation and failure evidence on each host. Pure path,
@@ -126,7 +136,7 @@ neither retry nor remote receipt is inferred from local acceptance.
 | H11 `Platformˉkeyˉstore` | Non-exportable key custody, rotation/revocation and destruction need selected provider contracts. | TLS service identity; deny unauthorized operations and preserve custody through restart. Production-listener claims wait for this gate. |
 | H12 `Networkˉtls` | Bounded hosted TLS implementations have isolated evidence, not complete Language 1.0 API/provider qualification. | Client/service streams on both hosts; typed peer evidence, truncation, cancellation, provider loss and clean shutdown. |
 
-## D. Backend application integration; public APIs still candidate
+## D. Deferred Backend application integration; public APIs still candidate
 
 | ID / candidate family | Required outcome and current gap | Consumer / final evidence |
 | --- | --- | --- |
@@ -156,13 +166,13 @@ Paper workloads remain design inputs, not executable consumers.
 | T02 Library-driven execution | [Borrowed Vector payloads](../Evidence/2026-09-22-Borrowed-Vector-Payloads.json) prove selected candidate WVB 1.40 scalar execution. | Source/WIR/WVB, complete verification, interpreter and required native lowering agree for every selected API; native minor-40 and installed promotion are not proved by that checkpoint. |
 | T03 Ordinary build/publication | [Source-edition package integration](../Evidence/2026-09-15-Source-Edition-Package-Integration.json) closes the selected package consumer. | Reconcile build/verify/run/inspect/assemble/link/package/publication tools and target/package identities for the complete selected suite. |
 | T04 Package lifecycle | [Package plan](Windvale-Package-System-Implementation-Plan.md) and existing package/generation/activation/uninstall owners provide subset evidence. | General dependency/admission and capability binding, clean installation, update, rollback, uninstall/data preservation and offline recovery; no inference from two pinned packages to arbitrary packages. |
-| T05 Service lifecycle | Existing provider and database services have bounded subsets. | Start/stop/restart, health, upgrade, recovery and explicit privileged service installation; selected contracts and independent host execution required. |
+| T05 Service lifecycle — deferred | Existing provider and database services have bounded subsets. | Separate future service delivery; no privileged service installation or WVDB service gate is required for the current language/toolchain scope. |
 | T06 Development verification | Focused selectors and exact reusable construction products exist. | Ordinary CI passes for the current state; fix failures causally without weakening frozen inputs, hiding failed owners, or raising resource limits to pass. |
 | T07 Candidate promotion | No claim that the complete Libraries 1.0 installed candidate is selected or qualified. | Choose exact identities and run independent Windows/Linux reconstruction, conformance, resource, clean-install and recovery gates before promotion. |
-| T08 Release readiness | Signed preview remains history. | Close support/security/compatibility and required WVDB/product gates; signing, tagging and public publication need explicit authorization. Compiler/library completion alone is not a product release. |
+| T08 Release readiness | Signed preview remains history. | Close the revised language/library/toolchain product gates, support/security/compatibility and exact distribution matrix; signing, tagging and public publication need explicit authorization. Narrow component checks do not establish a product release. |
 
-The [WVDB specification plan](WVDB-1.0-Specification-Plan.md) owns the dependency
-set for B10/T05/T08: types/values, entities/tables, relationships/constraints,
+The [WVDB specification plan](WVDB-1.0-Specification-Plan.md) owns the deferred
+database dependency set for B10/T05: types/values, entities/tables, relationships/constraints,
 indexes, queries/results, transactions/snapshots, catalog/migration,
 storage/reclamation, durability/integrity/full backup/restore, service,
 operations, and conformance. Accepted upper-layer direction does not close its
@@ -190,14 +200,14 @@ at its dependency boundary to treating the entire draft catalog as approved.
 No new public signature, standard profile or security choice is accepted by
 this inventory.
 
-### Required contract reconciliation
+### Deferred Decimal128 contract reconciliation
 
-The completion plan calls for Decimal128, while the frozen `Foundationˉnumeric`
+The earlier broad completion plan called for Decimal128, while the frozen `Foundationˉnumeric`
 block contains integer/floating operations and whole-u64 decimal parsing, not a
 Decimal128 type or arithmetic API. The accepted WVDB type direction includes
 exact decimal with a 128-bit coefficient and precision up to 38. Track this as
-a required unresolved cross-owner contract, not an optional deletion or an
-implicit registry addition. Settle arithmetic, rounding, scale/overflow, module
+a deferred database/library contract, not an essential toolchain requirement or
+an implicit registry addition. Before resuming it, settle arithmetic, rounding, scale/overflow, module
 ownership and signature identity with the maintainer before implementing a
 public Decimal128 surface; the
 [WVDB type review](WVDB-1.0-Types-Sizes-Documents-Graphs-And-Backup.md) remains its
@@ -208,24 +218,21 @@ database-side owner.
 1. Preserve the restored frozen Foundation identity after its accidental
    editorial change. The [focused repair evidence](../Evidence/2026-09-22-Frozen-Foundation-Identity-Repair.json)
    records passing Windows/Debian checks; it is not a green whole-CI claim.
-2. Keep F01/F02/F06 as the active feature chunk. The concrete migration candidate
-   is [Package-Lock](../../Libraries/Package/Package-Lock.wv): replace its private
-   repeatedly concatenated part-directory bytes with an owned typed directory,
-   then query locked parts and dependency/path checks without consuming it.
-   This is not an implemented consumer. Copy-record collections and owned-budget
-   helpers have focused Windows/Debian evidence under candidate WVB 1.42.
-   The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
-   owns the current implementation boundary and execution blockers. Avoid copying
-   that changing prerequisite list into each overview. More isolated fixtures
-   do not satisfy the maintained-consumer gate.
-   Preserve lock bytes, validation/failure ordering, bounded resource use and
-   the existing `package-format` consumer oracle; document any unavoidable
-   public API migration rather than hiding it in a parser refactor.
+2. Complete ownership-to-storage memory and the selected essential API rows
+   using compiler lexing/parsing, symbol/analysis state, interpreter working
+   storage and output construction as maintained consumers. The
+   [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md) owns the
+   current dependency map and integration gates. More isolated fixtures do not
+   satisfy the maintained-consumer requirement.
+   The typed [Package-Lock](../../Libraries/Package/Package-Lock.wv) migration is
+   deferred; it is not a delivered consumer or the mandatory next milestone.
+   Keep package functions needed to build/authenticate/distribute the toolchain,
+   with exact lock bytes, failure order and resource bounds.
 3. Expand each active row into declaration-level implementation and evidence
    mappings, using its existing owner rather than adding parallel verifiers.
-4. Ask for maintainer decisions at unresolved contract boundaries. Required rows
-   remain open until resolved; optional rows are never silently substituted for
-   missing required behavior.
+4. Resolve draft APIs at a concrete selected dependency boundary. Deferred rows
+   do not become automatic delivery blockers; a narrower passing subset must
+   still not be described as complete implementation of an accepted contract.
 
 This is a source/document audit and delivery inventory, not a fresh conformance
 run of every listed family. No overall percentage or completion date is inferred

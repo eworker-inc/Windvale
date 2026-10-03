@@ -65,6 +65,19 @@ The signed `v0.1.0` preview completed Windvale's initial feasibility phase. Do n
 
 Use these distinctions when choosing implementation work or describing progress:
 
+- The maintainer selected a usable language, compiler/runtime and essential
+  libraries as the first delivery on 3 October 2026 under
+  [the language and essential-library scope decision](Documents/Decisions/0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md).
+  Use the compiler and its tools as primary maintained consumers. WVDB, secondary
+  applications, broader service/OS work and 2.0 proposals are outside the current
+  critical path. Secondary applications may break and be migrated later; retain
+  package functionality needed by the toolchain. The typed Package-Lock refactor
+  is no longer the mandatory memory consumer.
+- Audit active commands and construction dependencies before retirement. Remove
+  superseded active implementations and compatibility when their supported
+  successors work; preserve required bootstrap inputs and immutable recovery
+  evidence. Host orchestration remains explicit until Windvale can replace it
+  usefully. Do not preserve an obsolete memory model for a secondary application.
 - The signed `v0.1.0` preview and Windvale Seed are historical baselines, not the
   target for new memory-management work. Preserve their exact recovery evidence;
   do not add permanent Seed compatibility to the forward compiler.
