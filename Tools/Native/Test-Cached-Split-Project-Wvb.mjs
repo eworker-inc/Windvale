@@ -1,5 +1,7 @@
 import Assert from 'node:assert/strict';
 import { Acquireˉauthenticatedˉanalysis } from './Authenticated-Analysis-Cache-Core.mjs';
+import { Acquireˉcurrentˉwvbˉpublisher } from './Current-Wvb-Publisher-Core.mjs';
+import { Createˉsegmentedˉhostedˉcheckpoint } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
 import { Buildˉcachedˉprojectˉwvb } from './Build-Cached-Project-Wvb.mjs';
 import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
 import {
@@ -85,6 +87,10 @@ await mkdir(Projectˉparentˉpath, { recursive: true });
 const Projectˉparent = realpathSync.native(Projectˉparentˉpath);
 const Projectˉroot = await mkdtemp(path.join(Projectˉparent, TEMPORARY_PREFIX));
 try {
+    if (process.argv[2] === '--publisher-cache') {
+        if (process.argv.length !== 3) Reject('Usage: --publisher-cache');
+        await Verifyˉpreparedˉpublisher(Testˉroot);
+    } else {
     await Verifyˉauthenticatedˉanalysisˉcache(Testˉroot);
     if (process.argv[2] === '--analysis-cache') process.exitCode = 0;
     else {
@@ -556,8 +562,9 @@ try {
     const Processˉcases = await Verifyˉconstructionˉprocessˉstatuses(Testˉroot);
     const Inspectionˉcases = await Verifyˉfunctionˉlimitˉdiagnostics(Testˉroot);
     const Legacyˉcases = await Verifyˉlegacyˉprojectˉcheckpoint(Testˉroot);
+    const Publisherˉcases = await Verifyˉpreparedˉpublisher(Testˉroot);
     console.log(
-        `split project cache test cases=${41 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases} status=Passed current-compiler-pair=Verified ` +
+        `split project cache test cases=${41 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases + Publisherˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -565,8 +572,9 @@ try {
         'raw-project2-route=Passed symbol-resume=Passed ' +
         'symbol-corruption=Rejected final-product-reuse=Passed ' +
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
-        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases} legacy-project-cache=${Legacyˉcases}`,
+        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases} legacy-project-cache=${Legacyˉcases} prepared-publisher=${Publisherˉcases}`,
     );
+    }
     }
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -1776,6 +1784,71 @@ async function Verifyˉcompilerˉpreparationˉcli(Testˉroot) {
     await Assert.rejects(Selected.Requireˉunchanged(), /checkpoint record differs/u);
     Cases += 2;
     return Cases;
+}
+
+async function Verifyˉpreparedˉpublisher(Testˉroot) {
+    const Previousˉroot = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Previousˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    const Root = path.join(Testˉroot, 'prepared-publisher');
+    await mkdir(Root);
+    const Cache = path.join(Root, 'cache');
+    const Host = process.platform === 'win32' ? 'windows-x64' : 'linux-x64';
+    const Extension = process.platform === 'win32' ? 'exe' : 'elf';
+    const Family = path.join(Cache, 'current-transactional-wvb-publisher-v1', Host);
+    const Wvb = path.join(Root, 'Publisher.wvb');
+    const Payload = Buffer.from('publisher input fixture\n');
+    const Product = Buffer.from('prepared publisher product fixture\n');
+    await writeFile(Wvb, Payload);
+    let Constructions = 0;
+    const Construct = async () => {
+        Constructions += 1;
+        throw new Error('publisher-staging-reached');
+    };
+    const Acquire = (Name, Compilerˉkey = 'a'.repeat(64)) => Acquireˉcurrentˉwvbˉpublisher(
+        Wvb, path.join(Root, `${Name}.${Extension}`), Compilerˉkey, Construct, Construct,
+    );
+    try {
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Cache;
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = 'invalid';
+        await Assert.rejects(Acquire('Invalid'), /must be absent or 1/u);
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+        let Key;
+        await Assert.rejects(Acquire('Missing'), Error => {
+            Assert.equal(Error.exitCode, 64);
+            const Match = /Prepared segmented hosted product missing key=([0-9a-f]{64})/u.exec(Error.message);
+            Assert.ok(Match);
+            Key = Match[1];
+            return true;
+        });
+        Assert.equal(Constructions, 0);
+        Assert.deepEqual(await readdir(Family), []);
+        Assert.deepEqual((await readdir(Root)).sort(), ['Publisher.wvb', 'cache']);
+        const Destination = path.join(Family, Key);
+        const Input = { path: Wvb, payload: Payload, bytes: Payload.length,
+            sha256: createHash('sha256').update(Payload).digest('hex') };
+        // Exercise cache control with an opaque product; this fixture is never executed.
+        await Createˉsegmentedˉhostedˉcheckpoint(Family, Destination, Key, '2', Input,
+            Place => writeFile(path.join(Place, `Product.${Extension}`), Product));
+        const Hit = await Acquire('Hit');
+        Assert.equal(Hit.Status, 'Hit');
+        Assert.deepEqual(await readFile(Hit.Path), Product);
+        Assert.equal(Constructions, 0);
+        await writeFile(path.join(Destination, `Product.${Extension}`), 'corrupt');
+        await Assert.rejects(Acquire('Corrupt'), /manifest differs/u);
+        Assert.equal(Constructions, 0);
+        delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        await Assert.rejects(Acquire('Construction', 'b'.repeat(64)), /publisher-staging-reached/u);
+        Assert.equal(Constructions, 1);
+        Assert.deepEqual(await readdir(Family), [Key]);
+        Assert.deepEqual(await readFile(Hit.Path), Product);
+        console.log('prepared publisher cache cases=5 status=Passed construction-on-miss=Disabled');
+        return 5;
+    } finally {
+        if (Previousˉroot === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Previousˉroot;
+        if (Previousˉmode === undefined) delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        else process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = Previousˉmode;
+    }
 }
 
 async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {

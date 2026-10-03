@@ -2484,8 +2484,45 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         Project4LauncherDevelopment = $true
+        Project4PublisherCacheDevelopment = $true
+        Project4LauncherExpectedSeconds = 960
+        Project4LauncherMaximumSeconds = 1980
+    },
+    @{
+        Name = 'Prepared publisher control and cache cases with routing companions'
+        Paths = @(
+            'Tools/Native/Current-Wvb-Publisher-Core.mjs',
+            'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+            'Tools/Native/Test-Compiler-Split-Development.mjs',
+            'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+            'Tools/Verify/Verify-Changed.ps1',
+            'Tools/Verify/Verify-Verification-Plan.ps1'
+        )
+        Suites = @('language-1-production-admission-ingress', 'compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $true
+        Project4LauncherDevelopment = $true
+        Project4PublisherCacheDevelopment = $true
+        Project4LauncherExpectedSeconds = 960
+        Project4LauncherMaximumSeconds = 1980
+    },
+    @{
+        Name = 'Publisher and Project 4 builder retain the complete cache cases'
+        Paths = @('Tools/Native/Current-Wvb-Publisher-Core.mjs', 'Tools/Native/Build-Wvb-Project4.mjs')
+        Suites = @('language-1-production-admission-ingress', 'compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+        Project4LauncherDevelopment = $true
         Project4LauncherExpectedSeconds = 1200
         Project4LauncherMaximumSeconds = 2400
+    },
+    @{
+        Name = 'Publisher and compiler implementation retain broader owners'
+        Paths = @('Tools/Native/Current-Wvb-Publisher-Core.mjs', 'Compiler/Windvale/Source-Emission-Core.wv')
+        Suites = @('language-1-front-door', 'language-1-production-admission-ingress', 'language-1-callable-semantics', 'compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+        Project4LauncherDevelopment = $false
     },
     @{
         Name = 'WVB runner reconstruction owner'
@@ -6006,6 +6043,17 @@ foreach ($Contract in @(
         )
     },
     @{
+        Name = 'Project 4 publisher cache checks avoid unrelated compiler construction'
+        Text = $ChangedVerification
+        Required = @(
+            '$Suite -eq ''compiler-split-development''',
+            '$NativePlan.UseProject4PublisherCacheDevelopment',
+            'Tools/Native/Test-Compiler-Split-Development.mjs',
+            '''--publisher-cache''',
+            'mode=publisher-cache cases=5 expected-seconds=60 maximum-seconds=180'
+        )
+    },
+    @{
         Name = 'changed-file Language 1 front-door development dispatch'
         Text = $ChangedVerification
         Required = @(
@@ -7616,6 +7664,12 @@ foreach ($Case in $NativeCases) {
     $Project4LauncherDevelopmentDiffers = (
         $Plan.UseProject4LauncherDevelopment -ne
             $ExpectedProject4LauncherDevelopment)
+    $ExpectedProject4PublisherCacheDevelopment = if (
+        $Case.ContainsKey('Project4PublisherCacheDevelopment')) {
+        $Case.Project4PublisherCacheDevelopment
+    } else { $false }
+    $Project4LauncherDevelopmentDiffers = $Project4LauncherDevelopmentDiffers -or
+        ($Plan.UseProject4PublisherCacheDevelopment -ne $ExpectedProject4PublisherCacheDevelopment)
     $Project4LauncherExpectedSecondsDiffers = (
         $Case.ContainsKey('Project4LauncherExpectedSeconds') -and
         $Plan.ExpectedSeconds -ne $Case.Project4LauncherExpectedSeconds)
@@ -7710,6 +7764,7 @@ foreach ($Case in $NativeCases) {
             "library-development=$($Plan.UseLibraryDevelopment), " +
             "library-target=$($Plan.LibraryDevelopmentTarget), " +
             "project4-launcher-development=$($Plan.UseProject4LauncherDevelopment), " +
+            "project4-publisher-cache-development=$($Plan.UseProject4PublisherCacheDevelopment), " +
             "database-development=$($Plan.UseDatabaseStorageDevelopment), " +
             "database-target=$($Plan.DatabaseStorageDevelopmentTarget), " +
             "database-cases=$($Plan.DatabaseStorageDevelopmentCaseCount), " +

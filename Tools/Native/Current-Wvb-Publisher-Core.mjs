@@ -10,10 +10,10 @@ import {
     Readˉboundedˉhostedˉfile,
 } from './Native-Hosted-Application-Cache-Core.mjs';
 import {
+    Acquireˉsegmentedˉhostedˉcheckpoint,
     Createˉsegmentedˉhostedˉcheckpoint,
     Materializeˉsegmentedˉhostedˉcheckpoint,
     Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged,
-    Validateˉsegmentedˉhostedˉcheckpoint,
 } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
 
 const NAMESPACE = 'current-transactional-wvb-publisher-v1';
@@ -108,6 +108,10 @@ async function Cacheˉkey(Input, Compilerˉkey) {
 export async function Acquireˉcurrentˉwvbˉpublisher(
     Wvb, Output, Compilerˉkey, Runˉnative, Runˉnode,
 ) {
+    const Productˉmode = process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+    if (Productˉmode !== undefined && Productˉmode !== '1') {
+        Reject('WINDVALE_PREPARED_PRODUCTS_ONLY must be absent or 1.');
+    }
     if (process.arch !== 'x64' || !['win32', 'linux'].includes(process.platform) ||
         !/^[0-9a-f]{64}$/u.test(Compilerˉkey) ||
         typeof Runˉnative !== 'function' || typeof Runˉnode !== 'function') {
@@ -141,13 +145,9 @@ export async function Acquireˉcurrentˉwvbˉpublisher(
             Reject('Current publisher inputs or producers changed during construction.');
         }
     };
-    const Existing = await lstat(Destination).catch(Error => {
-        if (Error.code === 'ENOENT') return null;
-        throw Error;
-    });
-    let Status = 'Hit';
-    if (Existing === null) {
-        Status = await Createˉsegmentedˉhostedˉcheckpoint(
+    const { checkpoint: Checkpoint, status: Status } = await Acquireˉsegmentedˉhostedˉcheckpoint(
+        Destination, Key, PROFILE, Input,
+        () => Createˉsegmentedˉhostedˉcheckpoint(
             Family, Destination, Key, PROFILE, Input,
             async Candidate => {
                 const Root = await realpath(os.tmpdir());
@@ -177,9 +177,8 @@ export async function Acquireˉcurrentˉwvbˉpublisher(
                     await rm(Work, { recursive: true, force: false });
                 }
             }, Admit,
-        );
-    }
-    const Checkpoint = await Validateˉsegmentedˉhostedˉcheckpoint(Destination, Key, PROFILE, Input);
+        ), Productˉmode === '1',
+    );
     await Admit();
     await Materializeˉsegmentedˉhostedˉcheckpoint(Checkpoint, Output);
     process.stdout.write(`current publisher cache status=${Status} key=${Key} host=${HOST}\n`);

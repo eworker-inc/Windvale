@@ -12,6 +12,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..', '..');
@@ -58,6 +59,17 @@ const COMPLETE_WVB = {
 
 // Reuse this owner for supplied-product diagnostics. The snapshot bundle is
 // produced by normal admission/analysis; this selection never builds a compiler.
+if (process.argv[2] === '--publisher-cache') {
+    if (process.argv.length !== 3) Reject('Usage: --publisher-cache');
+    const Result = await Runˉdevelopmentˉcommand(process.execPath,
+        [path.join(SCRIPT_DIRECTORY, 'Test-Cached-Split-Project-Wvb.mjs'), '--publisher-cache'],
+        Date.now() + 180_000, true, 1_048_576);
+    if (Result.Code !== 0 || Result.Error !== '') {
+        Reject(`Publisher cache checks failed: status=${Result.Code} ${Result.Error}`);
+    }
+    console.log('compiler split development status=Passed mode=publisher-cache cases=5 maximum-seconds=180');
+    process.exit(0);
+}
 if (process.argv[2] === '--emission-equivalence') {
     if (process.argv.length !== 9) {
         Reject('Usage: --emission-equivalence <admitter> <authenticator> <analyzer> <reference-emitter> <candidate-emitter> <binder>');

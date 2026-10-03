@@ -4991,6 +4991,11 @@ $Project4LauncherInputs = @(
     'Projects/Targets/Linux-X64-No-Foreign.wvtd',
     'Tools/Native/Build-Wvb-Project4.mjs',
     'Tools/Native/Current-Wvb-Publisher-Core.mjs',
+    'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+    'Tools/Native/Test-Compiler-Split-Development.mjs',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.cmd',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh'
@@ -4998,12 +5003,30 @@ $Project4LauncherInputs = @(
 $UseProject4LauncherDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-production-admission-ingress') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $Project4LauncherInputs }).Count -eq 0
+$PublisherCacheInputs = @(
+    'Tools/Native/Current-Wvb-Publisher-Core.mjs',
+    'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+    'Tools/Native/Test-Compiler-Split-Development.mjs',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1'
+)
+$UseProject4PublisherCacheDevelopment = $UseProject4LauncherDevelopment -and
+    $FocusedDevelopmentPaths -ccontains 'Tools/Native/Current-Wvb-Publisher-Core.mjs' -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCacheInputs }).Count -eq 0
 if ($UseProject4LauncherDevelopment) {
     $Project4Owner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-production-admission-ingress'
     })[0]
     $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $Project4Owner.ExpectedSeconds + 900)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $Project4Owner.MaximumSeconds + 1800)
+    if ($UseProject4PublisherCacheDevelopment -and $SelectedSuites.Contains('compiler-split-development')) {
+        $CacheOwner = @($SelectedSuiteEntries | Where-Object {
+            $_.Name -eq 'compiler-split-development'
+        })[0]
+        $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $CacheOwner.ExpectedSeconds + 60)
+        $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $CacheOwner.MaximumSeconds + 180)
+    }
 }
 $UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
@@ -5439,6 +5462,8 @@ if (!$Quiet) {
         $UsePublisherCurrentObjectDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Project 4 launcher development: ' +
         $UseProject4LauncherDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Project 4 publisher cache development: ' +
+        $UseProject4PublisherCacheDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Owned console development: ' +
         $UseOwnedConsoleDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
@@ -5529,6 +5554,7 @@ if ($PassThru) {
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
         UseOwnedConsoleDevelopment = $UseOwnedConsoleDevelopment
         UseProject4LauncherDevelopment = $UseProject4LauncherDevelopment
+        UseProject4PublisherCacheDevelopment = $UseProject4PublisherCacheDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount

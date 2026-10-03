@@ -213,6 +213,25 @@ preserves the old borrowing and delivered-consumer detail. Progress no longer
 lists completed record-vector work as a next step or repeats the obsolete
 pre-delivery consumer status. Its active text is below 2,000 words.
 
+### Ordinary owned-console baseline
+
+At source revision `8c19c1f2d13aba7ab1dab53bbc0b986e921ba1bf`, the maintained
+`Owned-Vector-Scope.wv` workload performs 1,000 scalar-Vector reserve/release
+cycles and returns `42`. With prepared Windows x64 products, three unchanged
+Project 4 builds took 4.1, 4.0 and 4.3 seconds. Ordinary WVB verification took
+0.25 seconds, current native lowering 3.4 seconds, owned-console packaging
+50.9 seconds and execution 0.33 seconds. The ordinary WVB runner refused this
+memory-budget entry under its `portable-main-i32` profile; the owned launcher
+supplied the budget and returned the expected result. The
+[source-to-WVB runbook](../Runbooks/Native-Source-To-Wvb.md#current-owned-memory-console-development)
+owns the commands and preparation boundary.
+
+These are warm measurements of an unchanged small program, not cold compiler
+construction or a representative compiler-edit baseline. Peak process memory
+was not measured. They do not close the ordinary-development phase or the
+memory completion gate. Measure changed application source, an affected compiler
+component and the corresponding Debian workflow before closing that phase.
+
 CI already requests cache saving after failure. Its remaining preparation work
 must finish or checkpoint before the enclosing 15-minute job is cancelled.
 The next CI batch will separate exact tool preparation from behavior execution

@@ -100,7 +100,7 @@ On Linux x64:
 Both routes verify the pinned native application before use. Inspection first asks
 the semantic verifier to admit the exact input, then runs the read-only structural
 inspector. Neither route requires .NET or grants file-write authority. The retained
-Stage 0 CLI remains available for explicit differential and recovery work.
+Stage 0 CLI requires the separate recovery workspace described below.
 
 ## Ordinary accepted-subset execution
 
@@ -121,6 +121,43 @@ Each launcher verifies the exact pinned runner digest before starting it. The
 runner admits and executes only its specified profiles and budgets, uses explicit
 host authority, and does not load .NET. Unsupported capability or execution
 surface fails explicitly.
+
+## Current owned-memory console development
+
+A program whose `Main` takes a canonical memory budget needs the owned-console
+launcher to supply that budget. The ordinary WVB runner's `portable-main-i32`
+entry profile does not supply it. Use the existing current native lowerer and
+owned launcher for the candidate scalar-Vector profile:
+
+```powershell
+$Work = 'Artifacts/Work/Owned-Vector-Example'
+New-Item -ItemType Directory -Force -Path $Work | Out-Null
+Tools/Native/Build-Wvb.cmd Projects/Tests/Windvale-Native-Test-Owned-Vector-Scope.wvproj "$Work/Example.wvb"
+Tools/Native/Verify-Wvb.cmd "$Work/Example.wvb"
+node Tools/Native/Lower-Wvb-To-Wvo.mjs --current "$Work/Example.wvb" "$Work/Example.wvo"
+node Tools/Native/Package-Console.mjs --maximum-seconds 120 --owned windows "$Work/Example.wvo" "$Work/Example.exe"
+& "$Work/Example.exe"
+```
+
+The example returns `42` after 1,000 reserve/release cycles; that exit code is its
+expected result. On Linux, use `Build-Wvb.sh` and `Verify-Wvb.sh`, package with
+`--owned linux`, and execute the resulting `.elf`. Prepare the current compiler
+and native tools separately using the
+[owned-console preparation procedure](Native-Tests.md#separate-current-compiler-preparation).
+The 120-second packaging limit above assumes those tools are prepared; it is
+not a cold preparation budget.
+
+`WINDVALE_PREPARED_PRODUCTS_ONLY=1` is for execution with already prepared
+products. It refuses a missing transactional publisher as well as other missing
+products, without construction. An invalid setting or corrupt checkpoint is an
+error. This mode can also refuse a new application product; ordinary source-edit
+builds use the prepared compiler while allowing the requested product to compile.
+It is not a substitute for an explicitly bounded preparation phase.
+
+These commands exercise ABI 24/context 10 scalar ownership and ordinary Core
+startup. They do not establish general owner aggregates, shared immutable
+last-share release, hosted memory startup, installed delivery or complete 1.0
+qualification.
 
 ## Stage 0 recovery
 

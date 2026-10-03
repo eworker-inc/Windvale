@@ -448,6 +448,11 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                     "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.$OwnerExtension")
                 $OwnerArguments = @('--project4-launcher')
                 $OwnerMessage = 'Native owner language-1-production-admission-ingress mode=project4-launcher cases=9 expected-seconds=900'
+            } elseif ($Suite -eq 'compiler-split-development' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UseProject4PublisherCacheDevelopment) {
+                $OwnerCommand = 'node'
+                $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Split-Development.mjs'), '--publisher-cache')
+                $OwnerMessage = 'Native owner compiler-split-development mode=publisher-cache cases=5 expected-seconds=60 maximum-seconds=180'
             } elseif ($Suite -eq 'language-1-front-door' -and
                 $Plan.Scope -eq 'development') {
                 $OwnerCommand = if ($IsWindowsHost) {
