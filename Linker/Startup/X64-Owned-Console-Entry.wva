@@ -1,0 +1,90 @@
+windvale-assembly 1
+
+# Console format 3 passes its immutable fresh-domain request in RDX.
+# Generated ABI 24 Main handles its normal/trap teardown. This outer owner
+# also closes a domain left open by a returned native entry, then checks closure.
+symbol export function Windvale_owned_console_entry in .text
+symbol import function Native_main
+symbol import function Windvale_budgeted_storage
+symbol import function Windvale_memory_budget_validate
+symbol import function Windvale_owned_domain_initialize
+section code .text align 16
+define Windvale_owned_console_entry
+push r12
+subtract_i32 rsp 144
+move r12 rdx
+move r8 rdx
+call Windvale_owned_domain_initialize
+test eax eax
+branch not_equal Invalid
+load_memory_u64 rdx r12 none 1 16
+xor ecx ecx
+move r8 rdx
+xor r9d r9d
+call Native_main
+store_memory_u64 rsp none 1 128 rax
+load_memory_u64 r8 r12 none 1 40
+load_memory_u32 eax r8 none 1 40
+compare_i32 eax 1
+branch equal Check_closed
+test eax eax
+branch not_equal Cleanup_failure
+xor eax eax
+move_u32 ecx 32
+label Clear_request
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Clear_request
+move_u32 eax 1
+store_memory_u32 rsp none 1 32 eax
+move_u32 eax 96
+store_memory_u32 rsp none 1 36 eax
+move_u32 eax 5
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rax r12 none 1 64
+store_memory_u64 rsp none 1 48 rax
+move r9 rsp
+add_i32 r9 32
+call Windvale_budgeted_storage
+test eax eax
+branch not_equal Cleanup_failure
+label Check_closed
+load_memory_u64 rdx r12 none 1 24
+load_memory_u32 eax rdx none 1 28
+compare_i32 eax 1
+branch not_equal Cleanup_failure
+load_memory_u64 rax rdx none 1 52
+test rax rax
+branch not_equal Cleanup_failure
+load_memory_u64 r8 r12 none 1 32
+call Windvale_memory_budget_validate
+test eax eax
+branch not_equal Cleanup_failure
+load_memory_u64 rdx r12 none 1 32
+move_u32 ecx 24
+label Accounting_closed
+load_memory_u64 rax rdx rcx 1 0
+test rax rax
+branch not_equal Cleanup_failure
+add_i32 ecx 40
+compare_i32 ecx 2616
+branch below Accounting_closed
+load_memory_u64 rax rsp none 1 128
+jump_label Finish
+label Cleanup_failure
+# Preserve an earlier language trap when cleanup reports a contract failure.
+load_memory_u64 rax rsp none 1 128
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Finish
+label Invalid
+move_u32 eax 9
+shift_left rax 32
+label Finish
+add_i32 rsp 144
+pop r12
+return
+end define
+end section

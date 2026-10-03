@@ -60,7 +60,7 @@ handbook.
   and specification pushes and pull requests. It adds the Windows development
   host only for Windows command, PowerShell, platform, or binary changes. Each
   automatic behavior job has a 15-minute wall-clock bound. Selected authenticated
-  foreign-binding and native lowerer work first prepare their exact compiler and
+  foreign-binding, native lowerer and owned-console development work first prepare their exact compiler and
   application products in a separate shared 75-minute command inside a 95-minute
   preparation job. Save
   completed checkpoints before behavior execution, including after preparation

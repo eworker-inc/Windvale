@@ -1813,8 +1813,34 @@ $PublisherCurrentObjectInputs = @(
     'Projects/Tests/Windvale-Native-Test-Current-Publisher-Object.wvproj',
     'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Current-Object-Admission.md'
 )
+$OwnedConsoleDevelopmentInputs = @(
+    'Linker/Startup/Linux-X64-Owned-Console.wva',
+    'Linker/Startup/Windows-X64-Owned-Console.wva',
+    'Linker/Startup/X64-Owned-Console-Entry.wva',
+    'Linker/Windvale/Console-Application-Plan-Core.wv',
+    'Linker/Windvale/Console-Application-Construction-Core.wv',
+    'Linker/Windvale/Console-Application-Admission-Core.wv',
+    'Linker/Windvale/Console-Application-Verification-Core.wv',
+    'Linker/Windvale/Console-Application-Packager.wv',
+    'Tools/Native/Package-Console.mjs',
+    'Tools/Native/Package-Console.cmd',
+    'Tools/Native/Package-Console.sh',
+    'Tools/Native/Native-Owned-Console-Cases.mjs',
+    'Tools/Native/Test-Console-Packager-Source-Reconstruction.mjs',
+    'Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd',
+    'Tools/Native/Test-Console-Packager-Source-Reconstruction.sh',
+    'Tests/Fixtures/Native-X64/Owned-Console-Fuel-Trap.wv',
+    'Tests/Fixtures/Native-X64/Owned-Console-Depth-Trap.wv',
+    'Projects/Tests/Windvale-Native-Test-Owned-Console-Fuel-Trap.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Owned-Console-Depth-Trap.wvproj',
+    'Specifications/Windvale-Native-Owned-Console-Application.md'
+)
 foreach ($Path in $Paths) {
     $script:CurrentChangedPath = $Path
+    if ($Path -cin $OwnedConsoleDevelopmentInputs) {
+        Add-Suite 'console-packager-source-reconstruction'
+        continue
+    }
     # Website checks run alongside native owners for mixed changes. These four
     # shared boundaries also retain their specific native execution evidence.
     if ($WebsitePaths.Contains($Path) -and $Path -cnotin @(
@@ -4863,6 +4889,14 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 # Documentation routing has already excluded executable and frozen contracts.
 # Keep every other path: owner routing alone is not a complete dependency proof.
 $FocusedDevelopmentPaths = @($Paths | Where-Object { !$DocumentationOnlyPaths.Contains($_) })
+$UseOwnedConsoleDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('console-packager-source-reconstruction') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cin $OwnedConsoleDevelopmentInputs }).Count -gt 0
+if ($UseOwnedConsoleDevelopment) {
+    $ConsoleOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'console-packager-source-reconstruction')[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $ConsoleOwner.ExpectedSeconds + 300)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $ConsoleOwner.MaximumSeconds + 600)
+}
 $StreamingSha256Inputs = @(
     'Foundation/Sha256-Compression.wv',
     'Foundation/Sha256-Streaming.wv',
@@ -5392,6 +5426,8 @@ if (!$Quiet) {
         $UsePublisherCurrentObjectDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Project 4 launcher development: ' +
         $UseProject4LauncherDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Owned console development: ' +
+        $UseOwnedConsoleDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
         Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
         Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
@@ -5478,6 +5514,7 @@ if ($PassThru) {
         UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
+        UseOwnedConsoleDevelopment = $UseOwnedConsoleDevelopment
         UseProject4LauncherDevelopment = $UseProject4LauncherDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible

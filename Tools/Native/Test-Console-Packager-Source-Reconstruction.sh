@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+if [[ ${1:-} == --owned-current || ${1:-} == --prepare-only || ${1:-} == --prepared-products-only ]]; then
+    exec node "$(dirname -- "$0")/Test-Console-Packager-Source-Reconstruction.mjs" "$@"
+fi
+
 if [[ $# -ne 0 ]]; then
     echo 'Usage: ./Tools/Native/Test-Console-Packager-Source-Reconstruction.sh' >&2
     exit 64

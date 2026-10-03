@@ -1,6 +1,10 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+if /I "%~1"=="--owned-current" goto :owned_current
+if /I "%~1"=="--prepare-only" goto :owned_current
+if /I "%~1"=="--prepared-products-only" goto :owned_current
+
 if not "%~1"=="" (
     >&2 echo Usage: Tools\Native\Test-Console-Packager-Source-Reconstruction.cmd
     exit /b 64
@@ -98,3 +102,7 @@ exit /b 1
 for %%F in (ordinary-packager-source.wvb ordinary-packager-source.wvo segmented-packager-source.wvb segmented-packager-source.wvo Build.out Build.err Lower.out Lower.err) do if exist "%TemporaryDirectory%\%%F" del /f /q "%TemporaryDirectory%\%%F" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b 0
+
+:owned_current
+node "%~dp0Test-Console-Packager-Source-Reconstruction.mjs" %*
+exit /b %ERRORLEVEL%

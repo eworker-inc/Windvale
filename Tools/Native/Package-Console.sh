@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+case "${1:-}" in
+    --owned|--current)
+        exec node "$(dirname -- "$0")/Package-Console.mjs" "$@"
+        ;;
+    windows-x64-console-v3|linux-x64-console-v3)
+        exec node "$(dirname -- "$0")/Package-Console.mjs" --current "$@"
+        ;;
+esac
+
 if [[ $# -ne 4 ]]; then
     echo 'Usage: ./Tools/Native/Package-Console.sh <windows-x64-console-v1|linux-x64-console-v1> <native-image.bin> <entry-offset> <output>' >&2
     exit 64

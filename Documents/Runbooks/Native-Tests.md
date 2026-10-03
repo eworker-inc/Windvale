@@ -2,7 +2,7 @@
 
 > Status: Current native verification procedure
 > Authority: Informative procedure; verification specifications own exact contracts
-> Last reviewed: 2026-09-26
+> Last reviewed: 2026-10-03
 
 This runbook owns the first .NET-free repository test slice accepted by
 [Decision 0218](../Decisions/0218-First-Native-Test-Orchestration.md). Its exact
@@ -98,6 +98,32 @@ reserved for that workflow and reject in an ordinary local command.
 
 ### Separate current compiler preparation
 
+Windvale's native and verification-result caches can live on a different drive
+from the checkout. On Windows, set their roots for the current shell before
+starting a build:
+
+```powershell
+$env:WINDVALE_NATIVE_CACHE_ROOT = 'E:\Windvale\Cache\Native'
+$env:WINDVALE_VERIFICATION_RESULT_CACHE_ROOT = 'E:\Windvale\Cache\Verification'
+```
+
+For persistent settings, use the corresponding user environment variables and
+restart the terminal. Add both names with `/p` to `WSLENV`, preserving its other
+entries, so WSL translates their paths. The example roots become
+`/mnt/e/Windvale/Cache/Native` and `/mnt/e/Windvale/Cache/Verification` in Debian.
+Compiler and result identities remain host-specific even when their parent
+directory is shared.
+
+WSL access to an NTFS cache needs working Linux permission metadata so cached
+executables retain their executable bit. If needed, configure its DrvFs mount
+with `metadata` and the actual Linux user's UID/GID, then verify `chmod` and
+execution on that mount before constructing tools. Keep large temporary Git
+source checkouts on Debian's native filesystem if DrvFs metadata operations
+exceed a bounded checkout phase. For example, scoped `TMPDIR=/var/tmp` keeps
+temporary compiler reconstruction on disk while both durable cache roots stay
+on E:. Check free space and the temporary filesystem's type first; a memory-backed
+`/tmp` adds source-checkout storage to the process workflow's memory pressure.
+
 The current split-project builder can prepare its identity-bound compiler and
 admission products without building a throwaway application. Select a finite
 deadline that includes construction and cleanup:
@@ -124,6 +150,14 @@ restriction can be inherited by nested builder invocations through
 that environment setting scoped to behavior execution, after preparation.
 This mode still permits building the requested product from a valid compiler.
 It does not make a cold owner profile cheap or qualify a restored compiler.
+
+The selected owned-console development path separates construction in the same
+way. Use `Test-Console-Packager-Source-Reconstruction.mjs --prepare-only
+--maximum-seconds <budget>` to prepare its current compiler and native tools;
+the preparation phase executes no behavior cases. Its `--prepared-products-only
+--maximum-seconds 600` selection refuses missing tool checkpoints. Automatic
+development jobs perform this preparation through `Verify-Changed.ps1` before
+the focused Windows/Linux behavior owners.
 
 For application or library development, deliberately select a previously
 prepared compiler by its reported checkpoint key. This selection stays fixed

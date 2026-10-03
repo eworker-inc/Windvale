@@ -1,0 +1,27 @@
+#!wv/1 en@1
+module Nativeˉownedˉconsoleˉdepthˉtrap;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
+
+fn Recurse(Count: i32) -> i32 {
+    if Count >= 1000000 { return 42; }
+    return Recurse(Count + 1);
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Results.Result<Collections.Vector<i32>, Memory.Allocationˉfailure> =
+        Collections.Vectorˉconstructˉreserved::<i32>(Budget, 1u64);
+    return match Outcome {
+        case Results.Result.Failure { Error: Refused } { 1 }
+        case Results.Result.Valid { Value: Values } {
+            var Result: i32 = 0;
+            using Resource = Values { Result = Recurse(0); }
+            Result
+        }
+    };
+}

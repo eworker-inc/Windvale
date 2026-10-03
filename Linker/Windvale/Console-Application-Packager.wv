@@ -64,19 +64,29 @@ fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
     return true;
 }
 
+fn Targetˉplatform(Target: u32) -> u32 {
+    if Target > 2u32 { return Target - 2u32; }
+    return Target;
+}
+
+fn Targetˉversion(Target: u32) -> u32 {
+    if Target > 2u32 { return 2u32; }
+    return 1u32;
+}
+
 fn Request(Input: bytes, Target: u32, Nativeˉentryˉoffset: u32) -> bytes {
     var Result: bytes = Empty(Input);
     Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
         Result, 1363367511u32
     );
     Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
-        Result, 1u32
+        Result, Targetˉversion(Target)
     );
     Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
         Result, 32u32
     );
     Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
-        Result, Target
+        Result, Targetˉplatform(Target)
     );
     Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
         Result, Bytesˉlength(Input)
@@ -97,15 +107,8 @@ fn Prepareˉrecipe(
     Target: u32,
     Nativeˉentryˉoffset: u32
 ) -> Consoleˉpackageˉresult {
-    if Target != 1u32 {
-        if Target != 2u32 {
-            return Failed(
-                Input,
-                Consoleˉpackageˉstatus.Invalidˉrequest,
-                Target,
-                Nativeˉentryˉoffset
-            );
-        }
+    if Target < 1u32 || Target > 4u32 {
+        return Failed(Input, Consoleˉpackageˉstatus.Invalidˉrequest, Target, Nativeˉentryˉoffset);
     }
     let Nativeˉbytes: u32 = Bytesˉlength(Input);
     if Nativeˉbytes == 0u32 {
@@ -145,7 +148,7 @@ fn Prepareˉrecipe(
             Nativeˉentryˉoffset
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != 1u32 {
+    if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != Targetˉversion(Target) {
         return Failed(
             Input,
             Consoleˉpackageˉstatus.Invalidˉrecipe,
@@ -177,7 +180,7 @@ fn Prepareˉrecipe(
             Nativeˉentryˉoffset
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Recipe, 20u32) != Target {
+    if Bytesˉreadˉu32ˉlittle(Recipe, 20u32) != Targetˉplatform(Target) {
         return Failed(
             Input,
             Consoleˉpackageˉstatus.Invalidˉrecipe,
@@ -230,7 +233,7 @@ fn Constructˉapplication(
     let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
     let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 24u32);
     let Segmentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 36u32);
-    if Target == 1u32 {
+    if Targetˉplatform(Target) == 1u32 {
         if Segmentˉcount != 5u32 {
             return Failed(
                 Input,
@@ -415,7 +418,7 @@ fn Verifyˉapplication(
             Nativeˉentryˉoffset
         );
     }
-    if Verified.Target != Target {
+    if Verified.Target != Targetˉplatform(Target) {
         return Failed(
             Input,
             Consoleˉpackageˉstatus.Verificationˉfailed,
@@ -492,6 +495,8 @@ fn Package(
 fn Targetˉname(Target: u32) -> text {
     if Target == 1u32 { return "windows-x64-console-v1"; }
     if Target == 2u32 { return "linux-x64-console-v1"; }
+    if Target == 3u32 { return "windows-x64-console-v3"; }
+    if Target == 4u32 { return "linux-x64-console-v3"; }
     return "invalid";
 }
 
@@ -519,6 +524,8 @@ fn Parseˉtarget(Value: bytes) -> u32 {
     if Bytesˉareˉequal(Value, Textˉtoˉutf8("linux-x64-console-v1")) {
         return 2u32;
     }
+    if Bytesˉareˉequal(Value, Textˉtoˉutf8("windows-x64-console-v3")) { return 3u32; }
+    if Bytesˉareˉequal(Value, Textˉtoˉutf8("linux-x64-console-v3")) { return 4u32; }
     return 0u32;
 }
 
@@ -546,7 +553,7 @@ export fn Main() -> i32 {
     }
     if process.argument_count() != 4u32 {
         diagnostic.write_line(
-            "Usage: wvpack <windows-x64-console-v1|linux-x64-console-v1> <native-image.bin> <entry-offset> <output>"
+            "Usage: wvpack <windows-x64-console-v1|linux-x64-console-v1|windows-x64-console-v3|linux-x64-console-v3> <native-image.bin> <entry-offset> <output>"
         );
         return 64;
     }

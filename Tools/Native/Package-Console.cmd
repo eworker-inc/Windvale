@@ -1,6 +1,11 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+if /I "%~1"=="--owned" goto :current
+if /I "%~1"=="--current" goto :current
+if /I "%~1"=="windows-x64-console-v3" goto :format_three
+if /I "%~1"=="linux-x64-console-v3" goto :format_three
+
 if "%~1"=="" goto :usage
 if "%~2"=="" goto :usage
 if "%~3"=="" goto :usage
@@ -38,6 +43,15 @@ if exist "%CandidatePath%" del /f /q "%CandidatePath%" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%
 
+:format_three
+node "%~dp0Package-Console.mjs" --current %*
+exit /b %ERRORLEVEL%
+
+:current
+node "%~dp0Package-Console.mjs" %*
+exit /b %ERRORLEVEL%
+
 :usage
 >&2 echo Usage: Tools\Native\Package-Console.cmd ^<windows-x64-console-v1^|linux-x64-console-v1^> ^<native-image.bin^> ^<entry-offset^> ^<output^>
+>&2 echo        Tools\Native\Package-Console.cmd --owned ^<windows^|linux^> ^<abi-24-main.wvo^> ^<output.exe^|elf^>
 exit /b 64

@@ -58,7 +58,7 @@ export fn Consoleˉapplicationˉadmission(
         Bytesˉreadˉu8(First, 154u32) == 2u8 {
         Hostedˉtarget = 1u32;
     }
-    if Firstˉbytes > 408u32 &&
+    if Firstˉbytes >= 412u32 &&
         Bytesˉreadˉu32ˉlittle(First, 0u32) == 1179403647u32 &&
         Bytesˉreadˉu32ˉlittle(First, 408u32) == 2u32 {
         Hostedˉtarget = 2u32;

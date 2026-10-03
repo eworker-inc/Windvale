@@ -45,6 +45,13 @@ export fn Consoleˉapplicationˉplanˉstatusˉvalue(
     return 0u32;
 }
 
+export fn Consoleˉapplicationˉplanˉversion(Input: bytes) -> u32 {
+    if Bytesˉlength(Input) >= 8u32 {
+        if Bytesˉreadˉu32ˉlittle(Input, 4u32) == 2u32 { return 2u32; }
+    }
+    return 1u32;
+}
+
 export fn Consoleˉapplicationˉplanˉresponse(
     Input: bytes,
     Status: Consoleˉapplicationˉplanˉstatus,
@@ -73,7 +80,9 @@ export fn Consoleˉapplicationˉplanˉresponse(
 ) -> bytes {
     var Result: bytes = Consoleˉapplicationˉplanˉempty(Input);
     Result = Consoleˉapplicationˉplanˉappendˉu32(Result, 1346590295u32);
-    Result = Consoleˉapplicationˉplanˉappendˉu32(Result, 1u32);
+    Result = Consoleˉapplicationˉplanˉappendˉu32(
+        Result, Consoleˉapplicationˉplanˉversion(Input)
+    );
     Result = Consoleˉapplicationˉplanˉappendˉu32(Result, 108u32);
     Result = Consoleˉapplicationˉplanˉappendˉu32(
         Result, Consoleˉapplicationˉplanˉstatusˉvalue(Status)
@@ -158,7 +167,15 @@ export fn Consoleˉapplicationˉplanˉwindows(
     Nativeˉimageˉbytes: u32,
     Nativeˉentryˉoffset: u32
 ) -> Consoleˉapplicationˉplanˉresult {
-    let Textˉvirtualˉbytes: u32 = 112u32 + Nativeˉimageˉbytes;
+    var Nativeˉoffset: u32 = 112u32;
+    var Startupˉbytes: u32 = 98u32;
+    var Dataˉbytes: u32 = 18874480u32;
+    if Consoleˉapplicationˉplanˉversion(Input) == 2u32 {
+        Nativeˉoffset = 144u32;
+        Startupˉbytes = 143u32;
+        Dataˉbytes = 16783296u32;
+    }
+    let Textˉvirtualˉbytes: u32 = Nativeˉoffset + Nativeˉimageˉbytes;
     let Textˉfileˉbytes: u32 = Textˉvirtualˉbytes +
         Consoleˉapplicationˉplanˉalignmentˉpadding(Textˉvirtualˉbytes, 512u32);
     let Dataˉfileˉoffset: u32 = 512u32 + Textˉfileˉbytes;
@@ -167,7 +184,7 @@ export fn Consoleˉapplicationˉplanˉwindows(
     let Dataˉbase: u32 = 4096u32 + Textˉvirtualˉbytes;
     let Dataˉvirtualˉaddress: u32 = Dataˉbase +
         Consoleˉapplicationˉplanˉalignmentˉpadding(Dataˉbase, 4096u32);
-    let Metadataˉbase: u32 = Dataˉvirtualˉaddress + 18874480u32;
+    let Metadataˉbase: u32 = Dataˉvirtualˉaddress + Dataˉbytes;
     let Metadataˉvirtualˉaddress: u32 = Metadataˉbase +
         Consoleˉapplicationˉplanˉalignmentˉpadding(Metadataˉbase, 4096u32);
     let Imageˉbase: u32 = Metadataˉvirtualˉaddress + 12u32;
@@ -187,17 +204,17 @@ export fn Consoleˉapplicationˉplanˉwindows(
         512u32,
         512u32,
         4096u32,
-        98u32,
-        112u32,
+        Startupˉbytes,
+        Nativeˉoffset,
         Nativeˉimageˉbytes,
         Nativeˉentryˉoffset,
-        4208u32 + Nativeˉentryˉoffset,
+        4096u32 + Nativeˉoffset + Nativeˉentryˉoffset,
         Textˉvirtualˉbytes,
         Textˉfileˉbytes,
         Dataˉfileˉoffset,
         Dataˉvirtualˉaddress,
         512u32,
-        18874480u32,
+        Dataˉbytes,
         Metadataˉfileˉoffset,
         512u32,
         Metadataˉvirtualˉaddress,
@@ -215,7 +232,15 @@ export fn Consoleˉapplicationˉplanˉlinux(
     Nativeˉimageˉbytes: u32,
     Nativeˉentryˉoffset: u32
 ) -> Consoleˉapplicationˉplanˉresult {
-    let Textˉvirtualˉbytes: u32 = 160u32 + Nativeˉimageˉbytes;
+    var Nativeˉoffset: u32 = 160u32;
+    var Startupˉbytes: u32 = 158u32;
+    var Dataˉbytes: u32 = 18874480u32;
+    if Consoleˉapplicationˉplanˉversion(Input) == 2u32 {
+        Nativeˉoffset = 208u32;
+        Startupˉbytes = 206u32;
+        Dataˉbytes = 16783296u32;
+    }
+    let Textˉvirtualˉbytes: u32 = Nativeˉoffset + Nativeˉimageˉbytes;
     let Dataˉbase: u32 = 4096u32 + Textˉvirtualˉbytes;
     let Dataˉfileˉoffset: u32 = Dataˉbase +
         Consoleˉapplicationˉplanˉalignmentˉpadding(Dataˉbase, 4096u32);
@@ -234,22 +259,22 @@ export fn Consoleˉapplicationˉplanˉlinux(
         4096u32,
         4096u32,
         4096u32,
-        158u32,
-        160u32,
+        Startupˉbytes,
+        Nativeˉoffset,
         Nativeˉimageˉbytes,
         Nativeˉentryˉoffset,
-        4256u32 + Nativeˉentryˉoffset,
+        4096u32 + Nativeˉoffset + Nativeˉentryˉoffset,
         Textˉvirtualˉbytes,
         Textˉvirtualˉbytes,
         Dataˉfileˉoffset,
         Dataˉfileˉoffset,
         112u32,
-        18874480u32,
+        Dataˉbytes,
         384u32,
         28u32,
         384u32,
         28u32,
-        Dataˉfileˉoffset + 18874480u32
+        Dataˉfileˉoffset + Dataˉbytes
     );
     return Consoleˉapplicationˉplanˉresult(
         Consoleˉapplicationˉplanˉstatus.Valid, Response, 32u32
@@ -268,10 +293,13 @@ export fn Consoleˉapplicationˉplan(Input: bytes) -> Consoleˉapplicationˉplan
             Input, Consoleˉapplicationˉplanˉstatus.Invalidˉmagic, 0u32
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
-        return Consoleˉapplicationˉplanˉfailure(
-            Input, Consoleˉapplicationˉplanˉstatus.Invalidˉversion, 4u32
-        );
+    let Version: u32 = Bytesˉreadˉu32ˉlittle(Input, 4u32);
+    if Version != 1u32 {
+        if Version != 2u32 {
+            return Consoleˉapplicationˉplanˉfailure(
+                Input, Consoleˉapplicationˉplanˉstatus.Invalidˉversion, 4u32
+            );
+        }
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
         return Consoleˉapplicationˉplanˉfailure(

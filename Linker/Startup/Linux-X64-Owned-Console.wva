@@ -1,0 +1,57 @@
+windvale-assembly 1
+
+# Canonical console format 3 startup with a bounded 64 MiB execution stack.
+symbol export function Linux_owned_console_startup in .text
+symbol import data Domain_request
+symbol import function Native_main
+symbol import data Owned_accounting
+symbol import data Owned_adapter
+symbol import data Owned_arena
+symbol import data Owned_context
+symbol import data Owned_physical
+section code .text align 16
+define Linux_owned_console_startup
+xor edi edi
+move_u32 esi 67108864
+move_u32 edx 3
+move_u32 r10d 131106
+xor r8 r8
+subtract_i32 r8 1
+xor r9d r9d
+move_u32 eax 9
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move rsp rax
+add_i32 rsp 67108864
+subtract_i32 rsp 32
+load_address rdx Domain_request
+load_address rax Owned_context
+store_memory_u64 rdx none 1 16 rax
+load_address rax Owned_physical
+store_memory_u64 rdx none 1 24 rax
+load_address rax Owned_accounting
+store_memory_u64 rdx none 1 32 rax
+load_address rax Owned_adapter
+store_memory_u64 rdx none 1 40 rax
+load_address rax Owned_arena
+store_memory_u64 rdx none 1 48 rax
+xor rcx rcx
+move r8 rdx
+xor r9 r9
+call Native_main
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Failure
+compare_i32 eax 255
+branch below_equal Exit
+label Failure
+move_u32 eax 1
+label Exit
+move edi eax
+move_u32 eax 60
+syscall
+trap
+end define
+end section

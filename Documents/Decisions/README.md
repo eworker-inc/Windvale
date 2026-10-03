@@ -12,7 +12,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | --- | ---: |
 | Accepted | 354 |
 | Implemented | 502 |
-| Proposed | 6 |
+| Proposed | 7 |
 | Qualified | 95 |
 | Recorded | 13 |
 | Superseded | 14 |
@@ -25,6 +25,7 @@ The normalized status is a search aid derived from the opening status. The copie
 - [Decision 0923: carry bound Foreign facts to typed lowering](0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md) — Proposed
 - [Decision 0973: connect exclusive Vector mutation to owned storage](0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) — Proposed
 - [Decision 0974: Construct fresh native owned-storage domains](0974-Construct-Fresh-Native-Owned-Storage-Domains.md) — Proposed
+- [Decision 0975: Launch owned-storage console applications](0975-Launch-Owned-Storage-Console-Applications.md) — Proposed
 
 ## Duplicated legacy numbers
 
@@ -49,6 +50,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0975: Launch owned-storage console applications](0975-Launch-Owned-Storage-Console-Applications.md) | Proposed |
 | [Decision 0974: Construct fresh native owned-storage domains](0974-Construct-Fresh-Native-Owned-Storage-Domains.md) | Proposed |
 | [Decision 0973: connect exclusive Vector mutation to owned storage](0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md) | Proposed |
 | [Decision 0972: pass native Vector borrows to helpers](0972-Pass-Native-Vector-Borrows-To-Helpers.md) | Recorded |
@@ -73,7 +75,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0953: bundle the root-split and depth-two database cases](0953-Bundle-The-Root-Split-And-Depth-Two-Database-Cases.md) | Implemented |
 | [Decision 0952: rank and trial overlapping database products](0952-Rank-And-Trial-Overlapping-Database-Products.md) | Implemented |
 | [Decision 0951: coalesce complete database bundles in development](0951-Coalesce-Complete-Database-Bundles-In-Development.md) | Implemented |
-| [Decision 0950: bundle compatible database ancestor cases](0950-Bundle-Compatible-Database-Ancestor-Cases.md) | Implemented |
 
 ## Superseded or historical records
 

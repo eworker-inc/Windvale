@@ -189,8 +189,22 @@ export fn Consoleˉapplicationˉverificationˉnativeˉimage(
     );
 }
 
+fn Consoleˉapplicationˉverificationˉversion(First: bytes, Target: u32) -> u32 {
+    if Target == 1u32 {
+        if Bytesˉlength(First) >= 155u32 {
+            if Bytesˉreadˉu8(First, 154u32) == 3u8 { return 2u32; }
+        }
+    } else {
+        if Bytesˉlength(First) >= 412u32 {
+            if Bytesˉreadˉu32ˉlittle(First, 408u32) == 3u32 { return 2u32; }
+        }
+    }
+    return 1u32;
+}
+
 fn Consoleˉapplicationˉverificationˉrecipeˉheader(
     Recipe: bytes,
+    Version: u32,
     Target: u32,
     Applicationˉbytes: u32,
     Nativeˉimageˉbytes: u32,
@@ -207,7 +221,7 @@ fn Consoleˉapplicationˉverificationˉrecipeˉheader(
             false, 0u32, 0u32, 0u32
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != 1u32 {
+    if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != Version {
         return Consoleˉapplicationˉrecipeˉheaderˉverification(
             false, 4u32, 0u32, 0u32
         );
@@ -409,6 +423,7 @@ export fn Consoleˉapplicationˉverificationˉrecipe(
     let Header: Consoleˉapplicationˉrecipeˉheaderˉverification =
         Consoleˉapplicationˉverificationˉrecipeˉheader(
             Recipe,
+            Consoleˉapplicationˉverificationˉversion(First, Target),
             Target,
             Applicationˉbytes,
             Nativeˉimageˉbytes,
@@ -489,25 +504,33 @@ fn Consoleˉapplicationˉverificationˉwindowsˉheader(
             Applicationˉbytes, 1u32, 0u32, 0u32
         );
     }
+    var Nativeˉoffset: u32 = 112u32;
+    var Callˉoffset: u32 = 566u32;
+    var Entryˉdelta: u32 = 54u32;
+    if Consoleˉapplicationˉverificationˉversion(First, 1u32) == 2u32 {
+        Nativeˉoffset = 144u32;
+        Callˉoffset = 611u32;
+        Entryˉdelta = 41u32;
+    }
     let Windowsˉtextˉbytes: u32 = Bytesˉreadˉu32ˉlittle(First, 400u32);
-    if Windowsˉtextˉbytes <= 112u32 {
+    if Windowsˉtextˉbytes <= Nativeˉoffset {
         return Consoleˉapplicationˉheaderˉverification(
             Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
             400u32, 1u32, 0u32, 0u32
         );
     }
-    let Nativeˉimageˉbytes: u32 = Windowsˉtextˉbytes - 112u32;
+    let Nativeˉimageˉbytes: u32 = Windowsˉtextˉbytes - Nativeˉoffset;
     if Nativeˉimageˉbytes > 4194304u32 {
         return Consoleˉapplicationˉheaderˉverification(
             Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
             400u32, 1u32, 0u32, 0u32
         );
     }
-    let Windowsˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, 566u32);
-    if Windowsˉcallˉdisplacement < 54u32 {
+    let Windowsˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, Callˉoffset);
+    if Windowsˉcallˉdisplacement < Entryˉdelta {
         return Consoleˉapplicationˉheaderˉverification(
             Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
-            566u32, 1u32, 0u32, 0u32
+            Callˉoffset, 1u32, 0u32, 0u32
         );
     }
     return Consoleˉapplicationˉheaderˉverification(
@@ -515,7 +538,7 @@ fn Consoleˉapplicationˉverificationˉwindowsˉheader(
         Applicationˉbytes,
         1u32,
         Nativeˉimageˉbytes,
-        Windowsˉcallˉdisplacement - 54u32
+        Windowsˉcallˉdisplacement - Entryˉdelta
     );
 }
 
@@ -560,25 +583,33 @@ fn Consoleˉapplicationˉverificationˉlinuxˉheader(
             Applicationˉbytes, 2u32, 0u32, 0u32
         );
     }
+    var Nativeˉoffset: u32 = 160u32;
+    var Callˉoffset: u32 = 4208u32;
+    var Entryˉdelta: u32 = 44u32;
+    if Consoleˉapplicationˉverificationˉversion(First, 2u32) == 2u32 {
+        Nativeˉoffset = 208u32;
+        Callˉoffset = 4256u32;
+        Entryˉdelta = 44u32;
+    }
     let Linuxˉtextˉbytes: u32 = Bytesˉreadˉu32ˉlittle(First, 152u32);
-    if Linuxˉtextˉbytes <= 160u32 {
+    if Linuxˉtextˉbytes <= Nativeˉoffset {
         return Consoleˉapplicationˉheaderˉverification(
             Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
             152u32, 2u32, 0u32, 0u32
         );
     }
-    let Nativeˉimageˉbytes: u32 = Linuxˉtextˉbytes - 160u32;
+    let Nativeˉimageˉbytes: u32 = Linuxˉtextˉbytes - Nativeˉoffset;
     if Nativeˉimageˉbytes > 4194304u32 {
         return Consoleˉapplicationˉheaderˉverification(
             Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
             152u32, 2u32, 0u32, 0u32
         );
     }
-    let Linuxˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, 4208u32);
-    if Linuxˉcallˉdisplacement < 44u32 {
+    let Linuxˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, Callˉoffset);
+    if Linuxˉcallˉdisplacement < Entryˉdelta {
         return Consoleˉapplicationˉheaderˉverification(
             Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
-            4208u32, 2u32, 0u32, 0u32
+            Callˉoffset, 2u32, 0u32, 0u32
         );
     }
     return Consoleˉapplicationˉheaderˉverification(
@@ -586,7 +617,7 @@ fn Consoleˉapplicationˉverificationˉlinuxˉheader(
         Applicationˉbytes,
         2u32,
         Nativeˉimageˉbytes,
-        Linuxˉcallˉdisplacement - 44u32
+        Linuxˉcallˉdisplacement - Entryˉdelta
     );
 }
 
@@ -648,17 +679,26 @@ export fn Consoleˉapplicationˉverification(
     if Header.Nativeˉentryˉoffset >= Header.Nativeˉimageˉbytes {
         var Entryˉoffset: u32 = 566u32;
         if Header.Target == 2u32 { Entryˉoffset = 4208u32; }
+        if Consoleˉapplicationˉverificationˉversion(First, Header.Target) == 2u32 {
+            Entryˉoffset = 611u32;
+            if Header.Target == 2u32 { Entryˉoffset = 4256u32; }
+        }
         return Consoleˉapplicationˉverificationˉfailure(
             First, Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
             Entryˉoffset, Header.Target, Applicationˉbytes
         );
     }
-    let Request: bytes = Consoleˉapplicationˉverificationˉrequest(
+    var Request: bytes = Consoleˉapplicationˉverificationˉrequest(
         First,
         Header.Target,
         Header.Nativeˉimageˉbytes,
         Header.Nativeˉentryˉoffset
     );
+    if Consoleˉapplicationˉverificationˉversion(First, Header.Target) == 2u32 {
+        Request = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉpatchˉu32(
+            Request, 4u32, 2u32
+        );
+    }
     let Recipe: bytes = Applicationˉconstruction.Consoleˉapplicationˉconstruction(Request);
     return Consoleˉapplicationˉverificationˉrecipe(
         First,

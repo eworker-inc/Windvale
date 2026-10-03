@@ -6266,6 +6266,69 @@ foreach ($OwnerPath in @(
         throw "The focused Foundation owner-flow plan differs for '$OwnerPath'."
     }
 }
+$OwnedConsolePaths = @(
+    'Linker/Startup/Linux-X64-Owned-Console.wva',
+    'Linker/Startup/Windows-X64-Owned-Console.wva',
+    'Linker/Startup/X64-Owned-Console-Entry.wva',
+    'Linker/Windvale/Console-Application-Plan-Core.wv',
+    'Linker/Windvale/Console-Application-Construction-Core.wv',
+    'Linker/Windvale/Console-Application-Admission-Core.wv',
+    'Linker/Windvale/Console-Application-Verification-Core.wv',
+    'Linker/Windvale/Console-Application-Packager.wv',
+    'Tools/Native/Package-Console.mjs',
+    'Tools/Native/Package-Console.cmd',
+    'Tools/Native/Package-Console.sh',
+    'Tools/Native/Native-Owned-Console-Cases.mjs',
+    'Tools/Native/Test-Console-Packager-Source-Reconstruction.mjs',
+    'Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd',
+    'Tools/Native/Test-Console-Packager-Source-Reconstruction.sh',
+    'Tests/Fixtures/Native-X64/Owned-Console-Fuel-Trap.wv',
+    'Tests/Fixtures/Native-X64/Owned-Console-Depth-Trap.wv',
+    'Projects/Tests/Windvale-Native-Test-Owned-Console-Fuel-Trap.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Owned-Console-Depth-Trap.wvproj',
+    'Specifications/Windvale-Native-Owned-Console-Application.md'
+)
+foreach ($ConsolePath in $OwnedConsolePaths) {
+    $ConsolePlan = & $NativePlanner -ChangedPath $ConsolePath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$ConsolePlan.UseOwnedConsoleDevelopment -or
+        $ConsolePlan.Suites.Count -ne 1 -or
+        $ConsolePlan.Suites[0] -cne 'console-packager-source-reconstruction' -or
+        $ConsolePlan.Gaps.Count -ne 0 -or
+        $ConsolePlan.ExpectedSeconds -ne 300 -or $ConsolePlan.MaximumSeconds -ne 600) {
+        throw "The current owned-console selection differs for '$ConsolePath'."
+    }
+}
+$ConsoleCompanionPlan = & $NativePlanner -ChangedPath @(
+    $OwnedConsolePaths + 'Documents/Project/Progress.md'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$ConsoleCompanionPlan.UseOwnedConsoleDevelopment -or
+    $ConsoleCompanionPlan.Suites.Count -ne 1 -or $ConsoleCompanionPlan.Gaps.Count -ne 0) {
+    throw 'Documentation companions lost the current owned-console selection.'
+}
+$DomainPlan = & $NativePlanner -ChangedPath 'Runtime/Native/X64-Owned-Domain.wva' -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+$MixedConsolePlan = & $NativePlanner -ChangedPath @(
+    $OwnedConsolePaths + 'Runtime/Native/X64-Owned-Domain.wva'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$MixedConsolePlan.UseOwnedConsoleDevelopment -or $DomainPlan.UseOwnedConsoleDevelopment -or
+    $MixedConsolePlan.Gaps.Count -ne 0 -or
+    @($DomainPlan.Suites | Where-Object { $_ -cnotin $MixedConsolePlan.Suites }).Count -ne 0) {
+    throw 'The owned-console selection hid shared runtime evidence.'
+}
+if (!$ChangedVerification.Contains("@('--owned-current', '--maximum-seconds', '600')", [StringComparison]::Ordinal)) {
+    throw 'The current owned-console behavior dispatch differs.'
+}
+foreach ($PreparationMarker in @(
+    'if ($NativePlan.UseOwnedConsoleDevelopment) {',
+    '--prepare-only --maximum-seconds $RemainingSeconds',
+    "$" + "OwnerArguments[0] = '--prepared-products-only'"
+)) {
+    if (!$ChangedVerification.Contains($PreparationMarker, [StringComparison]::Ordinal)) {
+        throw "Owned console preparation or prepared behavior lost '$PreparationMarker'."
+    }
+}
+
 foreach ($PublisherPath in @(
     'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
     'Tools/Native/Bind-Current-Publisher-Host-Imports.mjs',

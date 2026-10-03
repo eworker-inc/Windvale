@@ -122,8 +122,13 @@ ABI 24/context 10. Growth funds the full replacement while the old backing is
 live and preserves both owners on refusal. Direct helpers can transfer budgets,
 scalar Vectors and canonical allocation Results within that same domain;
 ordinary helper returns must explicitly release or transfer every owner.
+The candidate [owned console launcher](Specifications/Windvale-Native-Owned-Console-Application.md)
+connects a fresh process-local domain to ordinary Windows/Linux packaging and
+startup for capability-free ABI 24 Core applications. It checks physical and
+budget-domain closure before exit; hosted services and installed delivery remain
+outside that profile.
 Mutable indexed access, broader borrowed helpers, arbitrary owner-bearing
-aggregates, normal launchers and interpreter working state still need integration.
+aggregates, hosted launchers and interpreter working state still need integration.
 Connect those lifetimes and charges before describing the
 1.0 storage path as complete.
 
@@ -363,6 +368,11 @@ git status --short --branch
 git add <task-files>
 git commit -m "<task-scoped message>"
 git push
+git push github HEAD
 ```
+
+Push each completed change to both the configured working remote and the GitHub
+upstream, using their actual configured names, and verify that both branch heads
+match the committed revision.
 
 If the remote moved, use `git pull --rebase` and then push. Do not overwrite shared history.

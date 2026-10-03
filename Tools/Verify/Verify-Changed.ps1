@@ -197,7 +197,15 @@ if ($PreparationOnly) {
             $HostTarget $RepositoryRoot --prepare-only --maximum-seconds $RemainingSeconds
         if ($LASTEXITCODE -ne 0) { throw "Native lowerer preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
     }
-    if (@($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
+    if ($NativePlan.UseOwnedConsoleDevelopment) {
+        $RemainingSeconds = [int][Math]::Floor($PreparationMaximumSeconds - ([DateTime]::UtcNow - $VerificationStartedUtc).TotalSeconds)
+        if ($RemainingSeconds -lt 60) { throw 'The shared preparation deadline is exhausted; completed caches remain reusable.' }
+        Write-Host "Preparation owner=console-packager-source-reconstruction maximum-seconds=$RemainingSeconds"
+        & node (Join-Path $RepositoryRoot 'Tools/Native/Test-Console-Packager-Source-Reconstruction.mjs') `
+            --prepare-only --maximum-seconds $RemainingSeconds
+        if ($LASTEXITCODE -ne 0) { throw "Owned console preparation failed with exit $LASTEXITCODE; completed caches remain reusable." }
+    }
+    if (!$NativePlan.UseOwnedConsoleDevelopment -and @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -eq 0) {
         Write-Host 'Native preparation status=NotRequired selected-preparation-owners=0'
     }
     return
@@ -409,6 +417,16 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $OwnerMessage = (
                     'Native owner wvb-runner-reconstruction ' +
                     'mode=development-candidate-smoke')
+            } elseif ($Suite -eq 'console-packager-source-reconstruction' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UseOwnedConsoleDevelopment) {
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/Test-Console-Packager-Source-Reconstruction.$OwnerExtension")
+                $OwnerArguments = @('--owned-current', '--maximum-seconds', '600')
+                if ($UsePreparedProducts) {
+                    $OwnerArguments[0] = '--prepared-products-only'
+                }
+                $OwnerMessage = 'Native owner console-packager-source-reconstruction mode=owned-current expected-seconds=300 maximum-seconds=600'
             } elseif ($Suite -eq 'hosted-verifier-publisher-files' -and
                 $Plan.Scope -eq 'development' -and $NativePlan.UsePublisherCurrentObjectDevelopment) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }

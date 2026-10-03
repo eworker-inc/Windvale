@@ -100,17 +100,20 @@ owning caller can release its Vector after the loan ends.
 [Decision 0973](../Decisions/0973-Connect-Exclusive-Vector-Mutation-To-Owned-Storage.md)
 adds candidate scalar replacement, exclusive-parameter append and parameter
 length on that same storage path. Mutable element views, borrowed growth,
-general last-use borrowing, normal launchers and arbitrary owner aggregates
+general last-use borrowing, hosted launchers and arbitrary owner aggregates
 remain open. Complete those lifetimes before migrating interpreter working
 buffers or closing the memory gate.
 
 The candidate [fresh-domain constructor](../../Specifications/Windvale-Native-Owned-Domain.md)
 now initializes the physical allocator, canonical root budget, binding adapter
 and context 10 through one checked request. It rejects overlapping or previously
-used metadata and preserves bytes on failure. The next launcher task is an
-explicit container layout and ordinary startup using that constructor, followed
-by normal success/trap cleanup and paired host checks. This component does not
-qualify a launcher or reduce interpreter working storage.
+used metadata and preserves bytes on failure. The candidate
+[owned console application](../../Specifications/Windvale-Native-Owned-Console-Application.md)
+now supplies a fixed process-local domain through normal Windows and Linux
+startup. The ordinary packaging command links that startup to ABI 24 Core
+applications; the shared entry closes the domain and checks physical and budget
+accounting before exit. This bounded, capability-free profile does not complete
+hosted launchers, installed delivery or interpreter working storage.
 
 Work proceeds through these gates, preserving existing qualified contracts:
 
