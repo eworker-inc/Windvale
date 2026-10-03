@@ -8,6 +8,7 @@ authority library;
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
+import Compilerˉnativeˉx64ˉloweringˉownedˉframes as Ownedˉframes;
 
 export record Compilerˉnativeˉx64ˉobjectˉregions {
     Valid: bool;
@@ -130,7 +131,8 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
 ) -> Compilerˉnativeˉx64ˉobjectˉregions {
     let Helperˉbytes: u32 = Bytesˉlength(Helper);
     if Helperˉbytes != 0u32 &&
-        !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(Helper) {
+        !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(Helper) &&
+        !Ownedˉframes.Helperˉisˉexact(Helper) {
         return Invalidˉregions(Input);
     }
     if Codeˉbytes > 67108864u32 ||
@@ -334,9 +336,11 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         Function = Function + 1u32;
     }
     if Helperˉbytes > 0u32 {
+        var Helperˉname: text = "$native_sha256_hex";
+        if Ownedˉframes.Helperˉisˉexact(Helper) { Helperˉname = "$native_owned_frames"; }
         Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
             1u8, 1u8, 0u32, Declaredˉcodeˉbytes, Helperˉbytes,
-            Textˉtoˉutf8("$native_sha256_hex")
+            Textˉtoˉutf8(Helperˉname)
         ));
     }
     Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(

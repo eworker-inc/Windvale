@@ -6,6 +6,11 @@ authority library;
 
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 
+export record Analysis {
+    Valid: bool;
+    Ownedˉlocals: bytes;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -94,7 +99,7 @@ fn Setˉavailableˉhigh(
     return High & ~(1u32 << Shift);
 }
 
-export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
+export fn Analyze(
     Input: bytes,
     Codeˉoffset: u32,
     Codeˉlength: u32,
@@ -105,7 +110,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Isˉmain: bool,
     Instructions: bytes
-) -> bool {
+) -> Analysis {
     let Typeˉcount: u32 = Types.Count;
     let Ownedˉmodule: bool = Nominalˉtypes.Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32));
     let Locals: u32 = Bytesˉlength(Localˉtypes);
@@ -113,7 +118,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     if Bytesˉlength(Localˉtypeˉidentities) != Locals * 4u32 ||
         (Borrowˉkinds != 0u32 && Borrowˉkinds != Locals) ||
         Bytesˉlength(Instructions) != Codeˉlength || Parameters > Locals {
-        return false;
+        return Analysis(false, Empty(Input));
     }
 
     var Scratchˉresultˉtypes: bytes = Zeroˉmap(Input, Typeˉcount);
@@ -140,7 +145,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 5u32
             );
-            if Resultˉtype >= Typeˉcount { return false; }
+            if Resultˉtype >= Typeˉcount { return Analysis(false, Empty(Input)); }
             Scratchˉresultˉtypes = Setˉmapˉbyte(
                 Input, Scratchˉresultˉtypes, Resultˉtype
             );
@@ -149,11 +154,11 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             let Lengthˉtypeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 1u32
             );
-            if Lengthˉtypeˉlocal >= Locals { return false; }
+            if Lengthˉtypeˉlocal >= Locals { return Analysis(false, Empty(Input)); }
             let Lengthˉscratchˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Localˉtypeˉidentities, Lengthˉtypeˉlocal * 4u32
             );
-            if Lengthˉscratchˉtype >= Typeˉcount { return false; }
+            if Lengthˉscratchˉtype >= Typeˉcount { return Analysis(false, Empty(Input)); }
             Scratchˉresultˉtypes = Setˉmapˉbyte(
                 Input, Scratchˉresultˉtypes, Lengthˉscratchˉtype
             );
@@ -162,11 +167,11 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             let Regionˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 1u32
             );
-            if Regionˉscratchˉlocal >= Locals { return false; }
+            if Regionˉscratchˉlocal >= Locals { return Analysis(false, Empty(Input)); }
             let Regionˉscratchˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Localˉtypeˉidentities, Regionˉscratchˉlocal * 4u32
             );
-            if Regionˉscratchˉtype >= Typeˉcount { return false; }
+            if Regionˉscratchˉtype >= Typeˉcount { return Analysis(false, Empty(Input)); }
             Scratchˉresultˉtypes = Setˉmapˉbyte(
                 Input, Scratchˉresultˉtypes, Regionˉscratchˉtype
             );
@@ -179,12 +184,12 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Input, Codeˉoffset + Cursor + 5u32
             );
             if Regionˉlocal >= Locals || Pointerˉtype >= Typeˉcount {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             let Regionˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Localˉtypeˉidentities, Regionˉlocal * 4u32
             );
-            if Regionˉtype >= Typeˉcount { return false; }
+            if Regionˉtype >= Typeˉcount { return Analysis(false, Empty(Input)); }
             Scratchˉresultˉtypes = Setˉmapˉbyte(
                 Input, Scratchˉresultˉtypes, Regionˉtype
             );
@@ -197,7 +202,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             let Foreignˉpointerˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 5u32
             );
-            if Foreignˉpointerˉtype >= Typeˉcount { return false; }
+            if Foreignˉpointerˉtype >= Typeˉcount { return Analysis(false, Empty(Input)); }
             Scratchˉresultˉtypes = Setˉmapˉbyte(
                 Input, Scratchˉresultˉtypes, Foreignˉpointerˉtype
             );
@@ -211,6 +216,8 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     var Tracked: bytes = Zeroˉmap(Input, Locals);
     var Ranks: bytes = Empty(Input);
     var Trackedˉcount: u32 = 0u32;
+    var Ownedˉlocals: bytes = Empty(Input);
+    var Needsˉcleanup: bool = false;
     var Availableˉlow: u32 = 0u32;
     var Availableˉhigh: u32 = 0u32;
     var Local: u32 = 0u32;
@@ -238,7 +245,21 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             Isˉtracked = true;
         }
         if Isˉtracked {
-            if Trackedˉcount >= 64u32 { return false; }
+            if Trackedˉcount >= 64u32 { return Analysis(false, Empty(Input)); }
+            if Ownedˉmodule {
+                var Kind: u32 = 9u32;
+                if Type == 10u8 {
+                    if Identity == 25u32 { Kind = 7u32; }
+                } else {
+                    Kind = 19u32;
+                    if Nominalˉtypes.Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(Input, Types, Identity) {
+                        Kind = 17u32;
+                    }
+                }
+                Ownedˉlocals = Bytesˉconcat(Ownedˉlocals,
+                    Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Local * 16u32),
+                        Bytesˉfromˉu32ˉlittle(Kind)));
+            }
             Tracked = Setˉmapˉbyte(Input, Tracked, Local);
             Ranks = Bytesˉconcat(Ranks, Bytesˉfromˉu32ˉlittle(Trackedˉcount));
             if Local < Parameters {
@@ -277,7 +298,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                         (Availableˉlow != Branchˉlow || Availableˉhigh != Branchˉhigh) {
                         // This target lowers explicit drops. A join may not
                         // silently forget an owner that survives on one path.
-                        return false;
+                        return Analysis(false, Empty(Input));
                     }
                     Availableˉlow = Availableˉlow & Branchˉlow;
                     Availableˉhigh = Availableˉhigh & Branchˉhigh;
@@ -289,7 +310,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             }
             Branch = Branch + 12u32;
         }
-        if !Reachable { return false; }
+        if !Reachable { return Analysis(false, Empty(Input)); }
 
         Entries = Bytesˉconcat(
             Entries,
@@ -306,18 +327,18 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         if Ownedˉmodule && Opcode == 80u8 {
             // Only direct budget and Vector drops have a native release path.
             // A Result must first move out its active payload.
-            if Cursor < 5u32 || Bytesˉreadˉu8(Input, Codeˉoffset + Cursor - 5u32) != 205u8 { return false; }
+            if Cursor < 5u32 || Bytesˉreadˉu8(Input, Codeˉoffset + Cursor - 5u32) != 205u8 { return Analysis(false, Empty(Input)); }
             let Droppedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor - 4u32);
-            if Droppedˉlocal >= Locals || Bytesˉreadˉu8(Localˉtypes, Droppedˉlocal) != 10u8 { return false; }
+            if Droppedˉlocal >= Locals || Bytesˉreadˉu8(Localˉtypes, Droppedˉlocal) != 10u8 { return Analysis(false, Empty(Input)); }
             let Droppedˉidentity: u32 = Bytesˉreadˉu32ˉlittle(Localˉtypeˉidentities, Droppedˉlocal * 4u32);
             if Droppedˉidentity != 25u32 &&
-                (Droppedˉidentity < 2147483648u32 || Droppedˉidentity == 4294967295u32) { return false; }
+                (Droppedˉidentity < 2147483648u32 || Droppedˉidentity == 4294967295u32) { return Analysis(false, Empty(Input)); }
         }
         if Opcode == 4u8 || Opcode == 5u8 || Opcode == 205u8 {
             let Targetˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 1u32
             );
-            if Targetˉlocal >= Locals { return false; }
+            if Targetˉlocal >= Locals { return Analysis(false, Empty(Input)); }
             if Bytesˉreadˉu8(Tracked, Targetˉlocal) == 1u8 {
                 let Rank: u32 = Bytesˉreadˉu32ˉlittle(
                     Ranks, Targetˉlocal * 4u32
@@ -329,12 +350,12 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     Bytesˉreadˉu8(Pointerˉtypes, Targetˉidentity) == 1u8;
                 if Opcode == 4u8 {
                     if !Available(Availableˉlow, Availableˉhigh, Rank) {
-                        return false;
+                        return Analysis(false, Empty(Input));
                     }
                     let Observer: u32 = Nextˉinstruction(
                         Instructions, Cursor, Codeˉlength
                     );
-                    if Observer >= Codeˉlength { return false; }
+                    if Observer >= Codeˉlength { return Analysis(false, Empty(Input)); }
                     let Observerˉopcode: u8 = Bytesˉreadˉu8(
                         Input, Codeˉoffset + Observer
                     );
@@ -385,7 +406,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                             }
                         }
                         if !Callsˉforeign {
-                            if Observerˉopcode != 5u8 { return false; }
+                            if Observerˉopcode != 5u8 { return Analysis(false, Empty(Input)); }
                             let Pointerˉtarget: u32 =
                                 Bytesˉreadˉu32ˉlittle(
                                     Input, Codeˉoffset + Observer + 1u32
@@ -399,7 +420,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                                     Localˉtypeˉidentities,
                                     Pointerˉtarget * 4u32
                                 ) != Targetˉidentity {
-                                return false;
+                                return Analysis(false, Empty(Input));
                             }
                         }
                         Availableˉlow = Setˉavailableˉlow(
@@ -418,7 +439,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                                 Input, Codeˉoffset, Codeˉlength, Instructions, Observer);
                         }
                         if !Vectorˉcall {
-                            if Observerˉopcode != 5u8 { return false; }
+                            if Observerˉopcode != 5u8 { return Analysis(false, Empty(Input)); }
                             let Viewˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                                 Input, Codeˉoffset + Observer + 1u32
                             );
@@ -427,7 +448,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                                 Bytesˉreadˉu32ˉlittle(
                                     Localˉtypeˉidentities, Viewˉlocal * 4u32
                                 ) != 36u32 {
-                                return false;
+                                return Analysis(false, Empty(Input));
                             }
                         }
                     } else {
@@ -451,14 +472,14 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                             }
                         }
                         if !Borrowˉisˉvalid && Observerˉopcode != 152u8 {
-                            return false;
+                            return Analysis(false, Empty(Input));
                         }
                     }
                 }
                 if Opcode == 205u8 {
-                    if Isˉpointer { return false; }
+                    if Isˉpointer { return Analysis(false, Empty(Input)); }
                     if !Available(Availableˉlow, Availableˉhigh, Rank) {
-                        return false;
+                        return Analysis(false, Empty(Input));
                     }
                     Availableˉlow = Setˉavailableˉlow(
                         Availableˉlow, Rank, false
@@ -469,7 +490,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 }
                 if Opcode == 5u8 {
                     if Available(Availableˉlow, Availableˉhigh, Rank) {
-                        return false;
+                        return Analysis(false, Empty(Input));
                     }
                     Availableˉlow = Setˉavailableˉlow(
                         Availableˉlow, Rank, true
@@ -486,7 +507,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             );
             if Constructedˉtype < Typeˉcount &&
                 Bytesˉreadˉu8(Pointerˉtypes, Constructedˉtype) == 1u8 {
-                return false;
+                return Analysis(false, Empty(Input));
             }
         }
         if Opcode == 220u8 || Opcode == 207u8 {
@@ -498,13 +519,13 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Bytesˉreadˉu32ˉlittle(
                     Localˉtypeˉidentities, Budget * 4u32
                 ) != 25u32 {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             let Budgetˉrank: u32 = Bytesˉreadˉu32ˉlittle(
                 Ranks, Budget * 4u32
             );
             if !Available(Availableˉlow, Availableˉhigh, Budgetˉrank) {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             Availableˉlow = Setˉavailableˉlow(
                 Availableˉlow, Budgetˉrank, false
@@ -518,7 +539,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Input, Codeˉoffset + Cursor + 1u32
             );
             if Borrowedˉscratchˉlocal >= Locals {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             let Scratchˉborrowˉkind: u8 = Readˉborrowˉkind(
                 Localˉborrowˉkinds, Borrowedˉscratchˉlocal
@@ -531,7 +552,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                         Availableˉlow, Availableˉhigh,
                         Borrowedˉscratchˉrank
                     ) {
-                    return false;
+                    return Analysis(false, Empty(Input));
                 }
             } else if Scratchˉborrowˉkind == 28u8 {
                 let Borrowedˉscratchˉidentity: u32 =
@@ -544,9 +565,9 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                         Scratchˉresultˉtypes,
                         Borrowedˉscratchˉidentity
                     ) != 1u8 {
-                    return false;
+                    return Analysis(false, Empty(Input));
                 }
-            } else { return false; }
+            } else { return Analysis(false, Empty(Input)); }
         }
         if Opcode == 222u8 {
             let Writeˉregionˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
@@ -556,7 +577,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Bytesˉreadˉu8(
                     Tracked, Writeˉregionˉscratchˉlocal
                 ) != 1u8 {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             let Regionˉscratchˉrank: u32 = Bytesˉreadˉu32ˉlittle(
                 Ranks, Writeˉregionˉscratchˉlocal * 4u32
@@ -565,7 +586,7 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     Availableˉlow, Availableˉhigh,
                     Regionˉscratchˉrank
                 ) {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             Availableˉlow = Setˉavailableˉlow(
                 Availableˉlow, Regionˉscratchˉrank, false
@@ -580,26 +601,26 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             );
             if Writeˉpointerˉregionˉlocal >= Locals ||
                 Bytesˉreadˉu8(Tracked, Writeˉpointerˉregionˉlocal) != 1u8 {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             let Regionˉrank: u32 = Bytesˉreadˉu32ˉlittle(
                 Ranks, Writeˉpointerˉregionˉlocal * 4u32
             );
             if !Available(Availableˉlow, Availableˉhigh, Regionˉrank) {
-                return false;
+                return Analysis(false, Empty(Input));
             }
         }
         if Opcode == 208u8 || Opcode == 209u8 ||
             Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8 {
             let Vectorˉowner: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
-            if Vectorˉowner >= Locals { return false; }
+            if Vectorˉowner >= Locals { return Analysis(false, Empty(Input)); }
             let Vectorˉborrow: u8 = Readˉborrowˉkind(Localˉborrowˉkinds, Vectorˉowner);
             if Vectorˉowner < Parameters && (Vectorˉborrow == 26u8 || Vectorˉborrow == 27u8) {
                 if Opcode != 226u8 && Opcode != 227u8 &&
                     !(Vectorˉborrow == 27u8 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 &&
-                        (Opcode == 208u8 || Opcode == 228u8)) { return false; }
+                        (Opcode == 208u8 || Opcode == 228u8)) { return Analysis(false, Empty(Input)); }
             } else if Bytesˉreadˉu8(Tracked, Vectorˉowner) != 1u8 ||
-                !Available(Availableˉlow, Availableˉhigh, Bytesˉreadˉu32ˉlittle(Ranks, Vectorˉowner * 4u32)) { return false; }
+                !Available(Availableˉlow, Availableˉhigh, Bytesˉreadˉu32ˉlittle(Ranks, Vectorˉowner * 4u32)) { return Analysis(false, Empty(Input)); }
         }
         if Opcode == 206u8 || Opcode == 209u8 {
             var Fundingˉoffset: u32 = 1u32;
@@ -612,13 +633,13 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Bytesˉreadˉu32ˉlittle(
                     Localˉtypeˉidentities, Parent * 4u32
                 ) != 25u32 {
-                return false;
+                return Analysis(false, Empty(Input));
             }
             let Parentˉrank: u32 = Bytesˉreadˉu32ˉlittle(
                 Ranks, Parent * 4u32
             );
             if !Available(Availableˉlow, Availableˉhigh, Parentˉrank) {
-                return false;
+                return Analysis(false, Empty(Input));
             }
         }
         if Opcode == 48u8 || Opcode == 49u8 {
@@ -645,23 +666,26 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                                 Availableˉlow || Bytesˉreadˉu32ˉlittle(
                                 Entries, Entry + 8u32
                             ) != Availableˉhigh {
-                            return false;
+                            return Analysis(false, Empty(Input));
                         }
                         Found = true;
                     }
                     Entry = Entry + 12u32;
                 }
-                if !Found { return false; }
+                if !Found { return Analysis(false, Empty(Input)); }
             }
             if Opcode == 48u8 { Reachable = false; }
         }
         if Opcode == 81u8 {
-            // Only Main owns terminal domain teardown. Helpers must move or
-            // explicitly release all local owners before a successful return.
-            if Ownedˉmodule && !Isˉmain && (Availableˉlow != 0u32 || Availableˉhigh != 0u32) { return false; }
+            // Returned owners have already moved off the local availability
+            // map. Remaining helper owners require ordered frame cleanup.
+            if Ownedˉmodule && !Isˉmain && (Availableˉlow != 0u32 || Availableˉhigh != 0u32) {
+                Needsˉcleanup = true;
+            }
             Reachable = false;
         }
         Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
     }
-    return true;
+    if !Needsˉcleanup { Ownedˉlocals = Empty(Input); }
+    return Analysis(true, Ownedˉlocals);
 }

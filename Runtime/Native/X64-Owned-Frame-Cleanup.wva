@@ -1,0 +1,204 @@
+windvale-assembly 1
+symbol export function Windvale_owned_frame_cleanup in .text
+symbol export function Windvale_owned_frame_drop in .text
+symbol export function Windvale_owned_frame_track in .text
+section code .text align 16
+
+# Private frame ledger: count/capacity u32, then capacity u32 local ranks.
+# Track receives RAX=ledger, ECX=rank, EDX=0 acquire or 1 transfer.
+# The ledger has at most 64 entries and never allocates.
+define Windvale_owned_frame_track
+push r10
+push r11
+push rbx
+load_memory_u32 r8d rax none 1 0
+load_memory_u32 r9d rax none 1 4
+compare_i32 r9d 64
+branch above Invalid
+compare r8d r9d
+branch above Invalid
+compare ecx r9d
+branch above_equal Invalid
+compare_i32 edx 1
+branch above Invalid
+xor r10d r10d
+move_u32 r11d 4294967295
+label Scan
+compare r10d r8d
+branch above_equal Found
+load_memory_u32 ebx rax r10 4 8
+compare ebx r9d
+branch above_equal Invalid
+compare ebx ecx
+branch not_equal Next
+compare_i32 r11d -1
+branch not_equal Invalid
+move r11d r10d
+label Next
+add_i32 r10d 1
+jump_label Scan
+label Found
+test edx edx
+branch not_equal Transfer
+compare_i32 r11d -1
+branch not_equal Invalid
+compare r8d r9d
+branch above_equal Invalid
+store_memory_u32 rax r8 4 8 ecx
+add_i32 r8d 1
+store_memory_u32 rax none 1 0 r8d
+jump_label Valid
+label Transfer
+compare_i32 r11d -1
+branch equal Invalid
+move r10d r11d
+add_i32 r10d 1
+label Compact
+compare r10d r8d
+branch above_equal Removed
+load_memory_u32 ebx rax r10 4 8
+store_memory_u32 rax r11 4 8 ebx
+add_i32 r10d 1
+add_i32 r11d 1
+jump_label Compact
+label Removed
+subtract_i32 r8d 1
+store_memory_u32 rax none 1 0 r8d
+xor ebx ebx
+store_memory_u32 rax r8 4 8 ebx
+label Valid
+xor eax eax
+pop rbx
+pop r11
+pop r10
+return
+label Invalid
+move_u32 eax 5
+pop rbx
+pop r11
+pop r10
+return
+end define
+
+# RAX is an owner or allocation-Result address; ECX is kind 7/9/17/19.
+# RDX supplies the existing domain's generation-checked release helper.
+define Windvale_owned_frame_drop
+push r10
+push r11
+test rdx rdx
+branch equal Invalid
+compare_i32 ecx 7
+branch equal Release
+compare_i32 ecx 9
+branch equal Release
+compare_i32 ecx 17
+branch equal Result
+compare_i32 ecx 19
+branch not_equal Invalid
+label Result
+test rax rax
+branch equal Invalid
+load_memory_u32 r8d rax none 1 0
+test r8d r8d
+branch equal Payload
+compare_i32 r8d 1
+branch not_equal Invalid
+xor eax eax
+pop r11
+pop r10
+return
+label Payload
+load_memory_u64 rax rax none 1 16
+subtract_i32 ecx 10
+label Release
+subtract_i32 rsp 40
+call_register rdx
+add_i32 rsp 40
+pop r11
+pop r10
+return
+label Invalid
+move_u32 eax 5
+pop r11
+pop r10
+return
+end define
+
+# RAX=ledger, RDX=immutable (local byte offset, kind) pairs,
+# R8=local frame base, R9=release helper. R15 remains the owned context.
+define Windvale_owned_frame_cleanup
+push r10
+push r11
+push r12
+push r13
+push r14
+push rbx
+push rbp
+push rsi
+push rdi
+subtract_i32 rsp 32
+move r12 rax
+move r13 rdx
+move r14 r8
+move rbx r9
+load_memory_u32 esi r12 none 1 0
+load_memory_u32 ebp r12 none 1 4
+compare_i32 ebp 64
+branch above Invalid
+compare esi ebp
+branch above Invalid
+# Validate the complete bounded rank list before releasing an owner.
+xor ecx ecx
+label Validate
+compare ecx esi
+branch above_equal Release
+load_memory_u32 r10d r12 rcx 4 8
+compare r10d ebp
+branch above_equal Invalid
+xor edx edx
+label Distinct
+compare edx ecx
+branch above_equal Next
+load_memory_u32 r11d r12 rdx 4 8
+compare r10d r11d
+branch equal Invalid
+add_i32 edx 1
+jump_label Distinct
+label Next
+add_i32 ecx 1
+jump_label Validate
+label Release
+test esi esi
+branch equal Valid
+subtract_i32 esi 1
+load_memory_u32 edi r12 rsi 4 8
+store_memory_u32 r12 none 1 0 esi
+xor eax eax
+store_memory_u32 r12 rsi 4 8 eax
+load_memory_u32 edx r13 rdi 8 0
+load_memory_u64 rax r14 rdx 1 0
+load_memory_u32 ecx r13 rdi 8 4
+move rdx rbx
+call Windvale_owned_frame_drop
+test eax eax
+branch not_equal Finished
+jump_label Release
+label Valid
+xor eax eax
+jump_label Finished
+label Invalid
+move_u32 eax 5
+label Finished
+add_i32 rsp 32
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+pop r14
+pop r13
+pop r12
+pop r11
+pop r10
+return
+end define
+end section

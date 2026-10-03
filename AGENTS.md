@@ -134,13 +134,15 @@ reads, explicit replacement growth, scope release and terminal teardown through
 ABI 24/context 10. Growth funds the full replacement while the old backing is
 live and preserves both owners on refusal. Direct helpers can transfer budgets,
 scalar Vectors and canonical allocation Results within that same domain;
-ordinary helper returns must explicitly release or transfer every owner.
+ordinary helper returns now automatically release remaining budgets, scalar
+Vectors and canonical allocation Results in reverse acquisition order. A
+bounded stack ledger excludes transferred owners and borrowed parameters.
 The candidate [owned console launcher](Specifications/Windvale-Native-Owned-Console-Application.md)
 connects a fresh process-local domain to ordinary Windows/Linux packaging and
 startup for capability-free ABI 24 Core applications. It checks physical and
 budget-domain closure before exit; hosted services and installed delivery remain
 outside that profile.
-Mutable indexed access, broader borrowed helpers, arbitrary owner-bearing
+Broader scope exits, mutable element views, broader borrowed helpers, arbitrary owner-bearing
 aggregates, hosted launchers and interpreter working state still need integration.
 Connect those lifetimes and charges before describing the
 1.0 storage path as complete.

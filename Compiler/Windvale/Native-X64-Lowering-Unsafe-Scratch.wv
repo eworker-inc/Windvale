@@ -9,33 +9,7 @@ import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
-import Compilerˉnativeˉx64ˉloweringˉaffine as Affineˉownership;
 
-export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
-    Input: bytes,
-    Codeˉoffset: u32,
-    Codeˉlength: u32,
-    Parameters: u32,
-    Localˉtypes: bytes,
-    Localˉtypeˉidentities: bytes,
-    Localˉborrowˉkinds: bytes,
-    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    Isˉmain: bool,
-    Instructions: bytes
-) -> bool {
-    return Affineˉownership.Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
-        Input,
-        Codeˉoffset,
-        Codeˉlength,
-        Parameters,
-        Localˉtypes,
-        Localˉtypeˉidentities,
-        Localˉborrowˉkinds,
-        Types,
-        Isˉmain,
-        Instructions
-    );
-}
 
 fn Empty() -> bytes {
     let Zero: bytes = Bytesˉfromˉu8(0u8);

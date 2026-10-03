@@ -14,8 +14,9 @@ construct context 10. It is not installed qualification or complete Libraries 1.
 Reserved scalar Vectors now own physical storage and a canonical allocation
 lease. Append, indexed scalar reads and replacement use that backing directly. Explicit
 growth reserves replacement storage before releasing the old allocation.
-An explicit scope release returns the storage and parent budget credit.
-Normal return and terminal traps tear down the enclosing execution domain.
+Explicit scope release and automatic helper-return cleanup return storage and
+parent budget credit. Main return and terminal traps tear down the enclosing
+execution domain.
 The interpreter's working storage and shared immutable backing still need
 integration. No reduction in ordinary interpreter process memory is claimed.
 
@@ -57,13 +58,27 @@ entry template is emitted once at Main, at any function-directory position;
 helper allocation and release operations call that same template. Calling Main
 from bytecode is rejected because its wrapper owns initialization and teardown.
 
-Every ordinary helper return must have consumed, explicitly released or
-returned all its tracked owners. The native target rejects otherwise valid WVB
-that needs implicit helper-local cleanup. Allocation Results are tracked by
-their exact type even when received from a call or parameter; tracking does not
-depend on a constructor appearing in the same function. At most 64 owned local
-slots are tracked per function. Terminal helper traps unwind to Main's wrapper
-and reclaim the execution domain. Returned owners remain live in the caller.
+Ordinary helper returns automatically release remaining budgets, scalar Vectors
+and canonical allocation Results. Allocation Results are tracked by exact type
+even when received from a call or parameter; tracking does not depend on a
+constructor appearing in the same function. Successful Results release their
+owned payload; failure Results have no such payload. Returned owners remain
+live in the caller, including an allocation whose released parent budget must
+retain its reservation until the final descendant releases.
+
+At most 64 owned local slots are tracked per function. Functions needing implicit
+cleanup use a stack ledger with a count, capacity and ordered local ranks: at
+most 264 bytes, included in the existing 240-cell frame limit. Owned parameters
+enter in parameter order; stores append acquisitions and moves remove them.
+Cleanup walks remaining acquisitions in reverse order. Borrowed parameters do
+not enter the ledger. Immutable code metadata maps ranks to local offsets and
+the four admitted owner forms; no additional heap allocation is needed.
+The [frame helper](../Runtime/Native/X64-Owned-Frame-Cleanup.wva) calls the
+existing generation-checked domain release operation and preserves instruction
+fuel and call depth. Invalid internal ledger state or release traps; Main's
+wrapper reclaims the enclosing domain. This does not add general block-exit
+cleanup, arbitrary owner-bearing aggregates or shared immutable last-share
+release. Existing join and backedge restrictions remain.
 
 Borrowed scalar Vector helper parameters use the existing WVB shapes 26
 (immutable) and 27 (exclusive mutable) in admitted minor versions at least 1.26.
@@ -216,10 +231,24 @@ Its one, 1,000 and 32,768 iteration cases must fit the same 64-byte arena and
 48-byte peak charge, with zero live charge at completion. Main is not first in the function directory; the
 Vector travels through a stack argument as well as a return. Checks cover the
 64-function boundary, allocation refusal, nested fuel/depth failure, entry
-recursion rejection, copied owners and a helper retaining an owner at return.
+recursion rejection and copied owners.
 Borrowed-read and replacement bounds traps must reclaim the same domain. Malformed helper
 cases reject mutation through an immutable parameter, ownership escape and
 release of a borrowed Vector.
+
+The [automatic-cleanup workload](../Tests/Fixtures/Native-X64/Owned-Helper-Cleanup.wv)
+uses ordinary source helpers that leave budgets, Vectors and both canonical
+allocation Results at return. A constructor returns an allocation while its
+parent budget releases; later caller cleanup must still release that allocation
+and credit its ancestors. One, 1,000 and 32,768 iteration cases enforce the same
+64-byte arena and 48-byte peak physical charge, with zero live charge at exit.
+Budget-only cases allocate no physical backing. Repeated physical refusal uses
+a 16-byte arena; constructor traps must close the whole domain. Odd budget and
+even lease generation histories remain distinct.
+The same owner rebuilds the frame template, checks its private entry offsets,
+and executes bounded ledger tests for acquisition order, transfer/reacquisition,
+all four owner forms, malformed state and the 64-rank boundary. Its setup and
+boundary checks use bounded runtime loops rather than unrolled assembly.
 
 The [six-scalar workload](../Tests/Fixtures/Native-X64/Owned-Vector-Scalar-Mutation.wv)
 checks the old and updated values for every admitted scalar kind, including
@@ -235,7 +264,9 @@ digest-checked products may be supplied with `--lowerer`, `--borrow-probe`,
 and `--owned-scalar-helpers`
 to the existing native owner.
 Its `--owned-helper-memory` selection checks only helper mutation, transfers,
-refusal, bounds and cleanup with a digest-checked lowerer. The existing
+refusal, bounds and cleanup with a digest-checked lowerer. It also builds the
+small automatic-cleanup fixture through the prepared current compiler; the
+eight supplied-product options above do not supply that fixture. The existing
 memory-budget execution owner adds `--vector-mutation-products` to check the
 same bytecode on another host without rebuilding a compiler. Neither selection
 is independent compiler reconstruction or full cross-host qualification.

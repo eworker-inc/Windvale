@@ -1,0 +1,157 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉownedˉframes;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+// Linked from Runtime/Native/X64-Owned-Frame-Cleanup.wva. The focused native
+// owner rebuilds the template and checks each private entry offset.
+data Template: bytes = [
+    65, 82, 65, 83, 83, 68, 139, 132, 32, 0, 0, 0, 0, 68, 139, 140, 32, 4, 0, 0, 0, 65, 129, 249,
+    64, 0, 0, 0, 15, 135, 3, 1, 0, 0, 69, 57, 200, 15, 135, 250, 0, 0, 0, 68, 57, 201, 15, 131,
+    241, 0, 0, 0, 129, 250, 1, 0, 0, 0, 15, 135, 229, 0, 0, 0, 69, 49, 210, 65, 187, 255, 255, 255,
+    255, 69, 57, 194, 15, 131, 53, 0, 0, 0, 66, 139, 156, 144, 8, 0, 0, 0, 68, 57, 203, 15, 131, 194,
+    0, 0, 0, 57, 203, 15, 133, 16, 0, 0, 0, 65, 129, 251, 255, 255, 255, 255, 15, 133, 173, 0, 0, 0,
+    69, 137, 211, 65, 129, 194, 1, 0, 0, 0, 233, 194, 255, 255, 255, 133, 210, 15, 133, 50, 0, 0, 0, 65,
+    129, 251, 255, 255, 255, 255, 15, 133, 137, 0, 0, 0, 69, 57, 200, 15, 131, 128, 0, 0, 0, 66, 137, 140,
+    128, 8, 0, 0, 0, 65, 129, 192, 1, 0, 0, 0, 68, 137, 132, 32, 0, 0, 0, 0, 233, 92, 0, 0,
+    0, 65, 129, 251, 255, 255, 255, 255, 15, 132, 87, 0, 0, 0, 69, 137, 218, 65, 129, 194, 1, 0, 0, 0,
+    69, 57, 194, 15, 131, 35, 0, 0, 0, 66, 139, 156, 144, 8, 0, 0, 0, 66, 137, 156, 152, 8, 0, 0,
+    0, 65, 129, 194, 1, 0, 0, 0, 65, 129, 195, 1, 0, 0, 0, 233, 212, 255, 255, 255, 65, 129, 232, 1,
+    0, 0, 0, 68, 137, 132, 32, 0, 0, 0, 0, 49, 219, 66, 137, 156, 128, 8, 0, 0, 0, 49, 192, 91,
+    65, 91, 65, 90, 195, 184, 5, 0, 0, 0, 91, 65, 91, 65, 90, 195, 65, 82, 65, 83, 72, 133, 210, 15,
+    132, 129, 0, 0, 0, 129, 249, 7, 0, 0, 0, 15, 132, 96, 0, 0, 0, 129, 249, 9, 0, 0, 0, 15,
+    132, 84, 0, 0, 0, 129, 249, 17, 0, 0, 0, 15, 132, 12, 0, 0, 0, 129, 249, 19, 0, 0, 0, 15,
+    133, 81, 0, 0, 0, 72, 133, 192, 15, 132, 72, 0, 0, 0, 68, 139, 132, 32, 0, 0, 0, 0, 69, 133,
+    192, 15, 132, 20, 0, 0, 0, 65, 129, 248, 1, 0, 0, 0, 15, 133, 42, 0, 0, 0, 49, 192, 65, 91,
+    65, 90, 195, 72, 139, 132, 32, 16, 0, 0, 0, 129, 233, 10, 0, 0, 0, 72, 129, 236, 40, 0, 0, 0,
+    255, 210, 72, 129, 196, 40, 0, 0, 0, 65, 91, 65, 90, 195, 184, 5, 0, 0, 0, 65, 91, 65, 90, 195,
+    65, 82, 65, 83, 65, 84, 65, 85, 65, 86, 83, 85, 86, 87, 72, 129, 236, 32, 0, 0, 0, 73, 137, 196,
+    73, 137, 213, 77, 137, 198, 76, 137, 203, 65, 139, 180, 36, 0, 0, 0, 0, 65, 139, 172, 36, 4, 0, 0,
+    0, 129, 253, 64, 0, 0, 0, 15, 135, 176, 0, 0, 0, 57, 238, 15, 135, 168, 0, 0, 0, 49, 201, 57,
+    241, 15, 131, 66, 0, 0, 0, 69, 139, 148, 140, 8, 0, 0, 0, 65, 57, 234, 15, 131, 141, 0, 0, 0,
+    49, 210, 57, 202, 15, 131, 28, 0, 0, 0, 69, 139, 156, 148, 8, 0, 0, 0, 69, 57, 218, 15, 132, 114,
+    0, 0, 0, 129, 194, 1, 0, 0, 0, 233, 220, 255, 255, 255, 129, 193, 1, 0, 0, 0, 233, 182, 255, 255,
+    255, 133, 246, 15, 132, 77, 0, 0, 0, 129, 238, 1, 0, 0, 0, 65, 139, 188, 180, 8, 0, 0, 0, 65,
+    137, 180, 36, 0, 0, 0, 0, 49, 192, 65, 137, 132, 180, 8, 0, 0, 0, 65, 139, 148, 253, 0, 0, 0,
+    0, 73, 139, 132, 22, 0, 0, 0, 0, 65, 139, 140, 253, 4, 0, 0, 0, 72, 137, 218, 232, 143, 254, 255,
+    255, 133, 192, 15, 133, 17, 0, 0, 0, 233, 171, 255, 255, 255, 49, 192, 233, 5, 0, 0, 0, 184, 5, 0,
+    0, 0, 72, 129, 196, 32, 0, 0, 0, 95, 94, 93, 91, 65, 94, 65, 93, 65, 92, 65, 91, 65, 90, 195,
+];
+data Addressˉrax: bytes = [72, 141, 132, 36];
+data Addressˉrdxˉrelative: bytes = [72, 141, 21];
+data Addressˉr8: bytes = [76, 141, 4, 36];
+data Addressˉr9ˉrelative: bytes = [76, 141, 13];
+data Storeˉword: bytes = [199, 132, 36];
+data Rejectˉnonzero: bytes = [133, 192, 15, 133];
+
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+fn Word(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+fn Relative(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    return 4294967295u32 - (Origin - Target) + 1u32;
+}
+fn Store(Output: bytes, Offset: u32, Value: u32) -> bytes {
+    return Word(Word(Bytesˉconcat(Output, Storeˉword), Offset), Value);
+}
+fn Parameterˉcount(Locals: bytes, Parameters: u32) -> u32 {
+    var Count: u32 = 0u32;
+    while Count < Bytesˉlength(Locals) / 8u32 &&
+        Bytesˉreadˉu32ˉlittle(Locals, Count * 8u32) < Parameters * 16u32 {
+        Count = Count + 1u32;
+    }
+    return Count;
+}
+fn Rank(Locals: bytes, Local: u32) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Locals) / 8u32 {
+        if Bytesˉreadˉu32ˉlittle(Locals, Index * 8u32) == Local * 16u32 {
+            return Index;
+        }
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
+export fn Helper() -> bytes { return Template; }
+export fn Helperˉisˉexact(Input: bytes) -> bool {
+    if Bytesˉlength(Input) != 720u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 720u32 {
+        if Bytesˉreadˉu8(Input, Index) != Bytesˉreadˉu8(Template, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+export fn Slots(Locals: bytes) -> u32 {
+    if Bytesˉlength(Locals) == 0u32 { return 0u32; }
+    return (8u32 + Bytesˉlength(Locals) / 2u32 + 15u32) / 16u32;
+}
+export fn Prologueˉbytes(Locals: bytes, Parameters: u32) -> u32 {
+    if Bytesˉlength(Locals) == 0u32 { return 0u32; }
+    return 27u32 + Bytesˉlength(Locals) +
+        Parameterˉcount(Locals, Parameters) * 11u32;
+}
+export fn Emitˉprologue(Locals: bytes, Parameters: u32, Frameˉbase: u32)
+    -> bytes {
+    var Output: bytes = Empty(Locals);
+    if Bytesˉlength(Locals) == 0u32 { return Output; }
+    // The forward jump keeps immutable cleanup metadata out of execution.
+    Output = Word(Bytesˉfromˉu8(233u8), Bytesˉlength(Locals));
+    Output = Bytesˉconcat(Output, Locals);
+    let Count: u32 = Parameterˉcount(Locals, Parameters);
+    Output = Store(Output, Frameˉbase, Count);
+    Output = Store(Output, Frameˉbase + 4u32, Bytesˉlength(Locals) / 8u32);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Output = Store(Output, Frameˉbase + 8u32 + Index * 4u32, Index);
+        Index = Index + 1u32;
+    }
+    return Output;
+}
+export fn Hookˉbytes(Input: bytes, Offset: u32, Opcode: u8, Locals: bytes)
+    -> u32 {
+    if Bytesˉlength(Locals) == 0u32 { return 0u32; }
+    if Opcode == 81u8 { return 39u32; }
+    if Opcode != 5u8 && Opcode != 205u8 && Opcode != 207u8 { return 0u32; }
+    if Rank(Locals, Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32)) ==
+        4294967295u32 { return 0u32; }
+    return 31u32;
+}
+export fn Emitˉhook(
+    Input: bytes, Offset: u32, Opcode: u8, Locals: bytes,
+    Frameˉbase: u32, Metadataˉoffset: u32, Helperˉbase: u32,
+    Entryˉbase: u32, Codeˉbase: u32, Emittedˉoffset: u32,
+    Invalidˉtarget: u32
+) -> bytes {
+    var Output: bytes = Empty(Input);
+    if Hookˉbytes(Input, Offset, Opcode, Locals) == 0u32 { return Output; }
+    Output = Word(Addressˉrax, Frameˉbase);
+    var Target: u32 = Helperˉbase;
+    if Opcode == 81u8 {
+        Output = Bytesˉconcat(Output, Addressˉrdxˉrelative);
+        Output = Word(Output, Relative(Codeˉbase + Metadataˉoffset,
+            Codeˉbase + Emittedˉoffset + Bytesˉlength(Output) + 4u32));
+        Output = Bytesˉconcat(Output, Addressˉr8);
+        Output = Bytesˉconcat(Output, Addressˉr9ˉrelative);
+        Output = Word(Output, Relative(Entryˉbase + 1151u32,
+            Codeˉbase + Emittedˉoffset + Bytesˉlength(Output) + 4u32));
+        Target = Target + 456u32;
+    } else {
+        Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu8(185u8)),
+            Rank(Locals, Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32)));
+        var Operation: u32 = 1u32;
+        if Opcode == 5u8 { Operation = 0u32; }
+        Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu8(186u8)), Operation);
+    }
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu8(232u8));
+    Output = Word(Output, Relative(Target,
+        Codeˉbase + Emittedˉoffset + Bytesˉlength(Output) + 4u32));
+    Output = Bytesˉconcat(Output, Rejectˉnonzero);
+    return Word(Output, Relative(Invalidˉtarget,
+        Emittedˉoffset + Bytesˉlength(Output) + 4u32));
+}
