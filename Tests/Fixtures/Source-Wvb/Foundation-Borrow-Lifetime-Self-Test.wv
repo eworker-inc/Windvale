@@ -252,6 +252,69 @@ fn Checkˉsharedˉcallˉroots() -> i32 {
     return 0;
 }
 
+fn Dependencyˉflow(Count: u32, Looping: bool, Limit: u32) -> Owners.Loanˉevidence {
+    var Code: bytes = Bytesˉfromˉu8(80u8);
+    if Looping { Code = Instruction(48u8, 5u32); }
+    var Trace: Owners.Loanˉtrace = Owners.Loanˉevent(
+        Owners.Loanˉbegin(Shapes, 2u32, 2u32, Limit), 0u32, 1u32, 0u32, 0u32);
+    var Offset: u32 = 1u32;
+    while Offset < Count {
+        Code = Bytesˉconcat(Code, Bytesˉfromˉu8(80u8));
+        var Location: u32 = Offset;
+        if Looping { Location = Location + 4u32; }
+        Trace = Owners.Loanˉevent(Trace, Location, 3u32, 0u32, 0u32);
+        Offset = Offset + 1u32;
+    }
+    let Last: u32 = Bytesˉlength(Code) - 1u32;
+    Trace = Owners.Loanˉevent(Trace, Last, 3u32, 0u32, 0u32);
+    if Looping {
+        // The back edge changes the second slot's incoming state, revisiting
+        // dependencies in both the completed prefix and the active chunk.
+        Trace = Owners.Loanˉevent(Trace, Last, 2u32, 1u32, 0u32);
+        Code = Bytesˉconcat(Code, Instruction(49u8, 5u32));
+    }
+    Code = Bytesˉconcat(Code, Bytesˉfromˉu8(81u8));
+    let Input: bytes = Bytesˉconcat(Fragmentˉheader, Code);
+    let Control: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Input, 8u32, Bytesˉlength(Code));
+    return Owners.Loanˉcheckˉroots(Input, 8u32, Bytesˉlength(Code), 2u32, Control, Trace);
+}
+
+fn Checkˉdependencyˉchunks() -> i32 {
+    var Case: u32 = 0u32;
+    while Case < 7u32 {
+        var Count: u32 = 31u32 + Case;
+        if Case >= 3u32 { Count = 63u32 + Case - 3u32; }
+        let Looping: bool = Case == 6u32;
+        if Looping { Count = 513u32; }
+        let Evidence: Owners.Loanˉevidence = Dependencyˉflow(Count, Looping, 16777216u32);
+        var Rows: u32 = Count;
+        if Looping { Rows = Rows + 1u32; }
+        if !Evidence.Valid || Bytesˉlength(Evidence.Dependencies) != Rows * 12u32 { return 252; }
+        var Row: u32 = 0u32;
+        while Row < Count {
+            var Expected: u32 = Row;
+            if Looping && Row != 0u32 { Expected = Expected + 4u32; }
+            if Bytesˉreadˉu32ˉlittle(Evidence.Dependencies, Row * 12u32) != Expected ||
+                Bytesˉreadˉu32ˉlittle(Evidence.Dependencies, Row * 12u32 + 4u32) != 2u32 ||
+                Bytesˉreadˉu32ˉlittle(Evidence.Dependencies, Row * 12u32 + 8u32) != 0u32 { return 253; }
+            Row = Row + 1u32;
+        }
+        if Looping && !Hasˉdependency(Evidence.Dependencies, Count + 3u32, 3u32, 0u32) { return 254; }
+        let Exact: Owners.Loanˉevidence = Dependencyˉflow(Count, Looping, Evidence.Work);
+        let Refused: Owners.Loanˉevidence = Dependencyˉflow(Count, Looping, Evidence.Work - 1u32);
+        if !Exact.Valid || Exact.Work != Evidence.Work || Bytesˉlength(Exact.Dependencies) != Rows * 12u32 ||
+            Refused.Valid || Refused.Rule != 5u32 || Refused.Work >= Evidence.Work ||
+            Bytesˉlength(Refused.Dependencies) != 0u32 { return 255; }
+        Row = 0u32;
+        while Row < Rows * 12u32 {
+            if Bytesˉreadˉu8(Exact.Dependencies, Row) != Bytesˉreadˉu8(Evidence.Dependencies, Row) { return 255; }
+            Row = Row + 1u32;
+        }
+        Case = Case + 1u32;
+    }
+    return 0;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Start: bytes = Event(0u32, 1u32, 0u32, 0u32);
     let Read: bytes = Event(1u32, 3u32, 0u32, 0u32);
@@ -334,5 +397,7 @@ export fn Check(Candidate: bytes) -> i32 {
     }
     let Indexed: i32 = Checkˉindexedˉloans();
     if Indexed != 0 { return Indexed; }
+    let Chunked: i32 = Checkˉdependencyˉchunks();
+    if Chunked != 0 { return Chunked; }
     return Checkˉsharedˉcallˉroots();
 }

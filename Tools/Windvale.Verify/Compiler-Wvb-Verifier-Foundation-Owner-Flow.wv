@@ -485,34 +485,62 @@ fn Loanˉtransfer(State: bytes, Operation: u32, Destination: u32,
     return Loanˉstate(true, Bytesˉconcat(Result, Bytesˉconcat(Chunk, Bytesˉfromˉu8(Available))), 0u32, Work);
 }
 
-fn Loanˉdependency(Dependencies: bytes, Map: bytes, Loans: u32,
-    Offset: u32, Slot: u32, Root: u32, Limit: u32) -> Loanˉevidence {
-    let Cost: u32 = Bytesˉlength(Dependencies) +
-        Bytesˉlength(Dependencies) / 12u32 + Bytesˉlength(Map) / 4u32 + 48u32;
-    if Cost > Limit { return Loanˉreject(Dependencies, 5u32, Offset, 0u32); }
+record Loanˉdependencyˉbuffer {
+    Rule: u32;
+    Work: u32;
+    Rows: bytes;
+    Chunk: bytes;
+}
+
+fn Loanˉdependency(Dependencies: bytes, Chunk: bytes, Map: bytes, Loans: u32,
+    Offset: u32, Slot: u32, Root: u32, Limit: u32) -> Loanˉdependencyˉbuffer {
+    let Prefix: u32 = Bytesˉlength(Dependencies);
+    let Tail: u32 = Bytesˉlength(Chunk);
+    let Length: u32 = Prefix + Tail;
+    var Cost: u32 = Tail + Length / 12u32 + 48u32;
+    if Tail == 0u32 { Cost = Cost - 12u32; }
+    if Cost > Limit { return Loanˉdependencyˉbuffer(5u32, 0u32, Dependencies, Chunk); }
     var Actual: u32 = 0u32;
     if Slot < Loans {
         Actual = 4294967295u32;
-        var Local: u32 = 0u32;
-        while Local < Bytesˉlength(Map) / 4u32 {
+        // Retain the last matching local, stopping after the reverse lookup.
+        var Local: u32 = Bytesˉlength(Map) / 4u32;
+        while Local > 0u32 && Actual == 4294967295u32 {
+            if Cost >= Limit { return Loanˉdependencyˉbuffer(5u32, Cost, Dependencies, Chunk); }
+            Cost = Cost + 1u32;
+            Local = Local - 1u32;
             if Bytesˉreadˉu32ˉlittle(Map, Local * 4u32) == Slot { Actual = Local; }
-            Local = Local + 1u32;
         }
-        if Actual == 4294967295u32 { return Loanˉreject(Dependencies, 10u32, Offset, Cost); }
+        if Actual == 4294967295u32 { return Loanˉdependencyˉbuffer(10u32, Cost, Dependencies, Chunk); }
     } else { Actual = Bytesˉlength(Map) / 4u32 + Slot - Loans; }
     var Row: u32 = 0u32;
-    while Row < Bytesˉlength(Dependencies) {
-        if Bytesˉreadˉu32ˉlittle(Dependencies, Row) == Offset &&
-            Bytesˉreadˉu32ˉlittle(Dependencies, Row + 4u32) == Actual &&
-            Bytesˉreadˉu32ˉlittle(Dependencies, Row + 8u32) == Root {
-            return Loanˉevidence(true, 0u32, 0u32, Cost, Dependencies);
+    // Fixed-point traversal can revisit earlier offsets. Deduplicate across
+    // both buffers without assuming an ordering beyond first observation.
+    while Row < Length {
+        var Part: bytes = Dependencies;
+        var Cursor: u32 = Row;
+        if Row >= Prefix { Part = Chunk; Cursor = Row - Prefix; }
+        if Bytesˉreadˉu32ˉlittle(Part, Cursor) == Offset &&
+            Bytesˉreadˉu32ˉlittle(Part, Cursor + 4u32) == Actual &&
+            Bytesˉreadˉu32ˉlittle(Part, Cursor + 8u32) == Root {
+            return Loanˉdependencyˉbuffer(0u32, Cost, Dependencies, Chunk);
         }
         Row = Row + 12u32;
     }
-    if Bytesˉlength(Dependencies) >= 98304u32 { return Loanˉreject(Dependencies, 5u32, Offset, Cost); }
+    if Length >= 98304u32 { return Loanˉdependencyˉbuffer(5u32, Cost, Dependencies, Chunk); }
+    if Tail == 372u32 && Prefix != 0u32 {
+        if Length + 12u32 > Limit - Cost { return Loanˉdependencyˉbuffer(5u32, Cost, Dependencies, Chunk); }
+        Cost = Cost + Length + 12u32;
+    }
     let Cell: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Offset),
         Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Actual), Bytesˉfromˉu32ˉlittle(Root)));
-    return Loanˉevidence(true, 0u32, 0u32, Cost, Bytesˉconcat(Dependencies, Cell));
+    var Next: bytes = Cell;
+    if Tail != 0u32 { Next = Bytesˉconcat(Chunk, Cell); }
+    if Tail == 372u32 {
+        if Prefix != 0u32 { Next = Bytesˉconcat(Dependencies, Next); }
+        return Loanˉdependencyˉbuffer(0u32, Cost, Next, Bytesˉslice(Map, 0u32, 0u32));
+    }
+    return Loanˉdependencyˉbuffer(0u32, Cost, Dependencies, Next);
 }
 
 fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
@@ -530,6 +558,7 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
     }
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Dependencies: bytes = Empty;
+    var Dependencyˉchunk: bytes = Empty;
     let Limit: u32 = Trace.Limit;
     var Work: u32 = Trace.Work;
     if Bytesˉlength(Trace.Events) > Limit ||
@@ -647,11 +676,12 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
             let Rootˉloan: u32 = Bytesˉreadˉu32ˉlittle(Trace.Map, Root * 4u32);
             if Rootˉloan != 4294967295u32 { Initial = Setˉstate(Initial, Rootˉloan, 2u32); }
             if Collectˉroots && Rootˉloan != 4294967295u32 {
-                let Added: Loanˉevidence = Loanˉdependency(Dependencies, Trace.Map,
+                let Added: Loanˉdependencyˉbuffer = Loanˉdependency(Dependencies, Dependencyˉchunk, Trace.Map,
                     Trace.Locals, 0u32, Rootˉloan, Root, Limit - Work);
                 Work = Work + Added.Work;
-                if !Added.Valid { return Loanˉreject(Input, Added.Rule, Added.Offset, Work); }
-                Dependencies = Added.Dependencies;
+                if Added.Rule != 0u32 { return Loanˉreject(Input, Added.Rule, 0u32, Work); }
+                Dependencies = Added.Rows;
+                Dependencyˉchunk = Added.Chunk;
             }
         }
         var Available: u8 = 1u8;
@@ -690,11 +720,12 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
                     if Collectˉroots && Root != 4294967295u32 &&
                         (Transferˉoperation <= 3u32 || Transferˉoperation >= 7u32) &&
                         (U32ˉfromˉu8(Bytesˉreadˉu8(State, Transferˉdestination)) & 2u32) != 0u32 {
-                        let Transferˉdependency: Loanˉevidence = Loanˉdependency(Dependencies,
-                            Trace.Map, Trace.Locals, Transferˉoffset, Transferˉdestination, Root, Limit - Work);
+                        let Transferˉdependency: Loanˉdependencyˉbuffer = Loanˉdependency(Dependencies,
+                            Dependencyˉchunk, Trace.Map, Trace.Locals, Transferˉoffset, Transferˉdestination, Root, Limit - Work);
                         Work = Work + Transferˉdependency.Work;
-                        if !Transferˉdependency.Valid { return Loanˉreject(Input, Transferˉdependency.Rule, Transferˉdependency.Offset, Work); }
-                        Dependencies = Transferˉdependency.Dependencies;
+                        if Transferˉdependency.Rule != 0u32 { return Loanˉreject(Input, Transferˉdependency.Rule, Transferˉoffset, Work); }
+                        Dependencies = Transferˉdependency.Rows;
+                        Dependencyˉchunk = Transferˉdependency.Chunk;
                     }
                     Event = Event + 16u32;
                 }
@@ -734,6 +765,15 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
             }
         }
         Rootˉindex = Rootˉindex + 1u32;
+    }
+    if Bytesˉlength(Dependencyˉchunk) != 0u32 {
+        if Bytesˉlength(Dependencies) == 0u32 { Dependencies = Dependencyˉchunk; }
+        else {
+            let Merge: u32 = Bytesˉlength(Dependencies) + Bytesˉlength(Dependencyˉchunk);
+            if Merge > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+            Work = Work + Merge;
+            Dependencies = Bytesˉconcat(Dependencies, Dependencyˉchunk);
+        }
     }
     return Loanˉevidence(true, 0u32, 0u32, Work, Dependencies);
 }

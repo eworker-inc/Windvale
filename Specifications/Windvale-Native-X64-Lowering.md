@@ -39,19 +39,41 @@ return ownership through the same plan used for measurement and emission.
 Directory admission is bounded to 16 MiB of work; directory plus one function
 is bounded to 96 MiB of cumulative reads and copies. These are work limits,
 not live-storage limits or a bound on the entire native lowering phase.
-The complete verifier's executable and control passes index the structurally
-admitted type section once per pass. The private index contains at most 1,025
+The complete verifier indexes the type section once after structural, module
+and data admission, then shares that invocation-local view across function,
+executable and control checks. The private index contains at most 1,025
 u32 offsets (4,100 bytes), including the section end; construction uses 64-row
 chunks. Nominal lookups use those offsets without rescanning earlier types.
-Earlier semantic-phase readers retain the same checks through an unindexed
-view. The index is invocation-local working state, not serialized WVB evidence.
-After the function-count and code-size guards, those passes prepare at most
+Standalone semantic-phase readers retain the same checks through an unindexed
+view; standalone executable and control checks prepare their own view. These
+views are internal working state derived from the same immutable input, not
+serialized WVB evidence or an independently admissible verification token.
+After the function-count and code-size guards, the view prepares at most
 1,024 ownership-classification bytes beside the index, in 64-byte chunks.
 Preparation uses the existing root traversal, with an additional work allowance
-of 1,024 frame/item/field visits per type and 16,384 per pass. Only complete root
+of 1,024 frame/item/field visits per type and 16,384 per preparation. Only complete root
 answers are retained; unfinished or unprepared types use the original traversal
 when queried. Child answers never bypass another root's cycle, depth, step or
-pending-frame limits. The cache does not change admission or early-phase checks.
+pending-frame limits. The cache preserves the existing checks and semantic,
+typed-execution and control-flow failure codes.
+For shared-byte native lowering, complete admission collects E1 borrow-root
+evidence during that same executable check and still performs control-flow
+verification before returning it. Lowering checks the evidence generation and
+exact source bytes before use. The metadata entry validates the normalized
+module envelope, whose remaining section payloads are unchanged, then performs
+function, executable and control checks at their original input positions.
+The returned evidence therefore names the caller's exact source, including
+when metadata is present; no evidence is reused across inputs. The
+standalone root collector remains available after complete admission for
+focused comparison. Collection retains its existing work and row bounds and
+may refuse even when verification without collection succeeds.
+Per-function dependencies append in 32-row chunks, preserving first-observation
+order and duplicate checks across both completed and active rows, including
+control-flow revisits. Chunk flushes and the final join charge their actual
+copy lengths before allocation. Refusal publishes no partial dependencies;
+the existing 8,192-row and 16 MiB work limits remain unchanged.
+Local-slot lookup walks backward to the last matching map entry and charges
+only inspected entries; virtual operand slots require no map scan.
 The native function reader separates parameter/return metadata from local
 storage tables. Signature-table construction and direct-call checks validate
 every local shape and code-metadata bound but retain only parameter tables;

@@ -7,6 +7,12 @@ authority library;
 
 import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executableˉverifier;
 import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Typedˉdirectories;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
+
+record Compilerˉverification {
+    Status: u32;
+    Borrowˉroots: bytes;
+}
 
 export fn Aˉidentifier(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
@@ -1525,7 +1531,9 @@ export fn Dˉdata(Input: bytes) -> bytes {
     return Input;
 }
 
-export fn Eˉfunctions(Input: bytes) -> bytes {
+fn Eˉfunctionsˉwithˉtypes(
+    Input: bytes, Prepared: Executableˉverifier.Hˉtypeˉtable
+) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Minor: u32 = Bˉeffectiveˉminor(Input);
     let Declaredˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
@@ -1542,10 +1550,14 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
     let Functionˉcount: u32 =
         Bytesˉreadˉu32ˉlittle(Input, Functionsˉpayload);
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typesˉpayload);
+    var Types: Executableˉverifier.Hˉtypeˉtable = Prepared;
+    if Types.Offset != Typesˉpayload {
+        Types = Executableˉverifier.Hˉunindexedˉtypes(Input, Typesˉpayload);
+    }
     var Foundationˉtypes: bytes = Invalid;
     if (Declaredˉminor == 39u32 || Declaredˉminor == 40u32 || (Declaredˉminor == 41u32 || Declaredˉminor == 42u32 || (Declaredˉminor == 43u32 || (Declaredˉminor == 44u32 || Declaredˉminor == 45u32)))) {
-        Foundationˉtypes = Executableˉverifier.Hˉfoundationˉtypes(
-            Input, Typesˉpayload, Typeˉcount);
+        Foundationˉtypes = Executableˉverifier.Hˉfoundationˉtypesˉwithˉtypes(
+            Input, Types, Typeˉcount);
         if Bytesˉlength(Foundationˉtypes) != Typeˉcount * 11u32 { return Invalid; }
     }
     var Cursor: u32 = Functionsˉpayload + 4u32;
@@ -1775,8 +1787,8 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                     Nominalˉindex = Bytesˉreadˉu32ˉlittle(Input, Cursor);
                     if Nominalˉindex >= Typeˉcount { return Invalid; }
                     Cursor = Cursor + 4u32;
-                    Typeˉcursor = Bˉtypeˉat(
-                        Input, Typesˉpayload, Nominalˉindex
+                    Typeˉcursor = Executableˉverifier.Hˉtypeˉat(
+                        Input, Types, Nominalˉindex
                     );
                     Typeˉkind = U32ˉfromˉu8(
                         Bytesˉreadˉu8(Input, Typeˉcursor)
@@ -1810,8 +1822,8 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                     if Rawˉshape == 29u32 { Aggregateˉkind = 11u32; }
                     if Rawˉshape == 30u32 { Aggregateˉkind = 22u32; }
                     let Isˉownedˉaggregate: bool =
-                        Executableˉverifier.Hˉownedˉaggregate(
-                            Input, Typesˉpayload, Typeˉcount,
+                        Executableˉverifier.Hˉownedˉaggregateˉwithˉtypes(
+                            Input, Types, Typeˉcount,
                             Aggregateˉkind, Nominalˉindex, Minor
                         );
                     if Rawˉshape == 28u32 || Rawˉshape == 29u32 ||
@@ -1825,8 +1837,8 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                         if !Isˉownedˉaggregate && !Foundationˉview { return Invalid; }
                         if Shapeˉstage == 0u32 &&
                             (Rawˉshape != 28u32 ||
-                                !Executableˉverifier.Hˉunsafeˉscratchˉisˉexact(
-                                    Input, Typesˉpayload, Typeˉcount,
+                                !Executableˉverifier.Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
+                                    Input, Types, Typeˉcount,
                                     Nominalˉindex
                                 )) {
                             return Invalid;
@@ -4461,7 +4473,11 @@ export fn Gˉtypes(Input: bytes) -> bytes {
     return Input;
 }
 
-export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
+export fn Eˉfunctions(Input: bytes) -> bytes {
+    return Eˉfunctionsˉwithˉtypes(Input, Executableˉverifier.Hˉunindexedˉtypes(Input, 0u32));
+}
+
+fn Compilerˉwvbˉverifyˉprefix(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var State: bytes = Bˉstructure(Input);
     if Bytesˉlength(State) == 0u32 { return Invalid; }
@@ -4469,7 +4485,14 @@ export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
     if Bytesˉlength(State) == 0u32 { return Invalid; }
     State = Dˉdata(State);
     if Bytesˉlength(State) == 0u32 { return Invalid; }
-    State = Eˉfunctions(State);
+    return State;
+}
+
+fn Compilerˉwvbˉverifyˉsuffix(
+    Input: bytes, Types: Executableˉverifier.Hˉtypeˉtable
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var State: bytes = Eˉfunctionsˉwithˉtypes(Input, Types);
     if Bytesˉlength(State) == 0u32 { return Invalid; }
     State = Fˉcodeˉandˉexports(State);
     if Bytesˉlength(State) == 0u32 { return Invalid; }
@@ -4478,12 +4501,71 @@ export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
     return Bytesˉfromˉu8(1u8);
 }
 
+export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
+    let State: bytes = Compilerˉwvbˉverifyˉprefix(Input);
+    if Bytesˉlength(State) == 0u32 { return State; }
+    return Compilerˉwvbˉverifyˉsuffix(Input, Executableˉverifier.Hˉunindexedˉtypes(Input, 0u32));
+}
+
+fn Compilerˉwvbˉverifyˉcomplete(Input: bytes, Collectˉroots: bool, Normalizeˉmetadata: bool)
+    -> Compilerˉverification {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Admission: bytes = Input;
+    if Normalizeˉmetadata {
+        Admission = Metadataˉnormalization.Windvaleˉwvbˉmetadataˉnormalize(Input);
+        if Bytesˉlength(Admission) == 0u32 { return Compilerˉverification(1u32, Empty); }
+    }
+    if Bytesˉlength(Compilerˉwvbˉverifyˉprefix(Admission)) == 0u32 {
+        return Compilerˉverification(1u32, Empty);
+    }
+    // Normalization validates and replaces only the module metadata. The other
+    // section payloads are unchanged. Read their original positions so every
+    // working view and collected root remains bound to the caller's input.
+    // Structural admission has already bounded every type row, the 1,024-type
+    // directory, the 4,096 functions and their complete 4 MiB code section.
+    var Header: u32 = 12u32;
+    var Section: u32 = 1u32;
+    while Section < 7u32 {
+        Header = Header + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Header + 4u32);
+        Section = Section + 1u32;
+    }
+    let Offset: u32 = Header + 8u32;
+    let Types: Executableˉverifier.Hˉtypeˉtable = Executableˉverifier.Hˉprepareˉtypes(
+        Input, Offset, Offset + Bytesˉreadˉu32ˉlittle(Input, Header + 4u32));
+    if Bytesˉlength(Compilerˉwvbˉverifyˉsuffix(Input, Types)) == 0u32 {
+        return Compilerˉverification(1u32, Empty);
+    }
+    let Executable: bytes = Executableˉverifier.Hˉexecutableˉwithˉtypes(Input, Collectˉroots, Types);
+    if Bytesˉlength(Executable) == 0u32 { return Compilerˉverification(2u32, Empty); }
+    if Bytesˉlength(Executableˉverifier.Iˉcontrolˉwithˉtypes(Input, Types)) == 0u32 {
+        return Compilerˉverification(3u32, Empty);
+    }
+    if Collectˉroots { return Compilerˉverification(0u32, Executable); }
+    return Compilerˉverification(0u32, Empty);
+}
+
 export fn Compilerˉwvbˉverify(Input: bytes) -> u32 {
-    var State: bytes = Compilerˉwvbˉverifyˉsemantic(Input);
-    if Bytesˉlength(State) == 0u32 { return 1u32; }
-    State = Executableˉverifier.Hˉexecutable(Input);
-    if Bytesˉlength(State) == 0u32 { return 2u32; }
-    State = Executableˉverifier.Iˉcontrol(Input);
-    if Bytesˉlength(State) == 0u32 { return 3u32; }
-    return 0u32;
+    let Complete: Compilerˉverification = Compilerˉwvbˉverifyˉcomplete(Input, false, false);
+    return Complete.Status;
+}
+
+fn Compilerˉwvbˉverifyˉborrowˉrootsˉcore(Input: bytes, Normalizeˉmetadata: bool)
+    -> Executableˉverifier.Hˉborrowˉrootˉevidence {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Bytesˉlength(Input) < 8u32 ||
+        (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32) {
+        return Executableˉverifier.Hˉborrowˉrootˉevidence(false, 1u32, Input, Empty);
+    }
+    let Complete: Compilerˉverification = Compilerˉwvbˉverifyˉcomplete(Input, true, Normalizeˉmetadata);
+    return Executableˉverifier.Hˉborrowˉrootˉevidence(
+        Complete.Status == 0u32, 1u32, Input, Complete.Borrowˉroots);
+}
+
+export fn Compilerˉwvbˉverifyˉborrowˉroots(Input: bytes) -> Executableˉverifier.Hˉborrowˉrootˉevidence {
+    return Compilerˉwvbˉverifyˉborrowˉrootsˉcore(Input, false);
+}
+
+export fn Compilerˉwvbˉverifyˉmetadataˉborrowˉroots(Input: bytes)
+    -> Executableˉverifier.Hˉborrowˉrootˉevidence {
+    return Compilerˉwvbˉverifyˉborrowˉrootsˉcore(Input, true);
 }

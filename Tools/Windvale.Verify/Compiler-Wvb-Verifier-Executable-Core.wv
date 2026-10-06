@@ -74,7 +74,7 @@ record Hˉtaskˉsignatureˉstate {
 // A private view of this invocation's admitted type section. Empty Positions
 // retains the phase-level reader used before semantic admission. Complete
 // executable/control analysis builds one index, including the section end.
-record Hˉtypeˉtable {
+export record Hˉtypeˉtable {
     Offset: u32;
     Positions: bytes;
     Ownership: bytes;
@@ -261,7 +261,7 @@ fn Hˉtypeˉtableˉread(Input: bytes, Offset: u32, End: u32) -> Hˉtypeˉtable {
     return Hˉtypeˉtable(Offset, Bytesˉconcat(Positions, Chunk), Empty);
 }
 
-fn Hˉtypeˉat(Input: bytes, Types: Hˉtypeˉtable, Typeˉindex: u32) -> u32 {
+export fn Hˉtypeˉat(Input: bytes, Types: Hˉtypeˉtable, Typeˉindex: u32) -> u32 {
     if Bytesˉlength(Types.Positions) != 0u32 {
         if Typeˉindex >= Bytesˉlength(Types.Positions) / 4u32 {
             return Bytesˉlength(Input);
@@ -384,7 +384,7 @@ fn Hˉfoundationˉtypeˉcell(Input: bytes, Descriptor: u32) -> bytes {
 
 // B-validated Types only. Each 11-byte cell is kind (0/Option/Result),
 // exact Value shape, exact Error shape. Scan once; never rescan Types per E1.
-fn Hˉfoundationˉtypesˉwithˉtypes(Input: bytes, Types: Hˉtypeˉtable, Count: u32) -> bytes {
+export fn Hˉfoundationˉtypesˉwithˉtypes(Input: bytes, Types: Hˉtypeˉtable, Count: u32) -> bytes {
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
     if Count > 1024u32 { return Empty; }
     var Result: bytes = Empty;
@@ -457,7 +457,7 @@ fn Hˉtaskˉhandleˉisˉexact(
     return Hˉsynthesizedˉgenericˉname(Input, Types, Typeˉindex);
 }
 
-fn Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
+export fn Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
     Input: bytes,
     Types: Hˉtypeˉtable,
     Typeˉcount: u32,
@@ -842,7 +842,21 @@ fn Hˉtypeˉownership(Input: bytes, Types: Hˉtypeˉtable) -> Hˉtypeˉtable {
     return Hˉtypeˉtable(Types.Offset, Types.Positions, Bytesˉconcat(Ownership, Chunk));
 }
 
-fn Hˉownedˉaggregateˉwithˉtypes(
+// These views are invocation-local verifier working state. The complete
+// verifier derives them after structural admission of the same immutable input;
+// they are not independently admissible or reusable evidence.
+export fn Hˉunindexedˉtypes(Input: bytes, Offset: u32) -> Hˉtypeˉtable {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    return Hˉtypeˉtable(Offset, Empty, Empty);
+}
+
+export fn Hˉprepareˉtypes(Input: bytes, Offset: u32, End: u32) -> Hˉtypeˉtable {
+    let Indexed: Hˉtypeˉtable = Hˉtypeˉtableˉread(Input, Offset, End);
+    if Bytesˉlength(Indexed.Positions) == 0u32 { return Indexed; }
+    return Hˉtypeˉownership(Input, Indexed);
+}
+
+export fn Hˉownedˉaggregateˉwithˉtypes(
     Input: bytes,
     Types: Hˉtypeˉtable,
     Typeˉcount: u32,
@@ -5851,7 +5865,9 @@ fn Hˉscalarˉinstructionˉeffect(Opcode: u32) -> Hˉscalarˉeffect {
     );
 }
 
-fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
+export fn Hˉexecutableˉwithˉtypes(
+    Input: bytes, Collectˉroots: bool, Prepared: Hˉtypeˉtable
+) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
     let Minor: u32 = Hˉeffectiveˉminor(Input);
@@ -5886,12 +5902,14 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
         Sectionˉkind = Sectionˉkind + 1u32;
     }
 
-    let Indexedˉtypes: Hˉtypeˉtable = Hˉtypeˉtableˉread(Input, Typesˉoffset, Typesˉend);
-    if Bytesˉlength(Indexedˉtypes.Positions) == 0u32 { return Invalid; }
     let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Functions);
     if Functionˉcount > 4096u32 { return Invalid; }
     if Codeˉlength > 4194304u32 { return Invalid; }
-    let Types: Hˉtypeˉtable = Hˉtypeˉownership(Input, Indexedˉtypes);
+    var Types: Hˉtypeˉtable = Prepared;
+    if Types.Offset != Typesˉoffset || Bytesˉlength(Types.Positions) == 0u32 {
+        Types = Hˉprepareˉtypes(Input, Typesˉoffset, Typesˉend);
+    }
+    if Bytesˉlength(Types.Positions) == 0u32 { return Invalid; }
     var Foundationˉtypes: bytes = Invalid;
     if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32))))) {
         Foundationˉtypes = Hˉfoundationˉtypesˉwithˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset));
@@ -6470,7 +6488,7 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
 }
 
 export fn Hˉexecutable(Input: bytes) -> bytes {
-    return Hˉexecutableˉcore(Input, false);
+    return Hˉexecutableˉwithˉtypes(Input, false, Hˉunindexedˉtypes(Input, 0u32));
 }
 
 // Complete semantic admission precedes this export. The same typed/CFG proof
@@ -6481,7 +6499,7 @@ export fn Hˉborrowˉroots(Input: bytes) -> Hˉborrowˉrootˉevidence {
     if Bytesˉlength(Input) < 8u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32) {
         return Hˉborrowˉrootˉevidence(false, 1u32, Input, Empty);
     }
-    let Directory: bytes = Hˉexecutableˉcore(Input, true);
+    let Directory: bytes = Hˉexecutableˉwithˉtypes(Input, true, Hˉunindexedˉtypes(Input, 0u32));
     return Hˉborrowˉrootˉevidence(Bytesˉlength(Directory) >= 16u32, 1u32, Input, Directory);
 }
 
@@ -6931,7 +6949,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
     return true;
 }
 
-export fn Iˉcontrol(Input: bytes) -> bytes {
+export fn Iˉcontrolˉwithˉtypes(Input: bytes, Prepared: Hˉtypeˉtable) -> bytes {
     let Controlˉinvalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Controlˉtotal: u32 = Bytesˉlength(Input);
     let Minor: u32 = Hˉeffectiveˉminor(Input);
@@ -6967,15 +6985,17 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         Controlˉsectionˉkind = Controlˉsectionˉkind + 1u32;
     }
 
-    let Indexedˉtypes: Hˉtypeˉtable = Hˉtypeˉtableˉread(Input, Typesˉoffset, Typesˉend);
-    if Bytesˉlength(Indexedˉtypes.Positions) == 0u32 { return Controlˉinvalid; }
     let Controlˉfunctionˉcount: u32 = Bytesˉreadˉu32ˉlittle(
         Input,
         Controlˉfunctions
     );
     if Controlˉfunctionˉcount > 4096u32 { return Controlˉinvalid; }
     if Controlˉcodeˉlength > 4194304u32 { return Controlˉinvalid; }
-    let Types: Hˉtypeˉtable = Hˉtypeˉownership(Input, Indexedˉtypes);
+    var Types: Hˉtypeˉtable = Prepared;
+    if Types.Offset != Typesˉoffset || Bytesˉlength(Types.Positions) == 0u32 {
+        Types = Hˉprepareˉtypes(Input, Typesˉoffset, Typesˉend);
+    }
+    if Bytesˉlength(Types.Positions) == 0u32 { return Controlˉinvalid; }
     var Controlˉfunctionˉindex: u32 = 0u32;
     var Controlˉfunctionˉcursor: u32 = Controlˉfunctions + 4u32;
     var Controlˉaggregateˉinstructions: u32 = 0u32;
@@ -7135,6 +7155,10 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
     }
     if Controlˉenvelope > Controlˉtotal { return Controlˉinvalid; }
     return Input;
+}
+
+export fn Iˉcontrol(Input: bytes) -> bytes {
+    return Iˉcontrolˉwithˉtypes(Input, Hˉunindexedˉtypes(Input, 0u32));
 }
 
 export fn Hˉfoundationˉtypes(Input: bytes, Types: u32, Count: u32) -> bytes {

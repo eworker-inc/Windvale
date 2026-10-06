@@ -9762,14 +9762,24 @@ fn Compilerˉnativeˉx64ˉplanˉinputsˉread(Input: borrow bytes)
         Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32)) && Bytesˉlength(Input) > 1048576u32 {
         return Compilerˉnativeˉx64ˉplanˉinputsˉfailure(Input, Compilerˉnativeˉx64ˉstatus.Invalidˉwvb, 4294967295u32, 4294967295u32);
     }
-    // Candidate borrowing requires the shared typed-stack and lifetime proof,
-    // including when callers bypass the command-line tool. Native target
-    // admission below remains a separate, stricter boundary.
+    // Complete admission collects the same typed-stack and lifetime proof for
+    // shared input in one pass. Native target admission remains a separate,
+    // stricter boundary, including when callers bypass the command-line tool.
+    let Emptyˉevidence: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Sharedˉevidence: Executableˉverifier.Hˉborrowˉrootˉevidence =
+        Executableˉverifier.Hˉborrowˉrootˉevidence(false, 1u32, Emptyˉevidence, Emptyˉevidence);
     if Bytesˉlength(Input) >= 12u32 &&
         (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 ||
             Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) ||
             Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32))) {
-        if Completeˉverifier.Compilerˉwvbˉverifyˉmetadata(Input) != 0u32 {
+        var Admitted: bool = false;
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+            Sharedˉevidence = Completeˉverifier.Compilerˉwvbˉverifyˉmetadataˉborrowˉroots(Input);
+            Admitted = Sharedˉevidence.Valid;
+        } else {
+            Admitted = Completeˉverifier.Compilerˉwvbˉverifyˉmetadata(Input) == 0u32;
+        }
+        if !Admitted {
             return Compilerˉnativeˉx64ˉplanˉinputsˉfailure(
                 Input, Compilerˉnativeˉx64ˉstatus.Invalidˉwvb,
     4294967295u32, 4294967295u32
@@ -9809,7 +9819,7 @@ fn Compilerˉnativeˉx64ˉplanˉinputsˉread(Input: borrow bytes)
     var Borrowˉdirectory: Sharedˉlocalˉliveness.Directory = Sharedˉlocalˉliveness.Directory(false,
         Evidenceˉsource, Evidenceˉsource, Evidenceˉsource, 0u32);
     if Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Minor) {
-        let Evidence: Executableˉverifier.Hˉborrowˉrootˉevidence = Executableˉverifier.Hˉborrowˉroots(Input);
+        let Evidence: Executableˉverifier.Hˉborrowˉrootˉevidence = Sharedˉevidence;
         if !Evidence.Valid || Evidence.Generation != 1u32 || !Sharedˉbytes.Bytesˉareˉequal(Evidence.Source, Input) {
             return Compilerˉnativeˉx64ˉplanˉinputsˉfailure(Input, Compilerˉnativeˉx64ˉstatus.Invalidˉwvb, 4294967295u32, 4294967295u32);
         }

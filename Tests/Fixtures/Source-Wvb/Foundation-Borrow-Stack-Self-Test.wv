@@ -548,6 +548,52 @@ fn Budgetˉhelperˉmodel() -> bytes {
         Bytesˉreadˉu32ˉlittle(Model, Types - 4u32) + Bytesˉlength(Added)), Added);
 }
 
+fn Sameˉbytes(First: bytes, Second: bytes) -> bool {
+    if Bytesˉlength(First) != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(First) {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Checkˉcombinedˉadmission(Input: bytes) -> bool {
+    let Status: u32 = Semantic.Compilerˉwvbˉverify(Input);
+    if Typedˉresult(Input) == 99u32 { return false; }
+    let Combined: Executable.Hˉborrowˉrootˉevidence = Semantic.Compilerˉwvbˉverifyˉborrowˉroots(Input);
+    if Combined.Generation != 1u32 || !Sameˉbytes(Combined.Source, Input) { return false; }
+    if Status != 0u32 {
+        return Status != 99u32 && !Combined.Valid && Bytesˉlength(Combined.Directory) == 0u32;
+    }
+    let Separate: Executable.Hˉborrowˉrootˉevidence = Executable.Hˉborrowˉroots(Input);
+    return Combined.Valid == Separate.Valid &&
+        Sameˉbytes(Combined.Directory, Separate.Directory);
+}
+
+fn Withˉmoduleˉmetadata(Input: bytes) -> bytes {
+    let One: bytes = Bytesˉfromˉu8(1u8);
+    let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let Descriptor: bytes = Join(One, One, Join(One,
+        Bytesˉfromˉu32ˉlittle(1u32), Join(Name("linux"), Zero, Zero)));
+    let End: u32 = Section(Input, 2u32) - 8u32;
+    let Payload: bytes = Bytesˉconcat(Bytesˉslice(Input, 20u32, End - 21u32), Descriptor);
+    return Join(Bytesˉslice(Input, 0u32, 12u32), Encodedˉsection(1u32, Payload),
+        Bytesˉslice(Input, End, Bytesˉlength(Input) - End));
+}
+
+fn Checkˉmetadataˉadmission(Input: bytes) -> bool {
+    let Normalized: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Input);
+    let Combined: Executable.Hˉborrowˉrootˉevidence =
+        Semantic.Compilerˉwvbˉverifyˉmetadataˉborrowˉroots(Input);
+    if Combined.Generation != 1u32 || !Sameˉbytes(Combined.Source, Input) { return false; }
+    if Bytesˉlength(Normalized) == 0u32 || Semantic.Compilerˉwvbˉverify(Normalized) != 0u32 {
+        return !Combined.Valid && Bytesˉlength(Combined.Directory) == 0u32;
+    }
+    let Separate: Executable.Hˉborrowˉrootˉevidence = Executable.Hˉborrowˉroots(Input);
+    return Combined.Valid && Separate.Valid && Sameˉbytes(Combined.Directory, Separate.Directory);
+}
+
 fn Checkˉbudgetˉhelpers() -> bool {
     let Model: bytes = Budgetˉhelperˉmodel();
     if Budgetˉresult(Model) != 0u32 { return false; }
@@ -569,6 +615,25 @@ fn Checkˉbudgetˉhelpers() -> bool {
     // A call stales its old compiler view, but the incoming loan parameter and
     // an owned parent can each form a fresh view for the next direct helper.
     let Forwarded: bytes = Trial(Reader, Mutable, 1u32, U32, Mutable, 1u32, Forward, 1u32);
+    let Invalidˉboundary: bytes = Trial(Model, Empty, 0u32, U32, Empty, 0u32,
+        Cell(48u8, 1u32), 0u32);
+    let Invalidˉcontrol: bytes = Trial(Model, Empty, 0u32, U32, Empty, 0u32,
+        Bytesˉconcat(End, End), 1u32);
+    let Withˉmetadata: bytes = Withˉmoduleˉmetadata(Forwarded);
+    let Metadataˉoffset: u32 = 25u32 + Bytesˉreadˉu32ˉlittle(Withˉmetadata, 21u32);
+    if !Checkˉmetadataˉadmission(Forwarded) || !Checkˉmetadataˉadmission(Withˉmetadata) ||
+        !Checkˉmetadataˉadmission(Byte(Withˉmetadata, Metadataˉoffset, 2u8)) ||
+        !Checkˉmetadataˉadmission(Withˉmoduleˉmetadata(Invalidˉboundary)) ||
+        !Checkˉmetadataˉadmission(Withˉmoduleˉmetadata(Invalidˉcontrol)) { return false; }
+    if !Checkˉcombinedˉadmission(Forwarded) ||
+        !Checkˉcombinedˉadmission(Byte(Forwarded, 6u32, 44u8)) ||
+        !Checkˉcombinedˉadmission(Byte(Forwarded, 0u32, 0u8)) ||
+        Semantic.Compilerˉwvbˉverify(Invalidˉboundary) != 1u32 ||
+        !Checkˉcombinedˉadmission(Invalidˉboundary) ||
+        Semantic.Compilerˉwvbˉverify(Invalidˉcontrol) != 3u32 ||
+        !Checkˉcombinedˉadmission(Invalidˉcontrol) {
+        return false;
+    }
     if Budgetˉresult(Forwarded) != 0u32 ||
         Budgetˉresult(Trial(Reader, Owned, 1u32, U32, Mutable, 1u32, Forward, 1u32)) != 0u32 {
         return false;
@@ -628,6 +693,8 @@ fn Checkˉbudgetˉhelpers() -> bool {
     let Staleˉcall: bytes = Join(Saveˉmutable,
         Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 2u32)),
         Join(Invokeˉmutable, Drop, Join(Cell(4u8, 2u32), Drop, End)));
+    if !Checkˉcombinedˉadmission(Trial(Reader, Owned, 1u32, U32, Bytesˉconcat(Mutable, Immutable),
+        2u32, Staleˉcall, 1u32)) { return false; }
     if Budgetˉresult(Trial(Reader, Owned, 1u32, U32, Bytesˉconcat(Mutable, Immutable),
         2u32, Staleˉcall, 1u32)) != 2u32 { return false; }
     let Staleˉsplit: bytes = Join(Saveˉmutable, Splitˉandˉdrop, Bytesˉconcat(Invokeˉmutable, Return));

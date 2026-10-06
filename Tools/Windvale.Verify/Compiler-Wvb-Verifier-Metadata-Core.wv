@@ -6,6 +6,7 @@ authority library;
 
 
 import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executableˉverifier;
 import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
 
 export fn Compilerˉwvbˉverifyˉmetadata(Input: bytes) -> u32 {
@@ -13,4 +14,9 @@ export fn Compilerˉwvbˉverifyˉmetadata(Input: bytes) -> u32 {
         Metadataˉnormalization.Windvaleˉwvbˉmetadataˉnormalize(Input);
     if Bytesˉlength(Normalized) == 0u32 { return 1u32; }
     return Semanticˉverifier.Compilerˉwvbˉverify(Normalized);
+}
+
+export fn Compilerˉwvbˉverifyˉmetadataˉborrowˉroots(Input: bytes)
+    -> Executableˉverifier.Hˉborrowˉrootˉevidence {
+    return Semanticˉverifier.Compilerˉwvbˉverifyˉmetadataˉborrowˉroots(Input);
 }
