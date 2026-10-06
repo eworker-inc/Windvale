@@ -838,6 +838,75 @@ fn Checkˉindexedˉcalls(Input: bytes) -> bool {
     return true;
 }
 
+fn Indexedˉtypeˉsection(Kind: u32, Payload: bytes) -> bytes {
+    return Join(Bytesˉfromˉu32ˉlittle(Kind),
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Payload)), Payload);
+}
+
+// Exercise the last nominal type across index chunks and the admitted maximum.
+// Every record has the same field shape but a distinct canonical name. The
+// program constructs, stores, loads and reads the final record, so admission
+// must resolve the requested identity rather than merely scan unused types.
+fn Checkˉindexedˉtypes(Input: bytes) -> bool {
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let One: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    // This program uses the ordinary nominal subset, without E1 borrowing.
+    let Prefix: bytes = Replace(Bytesˉslice(Input, 0u32, Section(Input, 4u32) - 8u32),
+        6u32, Bytesˉfromˉu16ˉlittle(16u32));
+    var Count: u32 = 63u32;
+    while Count <= 1024u32 {
+        var Types: bytes = Bytesˉfromˉu32ˉlittle(Count);
+        var Chunk: bytes = Bytesˉslice(One, 0u32, 0u32);
+        var Index: u32 = 0u32;
+        while Index < Count {
+            var Digits: text = U32ˉformat(Index);
+            while Bytesˉlength(Textˉtoˉutf8(Digits)) < 4u32 {
+                Digits = Textˉconcat("0", Digits);
+            }
+            Chunk = Bytesˉconcat(Chunk, Join(Bytesˉfromˉu8(1u8),
+                Name(Textˉconcat("T", Digits)),
+                Join(One, Name("Value"), U32)));
+            Index = Index + 1u32;
+            if Index % 64u32 == 0u32 {
+                Types = Bytesˉconcat(Types, Chunk);
+                Chunk = Bytesˉslice(One, 0u32, 0u32);
+            }
+        }
+        if Bytesˉlength(Chunk) != 0u32 { Types = Bytesˉconcat(Types, Chunk); }
+        let Last: u32 = Count - 1u32;
+        let Body: bytes = Join(Cell(9u8, 42u32), Cell(104u8, Last),
+            Join(Cell(5u8, 0u32), Cell(4u8, 0u32),
+                Bytesˉconcat(Cell(105u8, 0u32), Bytesˉfromˉu8(81u8))));
+        let Function: bytes = Join(Name("Main"), Zero,
+            Join(U32, One, Join(Cell(7u8, Last), Zero,
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body)), One))));
+        let Model: bytes = Bytesˉconcat(Prefix,
+            Join(Indexedˉtypeˉsection(4u32, Bytesˉconcat(One, Function)),
+                Indexedˉtypeˉsection(5u32, Body),
+                Bytesˉconcat(Indexedˉtypeˉsection(6u32,
+                    Join(One, Name("Main"), Bytesˉconcat(Bytesˉfromˉu8(1u8), Zero))),
+                    Indexedˉtypeˉsection(7u32, Types))));
+        if Typedˉresult(Model) != 0u32 { return false; }
+        let Typeˉoffset: u32 = Section(Model, 7u32);
+        let Code: u32 = Section(Model, 5u32);
+        if Typedˉresult(Word(Model, Code + 6u32, Count)) != 1u32 ||
+            Typedˉresult(Bytesˉslice(Model, 0u32, Bytesˉlength(Model) - 1u32)) != 1u32 ||
+            Typedˉresult(Word(Model, Typeˉoffset, 1025u32)) != 1u32 {
+            return false;
+        }
+        // Phase entry points also reject an inconsistent index extent.
+        if Bytesˉlength(Executable.Hˉexecutable(Word(Model, Typeˉoffset, 0u32))) != 0u32 ||
+            Bytesˉlength(Executable.Iˉcontrol(Word(Model, Typeˉoffset, 0u32))) != 0u32 ||
+            Bytesˉlength(Executable.Hˉexecutable(Word(Model, Typeˉoffset, Count + 1u32))) != 0u32 {
+            return false;
+        }
+        if Count == 65u32 { Count = 1024u32; }
+        else { Count = Count + 1u32; }
+    }
+    return true;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
     if Typedˉresult(Input) != 0u32 { return 151; }
@@ -870,5 +939,6 @@ export fn Check(Candidate: bytes) -> i32 {
     let Authorityˉresult: i32 = Checkˉauthority();
     if Authorityˉresult != 0 { return Authorityˉresult; }
     if !Checkˉbudgetˉhelpers() { return 246; }
+    if !Checkˉindexedˉtypes(Input) { return 247; }
     return 0;
 }

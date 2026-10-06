@@ -39,6 +39,12 @@ return ownership through the same plan used for measurement and emission.
 Directory admission is bounded to 16 MiB of work; directory plus one function
 is bounded to 96 MiB of cumulative reads and copies. These are work limits,
 not live-storage limits or a bound on the entire native lowering phase.
+The complete verifier's executable and control passes index the structurally
+admitted type section once per pass. The private index contains at most 1,025
+u32 offsets (4,100 bytes), including the section end; construction uses 64-row
+chunks. Nominal lookups use those offsets without rescanning earlier types.
+Earlier semantic-phase readers retain the same checks through an unindexed
+view. The index is invocation-local working state, not serialized WVB evidence.
 Functions without E1 loan dependencies use reverse control-flow reachability
 for resource-bearing locals, stopping across definitions. Each reached block
 is processed once per resource local. Functions with loan dependencies retain

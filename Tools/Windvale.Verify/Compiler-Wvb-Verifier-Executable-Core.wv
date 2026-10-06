@@ -71,6 +71,14 @@ record Hˉtaskˉsignatureˉstate {
     Signatures: bytes;
 }
 
+// A private view of this invocation's admitted type section. Empty Positions
+// retains the phase-level reader used before semantic admission. Complete
+// executable/control analysis builds one index, including the section end.
+record Hˉtypeˉtable {
+    Offset: u32;
+    Positions: bytes;
+}
+
 record Hˉfunctionˉentry {
     Next: u32;
     Parameters: u32;
@@ -101,7 +109,7 @@ fn Hˉborrowedˉvalue(Kind: u32) -> bool {
         (Kind >= 64u32 && Hˉborrowˉpayloadˉkind(Kind - 64u32));
 }
 
-fn Hˉexactˉvalueˉmatches(Input: bytes, Types: u32, Expectedˉkind: u32,
+fn Hˉexactˉvalueˉmatches(Input: bytes, Types: Hˉtypeˉtable, Expectedˉkind: u32,
     Expectedˉnominal: u32, Actualˉkind: u32, Actualˉnominal: u32) -> bool {
     if Expectedˉnominal != Actualˉnominal { return false; }
     return Hˉvalueˉmatches(Input, Types, Expectedˉkind, Actualˉkind, Expectedˉnominal);
@@ -214,8 +222,46 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
     return Next;
 }
 
-fn Hˉtypeˉat(Input: bytes, Types: u32, Typeˉindex: u32) -> u32 {
-    var Cursor: u32 = Types + 4u32;
+// Structural admission bounds this table to 1,024 types. At most 4,100
+// retained bytes and 64-row chunks bound construction copies. This is private
+// working state, never an extra WVB section or reusable cross-input evidence.
+fn Hˉtypeˉtableˉread(Input: bytes, Offset: u32, End: u32) -> Hˉtypeˉtable {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Invalid: Hˉtypeˉtable = Hˉtypeˉtable(Offset, Empty);
+    if Offset > End || End > Bytesˉlength(Input) || End - Offset < 4u32 {
+        return Invalid;
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Count > 1024u32 { return Invalid; }
+    var Positions: bytes = Empty;
+    var Chunk: bytes = Empty;
+    var Cursor: u32 = Offset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Cursor >= End { return Invalid; }
+        Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu32ˉlittle(Cursor));
+        if Bytesˉlength(Chunk) == 256u32 {
+            Positions = Bytesˉconcat(Positions, Chunk);
+            Chunk = Empty;
+        }
+        let Next: u32 = Hˉnextˉtype(Input, Cursor);
+        if Next <= Cursor || Next > End { return Invalid; }
+        Cursor = Next;
+        Index = Index + 1u32;
+    }
+    if Cursor != End { return Invalid; }
+    Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu32ˉlittle(End));
+    return Hˉtypeˉtable(Offset, Bytesˉconcat(Positions, Chunk));
+}
+
+fn Hˉtypeˉat(Input: bytes, Types: Hˉtypeˉtable, Typeˉindex: u32) -> u32 {
+    if Bytesˉlength(Types.Positions) != 0u32 {
+        if Typeˉindex >= Bytesˉlength(Types.Positions) / 4u32 {
+            return Bytesˉlength(Input);
+        }
+        return Bytesˉreadˉu32ˉlittle(Types.Positions, Typeˉindex * 4u32);
+    }
+    var Cursor: u32 = Types.Offset + 4u32;
     var Index: u32 = 0u32;
     while Index < Typeˉindex {
         Cursor = Hˉnextˉtype(Input, Cursor);
@@ -245,7 +291,7 @@ fn Hˉspanˉequalsˉtext(
 
 fn Hˉsynthesizedˉgenericˉname(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉindex: u32
 ) -> bool {
     return Hˉsynthesizedˉgenericˉnameˉat(
@@ -331,12 +377,12 @@ fn Hˉfoundationˉtypeˉcell(Input: bytes, Descriptor: u32) -> bytes {
 
 // B-validated Types only. Each 11-byte cell is kind (0/Option/Result),
 // exact Value shape, exact Error shape. Scan once; never rescan Types per E1.
-export fn Hˉfoundationˉtypes(Input: bytes, Types: u32, Count: u32) -> bytes {
+fn Hˉfoundationˉtypesˉwithˉtypes(Input: bytes, Types: Hˉtypeˉtable, Count: u32) -> bytes {
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
     if Count > 1024u32 { return Empty; }
     var Result: bytes = Empty;
     var Chunk: bytes = Empty;
-    var Cursor: u32 = Types + 4u32;
+    var Cursor: u32 = Types.Offset + 4u32;
     var Index: u32 = 0u32;
     while Index < Count {
         Chunk = Bytesˉconcat(Chunk, Hˉfoundationˉtypeˉcell(Input, Cursor));
@@ -352,7 +398,7 @@ export fn Hˉfoundationˉtypes(Input: bytes, Types: u32, Count: u32) -> bytes {
 
 fn Hˉrecordˉhasˉoneˉu64ˉtoken(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32,
     Fieldˉidentity: text
@@ -379,7 +425,7 @@ fn Hˉrecordˉhasˉoneˉu64ˉtoken(
 
 fn Hˉtaskˉscopeˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -391,7 +437,7 @@ fn Hˉtaskˉscopeˉisˉexact(
 
 fn Hˉtaskˉhandleˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -404,9 +450,9 @@ fn Hˉtaskˉhandleˉisˉexact(
     return Hˉsynthesizedˉgenericˉname(Input, Types, Typeˉindex);
 }
 
-export fn Hˉunsafeˉscratchˉisˉexact(
+fn Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -425,7 +471,7 @@ fn Hˉunsafeˉforeignˉpointerˉfailureˉcaseˉfields(
 
 fn Hˉunsafeˉforeignˉpointerˉfailureˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Failureˉtype: u32
 ) -> bool {
@@ -568,7 +614,7 @@ fn Hˉtypeˉpathˉcontains(Path: bytes, Typeˉindex: u32) -> bool {
 
 fn Hˉownedˉvector(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Kind: u32,
     Nominal: u32
@@ -710,9 +756,9 @@ fn Hˉownedˉvector(
     return false;
 }
 
-export fn Hˉownedˉaggregate(
+fn Hˉownedˉaggregateˉwithˉtypes(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Kind: u32,
     Nominal: u32,
@@ -722,7 +768,7 @@ export fn Hˉownedˉaggregate(
     if (Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
         Minor == 36u32 || Minor == 37u32) &&
         Kind == 7u32 &&
-        Hˉunsafeˉscratchˉisˉexact(
+        Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
         Input, Types, Typeˉcount, Nominal
     ) { return true; }
     if Kind == 11u32 && Hˉvectorˉresultˉisˉexact(
@@ -746,14 +792,14 @@ fn Hˉownedˉtransferˉkind(Kind: u32) -> u32 {
 
 fn Hˉaffineˉresultˉtransferˉkind(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Minor: u32,
     Kind: u32,
     Nominal: u32
 ) -> u32 {
     if Kind != 11u32 { return Kind; }
-    if Hˉbytesˉbuilderˉresultˉisˉexact(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Nominal) { return 42u32; }
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    if Hˉbytesˉbuilderˉresultˉisˉexact(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Nominal) { return 42u32; }
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     if Minor >= 23u32 && Minor <= 37u32 &&
         Hˉmemoryˉbudgetˉresultˉisˉexact(
             Input, Types, Typeˉcount, Nominal
@@ -775,13 +821,13 @@ fn Hˉaffineˉresultˉtransferˉkind(
     }
     if (Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
         Minor == 36u32 || Minor == 37u32) &&
-        Hˉunsafeˉscratchˉresultˉisˉexact(
+        Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
         Input, Types, Typeˉcount, Nominal
     ) {
         return 36u32;
     }
     if (Minor == 36u32 || Minor == 37u32) &&
-        Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+        Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
         Input, Types, Typeˉcount, Nominal
     ) {
         return 37u32;
@@ -795,7 +841,7 @@ fn Hˉafterˉencodedˉstring(Input: bytes, Cursor: u32) -> u32 {
 
 fn Hˉallocationˉfailureˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Failureˉtype: u32
 ) -> bool {
@@ -901,7 +947,7 @@ fn Hˉallocationˉfailureˉisˉexact(
 
 fn Hˉunsafeˉmemoryˉfailureˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Failureˉtype: u32
 ) -> bool {
@@ -1007,9 +1053,9 @@ fn Hˉunsafeˉmemoryˉfailureˉisˉexact(
         Hˉtypeˉat(Input, Types, Failureˉtype + 1u32);
 }
 
-export fn Hˉunsafeˉscratchˉresultˉisˉexact(
+fn Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> bool {
@@ -1044,7 +1090,7 @@ export fn Hˉunsafeˉscratchˉresultˉisˉexact(
     }
     Cursor = Cursor + 4u32 + Valueˉnameˉlength;
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != 7u32 ||
-        !Hˉunsafeˉscratchˉisˉexact(
+        !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount,
             Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32)
         ) {
@@ -1082,13 +1128,13 @@ export fn Hˉunsafeˉscratchˉresultˉisˉexact(
         Hˉtypeˉat(Input, Types, Resultˉtype + 1u32);
 }
 
-export fn Hˉunsafeˉscratchˉresultˉvalueˉtype(
+fn Hˉunsafeˉscratchˉresultˉvalueˉtypeˉwithˉtypes(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> u32 {
-    if !Hˉunsafeˉscratchˉresultˉisˉexact(
+    if !Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Resultˉtype
         ) {
         return 4294967295u32;
@@ -1099,9 +1145,9 @@ export fn Hˉunsafeˉscratchˉresultˉvalueˉtype(
     return Bytesˉreadˉu32ˉlittle(Valid, 5u32);
 }
 
-export fn Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+fn Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> bool {
@@ -1136,7 +1182,7 @@ export fn Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
     }
     Cursor = Cursor + 4u32 + Valueˉnameˉlength;
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != 7u32 ||
-        !Hˉunsafeˉscratchˉisˉexact(
+        !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount,
             Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32)
         ) {
@@ -1174,13 +1220,13 @@ export fn Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
         Hˉtypeˉat(Input, Types, Resultˉtype + 1u32);
 }
 
-export fn Hˉunsafeˉwriteˉregionˉresultˉvalueˉtype(
+fn Hˉunsafeˉwriteˉregionˉresultˉvalueˉtypeˉwithˉtypes(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> u32 {
-    if !Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+    if !Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Resultˉtype
         ) {
         return 4294967295u32;
@@ -1193,7 +1239,7 @@ export fn Hˉunsafeˉwriteˉregionˉresultˉvalueˉtype(
 
 fn Hˉmemoryˉbudgetˉresultˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> bool {
@@ -1234,7 +1280,7 @@ fn Hˉmemoryˉbudgetˉresultˉisˉexact(
 
 fn Hˉallocationˉunitˉresultˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> bool {
@@ -1272,7 +1318,7 @@ fn Hˉallocationˉunitˉresultˉisˉexact(
 
 fn Hˉvectorˉresultˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> bool {
@@ -1319,7 +1365,7 @@ fn Hˉvectorˉresultˉisˉexact(
 }
 
 fn Hˉbytesˉresultˉfailure(
-    Input: bytes, Types: u32, Typeˉcount: u32, Resultˉtype: u32,
+    Input: bytes, Types: Hˉtypeˉtable, Typeˉcount: u32, Resultˉtype: u32,
     Valueˉkind: u32, Errorˉkind: u32
 ) -> u32 {
     if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32) || Resultˉtype >= Typeˉcount { return 4294967295u32; }
@@ -1356,12 +1402,12 @@ fn Hˉbytesˉresultˉfailure(
     return Failure;
 }
 
-fn Hˉbytesˉbuilderˉresultˉisˉexact(Input: bytes, Types: u32, Typeˉcount: u32, Resultˉtype: u32) -> bool {
+fn Hˉbytesˉbuilderˉresultˉisˉexact(Input: bytes, Types: Hˉtypeˉtable, Typeˉcount: u32, Resultˉtype: u32) -> bool {
     let Failure: u32 = Hˉbytesˉresultˉfailure(Input, Types, Typeˉcount, Resultˉtype, 39u32, 7u32);
     return Failure < Typeˉcount && Hˉallocationˉfailureˉisˉexact(Input, Types, Typeˉcount, Failure);
 }
 
-fn Hˉbytesˉlimitˉfailureˉisˉexact(Input: bytes, Types: u32, Typeˉcount: u32, Failure: u32) -> bool {
+fn Hˉbytesˉlimitˉfailureˉisˉexact(Input: bytes, Types: Hˉtypeˉtable, Typeˉcount: u32, Failure: u32) -> bool {
     if Failure >= Typeˉcount { return false; }
     var Cursor: u32 = Hˉtypeˉat(Input, Types, Failure);
     if Bytesˉreadˉu8(Input, Cursor) != 3u8 { return false; }
@@ -1393,12 +1439,12 @@ fn Hˉbytesˉlimitˉfailureˉisˉexact(Input: bytes, Types: u32, Typeˉcount: u3
 }
 
 fn Hˉbytesˉoperation(
-    Input: bytes, Code: u32, Cursor: u32, Types: u32, Shapes: bytes,
+    Input: bytes, Code: u32, Cursor: u32, Types: Hˉtypeˉtable, Shapes: bytes,
     Parameters: u32, Stack: bytes, Depth: u32
 ) -> Hˉoperationˉstate {
     let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Code + Cursor));
     if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32) || Opcode < 229u32 || Opcode > 241u32 { return Hˉoperationˉfailure(Stack, Depth); }
-    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     var Pops: u32 = 1u32;
     var Push: u32 = 10u32;
     var Nominal: u32 = 0u32;
@@ -1466,7 +1512,7 @@ fn Hˉcollectionˉfailureˉcaseˉfields(Index: u32) -> u32 {
 
 fn Hˉcollectionˉfailureˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Failureˉtype: u32
 ) -> bool {
@@ -1524,7 +1570,7 @@ fn Hˉcollectionˉfailureˉisˉexact(
 
 fn Hˉvectorˉappendˉfailureˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Appendˉfailureˉtype: u32,
     Element: bytes
@@ -1569,7 +1615,7 @@ fn Hˉvectorˉappendˉfailureˉisˉexact(
 
 fn Hˉvectorˉappendˉresultˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32,
     Vectorˉtype: u32
@@ -1614,7 +1660,7 @@ fn Hˉvectorˉappendˉresultˉisˉexact(
 
 fn Hˉownedˉlocalˉshape(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Localˉshapes: bytes,
     Slot: u32,
@@ -1631,7 +1677,7 @@ fn Hˉownedˉlocalˉshape(
     let Nominal: u32 = Bytesˉreadˉu32ˉlittle(
         Localˉshapes, Shape + 1u32
     );
-    if Hˉownedˉaggregate(
+    if Hˉownedˉaggregateˉwithˉtypes(
         Input, Types, Typeˉcount, Kind, Nominal, Minor
     ) { return true; }
     if Minor < 23u32 || Minor > 37u32 { return false; }
@@ -1648,11 +1694,11 @@ fn Hˉownedˉlocalˉshape(
     ) { return true; }
     if (Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
         Minor == 36u32 || Minor == 37u32) &&
-        Hˉunsafeˉscratchˉresultˉisˉexact(
+        Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
         Input, Types, Typeˉcount, Nominal
     ) { return true; }
     if (Minor == 36u32 || Minor == 37u32) &&
-        Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+        Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
         Input, Types, Typeˉcount, Nominal
     ) { return true; }
     return Minor >= 24u32 && Minor <= 37u32 && Hˉvectorˉresultˉisˉexact(
@@ -1662,7 +1708,7 @@ fn Hˉownedˉlocalˉshape(
 
 fn Iˉtrackedˉownedˉlocalˉshape(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Localˉshapes: bytes,
     Slot: u32,
@@ -1685,7 +1731,7 @@ fn Iˉtrackedˉownedˉlocalˉshape(
     }
     if (Minor == 36u32 || Minor == 37u32) &&
         U32ˉfromˉu8(Bytesˉreadˉu8(Localˉshapes, Shape)) == 28u32 &&
-        Hˉunsafeˉscratchˉisˉexact(
+        Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount,
             Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape + 1u32)
         ) {
@@ -1698,7 +1744,7 @@ fn Iˉtrackedˉownedˉlocalˉshape(
 
 fn Iˉownedˉlocalˉrank(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Localˉshapes: bytes,
     Slot: u32,
@@ -1738,17 +1784,12 @@ fn Iˉownedˉrankˉisˉavailable(
 
 fn Hˉvariantˉcaseˉat(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉindex: u32,
     Caseˉindex: u32
 ) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    var Cursor: u32 = Types + 4u32;
-    var Currentˉtype: u32 = 0u32;
-    while Currentˉtype < Typeˉindex {
-        Cursor = Hˉnextˉtype(Input, Cursor);
-        Currentˉtype = Currentˉtype + 1u32;
-    }
+    var Cursor: u32 = Hˉtypeˉat(Input, Types, Typeˉindex);
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != 3u32 {
         return Invalid;
     }
@@ -1798,7 +1839,7 @@ fn Hˉvariantˉcaseˉat(
 
 fn Hˉvariantˉcaseˉcount(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> u32 {
@@ -1813,7 +1854,7 @@ fn Hˉvariantˉcaseˉcount(
 
 fn Hˉtaskˉaffineˉresultˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Resultˉtype: u32
 ) -> bool {
@@ -1840,7 +1881,7 @@ fn Hˉtaskˉaffineˉresultˉisˉexact(
 
 fn Hˉtaskˉlimitsˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -1914,7 +1955,7 @@ fn Hˉtaskˉlimitsˉisˉexact(
 
 fn Hˉoperationˉcontextˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -1926,7 +1967,7 @@ fn Hˉoperationˉcontextˉisˉexact(
 
 fn Hˉtaskˉoutcomeˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -1965,7 +2006,7 @@ fn Hˉtaskˉoutcomeˉisˉexact(
 
 fn Hˉcancelˉoutcomeˉisˉexact(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Typeˉindex: u32
 ) -> bool {
@@ -1991,7 +2032,7 @@ fn Hˉcancelˉoutcomeˉisˉexact(
 
 fn Hˉtaskˉoutcomeˉmatchesˉresult(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Outcomeˉtype: u32,
     Resultˉtype: u32
@@ -2028,7 +2069,7 @@ fn Hˉtaskˉsignature(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Localˉslots: u32,
     Stack: bytes,
@@ -2048,7 +2089,7 @@ fn Hˉtaskˉsignature(
         let Callableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
             Stack, Callableˉoffset + 1u32
         );
-        let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+        let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
         if Callableˉtype >= Typeˉcount {
             return Hˉtaskˉsignatureˉstate(false, Signatures);
         }
@@ -2111,7 +2152,7 @@ fn Hˉtaskˉsignature(
                     Updatedˉsignatures, Awaitˉsignature
                 ) == Awaitˉtaskˉtype &&
                 Hˉtaskˉoutcomeˉmatchesˉresult(
-                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                     Outcomeˉtype,
                     Bytesˉreadˉu32ˉlittle(
                         Updatedˉsignatures, Awaitˉsignature + 4u32
@@ -2132,12 +2173,12 @@ export fn Hˉoperationˉfailure(Stack: bytes, Depth: u32) -> Hˉoperationˉstate
     return Hˉoperationˉstate(false, Stack, Depth, false, 0u32, 0u32);
 }
 
-export fn Hˉvariant(
+fn Hˉvariantˉwithˉtypes(
     Input: bytes,
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -2183,14 +2224,14 @@ export fn Hˉvariant(
             );
             if Fieldˉkind == 23u32 && Minor >= 20u32 {
                 Fieldˉkind = 26u32;
-            } else if Hˉownedˉaggregate(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            } else if Hˉownedˉaggregateˉwithˉtypes(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Fieldˉkind, Fieldˉnominal, Minor
             ) {
                 Fieldˉkind = Hˉownedˉtransferˉkind(Fieldˉkind);
             }
             if Fieldˉkind == 11u32 && Hˉbytesˉbuilderˉresultˉisˉexact(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Fieldˉnominal) { Fieldˉkind = 42u32; }
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Fieldˉnominal) { Fieldˉkind = 42u32; }
             let Payloadˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
             if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Payloadˉoffset)) !=
                 Fieldˉkind {
@@ -2210,8 +2251,8 @@ export fn Hˉvariant(
         if Createdˉkind == 37u32 {
             return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
         }
-        if Createdˉkind == 11u32 && Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        if Createdˉkind == 11u32 && Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             11u32, Variantˉtype, Minor
         ) {
             Createdˉkind = Hˉownedˉtransferˉkind(11u32);
@@ -2273,23 +2314,23 @@ export fn Hˉvariant(
     }
     if (Variantˉkind == 32u32 || Variantˉkind == 36u32 ||
         Variantˉkind == 37u32) &&
-        Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Payloadˉkind,
             Bytesˉreadˉu32ˉlittle(Variantˉcase, 5u32), Minor
         ) {
         Payloadˉkind = Hˉownedˉtransferˉkind(Payloadˉkind);
     }
     if Variantˉkind == 11u32 && Payloadˉkind == 23u32 &&
-        Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             11u32, Variantˉtype, Minor
         ) {
         Payloadˉkind = 26u32;
     }
     let Payloadˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Variantˉcase, 5u32);
     if !Borrowed && Payloadˉkind == 11u32 && Hˉbytesˉbuilderˉresultˉisˉexact(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Payloadˉnominal) { Payloadˉkind = 42u32; }
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Payloadˉnominal) { Payloadˉkind = 42u32; }
     return Hˉoperationˉstate(
         true,
         Resultˉstack,
@@ -2305,7 +2346,7 @@ fn Hˉvariantˉfield(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -2356,22 +2397,22 @@ fn Hˉvariantˉfield(
         Producedˉkind = 26u32;
     }
     if Variantˉkind == 11u32 && Producedˉkind == 23u32 &&
-        Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             11u32, Variantˉtype, Minor
     ) {
         Producedˉkind = 26u32;
     }
     if (Variantˉkind == 32u32 || Variantˉkind == 36u32 ||
         Variantˉkind == 37u32) &&
-        Hˉownedˉaggregate(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        Hˉownedˉaggregateˉwithˉtypes(
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
         Producedˉkind, Producedˉnominal, Minor
     ) {
         Producedˉkind = Hˉownedˉtransferˉkind(Producedˉkind);
     }
     if Producedˉkind == 11u32 && Hˉbytesˉbuilderˉresultˉisˉexact(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Producedˉnominal) { Producedˉkind = 42u32; }
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Producedˉnominal) { Producedˉkind = 42u32; }
     return Hˉoperationˉstate(
         true,
         Bytesˉslice(Stack, 0u32, Variantˉoffset),
@@ -2382,11 +2423,11 @@ fn Hˉvariantˉfield(
     );
 }
 
-export fn Hˉrecord(
+fn Hˉrecordˉwithˉtypes(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -2400,25 +2441,20 @@ export fn Hˉrecord(
         if (Minor == 32u32 || Minor == 33u32 || Minor == 34u32 ||
                 Minor == 35u32 || Minor == 36u32 || Minor == 37u32) &&
             (Hˉtaskˉscopeˉisˉexact(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Typeˉindex
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Typeˉindex
             ) || Hˉtaskˉhandleˉisˉexact(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Typeˉindex
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Typeˉindex
             ) || Hˉoperationˉcontextˉisˉexact(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Typeˉindex
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Typeˉindex
             ) || ((Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
                     Minor == 36u32 || Minor == 37u32) &&
-                Hˉunsafeˉscratchˉisˉexact(
-                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
+                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                     Typeˉindex
                 ))) {
             return Hˉoperationˉfailure(Stack, Depth);
         }
-        var Typeˉcursor: u32 = Types + 4u32;
-        var Currentˉtype: u32 = 0u32;
-        while Currentˉtype < Typeˉindex {
-            Typeˉcursor = Hˉnextˉtype(Input, Typeˉcursor);
-            Currentˉtype = Currentˉtype + 1u32;
-        }
+        var Typeˉcursor: u32 = Hˉtypeˉat(Input, Types, Typeˉindex);
         if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)) != 1u32 {
             return Hˉoperationˉfailure(Stack, Depth);
         }
@@ -2455,15 +2491,15 @@ export fn Hˉrecord(
             }
             if Expectedˉkind == 23u32 && Minor >= 20u32 {
                 Expectedˉkind = 26u32;
-            } else if Hˉownedˉaggregate(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            } else if Hˉownedˉaggregateˉwithˉtypes(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Expectedˉkind, Expectedˉnominal,
                 Minor
             ) {
                 Expectedˉkind = Hˉownedˉtransferˉkind(Expectedˉkind);
             }
             if Expectedˉkind == 11u32 && Hˉbytesˉbuilderˉresultˉisˉexact(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Expectedˉnominal) { Expectedˉkind = 42u32; }
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Expectedˉnominal) { Expectedˉkind = 42u32; }
             let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
             if !Hˉexactˉvalueˉmatches(Input, Types, Expectedˉkind, Expectedˉnominal,
                 U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actualˉoffset)),
@@ -2474,8 +2510,8 @@ export fn Hˉrecord(
             Resultˉdepth = Resultˉdepth - 1u32;
             Fieldˉpop = Fieldˉpop + 1u32;
         }
-        if Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        if Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             7u32, Typeˉindex, Minor
         ) {
             return Hˉoperationˉstate(
@@ -2505,30 +2541,25 @@ export fn Hˉrecord(
     if (Minor == 32u32 || Minor == 33u32 || Minor == 34u32 ||
             Minor == 35u32 || Minor == 36u32 || Minor == 37u32) &&
         (Hˉtaskˉscopeˉisˉexact(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Sourceˉtypeˉindex
         ) || Hˉtaskˉhandleˉisˉexact(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Sourceˉtypeˉindex
         ) || Hˉoperationˉcontextˉisˉexact(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Sourceˉtypeˉindex
         ) || ((Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
                 Minor == 36u32 || Minor == 37u32) &&
-            Hˉunsafeˉscratchˉisˉexact(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Sourceˉtypeˉindex
             ))) {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Sourceˉstack: bytes = Bytesˉslice(Stack, 0u32, Sourceˉoffset);
     let Sourceˉdepth: u32 = Depth - 1u32;
-    var Sourceˉtype: u32 = Types + 4u32;
-    var Sourceˉcurrentˉtype: u32 = 0u32;
-    while Sourceˉcurrentˉtype < Sourceˉtypeˉindex {
-        Sourceˉtype = Hˉnextˉtype(Input, Sourceˉtype);
-        Sourceˉcurrentˉtype = Sourceˉcurrentˉtype + 1u32;
-    }
+    var Sourceˉtype: u32 = Hˉtypeˉat(Input, Types, Sourceˉtypeˉindex);
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Sourceˉtype)) != 1u32 {
         return Hˉoperationˉfailure(Sourceˉstack, Sourceˉdepth);
     }
@@ -2566,15 +2597,15 @@ export fn Hˉrecord(
     }
     if Minor >= 28u32 && Minor <= 37u32 &&
         Pushˉkind == 23u32 &&
-        Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             7u32, Sourceˉtypeˉindex,
             Minor
         ) {
         Pushˉkind = 26u32;
     }
     if Pushˉkind == 11u32 && Hˉbytesˉbuilderˉresultˉisˉexact(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), Pushˉnominal) { Pushˉkind = 42u32; }
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), Pushˉnominal) { Pushˉkind = 42u32; }
     return Hˉoperationˉstate(
         true,
         Sourceˉstack,
@@ -2585,14 +2616,9 @@ export fn Hˉrecord(
     );
 }
 
-fn Hˉarrayˉdescriptor(Input: bytes, Types: u32, Typeˉindex: u32) -> bytes {
+fn Hˉarrayˉdescriptor(Input: bytes, Types: Hˉtypeˉtable, Typeˉindex: u32) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    var Typeˉcursor: u32 = Types + 4u32;
-    var Currentˉtype: u32 = 0u32;
-    while Currentˉtype < Typeˉindex {
-        Typeˉcursor = Hˉnextˉtype(Input, Typeˉcursor);
-        Currentˉtype = Currentˉtype + 1u32;
-    }
+    var Typeˉcursor: u32 = Hˉtypeˉat(Input, Types, Typeˉindex);
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)) != 4u32 {
         return Invalid;
     }
@@ -2615,17 +2641,12 @@ fn Hˉarrayˉdescriptor(Input: bytes, Types: u32, Typeˉindex: u32) -> bytes {
 
 fn Hˉcollectionˉdescriptor(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉindex: u32,
     Expectedˉkind: u32
 ) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    var Typeˉcursor: u32 = Types + 4u32;
-    var Currentˉtype: u32 = 0u32;
-    while Currentˉtype < Typeˉindex {
-        Typeˉcursor = Hˉnextˉtype(Input, Typeˉcursor);
-        Currentˉtype = Currentˉtype + 1u32;
-    }
+    var Typeˉcursor: u32 = Hˉtypeˉat(Input, Types, Typeˉindex);
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)) != Expectedˉkind {
         return Invalid;
     }
@@ -2645,7 +2666,7 @@ fn Hˉcollectionˉdescriptor(
     );
 }
 
-fn Hˉcollectionˉelementˉisˉsupported(Input: bytes, Types: u32, Element: bytes) -> bool {
+fn Hˉcollectionˉelementˉisˉsupported(Input: bytes, Types: Hˉtypeˉtable, Element: bytes) -> bool {
     if Bytesˉlength(Element) != 5u32 { return false; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Element, 0u32));
     if Kind == 1u32 || Kind == 2u32 || Kind == 4u32 || Kind == 5u32 ||
@@ -2669,7 +2690,7 @@ fn Hˉcollection(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -2807,7 +2828,7 @@ fn Hˉcollectionˉorˉarray(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -2834,8 +2855,8 @@ fn Hˉcollectionˉorˉarray(
         var Expectedˉelementˉkind: u32 = Elementˉkind;
         if Expectedˉelementˉkind == 23u32 && Minor >= 20u32 {
             Expectedˉelementˉkind = 26u32;
-        } else if Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        } else if Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Expectedˉelementˉkind, Elementˉnominal, Minor
         ) {
             Expectedˉelementˉkind = Hˉownedˉtransferˉkind(
@@ -2859,8 +2880,8 @@ fn Hˉcollectionˉorˉarray(
             Element = Element + 1u32;
         }
         var Createdˉkind: u32 = 22u32;
-        if Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        if Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             22u32, Createdˉtypeˉindex, Minor
         ) {
             Createdˉkind = Hˉownedˉtransferˉkind(22u32);
@@ -2900,8 +2921,8 @@ fn Hˉcollectionˉorˉarray(
     if Borrowed {
         if !Hˉborrowˉpayloadˉsupported(Input, Selectedˉkind) { return Hˉoperationˉfailure(Stack, Depth); }
         Selectedˉkind = Selectedˉkind + 64u32;
-    } else if Selectedˉkind == 23u32 && Hˉownedˉaggregate(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+    } else if Selectedˉkind == 23u32 && Hˉownedˉaggregateˉwithˉtypes(
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
         22u32, Selectedˉtypeˉindex, Minor
     ) {
         Selectedˉkind = 26u32;
@@ -2916,10 +2937,10 @@ fn Hˉcollectionˉorˉarray(
     );
 }
 
-fn Hˉreadˉthroughˉshape(Input: bytes, Types: u32, Kind: u32, Nominal: u32, Copyˉonly: bool) -> bool {
+fn Hˉreadˉthroughˉshape(Input: bytes, Types: Hˉtypeˉtable, Kind: u32, Nominal: u32, Copyˉonly: bool) -> bool {
     // Semantic verification already admitted the type directory. This local
     // proof bounds aggregate traversal; it does not replace that admission.
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     var Pending: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Kind), Bytesˉfromˉu32ˉlittle(Nominal));
     var Path: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Steps: u32 = 0u32;
@@ -2954,7 +2975,7 @@ fn Hˉreadˉthroughˉshape(Input: bytes, Types: u32, Kind: u32, Nominal: u32, Co
             }
             if Currentˉkind == 7u32 && (Hˉtaskˉscopeˉisˉexact(Input, Types, Typeˉcount, Currentˉnominal) ||
                 Hˉtaskˉhandleˉisˉexact(Input, Types, Typeˉcount, Currentˉnominal) ||
-                Hˉunsafeˉscratchˉisˉexact(Input, Types, Typeˉcount, Currentˉnominal)) {
+                Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(Input, Types, Typeˉcount, Currentˉnominal)) {
                 return false;
             }
             var Typeˉcursor: u32 = Hˉtypeˉat(Input, Types, Currentˉnominal);
@@ -3013,7 +3034,7 @@ fn Hˉreadˉthroughˉshape(Input: bytes, Types: u32, Kind: u32, Nominal: u32, Co
     return Bytesˉlength(Path) == 0u32;
 }
 
-fn Hˉvalueˉmatches(Input: bytes, Types: u32, Expected: u32, Actual: u32, Nominal: u32) -> bool {
+fn Hˉvalueˉmatches(Input: bytes, Types: Hˉtypeˉtable, Expected: u32, Actual: u32, Nominal: u32) -> bool {
     if Expected == Actual { return true; }
     if Actual == 89u32 || Actual == 90u32 { return false; }
     if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32))))) || Expected >= 64u32 ||
@@ -3091,7 +3112,7 @@ fn Hˉcallˉtargetˉread(Input: bytes, Start: u32, Limit: u32) -> Hˉcallˉtarge
         Targetˉparameterˉtypes, Targetˉreturn);
 }
 
-fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: u32,
+fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: Hˉtypeˉtable,
     Targetˉparameters: u32, Targetˉparameterˉtypes: u32, Targetˉreturn: u32,
     Stack: bytes, Depth: u32) -> Hˉoperationˉstate {
     if Targetˉparameters > Depth { return Hˉoperationˉfailure(Stack, Depth); }
@@ -3122,7 +3143,7 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: u32,
             if Minor >= 34u32 && Minor <= 37u32 && Declaredˉkind == 36u32 {
                 Expectedˉkind = 25u32;
             }
-            if Hˉownedˉaggregate(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            if Hˉownedˉaggregateˉwithˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Declaredˉkind, Expectedˉnominal, Minor) {
                 Expectedˉkind = Hˉownedˉtransferˉkind(Declaredˉkind);
             }
@@ -3139,7 +3160,7 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: u32,
             (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32))))) &&
             Declaredˉkind == 26u32 && Actualˉkind == 87u32;
         if Borrowedˉvectorˉargument {
-            let Borrowedˉvectorˉtypes: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+            let Borrowedˉvectorˉtypes: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
             if Borrowedˉvectorˉtypes > 4096u32 || Expectedˉnominal >= Borrowedˉvectorˉtypes {
                 return Hˉoperationˉfailure(Stack, Depth);
             }
@@ -3162,7 +3183,7 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: u32,
     if Hˉshapeˉwidth(Input, Targetˉreturn) == 5u32 {
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Targetˉreturn + 1u32);
     }
-    if Hˉownedˉaggregate(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+    if Hˉownedˉaggregateˉwithˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
         Declaredˉpushˉkind, Pushˉnominal, Minor) {
         Pushˉkind = Hˉownedˉtransferˉkind(Declaredˉpushˉkind);
     }
@@ -3173,20 +3194,20 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: u32,
         Depth - Targetˉparameters, Pushˉkind != 0u32 && Pushˉkind != 21u32, Pushˉkind, Pushˉnominal);
 }
 
-export fn Hˉcall(
+fn Hˉcallˉwithˉtypes(
     Input: bytes,
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
     Functions: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 8u32 || Functionˉcode > Total || Cursor > Total - Functionˉcode ||
         Total - Functionˉcode - Cursor < 5u32 || Functions > Total ||
-        Total - Functions < 4u32 || Types > Total || Total - Types < 4u32 ||
+        Total - Functions < 4u32 || Types.Offset > Total || Total - Types.Offset < 4u32 ||
         Depth > 4096u32 || Bytesˉlength(Stack) != Depth * 5u32 {
         return Hˉoperationˉfailure(Stack, Depth);
     }
@@ -3247,12 +3268,12 @@ fn Hˉcallˉsignatures(Input: bytes, Functions: u32, End: u32) -> bytes {
 }
 
 fn Hˉcallˉindexed(Input: bytes, Minor: u32, Functionˉcode: u32, Cursor: u32,
-    Functions: u32, Types: u32, Signatures: bytes, Stack: bytes, Depth: u32
+    Functions: u32, Types: Hˉtypeˉtable, Signatures: bytes, Stack: bytes, Depth: u32
 ) -> Hˉoperationˉstate {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 8u32 || Functionˉcode > Total || Cursor > Total - Functionˉcode ||
         Total - Functionˉcode - Cursor < 5u32 || Functions > Total ||
-        Total - Functions < 4u32 || Types > Total || Total - Types < 4u32 ||
+        Total - Functions < 4u32 || Types.Offset > Total || Total - Types.Offset < 4u32 ||
         Depth > 4096u32 || Bytesˉlength(Stack) != Depth * 5u32 {
         return Hˉoperationˉfailure(Stack, Depth);
     }
@@ -3275,7 +3296,7 @@ fn Hˉindirectˉcall(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -3335,8 +3356,8 @@ fn Hˉindirectˉcall(
                 Input, Parameterˉcursor + 1u32
             );
         }
-        if Hˉownedˉaggregate(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+        if Hˉownedˉaggregateˉwithˉtypes(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Declaredˉkind, Expectedˉnominal, Minor
         ) {
             Expectedˉkind = Hˉownedˉtransferˉkind(Declaredˉkind);
@@ -3374,8 +3395,8 @@ fn Hˉindirectˉcall(
     if Hˉshapeˉwidth(Input, Returnˉshape) == 5u32 {
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Returnˉshape + 1u32);
     }
-    if Hˉownedˉaggregate(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+    if Hˉownedˉaggregateˉwithˉtypes(
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
         Declaredˉpushˉkind, Pushˉnominal, Minor
     ) {
         Pushˉkind = Hˉownedˉtransferˉkind(Declaredˉpushˉkind);
@@ -3404,7 +3425,7 @@ fn Hˉcallableˉcreate(
     Functionˉcode: u32,
     Cursor: u32,
     Functions: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -3505,7 +3526,7 @@ fn Hˉcallableˉoperation(
     Functionˉcode: u32,
     Cursor: u32,
     Functions: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -3524,7 +3545,7 @@ fn Hˉtaskˉoperation(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Localˉslots: u32,
     Stack: bytes,
@@ -3533,7 +3554,7 @@ fn Hˉtaskˉoperation(
     let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
         Input, Functionˉcode + Cursor
     ));
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     let Local: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 1u32
     );
@@ -3686,7 +3707,7 @@ fn Hˉtaskˉoperation(
             return Hˉoperationˉfailure(Stack, Depth);
         }
         var Pushˉkind: u32 = 11u32;
-        if Hˉownedˉaggregate(
+        if Hˉownedˉaggregateˉwithˉtypes(
                 Input, Types, Typeˉcount, 11u32, Outcomeˉtype, 32u32
             ) {
             Pushˉkind = 32u32;
@@ -3723,7 +3744,7 @@ fn Hˉunsafeˉscratchˉoperation(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Localˉslots: u32,
     Stack: bytes,
@@ -3738,14 +3759,14 @@ fn Hˉunsafeˉscratchˉoperation(
     let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 9u32
     );
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     if (Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
         Minor != 36u32 && Minor != 37u32) ||
         Budget >= Localˉslots ||
         Resultˉtype >= Typeˉcount ||
         Abiˉtype >= Typeˉcount || Depth < 2u32 || U32ˉfromˉu8(
             Bytesˉreadˉu8(Localˉshapes, Budget * 5u32)
-        ) != 25u32 || !Hˉunsafeˉscratchˉresultˉisˉexact(
+        ) != 25u32 || !Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Resultˉtype
         ) {
         return Hˉoperationˉfailure(Stack, Depth);
@@ -3777,7 +3798,7 @@ fn Hˉunsafeˉwriteˉregionˉoperation(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Localˉslots: u32,
     Parameterˉcount: u32,
@@ -3793,7 +3814,7 @@ fn Hˉunsafeˉwriteˉregionˉoperation(
     let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 9u32
     );
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     if (Minor != 36u32 && Minor != 37u32) || Scratch >= Localˉslots ||
         Resultˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount ||
         Depth < 3u32 {
@@ -3809,15 +3830,15 @@ fn Hˉunsafeˉwriteˉregionˉoperation(
     if (Scratchˉkind != 7u32 &&
             (Scratchˉkind != 28u32 || Scratch >= Parameterˉcount)) ||
         Scratchˉtype >= Typeˉcount ||
-        !Hˉunsafeˉscratchˉisˉexact(
+        !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Scratchˉtype
-        ) || !Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+        ) || !Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Resultˉtype
         ) {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Regionˉtype: u32 =
-        Hˉunsafeˉwriteˉregionˉresultˉvalueˉtype(
+        Hˉunsafeˉwriteˉregionˉresultˉvalueˉtypeˉwithˉtypes(
             Input, Types, Typeˉcount, Resultˉtype
         );
     if Regionˉtype >= Typeˉcount || Regionˉtype == Scratchˉtype {
@@ -3854,7 +3875,7 @@ fn Hˉunsafeˉwriteˉpointerˉoperation(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Localˉslots: u32,
     Parameterˉcount: u32,
@@ -3870,7 +3891,7 @@ fn Hˉunsafeˉwriteˉpointerˉoperation(
     let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 9u32
     );
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     if Minor != 37u32 || Region >= Localˉslots ||
         Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount {
         return Hˉoperationˉfailure(Stack, Depth);
@@ -3885,9 +3906,9 @@ fn Hˉunsafeˉwriteˉpointerˉoperation(
     if (Regionˉkind != 7u32 &&
             (Regionˉkind != 28u32 || Region >= Parameterˉcount)) ||
         Regionˉtype >= Typeˉcount || Regionˉtype == Pointerˉtype ||
-        !Hˉunsafeˉscratchˉisˉexact(
+        !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Regionˉtype
-        ) || !Hˉunsafeˉscratchˉisˉexact(
+        ) || !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Pointerˉtype
         ) {
         return Hˉoperationˉfailure(Stack, Depth);
@@ -3907,7 +3928,7 @@ fn Hˉforeignˉcallˉoperation(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -3920,11 +3941,11 @@ fn Hˉforeignˉcallˉoperation(
     let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Functionˉcode + Cursor + 9u32
     );
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     let Declaredˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if (Declaredˉminor != 38u32 && Declaredˉminor != 39u32 && Declaredˉminor != 40u32 && (Declaredˉminor != 41u32 && Declaredˉminor != 42u32 && (Declaredˉminor != 43u32 && (Declaredˉminor != 44u32 && Declaredˉminor != 45u32)))) || Binding != 1u32 ||
         Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount || Depth < 3u32 ||
-        !Hˉunsafeˉscratchˉisˉexact(
+        !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Pointerˉtype
         ) {
         return Hˉoperationˉfailure(Stack, Depth);
@@ -3959,7 +3980,7 @@ fn Hˉsystemˉoperation(
     Minor: u32,
     Functionˉcode: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Localˉslots: u32,
     Parameterˉcount: u32,
@@ -3993,12 +4014,12 @@ fn Hˉsystemˉoperation(
     return Hˉoperationˉfailure(Stack, Depth);
 }
 
-export fn Hˉcapability(
+fn Hˉcapabilityˉwithˉtypes(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
     Capabilities: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -4232,7 +4253,7 @@ fn Hˉvectorˉindexedˉborrow(
     Functionˉcode: u32,
     Functionˉcodeˉlength: u32,
     Cursor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Parameterˉcount: u32,
     Localˉcount: u32,
@@ -4252,8 +4273,8 @@ fn Hˉvectorˉindexedˉborrow(
     if (Indexedˉkind != 23u32 && Indexedˉkind != 26u32 && Indexedˉkind != 27u32 && Indexedˉkind != 87u32) ||
         ((Indexedˉkind == 26u32 || Indexedˉkind == 27u32) && Localˉindex >= Parameterˉcount) ||
         (Indexedˉkind == 87u32 && Localˉindex < Parameterˉcount) ||
-        Bytesˉreadˉu32ˉlittle(Input, Types) > 4096u32 ||
-        Indexedˉnominal >= Bytesˉreadˉu32ˉlittle(Input, Types) ||
+        Bytesˉreadˉu32ˉlittle(Input, Types.Offset) > 4096u32 ||
+        Indexedˉnominal >= Bytesˉreadˉu32ˉlittle(Input, Types.Offset) ||
         Bytesˉreadˉu32ˉlittle(Localˉshapes, Localˉindex * 5u32 + 1u32) != Indexedˉnominal {
         return Hˉoperationˉfailure(Stack, Depth);
     }
@@ -4271,7 +4292,7 @@ fn Hˉvectorˉindexedˉborrow(
 
 fn Hˉvectorˉreplace(
     Input: bytes, Functionˉcode: u32, Functionˉcodeˉlength: u32,
-    Cursor: u32, Types: u32, Localˉshapes: bytes,
+    Cursor: u32, Types: Hˉtypeˉtable, Localˉshapes: bytes,
     Parameterˉcount: u32, Localˉcount: u32, Stack: bytes, Depth: u32
 ) -> Hˉoperationˉstate {
     if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32)) ||
@@ -4282,7 +4303,7 @@ fn Hˉvectorˉreplace(
     let Slot: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 1u32);
     let Nominal: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 5u32);
     if Slot >= Parameterˉcount + Localˉcount ||
-        Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types) {
+        Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types.Offset) {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Kind: u8 = Bytesˉreadˉu8(Localˉshapes, Slot * 5u32);
@@ -4310,7 +4331,7 @@ fn Hˉvectorˉreplace(
 
 fn Hˉvectorˉparameterˉlength(
     Input: bytes, Functionˉcode: u32, Functionˉcodeˉlength: u32,
-    Cursor: u32, Types: u32, Localˉshapes: bytes,
+    Cursor: u32, Types: Hˉtypeˉtable, Localˉshapes: bytes,
     Parameterˉcount: u32, Stack: bytes, Depth: u32
 ) -> Hˉoperationˉstate {
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
@@ -4323,7 +4344,7 @@ fn Hˉvectorˉparameterˉlength(
     let Nominal: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 5u32);
     if (Kind != 23u8 && Kind != 26u8 && Kind != 27u8) ||
         Bytesˉreadˉu32ˉlittle(Localˉshapes, Slot * 5u32 + 1u32) != Nominal ||
-        Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types) {
+        Nominal >= Bytesˉreadˉu32ˉlittle(Input, Types.Offset) {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     if Bytesˉreadˉu8(Input, Hˉtypeˉat(Input, Types, Nominal)) != 5u8 {
@@ -4332,7 +4353,7 @@ fn Hˉvectorˉparameterˉlength(
     return Hˉoperationˉstate(true, Stack, Depth, true, 10u32, 0u32);
 }
 
-fn Hˉbuilderˉloanˉcallˉkind(Input: bytes, Code: u32, Length: u32, Cursor: u32, Types: u32) -> u32 {
+fn Hˉbuilderˉloanˉcallˉkind(Input: bytes, Code: u32, Length: u32, Cursor: u32, Types: Hˉtypeˉtable) -> u32 {
     var Next: u32 = Cursor + 5u32;
     var After: u32 = 0u32;
     while Next < Length && (Bytesˉreadˉu8(Input, Code + Next) == 4u8 ||
@@ -4378,7 +4399,7 @@ fn Hˉlocalˉload(
     Functionˉcodeˉlength: u32,
     Cursor: u32,
     Previousˉopcode: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Parameterˉcount: u32,
     Localˉcount: u32,
@@ -4427,7 +4448,7 @@ fn Hˉlocalˉload(
         }
     }
     let Isˉownedˉaggregate: bool = !Localˉisˉborrowedˉaggregate &&
-        Hˉownedˉaggregate(
+        Hˉownedˉaggregateˉwithˉtypes(
         Input, Types, Typeˉcount,
         Localˉkind, Localˉnominal, Minor
     );
@@ -4474,7 +4495,7 @@ fn Hˉlocalˉload(
         ));
         Borrowedˉaggregateˉisˉcall = Observer == 64u32 &&
             Declaredˉlocalˉkind == 28u32 &&
-            Hˉunsafeˉscratchˉisˉexact(
+            Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
                 Input, Types, Typeˉcount, Localˉnominal
             );
         if !Borrowedˉaggregateˉisˉcall &&
@@ -4529,7 +4550,7 @@ fn Hˉlocalˉload(
 fn Hˉownedˉlocalˉtake(
     Input: bytes,
     Minor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Typeˉcount: u32,
     Localˉkind: u32,
     Localˉnominal: u32,
@@ -4566,17 +4587,17 @@ fn Hˉownedˉlocalˉtake(
     let Isˉunsafeˉscratchˉresult: bool =
         (Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
             Minor == 36u32 || Minor == 37u32) &&
-        Localˉkind == 11u32 && Hˉunsafeˉscratchˉresultˉisˉexact(
+        Localˉkind == 11u32 && Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Localˉnominal
         );
     let Isˉunsafeˉwriteˉregionˉresult: bool =
         (Minor == 36u32 || Minor == 37u32) &&
         Localˉkind == 11u32 &&
-        Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+        Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
             Input, Types, Typeˉcount, Localˉnominal
         );
     let Takeˉisˉownedˉaggregate: bool =
-        !Localˉisˉborrowedˉaggregate && Hˉownedˉaggregate(
+        !Localˉisˉborrowedˉaggregate && Hˉownedˉaggregateˉwithˉtypes(
         Input, Types, Typeˉcount,
         Localˉkind, Localˉnominal, Minor
     );
@@ -4621,7 +4642,7 @@ fn Hˉlocalˉoperation(
     Functionˉcodeˉlength: u32,
     Cursor: u32,
     Previousˉopcode: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Parameterˉcount: u32,
     Localˉcount: u32,
@@ -4667,7 +4688,7 @@ fn Hˉlocalˉoperation(
     let Localˉnominal: u32 = Bytesˉreadˉu32ˉlittle(
         Localˉshapes, Localˉshape + 1u32
     );
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
     if Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 {
         if Localˉkind == 25u32 && Opcode == 4u32 && Cursor + 10u32 <= Functionˉcodeˉlength &&
             Bytesˉreadˉu8(Input, Functionˉcode + Cursor + 5u32) == 5u8 {
@@ -4774,7 +4795,7 @@ fn Hˉlocalˉoperation(
         if (Minor != 35u32 && Minor != 36u32 && Minor != 37u32) ||
             Localˉkind != 7u32 ||
             Localˉnominal >= Typeˉcount || Abiˉtype >= Typeˉcount ||
-            !Hˉunsafeˉscratchˉisˉexact(
+            !Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(
                 Input, Types, Typeˉcount, Localˉnominal
             ) {
             return Hˉoperationˉfailure(Stack, Depth);
@@ -4825,14 +4846,14 @@ fn Hˉlocalˉoperation(
         if (Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
             Minor == 36u32 || Minor == 37u32) &&
             Firstˉkind == 11u32 &&
-            Hˉunsafeˉscratchˉresultˉisˉexact(
+            Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(
                 Input, Types, Typeˉcount, Firstˉnominal
             ) { Firstˉkind = 36u32; }
         if (Minor == 36u32 || Minor == 37u32) && Firstˉkind == 11u32 &&
-            Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+            Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
                 Input, Types, Typeˉcount, Firstˉnominal
             ) { Firstˉkind = 37u32; }
-        if !Localˉisˉborrowedˉaggregate && Hˉownedˉaggregate(
+        if !Localˉisˉborrowedˉaggregate && Hˉownedˉaggregateˉwithˉtypes(
             Input, Types, Typeˉcount,
             Localˉkind, Localˉnominal, Minor
         ) {
@@ -4993,7 +5014,7 @@ fn Hˉlocalˉoperation(
     );
 }
 
-fn Hˉfoundationˉlocal(Input: bytes, Types: u32, Functionˉcode: u32, Cursor: u32,
+fn Hˉfoundationˉlocal(Input: bytes, Types: Hˉtypeˉtable, Functionˉcode: u32, Cursor: u32,
     Previousˉopcode: u32, Shapes: bytes, Parameters: u32, Slot: u32,
     Kind: u32, Nominal: u32, Stack: bytes, Depth: u32) -> Hˉoperationˉstate {
     let Opcode: u8 = Bytesˉreadˉu8(Input, Functionˉcode + Cursor);
@@ -5017,8 +5038,8 @@ fn Hˉfoundationˉlocal(Input: bytes, Types: u32, Functionˉcode: u32, Cursor: u
         if Kind == 29u32 {
             // Shape 29 retains the older exact owned-Option view sequence.
             // Copy/shared Option views still require E1, not an ordinary load.
-            Ownerˉmatches = Actual == 11u32 && Hˉownedˉaggregate(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types), 11u32, Nominal, 37u32);
+            Ownerˉmatches = Actual == 11u32 && Hˉownedˉaggregateˉwithˉtypes(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset), 11u32, Nominal, 37u32);
         }
         if !Ownerˉmatches || Cursor < 5u32 ||
             Previousˉopcode != 4u32 { return Hˉoperationˉfailure(Stack, Depth); }
@@ -5040,7 +5061,7 @@ fn Hˉlocalˉoperationˉdispatch(
     Functionˉcodeˉlength: u32,
     Cursor: u32,
     Previousˉopcode: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Localˉshapes: bytes,
     Parameterˉcount: u32,
     Localˉcount: u32,
@@ -5205,7 +5226,7 @@ fn Hˉfunctionˉwriteˉpointerˉtypes(
 
 fn Hˉreturnˉoperation(
     Input: bytes,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Minor: u32,
     Returnˉtype: u32,
     Stack: bytes,
@@ -5236,8 +5257,8 @@ fn Hˉreturnˉoperation(
     if Expectedˉkind == 37u32 {
         return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
     }
-    if Hˉownedˉaggregate(
-        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+    if Hˉownedˉaggregateˉwithˉtypes(
+        Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
         Expectedˉkind, Expectedˉnominal, Minor
     ) {
         Expectedˉkind = Hˉownedˉtransferˉkind(Expectedˉkind);
@@ -5264,7 +5285,7 @@ fn Hˉreturnˉoperation(
 }
 
 fn Hˉfunctionˉentryˉread(Input: bytes, Start: u32, Limit: u32,
-    Types: u32, Minor: u32) -> Hˉfunctionˉentry {
+    Types: Hˉtypeˉtable, Minor: u32) -> Hˉfunctionˉentry {
     let Invalid: Hˉfunctionˉentry = Hˉfunctionˉentry(
         0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
     if Limit > Bytesˉlength(Input) || Start > Limit || Limit - Start < 4u32 {
@@ -5292,8 +5313,8 @@ fn Hˉfunctionˉentryˉread(Input: bytes, Start: u32, Limit: u32,
             if Width == 0u32 || Width > Limit - Cursor { return Invalid; }
             let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
             if Stage < 2u32 && (Minor == 36u32 || Minor == 37u32) &&
-                Kind == 11u8 && Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
-                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Kind == 11u8 && Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(
+                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                     Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32)) { return Invalid; }
             if Stage == 1u32 && Kind == 37u8 { return Invalid; }
             Cursor = Cursor + Width;
@@ -5337,7 +5358,7 @@ fn Hˉsoleˉborrowedˉparameter(Input: bytes, Shapes: u32, Parameters: u32) -> u
 }
 
 fn Hˉcallˉborrowedˉreturn(Input: bytes, Functions: u32, End: u32,
-    Types: u32, Minor: u32, Target: u32) -> Hˉfunctionˉentry {
+    Types: Hˉtypeˉtable, Minor: u32, Target: u32) -> Hˉfunctionˉentry {
     let Invalid: Hˉfunctionˉentry = Hˉfunctionˉentry(
         0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Functions);
@@ -5394,7 +5415,7 @@ fn Hˉbuilderˉexclusiveˉcallˉsources(Input: bytes, Code: u32, Cursor: u32,
 // entries at every call. A potential exclusive mutation conservatively stales
 // every loan; ordinary Vector stack cells do not encode their source local.
 fn Hˉexclusiveˉvectorˉfunctions(Input: bytes, Functions: u32, End: u32,
-    Types: u32, Minor: u32) -> bytes {
+    Types: Hˉtypeˉtable, Minor: u32) -> bytes {
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
     if Functions > End || End > Bytesˉlength(Input) || End - Functions < 4u32 { return Empty; }
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Functions);
@@ -5757,7 +5778,7 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
     var Functionsˉend: u32 = 0u32;
     var Code: u32 = 0u32;
     var Codeˉlength: u32 = 0u32;
-    var Types: u32 = 0u32;
+    var Typesˉoffset: u32 = 0u32;
     var Typesˉend: u32 = 0u32;
     while Sectionˉkind <= 7u32 {
         Payload = Envelope + 8u32;
@@ -5772,19 +5793,21 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
             Codeˉlength = Payloadˉlength;
         }
         if Sectionˉkind == 7u32 {
-            Types = Payload;
+            Typesˉoffset = Payload;
             Typesˉend = Payload + Payloadˉlength;
         }
         Envelope = Payload + Payloadˉlength;
         Sectionˉkind = Sectionˉkind + 1u32;
     }
 
+    let Types: Hˉtypeˉtable = Hˉtypeˉtableˉread(Input, Typesˉoffset, Typesˉend);
+    if Bytesˉlength(Types.Positions) == 0u32 { return Invalid; }
     let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Functions);
     if Functionˉcount > 4096u32 { return Invalid; }
     if Codeˉlength > 4194304u32 { return Invalid; }
     var Foundationˉtypes: bytes = Invalid;
     if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32))))) {
-        Foundationˉtypes = Hˉfoundationˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types));
+        Foundationˉtypes = Hˉfoundationˉtypesˉwithˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset));
     }
     var Functionˉindex: u32 = 0u32;
     var Functionˉcursor: u32 = Functions + 4u32;
@@ -5989,7 +6012,7 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
             }
 
             if Opcode >= 151u32 && Opcode <= 153u32 {
-                let Variantˉstate: Hˉoperationˉstate = Hˉvariant(
+                let Variantˉstate: Hˉoperationˉstate = Hˉvariantˉwithˉtypes(
                     Input,
                     Minor,
                     Functionˉcode,
@@ -6044,7 +6067,7 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
             }
 
             if Opcode == 104u32 || Opcode == 105u32 {
-                let Recordˉstate: Hˉoperationˉstate = Hˉrecord(
+                let Recordˉstate: Hˉoperationˉstate = Hˉrecordˉwithˉtypes(
                     Input,
                     Functionˉcode,
                     Cursor,
@@ -6147,7 +6170,7 @@ fn Hˉexecutableˉcore(Input: bytes, Collectˉroots: bool) -> bytes {
             }
 
             if Opcode == 65u32 {
-                let Capabilityˉstate: Hˉoperationˉstate = Hˉcapability(
+                let Capabilityˉstate: Hˉoperationˉstate = Hˉcapabilityˉwithˉtypes(
                     Input,
                     Functionˉcode,
                     Cursor,
@@ -6378,7 +6401,7 @@ export fn Hˉborrowˉroots(Input: bytes) -> Hˉborrowˉrootˉevidence {
 fn Iˉownedˉcontrolˉisˉvalid(
     Input: bytes,
     Minor: u32,
-    Types: u32,
+    Types: Hˉtypeˉtable,
     Functionˉcode: u32,
     Functionˉcodeˉlength: u32,
     Localˉslots: u32,
@@ -6395,7 +6418,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
     var Ownedˉslot: u32 = 0u32;
     while Ownedˉslot < Localˉslots {
         if Iˉtrackedˉownedˉlocalˉshape(
-            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
             Localˉshapes, Ownedˉslot, Minor, Pointerˉtypes
         ) {
             if Ownedˉvectorˉcount >= 64u32 { return false; }
@@ -6411,16 +6434,16 @@ fn Iˉownedˉcontrolˉisˉvalid(
                 if (Parameterˉkind == 7u32 &&
                         (Hˉtaskˉscopeˉisˉexact(
                             Input, Types,
-                            Bytesˉreadˉu32ˉlittle(Input, Types),
+                            Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                             Parameterˉnominal
                         ) || Hˉtaskˉhandleˉisˉexact(
                             Input, Types,
-                            Bytesˉreadˉu32ˉlittle(Input, Types),
+                            Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                             Parameterˉnominal
                         ))) || (Parameterˉkind == 11u32 &&
                         Hˉtaskˉaffineˉresultˉisˉexact(
                             Input, Types,
-                            Bytesˉreadˉu32ˉlittle(Input, Types),
+                            Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                             Parameterˉnominal
                         )) {
                     return false;
@@ -6500,7 +6523,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             );
             var Ownedˉrank: u32 = 4294967295u32;
             if Ownedˉlocal < Localˉslots && Iˉtrackedˉownedˉlocalˉshape(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Localˉshapes, Ownedˉlocal, Minor, Pointerˉtypes
             ) {
                 Ownedˉrank = 0u32;
@@ -6508,7 +6531,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
                 while Ownedˉearlier < Ownedˉlocal {
                     if Iˉtrackedˉownedˉlocalˉshape(
                         Input, Types,
-                        Bytesˉreadˉu32ˉlittle(Input, Types),
+                        Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                         Localˉshapes, Ownedˉearlier, Minor, Pointerˉtypes
                     ) { Ownedˉrank = Ownedˉrank + 1u32; }
                     Ownedˉearlier = Ownedˉearlier + 1u32;
@@ -6602,7 +6625,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             }
             if Ownedˉparent >= Localˉslots ||
                 !Iˉtrackedˉownedˉlocalˉshape(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Localˉshapes, Ownedˉparent, Minor, Pointerˉtypes
             ) || U32ˉfromˉu8(Bytesˉreadˉu8(
                 Localˉshapes, Ownedˉparent * 5u32
@@ -6611,7 +6634,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             var Ownedˉparentˉearlier: u32 = 0u32;
             while Ownedˉparentˉearlier < Ownedˉparent {
                 if Iˉtrackedˉownedˉlocalˉshape(
-                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                     Localˉshapes, Ownedˉparentˉearlier, Minor,
                     Pointerˉtypes
                 ) { Ownedˉparentˉrank = Ownedˉparentˉrank + 1u32; }
@@ -6651,7 +6674,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             var Ownedˉbudgetˉearlier: u32 = 0u32;
             while Ownedˉbudgetˉearlier < Ownedˉbudget {
                 if Iˉtrackedˉownedˉlocalˉshape(
-                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                     Localˉshapes, Ownedˉbudgetˉearlier, Minor,
                     Pointerˉtypes
                 ) {
@@ -6681,7 +6704,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
                 return false;
             }
             let Ownedˉscratchˉbudgetˉrank: u32 = Iˉownedˉlocalˉrank(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Localˉshapes, Ownedˉscratchˉbudget, Minor, Pointerˉtypes
             );
             if !Iˉownedˉrankˉisˉavailable(
@@ -6699,7 +6722,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             }
         }
         if Ownedˉopcode >= 214u32 && Ownedˉopcode <= 219u32 {
-            let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+            let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
             let Primary: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Functionˉcode + Ownedˉcursor + 1u32
             );
@@ -6833,7 +6856,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
     var Controlˉfunctionsˉend: u32 = 0u32;
     var Controlˉcode: u32 = 0u32;
     var Controlˉcodeˉlength: u32 = 0u32;
-    var Types: u32 = 0u32;
+    var Typesˉoffset: u32 = 0u32;
+    var Typesˉend: u32 = 0u32;
     while Controlˉsectionˉkind <= 7u32 {
         Controlˉpayload = Controlˉenvelope + 8u32;
         Controlˉpayloadˉlength = Bytesˉreadˉu32ˉlittle(
@@ -6848,11 +6872,16 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             Controlˉcode = Controlˉpayload;
             Controlˉcodeˉlength = Controlˉpayloadˉlength;
         }
-        if Controlˉsectionˉkind == 7u32 { Types = Controlˉpayload; }
+        if Controlˉsectionˉkind == 7u32 {
+            Typesˉoffset = Controlˉpayload;
+            Typesˉend = Controlˉpayload + Controlˉpayloadˉlength;
+        }
         Controlˉenvelope = Controlˉpayload + Controlˉpayloadˉlength;
         Controlˉsectionˉkind = Controlˉsectionˉkind + 1u32;
     }
 
+    let Types: Hˉtypeˉtable = Hˉtypeˉtableˉread(Input, Typesˉoffset, Typesˉend);
+    if Bytesˉlength(Types.Positions) == 0u32 { return Controlˉinvalid; }
     let Controlˉfunctionˉcount: u32 = Bytesˉreadˉu32ˉlittle(
         Input,
         Controlˉfunctions
@@ -6908,7 +6937,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         var Controlˉownedˉslot: u32 = 0u32;
         while Controlˉownedˉslot < Controlˉlocalˉslots {
             if Iˉtrackedˉownedˉlocalˉshape(
-                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset),
                 Controlˉlocalˉshapes, Controlˉownedˉslot, Minor,
                 Controlˉpointerˉtypes
             ) { Controlˉhasˉtake = true; }
@@ -7018,4 +7047,112 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
     }
     if Controlˉenvelope > Controlˉtotal { return Controlˉinvalid; }
     return Input;
+}
+
+export fn Hˉfoundationˉtypes(Input: bytes, Types: u32, Count: u32) -> bytes {
+    return Hˉfoundationˉtypesˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Count);
+}
+
+export fn Hˉunsafeˉscratchˉisˉexact(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Typeˉindex: u32
+) -> bool {
+    return Hˉunsafeˉscratchˉisˉexactˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Typeˉcount, Typeˉindex);
+}
+
+export fn Hˉownedˉaggregate(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Kind: u32,
+    Nominal: u32,
+    Minor: u32
+) -> bool {
+    return Hˉownedˉaggregateˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Typeˉcount, Kind, Nominal, Minor);
+}
+
+export fn Hˉunsafeˉscratchˉresultˉisˉexact(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Resultˉtype: u32
+) -> bool {
+    return Hˉunsafeˉscratchˉresultˉisˉexactˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Typeˉcount, Resultˉtype);
+}
+
+export fn Hˉunsafeˉscratchˉresultˉvalueˉtype(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Resultˉtype: u32
+) -> u32 {
+    return Hˉunsafeˉscratchˉresultˉvalueˉtypeˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Typeˉcount, Resultˉtype);
+}
+
+export fn Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Resultˉtype: u32
+) -> bool {
+    return Hˉunsafeˉwriteˉregionˉresultˉisˉexactˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Typeˉcount, Resultˉtype);
+}
+
+export fn Hˉunsafeˉwriteˉregionˉresultˉvalueˉtype(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Resultˉtype: u32
+) -> u32 {
+    return Hˉunsafeˉwriteˉregionˉresultˉvalueˉtypeˉwithˉtypes(Input, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Typeˉcount, Resultˉtype);
+}
+
+export fn Hˉvariant(
+    Input: bytes,
+    Minor: u32,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    return Hˉvariantˉwithˉtypes(Input, Minor, Functionˉcode, Cursor, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Stack, Depth);
+}
+
+export fn Hˉrecord(
+    Input: bytes,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    return Hˉrecordˉwithˉtypes(Input, Functionˉcode, Cursor, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Stack, Depth);
+}
+
+export fn Hˉcall(
+    Input: bytes,
+    Minor: u32,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Functions: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    return Hˉcallˉwithˉtypes(Input, Minor, Functionˉcode, Cursor, Functions, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Stack, Depth);
+}
+
+export fn Hˉcapability(
+    Input: bytes,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Capabilities: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    return Hˉcapabilityˉwithˉtypes(Input, Functionˉcode, Cursor, Capabilities, Hˉtypeˉtable(Types, Bytesˉslice(Input, 0u32, 0u32)), Stack, Depth);
 }
