@@ -161,12 +161,12 @@ fn Bindingsˉwithˉforeignˉgenericˉtypes(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty()
         );
     if Bound.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
-        let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+        let Unboundˉproduct: Bindings.Compilerˉsourceˉbindingˉsummary =
             Bindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
                 Input, Scan, Symbolsˉvalue, Phase
             );
         return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
-                Input, Scan, Symbolsˉvalue, Phase, Published, Symbolsˉvalue.Functions
+                Input, Scan, Symbolsˉvalue, Phase, Unboundˉproduct, Symbolsˉvalue.Functions
             );
     }
     return Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphaseˉproduct(
