@@ -1,7 +1,6 @@
 windvale-project 4
 root "Tests/Fixtures/Language-1.0/Callable-Type-Catalog-Self-Test.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
-source "Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Callable-Types-Core.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"

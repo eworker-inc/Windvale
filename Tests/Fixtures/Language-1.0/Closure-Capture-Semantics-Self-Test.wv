@@ -652,14 +652,14 @@ fn Bindingsˉfromˉsymbols(
 }
 
 fn Validateˉsourceˉbindings(Input: bytes) -> Bindings.Compilerˉsourceˉbindingˉsummary {
-    let Symbols: Symbols.Compilerˉsourceˉsymbolˉsummary =
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
-    if Symbols.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+    if Symbolˉsummary.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
         return Bindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
-            Input, Symbols
+            Input, Symbolˉsummary
         );
     }
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
         Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    return Bindingsˉfromˉsymbols(Input, Scan, Symbols);
+    return Bindingsˉfromˉsymbols(Input, Scan, Symbolˉsummary);
 }
