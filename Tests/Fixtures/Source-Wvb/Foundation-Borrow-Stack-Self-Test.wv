@@ -907,6 +907,91 @@ fn Checkˉindexedˉtypes(Input: bytes) -> bool {
     return true;
 }
 
+fn Ownershipˉname(Index: u32) -> text {
+    var Digits: text = U32ˉformat(Index);
+    while Bytesˉlength(Textˉtoˉutf8(Digits)) < 4u32 {
+        Digits = Textˉconcat("0", Digits);
+    }
+    return Digits;
+}
+
+fn Ownershipˉfields(Shape: bytes, Count: u32) -> bytes {
+    var Fields: bytes = Bytesˉslice(Shape, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Fields = Bytesˉconcat(Fields, Bytesˉconcat(
+            Name(Textˉconcat("F", Ownershipˉname(Index))), Shape));
+        Index = Index + 1u32;
+    }
+    return Fields;
+}
+
+// A used record beyond the first 64 entries distinguishes owning from copyable
+// cached results. Repeated child
+// records exceed the per-root preparation allowance; unused wide records
+// exhaust the per-pass allowance before the used type. Neither limit may
+// change the existing scalar-load acceptance or owned-load rejection.
+fn Checkˉownershipˉreuse(Input: bytes) -> bool {
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Empty: bytes = Bytesˉslice(U32, 0u32, 0u32);
+    let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let One: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    let Prefix: bytes = Replace(Bytesˉslice(Input, 0u32, Section(Input, 4u32) - 8u32),
+        6u32, Bytesˉfromˉu16ˉlittle(44u32));
+    let Fields: bytes = Ownershipˉfields(U32, 32u32);
+    let Leaf: bytes = Join(Bytesˉfromˉu8(1u8), Name("OwnershipLeaf"),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(32u32), Fields));
+    var Selection: u32 = 0u32;
+    while Selection < 3u32 {
+        var Padding: u32 = 0u32;
+        if Selection == 0u32 { Padding = 63u32; }
+        if Selection == 2u32 { Padding = 180u32; }
+        var Rootˉfields: u32 = 1u32;
+        if Selection == 1u32 { Rootˉfields = 64u32; }
+        var Added: bytes = Leaf;
+        var Index: u32 = 0u32;
+        while Index < Padding {
+            Added = Bytesˉconcat(Added, Join(Bytesˉfromˉu8(1u8),
+                Name(Textˉconcat("OwnershipPadding", Ownershipˉname(Index))),
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(32u32), Fields)));
+            Index = Index + 1u32;
+        }
+        let Root: u32 = 1u32 + Padding;
+        var Owned: u32 = 0u32;
+        while Owned < 2u32 {
+            var Payload: bytes = Ownershipˉfields(Cell(7u8, 0u32), Rootˉfields);
+            if Owned != 0u32 {
+                Payload = Replace(Payload, Bytesˉlength(Name("F0000")), Cell(23u8, Root + 1u32));
+            }
+            let Allˉadded: bytes = Bytesˉconcat(Added, Join(Bytesˉfromˉu8(1u8),
+                Name("OwnershipRoot"), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Rootˉfields), Payload)));
+            let Typeˉrows: bytes = Join(Bytesˉfromˉu32ˉlittle(Root + 2u32), Allˉadded,
+                Join(Bytesˉfromˉu8(5u8), Name("OwnershipVector"), U32));
+            let Mainˉbody: bytes = Bytesˉconcat(Cell(9u8, 42u32), Bytesˉfromˉu8(81u8));
+            let Main: bytes = Join(Name("Main"), Zero, Join(U32, Zero,
+                Join(Zero, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Mainˉbody)), One)));
+            let Model: bytes = Bytesˉconcat(Prefix,
+                Join(Indexedˉtypeˉsection(4u32, Bytesˉconcat(One, Main)),
+                    Indexedˉtypeˉsection(5u32, Mainˉbody),
+                    Bytesˉconcat(Indexedˉtypeˉsection(6u32,
+                        Join(One, Name("Main"), Bytesˉconcat(Bytesˉfromˉu8(1u8), Zero))),
+                        Indexedˉtypeˉsection(7u32, Typeˉrows))));
+            if Executable.Hˉownedˉaggregate(Model, Section(Model, 7u32), Root + 2u32, 7u32, Root, 37u32) !=
+                (Owned != 0u32) { return false; }
+            let Body: bytes = Join(Cell(4u8, 0u32), Bytesˉfromˉu8(80u8),
+                Bytesˉconcat(Cell(9u8, 42u32), Bytesˉfromˉu8(81u8)));
+            let Program: bytes = Trial(Model, Cell(7u8, Root), 1u32, U32,
+                Empty, 0u32, Body, 1u32);
+            var Expected: u32 = 0u32;
+            if Owned != 0u32 { Expected = 2u32; }
+            if Typedˉresult(Program) != Expected { return false; }
+            Owned = Owned + 1u32;
+        }
+        Selection = Selection + 1u32;
+    }
+    return true;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
     if Typedˉresult(Input) != 0u32 { return 151; }
@@ -940,5 +1025,6 @@ export fn Check(Candidate: bytes) -> i32 {
     if Authorityˉresult != 0 { return Authorityˉresult; }
     if !Checkˉbudgetˉhelpers() { return 246; }
     if !Checkˉindexedˉtypes(Input) { return 247; }
+    if !Checkˉownershipˉreuse(Input) { return 248; }
     return 0;
 }

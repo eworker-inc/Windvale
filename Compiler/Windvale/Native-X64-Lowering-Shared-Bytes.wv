@@ -58,13 +58,17 @@ export fn Entryˉisˉexact(Code: bytes, Offset: u32, Returnˉtype: u8) -> bool {
 export fn Entryˉproviderˉrelocations(Codeˉbase: u32) -> bytes {
     return Templates.Entryˉproviderˉrelocations(Codeˉbase);
 }
-export fn Operationˉbytes() -> u32 { return 145u32; }
+export fn Operationˉbytes() -> u32 { return 113u32; }
 export fn Requestˉslots() -> u32 { return 4u32; }
 
 fn Storeˉrax(Output: bytes, Offset: u32) -> bytes {
     return Word(Bytesˉconcat(Output,
         Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35144u32),
         Bytesˉfromˉu16ˉlittle(9348u32))), Offset);
+}
+fn Storeˉrequestˉrax(Output: bytes, Offset: u8) -> bytes {
+    // Every request field is within 0..56, so [r9 + disp8] stores are exact.
+    return Word(Output, 4294985u32 + U32ˉfromˉu8(Offset) * 16777216u32);
 }
 fn Addressˉrax(Output: bytes, Slot: u32) -> bytes {
     if Slot == 4294967295u32 {
@@ -101,23 +105,22 @@ fn Emitˉaddressed(
     // Initialize all 64 request bytes exactly once. Wide stores combine the
     // fixed version/size and zero-extended action/flags; only the reserved tail
     // needs an explicit zero. Operand stores below fill every remaining word.
-    // Build the bounded request fragment before copying the existing function.
+    // R9 addresses the request throughout initialization; operand preparation
+    // uses only RAX. Build the fragment before copying the existing function.
     let Prefix: u32 = Bytesˉlength(Initial);
-    var Output: bytes = Word(Word(Bytesˉconcat(Empty(Initial),
-        Bytesˉfromˉu16ˉlittle(47176u32)), 1u32), 64u32);
-    Output = Storeˉrax(Output, Request * 16u32);
-    Output = Storeˉrax(Word(Bytesˉconcat(Output, Bytesˉfromˉu8(184u8)), Operation),
-        Request * 16u32 + 8u32);
-    Output = Storeˉrax(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(49201u32)),
-        Request * 16u32 + 56u32);
-    Output = Storeˉrax(Addressˉat(Output, Destination, Destinationˉoffset, Destinationˉindirect), Request * 16u32 + 16u32);
-    Output = Storeˉrax(Addressˉat(Output, Source, Sourceˉoffset, Sourceˉindirect), Request * 16u32 + 24u32);
-    Output = Storeˉrax(Addressˉrax(Output, Argument), Request * 16u32 + 32u32);
-    Output = Storeˉrax(Numericˉrax(Output, Numberˉzero, Zeroˉmode), Request * 16u32 + 40u32);
-    Output = Storeˉrax(Numericˉrax(Output, Numberˉone, Oneˉmode), Request * 16u32 + 48u32);
-    Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35149u32), Bytesˉfromˉu8(248u8)));
-    Output = Word(Bytesˉconcat(Output,
+    var Output: bytes = Word(Bytesˉconcat(Empty(Initial),
         Bytesˉconcat(Bytesˉfromˉu16ˉlittle(36172u32), Bytesˉfromˉu16ˉlittle(9356u32))), Request * 16u32);
+    Output = Word(Word(Bytesˉconcat(Output,
+        Bytesˉfromˉu16ˉlittle(47176u32)), 1u32), 64u32);
+    Output = Storeˉrequestˉrax(Output, 0u8);
+    Output = Storeˉrequestˉrax(Word(Bytesˉconcat(Output, Bytesˉfromˉu8(184u8)), Operation), 8u8);
+    Output = Storeˉrequestˉrax(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(49201u32)), 56u8);
+    Output = Storeˉrequestˉrax(Addressˉat(Output, Destination, Destinationˉoffset, Destinationˉindirect), 16u8);
+    Output = Storeˉrequestˉrax(Addressˉat(Output, Source, Sourceˉoffset, Sourceˉindirect), 24u8);
+    Output = Storeˉrequestˉrax(Addressˉrax(Output, Argument), 32u8);
+    Output = Storeˉrequestˉrax(Numericˉrax(Output, Numberˉzero, Zeroˉmode), 40u8);
+    Output = Storeˉrequestˉrax(Numericˉrax(Output, Numberˉone, Oneˉmode), 48u8);
+    Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35149u32), Bytesˉfromˉu8(248u8)));
     Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu8(232u8)),
         Relative(Helperˉtarget, Codeˉbase + Prefix + Bytesˉlength(Output) + 5u32));
     Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(49285u32), Bytesˉfromˉu16ˉlittle(34063u32)));
