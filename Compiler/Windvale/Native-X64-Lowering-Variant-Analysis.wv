@@ -5,48 +5,17 @@ platform linux, windows, windvale;
 authority library;
 
 
+import Compilerˉnativeˉx64ˉloweringˉvalueˉstate as Valueˉstate;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 import Compilerˉnativeˉx64ˉloweringˉrecords as Records;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions as Variantˉinstructions;
-
-export record Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
-    Valid: bool;
-    Stack: bytes;
-    Depth: u32;
-    I32ˉvalues: u32;
-    Boolˉvalues: u32;
-    Textˉvalues: u32;
-    U8ˉvalues: u32;
-    U32ˉvalues: u32;
-    Bytesˉvalues: u32;
-    Enumˉvalues: u32;
-    Recordˉvalues: u32;
-    Bodyˉbytes: u32;
-}
-
-fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
-    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
-        false,
-        Bytesˉslice(Input, 0u32, 0u32),
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32
-    );
-}
 
 fn Analyzeˉcreate(
     Input: bytes,
     Instructionˉoffset: u32,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
-) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    State: Valueˉstate.State
+) -> Valueˉstate.State {
     let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Input,
         Instructionˉoffset + 1u32
@@ -61,14 +30,14 @@ fn Analyzeˉcreate(
             Types,
             Typeˉindex
         ) {
-        return Invalid(Input);
+        return Valueˉstate.Invalid(Input);
     }
     let Variantˉtype: u8 =
         Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex);
     let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(
         Input, Types, Typeˉindex, Caseˉindex);
     if Fields > 64u32 || Fields > State.Depth || Variantˉtype == 0u8 {
-        return Invalid(Input);
+        return Valueˉstate.Invalid(Input);
     }
     let Depth: u32 = State.Depth - Fields;
     var Field: u32 = 0u32;
@@ -77,12 +46,12 @@ fn Analyzeˉcreate(
             Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
                 Input, Types, Typeˉindex, Caseˉindex, Field);
         if !Payload.Valid || Bytesˉreadˉu8(State.Stack, Depth + Field) != Payload.Type {
-            return Invalid(Input);
+            return Valueˉstate.Invalid(Input);
         }
         Field = Field + 1u32;
     }
     let Stack: bytes = Bytesˉslice(State.Stack, 0u32, Depth);
-    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+    return Valueˉstate.State(
         true,
         Bytesˉconcat(Stack, Bytesˉfromˉu8(Variantˉtype)),
         Depth + 1u32,
@@ -109,8 +78,8 @@ fn Analyzeˉinspect(
     Instructionˉoffset: u32,
     Opcode: u8,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
-) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    State: Valueˉstate.State
+) -> Valueˉstate.State {
     let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Input,
         Instructionˉoffset + 1u32
@@ -125,18 +94,18 @@ fn Analyzeˉinspect(
             Types,
             Typeˉindex
         ) {
-        return Invalid(Input);
+        return Valueˉstate.Invalid(Input);
     }
     let Variantˉtype: u8 =
         Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex);
     if State.Depth == 0u32 ||
         Bytesˉreadˉu8(State.Stack, State.Depth - 1u32) != Variantˉtype {
-        return Invalid(Input);
+        return Valueˉstate.Invalid(Input);
     }
     let Depth: u32 = State.Depth - 1u32;
     var Stack: bytes = Bytesˉslice(State.Stack, 0u32, Depth);
     if Opcode == 152u8 {
-        return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+        return Valueˉstate.State(
             true,
             Bytesˉconcat(Stack, Bytesˉfromˉu8(2u8)),
             Depth + 1u32,
@@ -159,8 +128,8 @@ fn Analyzeˉinspect(
             Typeˉindex,
             Caseˉindex
         );
-    if !Payload.Valid { return Invalid(Input); }
-    if Opcode != 153u8 || Payload.Type == 0u8 { return Invalid(Input); }
+    if !Payload.Valid { return Valueˉstate.Invalid(Input); }
+    if Opcode != 153u8 || Payload.Type == 0u8 { return Valueˉstate.Invalid(Input); }
     Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(Payload.Type));
     var I32ˉvalues: u32 = State.I32ˉvalues;
     var Boolˉvalues: u32 = State.Boolˉvalues;
@@ -184,7 +153,7 @@ fn Analyzeˉinspect(
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
         Recordˉvalues = Recordˉvalues + 1u32;
     }
-    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+    return Valueˉstate.State(
         true,
         Stack,
         Depth + 1u32,
@@ -205,8 +174,8 @@ fn Analyzeˉfield(
     Input: bytes,
     Instructionˉoffset: u32,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
-) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    State: Valueˉstate.State
+) -> Valueˉstate.State {
     let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Instructionˉoffset + 1u32
     );
@@ -221,13 +190,13 @@ fn Analyzeˉfield(
         ) != 3u8 || State.Depth == 0u32 || Bytesˉreadˉu8(
             State.Stack, State.Depth - 1u32
         ) != Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex) {
-        return Invalid(Input);
+        return Valueˉstate.Invalid(Input);
     }
     let Field: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
         Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
             Input, Types, Typeˉindex, Caseˉindex, Fieldˉindex
         );
-    if !Field.Valid { return Invalid(Input); }
+    if !Field.Valid { return Valueˉstate.Invalid(Input); }
     let Depth: u32 = State.Depth - 1u32;
     let Stack: bytes = Bytesˉconcat(
         Bytesˉslice(State.Stack, 0u32, Depth),
@@ -255,7 +224,7 @@ fn Analyzeˉfield(
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Field.Type) {
         Recordˉvalues = Recordˉvalues + 1u32;
     }
-    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+    return Valueˉstate.State(
         true,
         Stack,
         Depth + 1u32,
@@ -277,20 +246,20 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
     Instructionˉoffset: u32,
     Opcode: u8,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
-) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    State: Valueˉstate.State
+) -> Valueˉstate.State {
     if Opcode == 225u8 {
         if Instructionˉoffset > Bytesˉlength(Input) ||
             Bytesˉlength(Input) - Instructionˉoffset < 13u32 {
-            return Invalid(Input);
+            return Valueˉstate.Invalid(Input);
         }
         let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 5u32);
         let Projection: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 9u32);
         if Viewˉtype >= Types.Count || Projection < 1u32 || Projection > 3u32 ||
             Nominalˉtypes.Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
                 Input, Types, Viewˉtype
-            ) != 1u8 { return Invalid(Input); }
-        return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+            ) != 1u8 { return Valueˉstate.Invalid(Input); }
+        return Valueˉstate.State(
             true,
             Bytesˉconcat(State.Stack,
                 Bytesˉfromˉu8(Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Viewˉtype))),
@@ -312,67 +281,16 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
     return Analyzeˉinspect(Input, Instructionˉoffset, Opcode, Types, State);
 }
 
-fn Encodeˉstate(
-    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
-) -> bytes {
-    var Result: bytes = Bytesˉfromˉu8(1u8);
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Depth));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.I32ˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Boolˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Textˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.U8ˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.U32ˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Bytesˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Enumˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Recordˉvalues));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(State.Bodyˉbytes));
-    return Bytesˉconcat(Result, State.Stack);
-}
-
-fn Decodeˉstate(
-    Input: bytes,
-    State: bytes
-) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
-    if Bytesˉlength(State) < 41u32 || Bytesˉreadˉu8(State, 0u32) != 1u8 ||
-        Bytesˉreadˉu32ˉlittle(State, 1u32) != Bytesˉlength(State) - 41u32 {
-        return Invalid(Input);
-    }
-    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
-        true,
-        Bytesˉslice(State, 41u32, Bytesˉlength(State) - 41u32),
-        Bytesˉreadˉu32ˉlittle(State, 1u32),
-        Bytesˉreadˉu32ˉlittle(State, 5u32),
-        Bytesˉreadˉu32ˉlittle(State, 9u32),
-        Bytesˉreadˉu32ˉlittle(State, 13u32),
-        Bytesˉreadˉu32ˉlittle(State, 17u32),
-        Bytesˉreadˉu32ˉlittle(State, 21u32),
-        Bytesˉreadˉu32ˉlittle(State, 25u32),
-        Bytesˉreadˉu32ˉlittle(State, 29u32),
-        Bytesˉreadˉu32ˉlittle(State, 33u32),
-        Bytesˉreadˉu32ˉlittle(State, 37u32)
-    );
-}
-
 export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉvalue(
     Input: bytes,
     Instructionˉoffset: u32,
     Opcode: u8,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    State: bytes
-) -> bytes {
-    let Current: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
-        Decodeˉstate(Input, State);
-    if !Current.Valid { return Bytesˉslice(Input, 0u32, 0u32); }
-    let Result: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
-        Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
-            Input,
-            Instructionˉoffset,
-            Opcode,
-            Types,
-            Current
-        );
-    if !Result.Valid { return Bytesˉslice(Input, 0u32, 0u32); }
-    return Encodeˉstate(Result);
+    State: Valueˉstate.State
+) -> Valueˉstate.State {
+    if !Valueˉstate.Isˉvalid(State) { return Valueˉstate.Invalid(Input); }
+    return Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
+        Input, Instructionˉoffset, Opcode, Types, State);
 }
 
 fn Extractionˉbytes(Input: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Type: u8) -> u32 {

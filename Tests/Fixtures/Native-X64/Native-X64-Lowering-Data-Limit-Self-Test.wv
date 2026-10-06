@@ -8,6 +8,7 @@ authority application;
 import Compilerˉnativeˉx64ˉloweringˉdata as Dataˉreader;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Typeˉreader;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions as Variantˉemitter;
+import Compilerˉnativeˉx64ˉloweringˉvalueˉstate as Valueˉstate;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉanalysis as Variantˉanalysis;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉstorage as Variantˉstorage;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉemitter;
@@ -463,17 +464,27 @@ fn Borrowˉemission() -> bool {
         Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate(
             Empty, Bytesˉfromˉu8(1u8), Bytesˉfromˉu32ˉlittle(2u32),
             1u32, 2u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
-    let Analysis: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
-        Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+    let Analysis: Valueˉstate.State =
+        Valueˉstate.State(
             true, Bytesˉfromˉu8(1u8), 1u32, 2u32, 0u32, 0u32, 0u32,
             0u32, 0u32, 0u32, 0u32, 7u32);
+    let Invalidˉstate: Valueˉstate.State =
+        Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉvalue(
+            Empty, 0u32, 225u8, Types, Valueˉstate.Invalid(Empty));
+    if Invalidˉstate.Valid { return false; }
+    let Inconsistentˉstate: Valueˉstate.State =
+        Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉvalue(
+            Empty, 0u32, 225u8, Types,
+            Valueˉstate.State(true, Empty, 1u32, 0u32, 0u32, 0u32,
+                0u32, 0u32, 0u32, 0u32, 0u32, 0u32));
+    if Inconsistentˉstate.Valid { return false; }
     var Projection: u32 = 0u32;
     while Projection <= 4u32 {
         var Input: bytes = Bytesˉconcat(Section, Bytesˉfromˉu8(225u8));
         Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(3u32));
         Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(0u32));
         Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Projection));
-        let Planned: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+        let Planned: Valueˉstate.State =
             Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
                 Input, Length, 225u8, Types, Analysis);
         if Planned.Valid != (Projection >= 1u32 && Projection <= 3u32) { return false; }
@@ -780,9 +791,9 @@ fn Variantˉcreation() -> i32 {
                 Records = Bytesˉconcat(Records, Bytesˉfromˉu32ˉlittle(Record));
                 Field = Field + 1u32;
             }
-            let Planned: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+            let Planned: Valueˉstate.State =
                 Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(Input, Length, 151u8, Types,
-                    Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+                    Valueˉstate.State(
                         true, Stack, Fields + 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32));
             let Stored: Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉstate =
                 Variantˉstorage.Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(Input, 0u32, Length, 151u8, Types,
@@ -816,13 +827,13 @@ fn Variantˉcreation() -> i32 {
                 Bytesˉreadˉu32ˉlittle(Emitted.Stackˉslots, 4u32) != 81u32 { return Failureˉbase + 9; }
             // A u32 cannot stand in for the last u64, even at the same slot size.
             let Wrong: bytes = Bytesˉconcat(Bytesˉslice(Stack, 0u32, Fields), Bytesˉfromˉu8(5u8));
-            let Rejected: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+            let Rejected: Valueˉstate.State =
                 Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(Input, Length, 151u8, Types,
-                    Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+                    Valueˉstate.State(
                         true, Wrong, Fields + 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32));
-            let Underflow: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+            let Underflow: Valueˉstate.State =
                 Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(Input, Length, 151u8, Types,
-                    Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+                    Valueˉstate.State(
                         true, Empty, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32));
             if Rejected.Valid || Underflow.Valid { return Failureˉbase + 10; }
         }

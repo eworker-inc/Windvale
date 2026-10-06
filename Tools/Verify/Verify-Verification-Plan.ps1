@@ -8612,6 +8612,7 @@ $BudgetHelperPaths = @(
     'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
     'Compiler/Windvale/Native-X64-Lowering-Shared-Bytes.wv',
     'Compiler/Windvale/Native-X64-Lowering-Types.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Value-State.wv',
     'Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv',
     'Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv',
     'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
@@ -8654,7 +8655,7 @@ if (!$BudgetHelperPlan.UseCausalBudgetHelperDevelopment -or
     $BudgetHelperPlan.Language1FrontDoorDevelopmentTarget -cne 'bytes-source' -or
     $BudgetHelperPlan.Language1FrontDoorDevelopmentCaseCount -ne 358 -or
     !$BudgetHelperPlan.RunPlanVerification -or
-    $BudgetHelperPaths.Count -ne 36 -or
+    $BudgetHelperPaths.Count -ne 37 -or
     $BudgetHelperPlan.ExpectedSeconds -ne 5520 -or $BudgetHelperPlan.MaximumSeconds -ne 9120 -or
     $BudgetHelperPlan.Gaps.Count -ne 0 -or
     !([Collections.Generic.HashSet[string]]::new([string[]]$BudgetHelperPlan.Suites,
@@ -8779,7 +8780,7 @@ foreach ($Standalone in @($ConstructionReadinessPaths[0], $ConstructionReadiness
 $SharedReadinessPaths = @($BudgetHelperPaths + $ConstructionReadinessPaths +
     'Tools/Native/Build-Shared-Compiler-Host.mjs' | Sort-Object -Unique)
 $SharedReadinessPlan = & $NativePlanner -ChangedPath $SharedReadinessPaths -PassThru -Quiet -PreparedProductsOnly
-if ($SharedReadinessPaths.Count -ne 42 -or
+if ($SharedReadinessPaths.Count -ne 43 -or
     !$SharedReadinessPlan.UseCausalBudgetHelperDevelopment -or
     !$SharedReadinessPlan.UseConstructionReadinessDevelopment -or
     !$SharedReadinessPlan.UseAnalysisDiagnosticsDevelopment -or
@@ -8839,7 +8840,7 @@ foreach ($Marker in @(
         throw 'Readiness dispatch lost additive checks, exact cache authority or bounded process supervision.'
     }
 }
-Write-Host 'PASS construction-readiness-routing focused=23+13 deadline-assertions=12 shared-scope=42 source-analysis=3 native=270+10+3+13'
+Write-Host 'PASS construction-readiness-routing focused=23+13 deadline-assertions=12 shared-scope=43 source-analysis=3 native=270+10+3+13'
 $CacheForeignPreparedPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
     'Tools/Native/Current-Split-Compiler-Cache-Core.mjs') -PassThru -Quiet -PreparedProductsOnly
 if (!$CacheForeignPreparedPlan.UsePreparedForeignBindingDevelopment -or

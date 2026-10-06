@@ -89,17 +89,31 @@ earlier 203-byte base. It retains per-call initialization and requires no
 previous request contents or extra frame state.
 
 Within an admitted, serialized ABI-25 execution domain, the private value helper
-checks immutable reads, retains and nonfinal releases against the addressed
-entry's generation, kind, range and physical or mapped backing. It does not
-rescan unrelated accounting entries for each byte access. The authenticated
-entry first validates the complete domain; generated source has no authority to
-write its control metadata. Allocation, builder operations, final release and
-teardown continue through the fully checked provider and preserve that domain
-invariant. The private access helper uses 72 bytes of local call storage and
+checks immutable reads, retains, nonfinal releases, reserved integer appends and
+freeze against the addressed entry's generation, kind, range and backing.
+Integer appends require a unique physical builder and prove the complete write
+fits its capacity before changing any byte or length. Freeze changes only that
+unique builder's kind. Neither operation changes physical or budget charges.
+Four- and eight-byte integer construction uses one checked little-endian append;
+one- and two-byte construction retains its existing narrowing and refusal rules.
+The authenticated entry first validates the complete domain; generated source
+has no authority to write its control metadata. Allocation, other builder
+operations, final release and teardown continue through the fully checked
+provider and preserve that domain invariant. The private access helper uses
+72 bytes of local call storage and
 preserves the execution counters and nonvolatile registers. Unsupported requests
 and local refusals fall back to the unchanged provider. This optimization does
 not relax the public storage leaf's complete-state corruption checks or permit
 foreign mutation of an active private domain.
+
+Instruction analysis shares one private typed value-state record across nominal,
+descriptor and variant operations. Its validity flag, depth, value counters and
+machine-byte count remain scalar fields; its stack is the existing shared byte
+value. Helpers no longer serialize those fields into a 41-byte header and decode
+them again on each instruction. Admission still checks validity and that depth
+matches the stack length. This is internal compiler working state, with no new
+serialized format or change to WVB validation. Mutable stack storage remains
+separate work.
 
 Shared requests, aggregate cleanup and each local-release sequence are assembled
 as separate fragments and appended to the function once. Function-exit cleanup

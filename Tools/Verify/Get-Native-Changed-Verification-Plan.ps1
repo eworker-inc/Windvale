@@ -3893,6 +3893,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Value-State.wv',
         'Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv',
         'Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Variant-Storage.wv',

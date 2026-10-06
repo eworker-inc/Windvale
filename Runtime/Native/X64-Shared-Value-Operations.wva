@@ -436,6 +436,29 @@ test eax eax
 branch not_equal Finish
 load_memory_u64 rax r13 none 1 40
 store_memory_u64 rbp none 1 448 rax
+load_memory_u32 eax rbp none 1 440
+compare_i32 eax 4
+branch below Encode_narrow
+# Whole-word append preserves little-endian construction with one checked call.
+call Shared_reset
+load_memory_u32 eax rbp none 1 440
+shift_right eax 2
+add_i32 eax 2
+store_memory_u32 rbp none 1 40 eax
+load_memory_u64 rax rbp none 1 368
+store_memory_u64 rbp none 1 56 rax
+load_memory_u32 eax rbp none 1 448
+load_memory_u32 ecx rbp none 1 440
+compare_i32 ecx 8
+branch not_equal Encode_append
+load_memory_u64 rax rbp none 1 448
+label Encode_append
+store_memory_u64 rbp none 1 72 rax
+call Shared_call
+test eax eax
+branch not_equal Runtime_refusal
+jump_label Encode_complete
+label Encode_narrow
 xor edi edi
 label Encode_loop
 call Shared_reset
@@ -456,6 +479,7 @@ add_i32 edi 1
 load_memory_u64 rax rbp none 1 440
 compare rdi rax
 branch below Encode_loop
+label Encode_complete
 call Runtime_freeze
 jump_label Finish
 
@@ -1923,9 +1947,10 @@ return
 end define
 # Only the admitted ABI25 value helper calls this serialized-domain path.
 # Entry validates the complete domain; source cannot write its control metadata.
-# Checked provider mutations preserve that invariant. Immutable reads and share
-# count changes check their exact generation, kind and range here; final release
-# and other operations still use the authenticated provider. Corruption outside
+# Checked provider mutations preserve that invariant. Reads, share counts and
+# reserved integer appends/freeze check the addressed generation, kind and range.
+# Appends and freeze do not change physical or budget charges. Allocation, final
+# release and other operations use the authenticated provider. Corruption outside
 # that private invariant is checked at the public boundary, not on every read.
 # Local scratch is72B; nonvolatile registers and R10/R11 are preserved.
 define Shared_access
@@ -1973,10 +1998,15 @@ load_memory_u32 eax r9 none 1 12
 test eax eax
 branch not_equal Fallback
 load_memory_u32 eax r9 none 1 8
-compare_i32 eax 8
+compare_i32 eax 2
+branch below Fallback
+compare_i32 eax 4
+branch below_equal Arguments
+compare_i32 eax 7
 branch below Fallback
 compare_i32 eax 10
 branch above Fallback
+label Arguments
 load_memory_u64 rax r9 none 1 32
 load_memory_u64 rcx r9 none 1 56
 or rax rcx
@@ -1991,12 +2021,31 @@ add_i32 ecx 8
 compare_i32 ecx 128
 branch below Outputs
 load_memory_u32 eax r9 none 1 8
+compare_i32 eax 4
+branch below_equal Integer_arguments
 compare_i32 eax 10
 branch equal Handle
 load_memory_u64 rax r9 none 1 40
 load_memory_u64 rcx r9 none 1 48
 or rax rcx
 test rax rax
+branch not_equal Fallback
+jump_label Handle
+label Integer_arguments
+load_memory_u64 rcx r9 none 1 48
+test rcx rcx
+branch not_equal Fallback
+load_memory_u64 rcx r9 none 1 40
+compare_i32 eax 2
+branch not_equal Word_argument
+compare_i32 rcx 255
+branch above Fallback
+jump_label Handle
+label Word_argument
+compare_i32 eax 3
+branch not_equal Handle
+shift_right rcx 32
+test rcx rcx
 branch not_equal Fallback
 label Handle
 load_memory_u32 edx r9 none 1 24
@@ -2016,12 +2065,26 @@ branch not_equal Fallback
 shift_right rax 32
 test eax eax
 branch equal Fallback
+load_memory_u32 eax r9 none 1 8
+compare_i32 eax 7
+branch below_equal Builder_kind
 load_memory_u32 eax rbx none 1 12
 compare_i32 eax 2
 branch not_equal Fallback
 load_memory_u32 eax rbx none 1 8
 test eax eax
 branch equal Fallback
+jump_label Entry_fields
+label Builder_kind
+load_memory_u32 eax rbx none 1 12
+compare_i32 eax 1
+branch not_equal Fallback
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 1
+branch not_equal Fallback
+compare_i32 edx 64
+branch above_equal Fallback
+label Entry_fields
 load_memory_u64 rax rbx none 1 24
 test rax rax
 branch not_equal Fallback
@@ -2119,6 +2182,10 @@ add rax rdi
 branch below Fallback
 label Operation
 load_memory_u32 eax r9 none 1 8
+compare_i32 eax 4
+branch below_equal Append_integer
+compare_i32 eax 7
+branch equal Freeze
 compare_i32 eax 10
 branch equal View
 load_memory_u32 eax rbx none 1 8
@@ -2136,6 +2203,43 @@ branch below_equal Fallback
 subtract_i32 eax 1
 store_memory_u32 rbx none 1 8 eax
 jump_label Success
+label Append_integer
+move_u32 edx 1
+compare_i32 eax 2
+branch equal Append_extent
+move_u32 edx 4
+compare_i32 eax 3
+branch equal Append_extent
+move_u32 edx 8
+label Append_extent
+load_memory_u32 ecx rbx none 1 16
+move eax ecx
+add eax edx
+load_memory_u32 esi rbx none 1 20
+compare eax esi
+branch above Fallback
+# The admitted physical extent contains the complete append before any write.
+add rdi rcx
+load_memory_u64 rsi r9 none 1 40
+compare_i32 edx 1
+branch not_equal Append_word
+store_memory_u8 rdi none 1 0 sil
+jump_label Append_commit
+label Append_word
+compare_i32 edx 4
+branch not_equal Append_wide
+store_memory_u32 rdi none 1 0 esi
+jump_label Append_commit
+label Append_wide
+store_memory_u64 rdi none 1 0 rsi
+label Append_commit
+store_memory_u32 rbx none 1 16 eax
+subtract rdi rcx
+jump_label Publish
+label Freeze
+move_u32 eax 2
+store_memory_u32 rbx none 1 12 eax
+jump_label Publish
 label View
 load_memory_u64 rax r9 none 1 40
 load_memory_u64 rcx r9 none 1 48

@@ -164,12 +164,33 @@ export function Buildˉsharedˉvalueˉcases() {
     const Cases = [];
     const Case = (Name, Body) => Cases.push(Fixture(Name, Body));
     Case('builder-and-scalar', ({ Value, Reserve, Freeze, Check, PHYSICAL }) => {
+        Value(120, BYTES, null, null, 255n);
+        Value(13, SCALAR, BYTES); Check(SCALAR, 255); Value(1, null, BYTES);
+        Value(121, BYTES, null, null, 65535n);
+        Value(14, SCALAR, BYTES); Check(SCALAR, 65535);
+        Value(121, BYTES, null, null, 65536n, 0n, 7);
+        Value(14, SCALAR, BYTES); Check(SCALAR, 65535); Value(1, null, BYTES);
+        Value(122, BYTES, null, null, 0xffff_fffen);
+        Value(15, SCALAR, BYTES); Check(SCALAR, -2); Value(1, null, BYTES);
+        for (const Word of [0n, 0x8000_0000n, 0xffff_ffffn, 0x8877_6655_4433_2211n]) {
+            Value(123, BYTES, null, null, Word); Check(BYTES + 8, 4);
+            Value(15, SCALAR, BYTES); Check(SCALAR, Number(Word & 0xffff_ffffn));
+            Value(1, null, BYTES); Check(PHYSICAL + 56, 0);
+        }
+        for (const Wide of [0n, 0x8877_6655_4433_2211n, 0xffff_ffff_ffff_ffffn]) {
+            Value(190, BYTES, null, null, Wide); Check(BYTES + 8, 8);
+            Value(189, SCALAR, BYTES);
+            Check(SCALAR, Number(Wide & 0xffff_ffffn)); Check(SCALAR + 4, Number(Wide >> 32n));
+            Value(1, null, BYTES); Check(PHYSICAL + 56, 0);
+        }
         // Immutable module mappings use the same generation/range path as backing.
         Value(4, BYTES, null, null, 0n); Check(BYTES + 8, 4);
         Value(2, ALIAS, BYTES); Value(1, null, BYTES);
         Value(13, SCALAR, ALIAS, null, 3n); Check(SCALAR, 100);
         Value(13, SCALAR, ALIAS, null, 4n, 0n, 7); Check(SCALAR, 100);
         Value(1, null, ALIAS); Check(PHYSICAL + 56, 0);
+        Reserve(0, 32); Freeze(); Check(BYTES + 8, 0); Check(BYTES + 12, 0);
+        Check(PHYSICAL + 56, 32); Value(1, null, BYTES); Check(PHYSICAL + 56, 0);
         Reserve(16, 32);
         Value(230, RESULT, BUILDER, null, 65n); Check(RESULT, 0);
         Value(231, RESULT, BUILDER, null, 0x4433_2211n); Check(RESULT, 0);
@@ -253,6 +274,13 @@ export function Buildˉsharedˉvalueˉcases() {
             Value(13, SCALAR, ALIAS, null, 0n); Check(SCALAR, 11); Check(PHYSICAL + 56, 32);
             Value(1, null, ALIAS); Check(PHYSICAL + 56, 0);
             Value(16, SCALAR, PARENT); Check(SCALAR, 48);
+            Value(123, BYTES, null, null, 0x4433_2211n);
+            Value(2, ALIAS, BYTES); Value(1, null, BYTES);
+            Value(15, SCALAR, ALIAS); Check(SCALAR, 0x4433_2211);
+            Check(PHYSICAL + 56, 32); Value(1, null, ALIAS); Check(PHYSICAL + 56, 0);
+            Value(190, BYTES, null, null, 0x8877_6655_4433_2211n);
+            Value(189, SCALAR, BYTES); Check(SCALAR, 0x4433_2211); Check(SCALAR + 4, 0x8877_6655);
+            Value(1, null, BYTES); Check(PHYSICAL + 56, 0);
             Emit(`load_memory_u32 eax rsp none 1 ${COUNTER}`, 'subtract_i32 eax 1',
                 `store_memory_u32 rsp none 1 ${COUNTER} eax`, 'test eax eax', 'branch not_equal Reuse');
         });

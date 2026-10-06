@@ -1,0 +1,29 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉvalueˉstate;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+export record State {
+    Valid: bool;
+    Stack: bytes;
+    Depth: u32;
+    I32ˉvalues: u32;
+    Boolˉvalues: u32;
+    Textˉvalues: u32;
+    U8ˉvalues: u32;
+    U32ˉvalues: u32;
+    Bytesˉvalues: u32;
+    Enumˉvalues: u32;
+    Recordˉvalues: u32;
+    Bodyˉbytes: u32;
+}
+
+export fn Invalid(Input: bytes) -> State {
+    return State(false, Bytesˉslice(Input, 0u32, 0u32),
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+}
+
+export fn Isˉvalid(Value: State) -> bool {
+    return Value.Valid && Value.Depth == Bytesˉlength(Value.Stack);
+}
