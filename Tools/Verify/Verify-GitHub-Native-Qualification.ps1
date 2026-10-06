@@ -143,10 +143,92 @@ Assert-Workflow (!$Preparation.Contains('continue-on-error: true')) 'Required pr
 foreach ($Fragment in @(
     'preparation_required: ${{ steps.native-plan.outputs.preparation_required }}',
     'preparation_hosts: ${{ steps.native-plan.outputs.preparation_hosts }}',
-    "`$PreparationRequired = `$NativePlan.UseOwnedConsoleDevelopment -or `$NativePlan.UseCurrentVerifierDevelopment -or `$NativePlan.UseFoundationLibraryDevelopment -or @(`$NativePlan.Suites | Where-Object { `$_ -eq 'language-1-authenticated-foreign-binding' -or (`$_ -eq 'native-x64-lowering-development' -and !`$NativePlan.UseNativeSharedStorageDevelopment) }).Count -ne 0"
+    'shared_compiler_required: ${{ steps.native-plan.outputs.shared_compiler_required }}',
+    'native_maximum_seconds: ${{ steps.native-plan.outputs.native_maximum_seconds }}',
+    'native_admission_maximum_seconds: ${{ steps.native-plan.outputs.native_admission_maximum_seconds }}',
+    'native_control_maximum_seconds: ${{ steps.native-plan.outputs.native_control_maximum_seconds }}',
+    'development_timeout_minutes: ${{ steps.native-plan.outputs.development_timeout_minutes }}',
+    'development_shards: ${{ steps.native-plan.outputs.development_shards }}',
+    '$NativeExpectedSeconds = $NativePlan.ExpectedSeconds',
+    '$NativeMaximumSeconds = $NativePlan.MaximumSeconds',
+    '$NativePlan = ./Tools/Verify/Get-Native-Changed-Verification-Plan.ps1 -ChangedPath $Paths -PassThru -Quiet -PreparedProductsOnly',
+    '$NativeOwnerCount = @($NativePlan.Suites).Count',
+    '@(./Tools/Verify/Get-Native-Development-Shards.ps1 -NativePlan $NativePlan)',
+    'Get-NativeDevelopmentBudget -NativeExpectedSeconds $_.ExpectedSeconds -NativeMaximumSeconds $_.MaximumSeconds -NativeOwnerCount @($_.Suites).Count -SharedCompilerRequired $SharedCompilerRequired',
+    '"native_maximum_seconds=$NativeMaximumSeconds" >> $env:GITHUB_OUTPUT',
+    '"development_shards=$(@($Shards.Index) | ConvertTo-Json -Compress -AsArray)" >> $env:GITHUB_OUTPUT',
+    '"native_admission_maximum_seconds=$($Budget.AdmissionMaximumSeconds)" >> $env:GITHUB_OUTPUT',
+    '"native_control_maximum_seconds=$($Budget.ControlMaximumSeconds)" >> $env:GITHUB_OUTPUT',
+    '"development_timeout_minutes=$($Budget.TimeoutMinutes)" >> $env:GITHUB_OUTPUT',
+    "`$SharedCompilerRequired = `$NativePlan.NativeSharedCompilerHostRecordRequired",
+    "`$PreparationRequired = `$NativePlan.UseOwnedConsoleDevelopment -or `$NativePlan.UseCurrentVerifierDevelopment -or `$NativePlan.UseFoundationLibraryDevelopment -or `$NativePlan.UseFoundationBorrowOwnerDevelopment -or `$NativePlan.UseLanguage1FrontDoorPreparation -or `$NativePlan.UseCallablePreparation -or @(`$NativePlan.Suites | Where-Object { `$_ -eq 'language-1-authenticated-foreign-binding' -or (`$_ -eq 'native-x64-lowering-development' -and !`$NativePlan.UseNativeSharedStorageDevelopment) }).Count -ne 0"
 )) {
     Assert-Workflow ($ClassificationBlock.Contains($Fragment)) "Preparation selection lacks '$Fragment'."
 }
+
+$BudgetDefinitions = [regex]::Matches($ClassificationBlock,
+    '(?ms)^          function Get-NativeDevelopmentBudget \{.*?^          \}')
+Assert-Workflow ($BudgetDefinitions.Count -eq 1) 'Classification must own one bounded native development budget function.'
+$BudgetDefinition = $BudgetDefinitions[0].Value -replace '(?m)^          ', ''
+$BudgetFunction = [scriptblock]::Create('param([System.Collections.IDictionary]$Arguments)' +
+    [Environment]::NewLine + $BudgetDefinition + [Environment]::NewLine + 'Get-NativeDevelopmentBudget @Arguments')
+foreach ($Case in @(
+    @{ Maximum = 0; Owners = 0; Shared = $false; Minutes = 15; Admission = 0 },
+    @{ Maximum = 600; Owners = 1; Shared = $false; Minutes = 15; Admission = 0 },
+    @{ Maximum = 601; Owners = 1; Shared = $false; Minutes = 16; Admission = 0 },
+    @{ Maximum = 1200; Owners = 1; Shared = $false; Minutes = 25; Admission = 0 },
+    @{ Maximum = 600; Owners = 1; Shared = $true; Minutes = 25; Admission = 600 },
+    @{ Maximum = 1200; Owners = 1; Shared = $true; Minutes = 35; Admission = 600 },
+    @{ Maximum = 2400; Owners = 5; Shared = $true; Minutes = 55; Admission = 600 },
+    @{ Maximum = 2520; Owners = 6; Shared = $true; Minutes = 57; Admission = 600 },
+    @{ Maximum = 8130; Owners = 18; Shared = $true; Minutes = 151; Admission = 600 },
+    @{ Maximum = 9900; Owners = 1; Shared = $true; Minutes = 180; Admission = 600 },
+    @{ Maximum = 10500; Owners = 1; Shared = $false; Minutes = 180; Admission = 0 }
+)) {
+    $Expected = if ($Case.Owners -eq 0) { 0 } else { 1 }
+    $Budget = & $BudgetFunction @{ NativeExpectedSeconds = $Expected; NativeMaximumSeconds = $Case.Maximum;
+        NativeOwnerCount = $Case.Owners; SharedCompilerRequired = $Case.Shared }
+    Assert-Workflow (@($Budget.PSObject.Properties).Count -eq 4 -and
+        $Budget.NativeMaximumSeconds -eq $Case.Maximum -and
+        $Budget.AdmissionMaximumSeconds -eq $Case.Admission -and
+        $Budget.ControlMaximumSeconds -eq 300 -and $Budget.TimeoutMinutes -eq $Case.Minutes) "Native development deadline differs for maximum $($Case.Maximum) and shared admission $($Case.Shared)."
+}
+foreach ($Case in @(
+    @{ Field = 'NativeMaximumSeconds'; Value = -1 },
+    @{ Field = 'NativeMaximumSeconds'; Value = '01' },
+    @{ Field = 'NativeMaximumSeconds'; Value = '1.0' },
+    @{ Field = 'NativeMaximumSeconds'; Value = 1.5 },
+    @{ Field = 'NativeMaximumSeconds'; Value = [double]1 },
+    @{ Field = 'NativeMaximumSeconds'; Value = $null },
+    @{ Field = 'NativeMaximumSeconds'; Value = '9223372036854775808' },
+    @{ Field = 'NativeMaximumSeconds'; Value = '9223372036854775807' },
+    @{ Field = 'NativeMaximumSeconds'; Value = 0 },
+    @{ Field = 'NativeExpectedSeconds'; Value = 601 },
+    @{ Field = 'NativeExpectedSeconds'; Value = 0 },
+    @{ Field = 'NativeOwnerCount'; Value = 0 },
+    @{ Field = 'NativeOwnerCount'; Value = 601 },
+    @{ Field = 'SharedCompilerRequired'; Value = 'false' },
+    @{ Field = 'SharedCompilerRequired'; Value = $null },
+    @{ Field = 'NativeMaximumSeconds'; Value = 10501 },
+    @{ Field = 'NativeMaximumSeconds'; Value = 9901; Shared = $true },
+    @{ Field = 'NativeMaximumSeconds'; Value = 33600; Shared = $true },
+    @{ Remove = 'NativeMaximumSeconds' }
+)) {
+    $Arguments = @{ NativeExpectedSeconds = 1; NativeMaximumSeconds = 600;
+        NativeOwnerCount = 1; SharedCompilerRequired = $false }
+    if ($Case.ContainsKey('Remove')) { $Arguments.Remove($Case.Remove) }
+    else { $Arguments[$Case.Field] = $Case.Value }
+    if ($Case.ContainsKey('Shared')) { $Arguments.SharedCompilerRequired = $Case.Shared }
+    $Rejected = $false
+    try { $null = & $BudgetFunction $Arguments } catch { $Rejected = $true }
+    Assert-Workflow $Rejected 'Classification accepted a malformed or over-cap native development budget.'
+}
+$Rejected = $false
+try {
+    $null = & $BudgetFunction @{ NativeExpectedSeconds = 0; NativeMaximumSeconds = 0;
+        NativeOwnerCount = 0; SharedCompilerRequired = $true }
+} catch { $Rejected = $true }
+Assert-Workflow $Rejected 'Classification admitted a shared-host request without a selected native owner.'
 $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
     $Block = Get-JobBlock $Job
@@ -161,8 +243,15 @@ foreach ($Job in $DevelopmentJobs) {
         $Block.Contains($DevelopmentConditions[$Job], [StringComparison]::Ordinal)
     ) "Development job '$Job' does not use the focused-development condition."
     Assert-Workflow (
-        $Block.Contains('    timeout-minutes: 15', [StringComparison]::Ordinal)
-    ) "Development job '$Job' does not enforce the 15-minute automatic bound."
+        $Block.Contains('    timeout-minutes: ${{ fromJSON(needs.classify-changes.outputs.development_timeout_minutes) }}', [StringComparison]::Ordinal)
+    ) "Development job '$Job' does not consume the validated complete-plan deadline."
+    Assert-Workflow (
+        $Block.Contains('shard: ${{ fromJSON(needs.classify-changes.outputs.development_shards) }}') -and
+        $Block.Contains('fail-fast: false') -and $Block.Contains('max-parallel: 4') -and
+        $Block.Contains('-NativeDevelopmentShard ${{ matrix.shard }}') -and
+        $Block.Contains('key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior-${{ matrix.shard }}') -and
+        $Block.Contains('name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}')
+    ) "Development job '$Job' does not execute every bounded shard with isolated cache/report publication."
     Assert-Workflow (
         $Block.Contains(
             'run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA')
@@ -184,6 +273,11 @@ foreach ($Job in $DevelopmentJobs) {
     Assert-Workflow (
         $Block.Contains('-PlanVerificationInClassification')
     ) "Development job '$Job' does not consume classification-owned plan verification."
+    $SharedHostFamily = if ($Job -eq 'windows-development') { 'windows-x64' } else { 'linux-x64' }
+    Assert-Workflow (
+        $Block.Contains('-NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION') -and
+        $Block.Contains("Native-Shared-Compiler-Host-Selection.$SharedHostFamily.json")
+    ) "Development job '$Job' does not explicitly select its prepared shared compiler record."
     if ($Job -eq 'windows-development') {
         Assert-Workflow (
             $Block.Contains('-GitHubVerificationOnLinux')

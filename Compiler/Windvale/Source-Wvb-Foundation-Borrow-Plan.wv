@@ -13,6 +13,13 @@ export record Borrowˉplan {
     Frozenˉslots: bytes;
 }
 
+export record Ownerˉplan {
+    Valid: bool;
+    Count: u32;
+    Mapping: bytes;
+    Temporaries: bytes;
+}
+
 export fn Zeroes(Count: u32) -> bytes {
     var Chunk: bytes = Bytesˉfromˉu8(0u8);
     var Result: bytes = Bytesˉslice(Chunk, 0u32, 0u32);
@@ -39,6 +46,109 @@ export fn Setˉstate(State: bytes, Index: u32, Value: u8) -> bytes {
 fn Invalid(Input: bytes) -> Borrowˉplan {
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
     return Borrowˉplan(false, false, Empty, Empty, Empty);
+}
+
+// Ordinary expression results need a named owner before a loan can be stored.
+// Existing loads, intrinsic views and borrowed projections already have roots.
+export fn Buildˉowners(
+    Wir: bytes,
+    Operations: u32,
+    Operands: u32,
+    Firstˉoperation: u32,
+    Operationˉcount: u32,
+    Temporaryˉcount: u32,
+    Plan: Borrowˉplan,
+    Intrinsicˉloans: bytes,
+    Readˉthroughˉvalues: bytes
+) -> Ownerˉplan {
+    let Empty: bytes = Bytesˉslice(Wir, 0u32, 0u32);
+    let Failure: Ownerˉplan = Ownerˉplan(false, 0u32, Empty, Empty);
+    if !Plan.Valid { return Failure; }
+    if !Plan.Hasˉborrow { return Ownerˉplan(true, 0u32, Empty, Empty); }
+    let Length: u32 = Bytesˉlength(Wir);
+    if Operationˉcount > 4096u32 || Temporaryˉcount > 4096u32 ||
+        Operations > Length || Operands > Length ||
+        Bytesˉlength(Plan.Temporaryˉstate) != Temporaryˉcount ||
+        Bytesˉlength(Intrinsicˉloans) != Temporaryˉcount ||
+        Bytesˉlength(Readˉthroughˉvalues) != Temporaryˉcount {
+        return Failure;
+    }
+    let Available: u32 = (Length - Operations) / 28u32;
+    if Firstˉoperation > Available || Operationˉcount > Available - Firstˉoperation {
+        return Failure;
+    }
+    var Owners: bytes = Zeroes(Temporaryˉcount);
+    var Index: u32 = 0u32;
+    while Index < Temporaryˉcount {
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Intrinsicˉloans, Index)) > 1u32 ||
+            U32ˉfromˉu8(Bytesˉreadˉu8(Readˉthroughˉvalues, Index)) > 1u32 {
+            return Failure;
+        }
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < Operationˉcount {
+        let Entry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
+        let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
+        let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32);
+        if Temporary != 4294967295u32 {
+            if Temporary >= Temporaryˉcount { return Failure; }
+            var Needsˉowner: bool = U32ˉfromˉu8(Bytesˉreadˉu8(Plan.Temporaryˉstate, Temporary)) >= 2u32 &&
+                Bytesˉreadˉu8(Intrinsicˉloans, Temporary) == 0u8 &&
+                Kind != 7u32 && Kind != 64u32 && Kind != 191u32 &&
+                Kind != 192u32 && Kind != 205u32;
+            if Needsˉowner && (Kind == 18u32 || Kind == 67u32 ||
+                Kind == 164u32 || Kind == 166u32 || Kind == 168u32) {
+                let First: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
+                if Bytesˉreadˉu16ˉlittle(Wir, Entry + 6u32) == 0u32 ||
+                    First >= (Length - Operands) / 4u32 { return Failure; }
+                let Source: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operands + First * 4u32);
+                if Source >= Temporaryˉcount { return Failure; }
+                if Bytesˉreadˉu8(Plan.Temporaryˉstate, Source) != 0u8 {
+                    Needsˉowner = false;
+                }
+            }
+            if Needsˉowner {
+                // A unique payload must retain its existing loan provenance;
+                // this path can materialize only Copy or shared values.
+                if Bytesˉreadˉu8(Readˉthroughˉvalues, Temporary) == 0u8 { return Failure; }
+                Owners = Setˉstate(Owners, Temporary, 1u8);
+            }
+        }
+        Index = Index + 1u32;
+    }
+    var Count: u32 = 0u32;
+    var Mapping: bytes = Empty;
+    var Mappingˉchunk: bytes = Empty;
+    var Temporaries: bytes = Empty;
+    var Temporaryˉchunk: bytes = Empty;
+    Index = 0u32;
+    while Index < Temporaryˉcount {
+        var Slot: u32 = 0u32;
+        if Bytesˉreadˉu8(Owners, Index) != 0u8 {
+            Count = Count + 1u32;
+            Slot = Count;
+            Temporaryˉchunk = Bytesˉconcat(Temporaryˉchunk, Bytesˉfromˉu32ˉlittle(Index));
+            if Bytesˉlength(Temporaryˉchunk) == 256u32 {
+                Temporaries = Bytesˉconcat(Temporaries, Temporaryˉchunk);
+                Temporaryˉchunk = Empty;
+            }
+        }
+        Mappingˉchunk = Bytesˉconcat(Mappingˉchunk, Bytesˉfromˉu32ˉlittle(Slot));
+        if Bytesˉlength(Mappingˉchunk) == 256u32 {
+            Mapping = Bytesˉconcat(Mapping, Mappingˉchunk);
+            Mappingˉchunk = Empty;
+        }
+        Index = Index + 1u32;
+    }
+    if Count == 0u32 { return Ownerˉplan(true, 0u32, Empty, Empty); }
+    return Ownerˉplan(true, Count, Bytesˉconcat(Mapping, Mappingˉchunk),
+        Bytesˉconcat(Temporaries, Temporaryˉchunk));
+}
+
+export fn Ownerˉslot(Plan: Ownerˉplan, Temporary: u32) -> u32 {
+    if Temporary >= Bytesˉlength(Plan.Mapping) / 4u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Plan.Mapping, Temporary * 4u32);
 }
 
 // The caller owns complete WVIR validation and declaration/call resolution.
@@ -99,7 +209,7 @@ export fn Build(
             Frozenˉslots = Setˉstate(Frozenˉslots, Owner, 1u8);
             Hasˉborrow = true;
         }
-        if Freezeˉkind == 192u32 { Hasˉborrow = true; }
+        if Freezeˉkind == 192u32 || Freezeˉkind == 205u32 { Hasˉborrow = true; }
         Index = Index + 1u32;
     }
     if !Hasˉborrow {
@@ -122,6 +232,14 @@ export fn Build(
                 return Invalid(Wir);
             }
             Temporaryˉstate = Setˉstate(Temporaryˉstate, Resultˉtemporary, 1u8);
+        } else if Kind == 205u32 {
+            if Target >= Slotˉcount || Resultˉtemporary >= Temporaryˉcount || Operandˉcount != 3u32 ||
+                Firstˉoperand > Availableˉoperands || Operandˉcount > Availableˉoperands - Firstˉoperand {
+                return Invalid(Wir);
+            }
+            // Slice is inherently borrowed. Its owner remains an ordinary
+            // bytes slot; complete WVIR validation proves this root and escape.
+            Temporaryˉstate = Setˉstate(Temporaryˉstate, Resultˉtemporary, 2u8);
         } else if Kind == 192u32 {
             if Target >= Slotˉcount || Resultˉtemporary >= Temporaryˉcount || Operandˉcount != 1u32 ||
                 Firstˉoperand >= Availableˉoperands ||

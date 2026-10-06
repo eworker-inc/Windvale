@@ -38,6 +38,10 @@ const WVFB_MAXIMUM_RECORDS = 64;
 const WVFB_MAXIMUM_BYTES =
     WVFB_HEADER_BYTES + WVFB_MAXIMUM_RECORDS * WVFB_RECORD_BYTES;
 const PRODUCER_TIMEOUT_MILLISECONDS = Readˉproducerˉtimeout();
+const SOURCE_EMISSION_MAXIMUM_MILLISECONDS = 600_000;
+const SOURCE_EMISSION_TIMEOUT_MILLISECONDS =
+    process.env.WINDVALE_SPLIT_COMPILER_TEST_TIMEOUT_MILLISECONDS === undefined
+        ? SOURCE_EMISSION_MAXIMUM_MILLISECONDS : PRODUCER_TIMEOUT_MILLISECONDS;
 const TEST_HOOKS = Readˉtestˉhooks();
 const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
 const TASKKILL_TIMEOUT_MILLISECONDS = 2_000;
@@ -82,6 +86,9 @@ if (Authenticated) {
 }
 
 const Coordinatorˉstarted = Date.now();
+const Sourceˉemissionˉdeadline = Readˉsourceˉemissionˉdeadline(
+    Arguments, Projectˉmode, Coordinatorˉstarted,
+);
 let Activeˉstep = 'input-validation';
 const Activityˉenabled =
     process.env.WINDVALE_SPLIT_COMPILER_ACTIVITY !== '0';
@@ -766,7 +773,8 @@ async function Runˉrequired(Command, Commandˉarguments, Step) {
             ),
         );
     }
-    if (Result.timedOut) {
+    if (Result.timedOut || (Step === 'source-emission' &&
+        Sourceˉemissionˉdeadline !== null && Date.now() >= Sourceˉemissionˉdeadline)) {
         throw new Splitˉcompilerˉfailure(
             1, Buffer.from(`split compiler status=Timeout step=${Step}\n`)
         );
@@ -792,6 +800,11 @@ async function Runˉrequired(Command, Commandˉarguments, Step) {
 }
 
 function Runˉbounded(Command, Commandˉarguments, Step) {
+    const Timeout = Producerˉtimeout(Step);
+    if (Timeout === 0) return Promise.resolve({
+        cleanupFailure: null, exceeded: false, forced: false, status: null,
+        stderr: Buffer.alloc(0), stdout: Buffer.alloc(0), timedOut: true,
+    });
     return new Promise((Resolve, Rejectˉpromise) => {
         Reportˉactivity(Step);
         const Isˉcommand = WINDOWS && Command.toLowerCase().endsWith('.cmd');
@@ -885,7 +898,7 @@ function Runˉbounded(Command, Commandˉarguments, Step) {
         const Timer = setTimeout(() => {
             Timedˉout = true;
             Terminateˉandˉsettle();
-        }, PRODUCER_TIMEOUT_MILLISECONDS);
+        }, Timeout);
         Child.stdout.on('data', Chunk => {
             Append(Stdout, Chunk);
         });
@@ -913,6 +926,34 @@ function Reportˉactivity(Step) {
         `INFO  split compiler active step=${Step} ` +
         `elapsed-ms=${Date.now() - Coordinatorˉstarted}\n`
     );
+}
+
+function Readˉsourceˉemissionˉdeadline(Arguments, Projectˉmode, Started) {
+    const Option = '--source-emission-deadline-ms';
+    const Index = Arguments.indexOf(Option);
+    if (Index === -1) return null;
+    if (!Projectˉmode || Arguments.lastIndexOf(Option) !== Index ||
+        Index + 1 >= Arguments.length) {
+        Reject('The source emission deadline requires one authenticated Project 4 option.');
+    }
+    const Value = Arguments[Index + 1];
+    if (!/^[1-9][0-9]{0,15}$/u.test(Value) || !Number.isSafeInteger(Number(Value))) {
+        Reject('The source emission deadline must be canonical Unix milliseconds.');
+    }
+    const Deadline = Number(Value);
+    if (Deadline <= Started || Deadline - Started > SOURCE_EMISSION_MAXIMUM_MILLISECONDS) {
+        Reject('The source emission deadline must be future and at most 600000 ms from coordinator start.');
+    }
+    Arguments.splice(Index, 2);
+    return Deadline;
+}
+
+function Producerˉtimeout(Step, Started = Date.now()) {
+    if (Step !== 'source-emission' || Sourceˉemissionˉdeadline === null) {
+        return PRODUCER_TIMEOUT_MILLISECONDS;
+    }
+    return Math.max(0, Math.min(SOURCE_EMISSION_TIMEOUT_MILLISECONDS,
+        Sourceˉemissionˉdeadline - Started));
 }
 
 function Readˉproducerˉtimeout() {
@@ -1640,7 +1681,8 @@ function Usage() {
         '<profile> --target-descriptor <target.wvtd> <root.wv> ' +
         '[dependency.wv ...] <output.wvb>; Project 4 replaces the source arguments ' +
         'with --workspace <workspace.wvws> --project <project.wvproj> ' +
-        '--manifest-reader <native-reader> <output.wvb>; retained Project 2: ' +
+        '--manifest-reader <native-reader> [--source-emission-deadline-ms ' +
+        '<absolute-unix-ms>] <output.wvb>; retained Project 2: ' +
         '<admitter> <analyzer> <emitter> <root.wv> [dependency.wv ...] ' +
         '<output.wvb>',
     );

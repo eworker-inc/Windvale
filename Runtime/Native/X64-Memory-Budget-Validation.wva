@@ -8,11 +8,8 @@ symbol export function Windvale_memory_budget_validate in .text
 section code .text align 16
 define Windvale_memory_budget_validate
 push rbx
-push rbp
 push rsi
 push rdi
-push r12
-push r13
 push r10
 push r11
 move rbx r8
@@ -32,6 +29,9 @@ compare_i32 eax 1
 branch not_equal Invalid
 
 # Validate every parent index before following any ancestor chain.
+# R11 bounds later accounting scans only after the complete structure has
+# proved every later entry inactive. Retired generations remain permitted.
+move_u32 r11d 1
 move_u32 edi 1
 move rsi rbx
 add_i32 rsi 16
@@ -44,16 +44,20 @@ compare ecx eax
 branch above Invalid
 test eax eax
 branch not_equal Active
-move_u32 ecx 4
-label Inactive
-load_memory_u32 eax rsi rcx 1 0
-test eax eax
+# Active and owner were already proved zero. Check every remaining field
+# except the retained generation without a per-word loop.
+load_memory_u32 eax rsi none 1 4
+load_memory_u64 rcx rsi none 1 16
+or rax rcx
+load_memory_u64 rcx rsi none 1 24
+or rax rcx
+load_memory_u64 rcx rsi none 1 32
+or rax rcx
+test rax rax
 branch not_equal Invalid
-add_i32 ecx 4
-compare_i32 ecx 40
-branch below Inactive
 jump_label Structure_next
 label Active
+move r11d edi
 load_memory_u32 eax rsi none 1 0
 test eax eax
 branch equal Invalid
@@ -116,37 +120,37 @@ add eax r10d
 load_memory_u32 eax rbx rax 1 20
 jump_label Ancestors
 label Children
-xor r12d r12d
-xor r13d r13d
-move rbp rbx
-add_i32 rbp 56
+xor r8d r8d
+xor ecx ecx
+move r9 rbx
+add_i32 r9 56
 move_u32 edx 2
 label Sum_children
-load_memory_u32 eax rbp none 1 8
+load_memory_u32 eax r9 none 1 8
 test eax eax
 branch equal Sum_next
-load_memory_u32 eax rbp none 1 4
+load_memory_u32 eax r9 none 1 4
 compare eax edi
 branch not_equal Sum_next
-load_memory_u64 rax rbp none 1 24
-add r12 rax
+load_memory_u64 rax r9 none 1 24
+add r8 rax
 branch below Invalid
-add_i32 r13d 1
+add_i32 ecx 1
 label Sum_next
-add_i32 rbp 40
+add_i32 r9 40
 add_i32 edx 1
-compare_i32 edx 65
+compare edx r11d
 branch below_equal Sum_children
 load_memory_u64 rax rsi none 1 32
-compare rax r12
+compare rax r8
 branch not_equal Invalid
 load_memory_u32 eax rsi none 1 20
-compare eax r13d
+compare eax ecx
 branch not_equal Invalid
 label Accounting_next
 add_i32 edi 1
 add_i32 rsi 40
-compare_i32 edi 65
+compare edi r11d
 branch below_equal Accounting
 xor eax eax
 jump_label Finish
@@ -155,11 +159,8 @@ move_u32 eax 5
 label Finish
 pop r11
 pop r10
-pop r13
-pop r12
 pop rdi
 pop rsi
-pop rbp
 pop rbx
 return
 end define

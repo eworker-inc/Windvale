@@ -56,6 +56,12 @@ The catalog selects the even WVIR minor in the current `1.9` through candidate `
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
+Candidate WVIR 1.39/1.40 extends that paired convention for canonical reserved
+byte construction and borrowed slices under
+[Decision 0978](../Documents/Decisions/0978-Represent-Reserved-Byte-Construction-In-WVIR-1.39-And-1.40.md).
+The profile is under implementation. These are source-analysis versions; their
+acceptance does not establish executable WVB, native ownership or release.
+
 Foundation payload borrowing additionally reserves ephemeral shapes
 `0x80000200..0x800002ff`. Each shape maps by its low eight bits to one exact
 canonical `Option<T>` WVGT instance. It represents `Option<borrow T>` only
@@ -79,7 +85,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through candidate `38` selected by the features below |
+| 6 | 2 | Minor version `9` through candidate `40` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -442,6 +448,17 @@ deterministic target-module-and-name WVSI 1.2 index over absolute WVSS spans.
 Canonical record/enum shapes and directory identities use the private WVSI
 bidirectional nominal tables rather than repeated ordinal rescans.
 
+The complete published directory is limited to 4 MiB. Preparation checks
+fixed-row payload geometry and uses the existing generic/callable catalog
+admissions before scanning header features, computes the actual header once,
+and charges that same header,
+every section and the nonempty callable tail against the remaining limit
+before concatenation. Feature-selected zero-length callable envelopes still
+consume their eight header bytes. Malformed construction geometry is refused
+before count-indexed feature reads. Catalog checks retain their existing
+admission contracts; the independent validator retains its separate exact
+serialized-length and semantic checks.
+
 The first WIR planning pass is retained rather than discarded. Its ordinary
 functions and generic placeholders become the canonical base. Concrete generic
 functions are then appended in WVGC order beginning at the first not-yet-built
@@ -627,7 +644,45 @@ exactly, and pairwise `Valueˉphi = 64` joins carry the selected value. A `never
 arm contributes no value. Descriptorless Seed rejects the value form, while its
 statement match remains unchanged. No new operation or WVIR version is needed.
 
-`&&` and `||` lower the left operand, branch to either a short-result block or a right-operand block, and join those Boolean values with `Valueˉphi`. The right expression therefore has no operation or runtime behavior on the skipped path. The operation records the short and right predecessor identities so independent validation does not infer phi ownership from layout alone.
+In value positions, `&&` and `||` lower the left operand, branch to either a
+short-result block or a right-operand block, and join those Boolean values with
+`Valueˉphi`. The operation records both predecessor identities so independent
+validation does not infer phi ownership from layout alone.
+
+Statement `if` and `while` conditions lower a conjunction or disjunction to
+direct branches when their Boolean value is needed only to select control
+flow. Leaves keep the existing expression lowering and source order; the right
+operand has no runtime behavior on the skipped path. A non-Boolean logical
+operand retains `Invalidˉoperator` at its enclosing logical expression, while a
+non-Boolean statement condition retains `Invalidˉcondition` at the condition.
+A left operand of shape `never` still ends lowering before the right operand.
+A right operand of shape `never` keeps the surviving short-result Boolean
+branch, including the existing type analysis of any enclosing logical operand.
+Literal-true loop classification continues to use the original source expression.
+
+Compound-condition construction uses at most 2,048 sorted leaf rows of twelve
+bytes under the existing 4,096-node and depth-64 expression limits. Each row
+owns one branch block and its two targets. Internal targets resolve while the
+condition is lowered; remaining targets resolve after allocating the statement
+arms. A single bounded block-payload pass checks the branch rows and replaces
+only their target fields. No unresolved target reaches published WVIR. Ordinary
+nonlogical conditions keep the existing direct branch construction.
+
+Before merging a completed function, the lowerer may pool identical primitive
+`i32`, `u8`, `u32`, and `bool` constants. Only exact operation/shape pairs `1/1`,
+`2/2`, `3/3`, and `4/4`, with no operands and zero auxiliary field, qualify.
+Both inputs of every `Valueˉphi` are excluded from pooling, preserving the
+validator's exact predecessor-ownership rule. Eligible constants move to the
+function entry; other operations retain their order. Dense temporary mappings,
+operands, terminator values and block operation ranges change together, and the
+completed directory still passes the existing independent validator.
+
+The pooling profile admits at most 4,096 operations, 4,096 temporaries, 8,192
+operands, 2,048 blocks and 128 distinct constant keys per function. Profile
+overflow retains the original function. Malformed rewrite geometry is rejected;
+no partial rewrite is published. Hash probing is bounded by 128 entries and
+payload construction uses bounded pending chunks. These implementation bounds
+do not change source semantics, WVIR layouts or immutable recovery artifacts.
 
 Borrow-mode checking classifies the canonical WVGT kind-11 `Vector<T>` identity
 as owned and kind-12 `Sequence<T>` as shared immutable. A borrowed sequence may
@@ -695,17 +750,29 @@ WVB 1.34 serializes an immutable borrowed call boundary as shape `36` while
 retaining shape `25` for the affine owner. That view shape is not a second WVIR
 budget identity: the writer derives it only for a proven borrowed call operand,
 and the verifier confines it to the canonical direct-call sequence. Mutable
-budget borrowing remains source/WVIR evidence only until a write-through WVB
-and native alias contract exists.
+budget borrowing retains that canonical WVIR identity and explicit parameter
+mode. Candidate WVB 1.45 supplies its direct-helper alias contract under
+[Decision 0982](../Documents/Decisions/0982-Complete-Direct-Budget-Helper-Authority-In-WVB-1.45.md).
+The budget ownership proof checks exact VALUE mode before consuming a
+parameter-origin temporary in a store, direct value call or reserved-byte
+constructor. An owned budget return consumes its live same-block temporary
+and live origin before the temporary sweep; borrowed parents cannot be
+laundered through an owned local. This does not change WVIR encoding or widen
+its CFG and ownership bounds, and does not newly qualify legacy named-slot
+collection, task or unsafe construction paths. Their existing named-slot
+consuming targets also require exact VALUE mode for budget parameters.
 
 The exact `Foundationˉmemory.Split` call has three arguments and is recognized
 only through the canonical edition-1 module identity. Its first argument must be
 `borrow mut` of one directly named mutable local whose exact shape is
 `Memoryˉbudget`; the borrow itself is not serialized. Its second and third
 arguments are evaluated left to right as exact `u64 Maximumˉbytes` and `u32
-Maximumˉchildren` values. The expected result must be the canonical materialized
+Maximumˉchildren` values. The result is the canonical materialized
 `Foundationˉresult.Result<Memoryˉbudget,
-Foundationˉmemory.Allocationˉfailure>`. That failure record has exactly three
+Foundationˉmemory.Allocationˉfailure>`. A local without an explicit result context
+infers this one fixed instance from the exact Foundation identities. An explicit
+context must match it; mismatched or forged Result and failure layouts reject
+before numeric argument evaluation. That failure record has exactly three
 declaration-order fields: the canonical same-module `Allocationˉreason` enum,
 then `Requestedˉbytes: u64`, then `Availableˉbytes: u64`.
 
@@ -932,3 +999,77 @@ The original typed-WVIR candidate was cross-host qualified at `bf77f70`, the fus
 The ten-module compiler closure is intentionally not in the fast loop. Decision 0042 reduced the focused typed-WVIR fixture from 8,074,045 to 5,735,695 instructions; Decision 0050 reduced it again to 5,715,847 and removed directory-entry construction and nominal-rank derivation as dominant costs. Decision 0055's implementation falls to 3,626,693 focused instructions and completes the exact ten-module input in 3,912,239,584 instructions under the unchanged 4,000,000,000 ceiling. That clears the typed-WVIR performance entry gate. Decision 0058's separate dedicated verifier proceeds through WVB and qualifies exact Stage 1 to Stage 2 convergence.
 
 WVIR-to-WVB lowering is specified separately in the initial [source-to-WVB backend contract](Compiler-Source-Wvb.md). WVIR execution, optimization, native IR, and OS-specific lowering are not part of this contract.
+
+## Candidate WVIR 1.39/1.40 reserved bytes and borrowed slices
+
+This source-analysis extension implements the frozen
+[Foundation bytes signatures](Windvale-Language-1.0-Foundation-Registry.md#foundation-bytes)
+through the existing compiler. Its opaque owned `Bytesˉbuilder` shape is
+`805306370`; builtin bytes and text keep shapes 6 and 5. Canonical Slice instances
+use authenticated generic catalog kind 13 and have borrowed value class 4.
+They cannot inhabit escaping user records, variants, arrays, collections or
+captures. A plain Slice parameter counts as one borrowed owner without requiring
+an additional source `borrow` keyword.
+
+Each operation keeps the existing 28-byte record. Operands are earlier typed
+temporaries in the current function. A zero target/auxiliary field is required
+where the table says zero; unused fields cannot smuggle an owner or identity.
+
+| Operation | Result | Ordered operands | Target | Auxiliary |
+| --- | --- | --- | --- | --- |
+| 195 `Constructˉreserved` | canonical Result<Bytesˉbuilder, Allocationˉfailure> | owned budget, u64 maximum | zero | canonical Memory module |
+| 196 `Appendˉu8` | canonical Result<unit, Limitˉfailure> | u8 value | builder local slot | canonical Memory module |
+| 197 `Appendˉu32ˉlittle` | same append Result | u32 value | builder local slot | canonical Memory module |
+| 198 `Appendˉu64ˉlittle` | same append Result | u64 value | builder local slot | canonical Memory module |
+| 199 `Appendˉu64ˉdecimal` | same append Result | u64 value | builder local slot | canonical Memory module |
+| 200 `Appendˉbytes` | same append Result | immutable bytes value | builder local slot | canonical Memory module |
+| 201 `Appendˉutf8` | same append Result | immutable text value | builder local slot | canonical Memory module |
+| 202 `Freeze` | bytes | owned builder | zero | zero |
+| 203 `Length` | u64 | bytes | zero | zero |
+| 204 `At` | u8 | bytes, u64 index | zero | zero |
+| 205 `Borrowˉrange` | canonical Slice<u8> | bytes, u64 start, u64 length | borrowed bytes owner slot | bytes shape 6 |
+| 206 Slice indexed read | exact element shape | Slice, u64 index | zero | zero |
+| 207 Slice length | u64 | Slice | zero | zero |
+
+Result admission checks the canonical imported Result family and exact payload
+types. Allocation failure retains its existing nominal validation. Limit failure
+is the canonical Core `Foundationˉmemory.Limitˉfailure` variant with exactly
+`Maximumˉexceeded(Requested: u64, Maximum: u64)` followed by
+`Arithmeticˉoverflow`; structural lookalikes, wrong fields or reordered cases
+are rejected. Inferred calls intern those exact result/view instances through
+the existing bounded generic catalog rather than constructing anonymous types.
+Calls without an expected result type, including calls inside `try`, infer the
+same canonical result before failure propagation is checked.
+
+Constructor and freeze operands transfer owned temporary evidence. Appends
+retain an exclusive receiver borrow and cannot copy or transfer its owner.
+The bytes/text operand observes immutable content without transferring its
+source owner. Source argument expressions evaluate once, left to right as
+written, including named arguments; operands are then serialized in signature
+order. Unknown, missing or repeated labels reject. If later argument evaluation
+propagates failure, already moved call temporaries remain subject to ordinary
+cleanup. The exclusive receiver cannot be read, moved or mutated by a later
+argument while its loan is active.
+
+Borrowed-range provenance names the exact bytes local or immutable/exclusive
+borrowed parameter. Slice loads, stores, indexed reads and helper calls preserve
+that underlying owner. Ordinary Copy and shared-immutable reads of a frozen
+owner remain semantic values; they may be copied, passed by value and returned
+while the Slice lives. The owner still cannot be replaced, released or passed
+to a mutable direct or indirect call. Borrowed projections retain their escape
+restrictions. Read-through classification is cached for at most 64 owner slots
+within the existing bounded provenance profile. A returned Slice must satisfy
+the frozen single-owner elision rule; a local owner, no borrowed owner or
+ambiguous multiple-owner return cannot escape. Bounds use exact u64 operands;
+no native narrowing or unchecked pointer is represented by this source directory.
+
+Select minor 39 without generic function instances and 40 with them, retaining
+the earlier 56/64-byte paired header and callable catalog tail conventions.
+The version is also required when the new opaque or Slice types occur in a
+signature without one of the new calls. Other source features keep their earlier
+lowest applicable minor when this vocabulary is absent.
+
+The existing executable backend does not yet encode this vocabulary. It rejects
+the new owner, view and operations before publication. These source/WVIR checks
+therefore do not prove native release, interpreter memory reuse or delivery of
+an executable reserved-byte application.

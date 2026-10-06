@@ -9,6 +9,7 @@ import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
+import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage as Flat;
 
 export enum Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus: i32 {
     Active = 0;
@@ -91,7 +92,8 @@ fn Evidence(
     Prefix: bytes,
     Readˉonlyˉheader: bytes,
     Symbolˉchunk: bytes,
-    Relocationˉchunk: bytes
+    Relocationˉchunk: bytes,
+    Providers: bytes
 ) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence {
     let Manifestˉsummary:
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
@@ -130,6 +132,13 @@ fn Evidence(
         return Invalidˉevidence(
             Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Symbols
         );
+    }
+    if !Flat.Linkerˉcompilerˉwvoˉsegmentedˉprovidersˉvalidate(
+        Symbolˉsummary.Sharedˉprofile,
+        Envelopeˉsummary.Textˉbytes + Envelopeˉsummary.Readˉonlyˉbytes,
+        Providers
+    ) {
+        return Invalidˉevidence(Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Symbols);
     }
     let Relocationˉsummary:
         Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
@@ -193,6 +202,8 @@ fn Rangeˉequal(
 fn Textˉcandidateˉmatches(
     Textˉbytes: u32,
     Symbolˉchunk: bytes,
+    Symbolˉsummary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary,
+    Providers: bytes,
     Relocationˉchunk: bytes,
     Relocationˉcount: u32,
     Position: u32,
@@ -223,12 +234,18 @@ fn Textˉcandidateˉmatches(
             }
             let Targetˉsymbol: u32 =
                 Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 12u32);
-            let Dataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbolˉchunk,
-                Targetˉsymbol * 30u32 + 8u32
-            );
-            let Expected: u32 =
-                Textˉbytes + Dataˉoffset - Patchˉoffset - 4u32;
+            var Address: u32 = 0u32;
+            if Targetˉsymbol < Symbolˉsummary.Dataˉsymbols {
+                Address = Textˉbytes + Bytesˉreadˉu32ˉlittle(
+                    Symbolˉchunk, Targetˉsymbol * 30u32 + 8u32);
+            } else {
+                if Targetˉsymbol == Symbolˉsummary.Budgetedˉsymbol {
+                    Address = Bytesˉreadˉu32ˉlittle(Providers, 24u32);
+                } else {
+                    Address = Bytesˉreadˉu32ˉlittle(Providers, 28u32);
+                }
+            }
+            let Expected: u32 = Address - (Patchˉoffset + 4u32);
             if Bytesˉreadˉu32ˉlittle(Candidate, Localˉoffset) != Expected {
                 return false;
             }
@@ -255,12 +272,13 @@ fn Cursorˉisˉvalid(
     return Current.Imageˉposition <= Evidence.Imageˉbytes;
 }
 
-export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
+fn Begin(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
     Readˉonlyˉheader: bytes,
     Symbolˉchunk: bytes,
-    Relocationˉchunk: bytes
+    Relocationˉchunk: bytes,
+    Providers: bytes
 ) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
     let Accepted:
         Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence = Evidence(
@@ -268,7 +286,8 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
             Prefix,
             Readˉonlyˉheader,
             Symbolˉchunk,
-            Relocationˉchunk
+            Relocationˉchunk,
+            Providers
         );
     if !Accepted.Valid { return Invalid(Accepted.Status); }
     return State(
@@ -280,7 +299,7 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
     );
 }
 
-export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+fn Next(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
     Readˉonlyˉheader: bytes,
@@ -289,7 +308,8 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
     Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor,
     Sourceˉchunk: bytes,
     Candidateˉposition: u32,
-    Candidateˉchunk: bytes
+    Candidateˉchunk: bytes,
+    Providers: bytes
 ) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
     let Accepted:
         Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence = Evidence(
@@ -297,9 +317,13 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
             Prefix,
             Readˉonlyˉheader,
             Symbolˉchunk,
-            Relocationˉchunk
+            Relocationˉchunk,
+            Providers
         );
     if !Accepted.Valid { return Invalid(Accepted.Status); }
+    let Symbolˉsummary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
     if !Cursorˉisˉvalid(Current, Accepted) ||
         Current.Nextˉchunk >= Accepted.Chunks {
         return Invalid(
@@ -350,6 +374,8 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
         if !Textˉcandidateˉmatches(
             Accepted.Textˉbytes,
             Symbolˉchunk,
+            Symbolˉsummary,
+            Providers,
             Relocationˉchunk,
             Accepted.Relocations,
             Position,
@@ -381,6 +407,12 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
                 return Invalid(
                     Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉlength
                 );
+            }
+            if Symbolˉsummary.Sharedˉprofile &&
+                (Position != Readˉonlyˉstart ||
+                    !Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsharedˉdataˉvalidate(
+                        Symbolˉsummary, Symbolˉchunk, Sourceˉchunk)) {
+                return Invalid(Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Source);
             }
             if !Bytesˉequal(Sourceˉchunk, Candidateˉchunk) {
                 return Invalid(
@@ -440,13 +472,14 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
     );
 }
 
-export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
+fn Finish(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
     Readˉonlyˉheader: bytes,
     Symbolˉchunk: bytes,
     Relocationˉchunk: bytes,
-    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor,
+    Providers: bytes
 ) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
     let Accepted:
         Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence = Evidence(
@@ -454,7 +487,8 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
             Prefix,
             Readˉonlyˉheader,
             Symbolˉchunk,
-            Relocationˉchunk
+            Relocationˉchunk,
+            Providers
         );
     if !Accepted.Valid { return Invalid(Accepted.Status); }
     if !Cursorˉisˉvalid(Current, Accepted) ||
@@ -471,4 +505,52 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
         Current.Imageˉposition,
         Current.Imageˉbytes
     );
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Begin(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Bytesˉslice(Prefix, 0u32, 0u32));
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor,
+    Sourceˉchunk: bytes, Candidateˉposition: u32, Candidateˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Next(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Current, Sourceˉchunk, Candidateˉposition, Candidateˉchunk, Bytesˉslice(Prefix, 0u32, 0u32));
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Finish(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Current, Bytesˉslice(Prefix, 0u32, 0u32));
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉsharedˉverificationˉbegin(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes, Providers: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Begin(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Providers);
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉsharedˉverificationˉnext(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor,
+    Sourceˉchunk: bytes, Candidateˉposition: u32, Candidateˉchunk: bytes, Providers: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Next(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Current, Sourceˉchunk, Candidateˉposition, Candidateˉchunk, Providers);
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉsharedˉverificationˉfinish(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor, Providers: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Finish(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Current, Providers);
 }

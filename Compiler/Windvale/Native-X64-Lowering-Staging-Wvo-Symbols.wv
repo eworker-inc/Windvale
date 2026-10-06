@@ -7,6 +7,7 @@ authority library;
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉtemplates as Sharedˉtemplates;
 
 export enum Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus: i32 {
     Valid = 0;
@@ -34,6 +35,15 @@ export record Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
     Paddingˉbytes: u32;
     Relocationˉposition: u32;
     Relocationˉbytes: u32;
+    Sharedˉprofile: bool;
+    Mainˉoffset: u32;
+    Mainˉbytes: u32;
+    Blobˉbytes: u32;
+    Directoryˉoffset: u32;
+    Directoryˉbytes: u32;
+    Closeˉoffset: u32;
+    Budgetedˉsymbol: u32;
+    Sharedˉsymbol: u32;
 }
 
 fn Invalid(
@@ -48,7 +58,10 @@ fn Invalid(
         0u32,
         0u32,
         0u32,
-        0u32
+        0u32,
+        false,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        4294967295u32, 4294967295u32
     );
 }
 
@@ -60,7 +73,16 @@ fn Accepted(
     Helperˉbytes: u32,
     Paddingˉbytes: u32,
     Relocationˉposition: u32,
-    Relocationˉbytes: u32
+    Relocationˉbytes: u32,
+    Sharedˉprofile: bool,
+    Mainˉoffset: u32,
+    Mainˉbytes: u32,
+    Blobˉbytes: u32,
+    Directoryˉoffset: u32,
+    Directoryˉbytes: u32,
+    Closeˉoffset: u32,
+    Budgetedˉsymbol: u32,
+    Sharedˉsymbol: u32
 ) -> Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
     return Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary(
         Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid,
@@ -71,7 +93,11 @@ fn Accepted(
         Helperˉbytes,
         Paddingˉbytes,
         Relocationˉposition,
-        Relocationˉbytes
+        Relocationˉbytes,
+        Sharedˉprofile,
+        Mainˉoffset, Mainˉbytes, Blobˉbytes,
+        Directoryˉoffset, Directoryˉbytes, Closeˉoffset,
+        Budgetedˉsymbol, Sharedˉsymbol
     );
 }
 
@@ -201,6 +227,39 @@ fn Sha256ˉhelperˉnameˉisˉvalid(
     return true;
 }
 
+fn Nameˉmatches(Input: bytes, Offset: u32, Length: u32, Name: text) -> bool {
+    let Expected: bytes = Textˉtoˉutf8(Name);
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expected, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+// This selects one exact tail length. Every selected row is still admitted below.
+fn Sharedˉtailˉselected(Symbolˉchunk: bytes, Symbols: u32) -> bool {
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    let Total: u32 = Bytesˉlength(Symbolˉchunk);
+    while Index < Symbols {
+        if Cursor > Total || 20u32 > Total - Cursor { return false; }
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 16u32);
+        if Length > Total - Cursor - 20u32 { return false; }
+        if Index + 6u32 == Symbols &&
+            Bytesˉreadˉu8(Symbolˉchunk, Cursor) == 2u8 &&
+            Bytesˉreadˉu8(Symbolˉchunk, Cursor + 1u32) == 1u8 &&
+            Mainˉnameˉisˉvalid(Symbolˉchunk, Cursor + 20u32, Length) {
+            return true;
+        }
+        Cursor = Cursor + 20u32 + Length;
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
 export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
@@ -225,7 +284,11 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
             Stagingˉmanifest
         );
-    if Envelopeˉsummary.Symbols > 1537u32 {
+    let Sharedˉprofile: bool = Sharedˉtailˉselected(
+        Symbolˉchunk, Envelopeˉsummary.Symbols
+    );
+    if Envelopeˉsummary.Symbols > 2566u32 ||
+        (!Sharedˉprofile && Envelopeˉsummary.Symbols > 2561u32) {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
         );
@@ -257,6 +320,13 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     var Helperˉseen: bool = false;
     var Helperˉoffset: u32 = 0u32;
     var Helperˉbytes: u32 = 0u32;
+    var Sharedˉtail: u32 = 0u32;
+    var Blobˉbytes: u32 = 0u32;
+    var Directoryˉoffset: u32 = 0u32;
+    var Directoryˉbytes: u32 = 0u32;
+    var Closeˉoffset: u32 = 0u32;
+    var Budgetedˉsymbol: u32 = 4294967295u32;
+    var Sharedˉsymbol: u32 = 4294967295u32;
     while Index < Envelopeˉsummary.Symbols {
         let Total: u32 = Bytesˉlength(Symbolˉchunk);
         if Cursor > Total || 20u32 > Total - Cursor {
@@ -288,6 +358,72 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
             );
         }
 
+        if Mainˉseen {
+            if !Sharedˉprofile || Sharedˉtail >= 5u32 {
+                return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Order);
+            }
+            if Sharedˉtail < 2u32 {
+                if Binding != 2u32 || Kind != 2u32 || Section != 1u32 ||
+                    Envelopeˉsummary.Sections != 2u32 {
+                    return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape);
+                }
+                if Sharedˉtail == 0u32 {
+                    if !Nameˉmatches(Symbolˉchunk, Nameˉoffset, Nameˉlength,
+                        "Windvale_shared_data_blob") {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name);
+                    }
+                    if Offset != 0u32 || Size != Expectedˉdataˉoffset || Size > 4194304u32 {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Dataˉcoverage);
+                    }
+                    Blobˉbytes = Size;
+                } else {
+                    if !Nameˉmatches(Symbolˉchunk, Nameˉoffset, Nameˉlength,
+                        "Windvale_shared_data_directory") {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name);
+                    }
+                    let Alignedˉblob: u32 = (Blobˉbytes + 3u32) / 4u32 * 4u32;
+                    if Offset != Alignedˉblob || Size != Dataˉsymbols * 16u32 ||
+                        Size > 8192u32 || Offset > Envelopeˉsummary.Readˉonlyˉbytes ||
+                        Size != Envelopeˉsummary.Readˉonlyˉbytes - Offset {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Dataˉcoverage);
+                    }
+                    Directoryˉoffset = Offset;
+                    Directoryˉbytes = Size;
+                }
+            } else {
+                if Sharedˉtail == 2u32 {
+                    if Binding != 2u32 || Kind != 1u32 || Section != 0u32 ||
+                        Offset != Exportˉoffset + 32u32 || Size != 17u32 ||
+                        Exportˉsize < 49u32 {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape);
+                    }
+                    if !Nameˉmatches(Symbolˉchunk, Nameˉoffset, Nameˉlength,
+                        "Windvale_shared_result_close") {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name);
+                    }
+                    Closeˉoffset = Offset;
+                } else {
+                    if Binding != 3u32 || Kind != 1u32 || Section != 4294967295u32 ||
+                        Offset != 0u32 || Size != 0u32 {
+                        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape);
+                    }
+                    if Sharedˉtail == 3u32 {
+                        if !Nameˉmatches(Symbolˉchunk, Nameˉoffset, Nameˉlength,
+                            "Windvale_budgeted_storage") {
+                            return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name);
+                        }
+                        Budgetedˉsymbol = Index;
+                    } else {
+                        if !Nameˉmatches(Symbolˉchunk, Nameˉoffset, Nameˉlength,
+                            "Windvale_shared_storage") {
+                            return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name);
+                        }
+                        Sharedˉsymbol = Index;
+                    }
+                }
+            }
+            Sharedˉtail = Sharedˉtail + 1u32;
+        } else {
         if Binding == 1u32 && Kind == 2u32 {
             if Functionsˉstarted || Mainˉseen ||
                 Envelopeˉsummary.Sections != 2u32 || Section != 1u32 {
@@ -312,14 +448,16 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                     Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
                 );
             }
-            if Offset != Expectedˉdataˉoffset ||
+            if ((!Sharedˉprofile && Offset != Expectedˉdataˉoffset) ||
+                    (Sharedˉprofile && (Offset < Expectedˉdataˉoffset ||
+                        Offset - Expectedˉdataˉoffset > 3u32))) ||
                 Offset > Envelopeˉsummary.Readˉonlyˉbytes ||
                 Size > Envelopeˉsummary.Readˉonlyˉbytes - Offset {
                 return Invalid(
                     Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range
                 );
             }
-            Expectedˉdataˉoffset = Expectedˉdataˉoffset + Size;
+            Expectedˉdataˉoffset = Offset + Size;
             Dataˉsymbols = Dataˉsymbols + 1u32;
         } else {
             if Binding == 1u32 && Kind == 1u32 {
@@ -329,11 +467,17 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                     );
                 }
                 Functionsˉstarted = true;
-                if Sha256ˉhelperˉnameˉisˉvalid(
-                    Symbolˉchunk, Nameˉoffset, Nameˉlength
-                ) {
-                    if Helperˉseen || Index + 2u32 != Envelopeˉsummary.Symbols ||
-                        Size != 1640u32 || Offset > Envelopeˉsummary.Textˉbytes ||
+                let Sharedˉhelper: bool = Sharedˉprofile && Nameˉmatches(
+                    Symbolˉchunk, Nameˉoffset, Nameˉlength, "$native_shared_values");
+                let Sha256ˉhelper: bool = !Sharedˉprofile && Sha256ˉhelperˉnameˉisˉvalid(
+                    Symbolˉchunk, Nameˉoffset, Nameˉlength);
+                if Sharedˉhelper || Sha256ˉhelper {
+                    var Expectedˉhelperˉbytes: u32 = 1640u32;
+                    if Sharedˉhelper { Expectedˉhelperˉbytes = Sharedˉtemplates.Helperˉbytes(); }
+                    if Helperˉseen ||
+                        (!Sharedˉprofile && Index + 2u32 != Envelopeˉsummary.Symbols) ||
+                        (Sharedˉprofile && Index + 7u32 != Envelopeˉsummary.Symbols) ||
+                        Size != Expectedˉhelperˉbytes || Offset > Envelopeˉsummary.Textˉbytes ||
                         Size > Envelopeˉsummary.Textˉbytes - Offset {
                         return Invalid(
                             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
@@ -370,7 +514,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                     }
                     Expectedˉfunctionˉoffset = Offset;
                 }
-                if Functionˉordinal >= 1024u32 ||
+                if Functionˉordinal >= 2048u32 ||
                     Offset != Expectedˉfunctionˉoffset ||
                     Size == 0u32 || Offset > Envelopeˉsummary.Textˉbytes ||
                     Size > Envelopeˉsummary.Textˉbytes - Offset {
@@ -384,7 +528,9 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                 }
             } else {
                 if Binding != 2u32 || Kind != 1u32 || Section != 0u32 ||
-                    Mainˉseen || Index + 1u32 != Envelopeˉsummary.Symbols {
+                    Mainˉseen ||
+                    (!Sharedˉprofile && Index + 1u32 != Envelopeˉsummary.Symbols) ||
+                    (Sharedˉprofile && Index + 6u32 != Envelopeˉsummary.Symbols) {
                     return Invalid(
                         Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
                     );
@@ -409,6 +555,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                 Mainˉseen = true;
             }
         }
+        }
         Cursor = Nameˉoffset + Nameˉlength;
         Index = Index + 1u32;
     }
@@ -417,14 +564,14 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Symbolˉchunk
         );
     }
-    if !Mainˉseen {
+    if !Mainˉseen || (Sharedˉprofile && (Sharedˉtail != 5u32 || !Helperˉseen)) {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
         );
     }
     if Envelopeˉsummary.Sections == 2u32 {
-        if Dataˉsymbols == 0u32 ||
-            Expectedˉdataˉoffset != Envelopeˉsummary.Readˉonlyˉbytes {
+        if !Sharedˉprofile && (Dataˉsymbols == 0u32 ||
+            Expectedˉdataˉoffset != Envelopeˉsummary.Readˉonlyˉbytes) {
             return Invalid(
                 Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Dataˉcoverage
             );
@@ -438,7 +585,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     }
 
     let Functions: u32 = Localˉfunctions + 1u32;
-    if Functions > 1024u32 {
+    if Functions > 2048u32 {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
         );
@@ -528,6 +675,60 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
         Helperˉbytes,
         Padding,
         Relocationˉposition,
-        Relocationˉbytes
+        Relocationˉbytes,
+        Sharedˉprofile,
+        Exportˉoffset, Exportˉsize, Blobˉbytes,
+        Directoryˉoffset, Directoryˉbytes, Closeˉoffset,
+        Budgetedˉsymbol, Sharedˉsymbol
     );
+}
+
+// Selected ABI25 publication emits its complete bounded read-only region once.
+// Admission ties every directory row to its local data symbol and zero padding.
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsharedˉdataˉvalidate(
+    Summary: Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary,
+    Symbolˉchunk: bytes,
+    Readˉonlyˉdata: bytes
+) -> bool {
+    if Summary.Status != Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid ||
+        !Summary.Sharedˉprofile ||
+        Bytesˉlength(Readˉonlyˉdata) != Summary.Directoryˉoffset + Summary.Directoryˉbytes {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    var Expectedˉoffset: u32 = 0u32;
+    while Index < Summary.Dataˉsymbols {
+        let Symbol: u32 = Index * 30u32;
+        let Row: u32 = Summary.Directoryˉoffset + Index * 16u32;
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Symbol + 8u32);
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Symbol + 12u32);
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Readˉonlyˉdata, Row + 12u32);
+        if Bytesˉreadˉu32ˉlittle(Readˉonlyˉdata, Row) != Offset ||
+            Bytesˉreadˉu32ˉlittle(Readˉonlyˉdata, Row + 4u32) != Size ||
+            Bytesˉreadˉu32ˉlittle(Readˉonlyˉdata, Row + 8u32) != Size {
+            return false;
+        }
+        if Kind == 4u32 {
+            if Offset != (Expectedˉoffset + 3u32) / 4u32 * 4u32 ||
+                Size % 4u32 != 0u32 || Size > 1048576u32 { return false; }
+        } else {
+            if (Kind != 3u32 && Kind != 5u32) || Offset != Expectedˉoffset {
+                return false;
+            }
+            if Kind == 3u32 && (Size > 1048576u32 || !Textˉutf8ˉisˉvalid(
+                Bytesˉslice(Readˉonlyˉdata, Offset, Size))) { return false; }
+        }
+        while Expectedˉoffset < Offset {
+            if Bytesˉreadˉu8(Readˉonlyˉdata, Expectedˉoffset) != 0u8 { return false; }
+            Expectedˉoffset = Expectedˉoffset + 1u32;
+        }
+        Expectedˉoffset = Offset + Size;
+        Index = Index + 1u32;
+    }
+    if Expectedˉoffset != Summary.Blobˉbytes { return false; }
+    while Expectedˉoffset < Summary.Directoryˉoffset {
+        if Bytesˉreadˉu8(Readˉonlyˉdata, Expectedˉoffset) != 0u8 { return false; }
+        Expectedˉoffset = Expectedˉoffset + 1u32;
+    }
+    return true;
 }

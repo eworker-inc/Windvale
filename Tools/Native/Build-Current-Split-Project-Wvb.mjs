@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 import {
     Acquireˉcurrentˉsplitˉcompiler,
     Constructˉcurrentˉsplitˉcompiler,
+    CURRENT_COMPILER_PROJECTS,
+    Getˉcurrentˉsplitˉcompilerˉcacheˉroot,
     Getˉcurrentˉsplitˉcompilerˉfamily,
     Getˉcurrentˉsplitˉcompilerˉkey,
     Readˉpreparedˉsplitˉcompiler,
@@ -22,10 +24,14 @@ import {
     Runˉcompilerˉconstructionˉcommand,
 } from './Source-Edition-Predecessor-Core.mjs';
 
+import { Checkˉprojectˉconstructionˉreadiness } from './Project-Construction-Readiness-Core.mjs';
+
 const MAXIMUM_DIAGNOSTIC_BYTES = 1_048_576;
 const MAXIMUM_INPUT_BYTES = 16_777_216;
 const MAXIMUM_TARGET_PROJECTS = 8;
 const TOOL_TIMEOUT_MILLISECONDS = 600_000;
+// Existing package: 120s verification + 900s image/container + 30s settlement.
+const PREPARATION_PACKAGE_TIMEOUT_MILLISECONDS = 1_050_000;
 const CLEANUP_RESERVE_MILLISECONDS = 30_000;
 const PINNED_ANALYZER_BYTES = 1_552_090;
 const PINNED_ANALYZER_SHA256 =
@@ -34,10 +40,23 @@ const PINNED_EMITTER_BYTES = 1_556_434;
 const PINNED_EMITTER_SHA256 =
     'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9';
 
+export function Currentˉsplitˉcommandˉdeadline(
+    Name, Preparingˉcompiler, Workˉdeadline, Started = Date.now(),
+) {
+    const Preparationˉpackage = Preparingˉcompiler === true &&
+        (Name === 'Package-Segmented-Compiler-Wvb' ||
+            Name === 'Build-Cached-Segmented-Hosted-Wvb.mjs');
+    const Maximum = Preparationˉpackage
+        ? PREPARATION_PACKAGE_TIMEOUT_MILLISECONDS : TOOL_TIMEOUT_MILLISECONDS;
+    return Workˉdeadline === null ? Started + Maximum
+        : Math.min(Started + Maximum, Workˉdeadline);
+}
+
 async function Buildˉcurrentˉsplitˉprojects() {
     const Targetˉarguments = [];
     let Deadline = null;
     let Prepareˉonly = false;
+    let Preflightˉonly = false;
     let Preparedˉonly = false;
     let Prepareˉcompiler = false;
     let Selectedˉkey = null;
@@ -52,6 +71,9 @@ async function Buildˉcurrentˉsplitˉprojects() {
         } else if (process.argv[Index] === '--prepare-only') {
             if (Prepareˉonly) Usage();
             Prepareˉonly = true;
+        } else if (process.argv[Index] === '--preflight-only') {
+            if (Preflightˉonly) Usage();
+            Preflightˉonly = true;
         } else if (process.argv[Index] === '--compiler-checkpoint') {
             if (Selectedˉkey !== null || Index + 1 >= process.argv.length) Usage();
             Selectedˉkey = process.argv[++Index];
@@ -144,6 +166,18 @@ async function Buildˉcurrentˉsplitˉprojects() {
         os.tmpdir(),
         'temporary root',
     );
+    Requireˉtime(Workˉdeadline, 'readiness');
+    const Readiness = await Checkˉprojectˉconstructionˉreadiness({
+        Repository: Repositoryˉroot,
+        Projects: Prepareˉonly || Prepareˉcompiler
+            ? CURRENT_COMPILER_PROJECTS.map(Name => path.join(Repositoryˉroot, 'Projects', 'Tools', Name))
+            : Targets.map(Value => Value.Project),
+        Temporary: Temporaryˉroot, Cache: Getˉcurrentˉsplitˉcompilerˉcacheˉroot(),
+        Outputs: Targets.map(Value => Value.Output),
+        Prepare: Prepareˉonly || Prepareˉcompiler, Preparedˉonly, Deadline: Workˉdeadline,
+    });
+    console.log(`current-split-readiness ${JSON.stringify(Readiness)}`);
+    if (Preflightˉonly) return;
     Requireˉtime(Workˉdeadline, 'work-directory creation');
     const Work = mkdtempSync(path.join(
         Temporaryˉroot,
@@ -170,7 +204,9 @@ async function Buildˉcurrentˉsplitˉprojects() {
                     ), { exitCode: 64 });
                 }
                 return Constructˉcurrentˉsplitˉcompiler(
-                    Work, Candidate, Runˉnative, Runˉnode,
+                    Work, Candidate,
+                    (Label, Name, Arguments) => Runˉnative(Label, Name, Arguments, true),
+                    (Label, Name, Arguments) => Runˉnode(Label, Name, Arguments, true),
                     async Place => {
                         try {
                             return await Constructˉsourceˉeditionˉpredecessor(Place, Workˉdeadline);
@@ -181,6 +217,15 @@ async function Buildˉcurrentˉsplitˉprojects() {
                             throw Error;
                         }
                     },
+                    undefined,
+                    { Mode: 'prepare', Key: Compilerˉkey, Family, Deadline: Workˉdeadline,
+                        Requireˉunchanged: async () => {
+                            Requireˉtime(Workˉdeadline, 'intermediate identity check');
+                            if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
+                                Reject('Current compiler construction inputs changed.');
+                            }
+                            Requireˉtime(Workˉdeadline, 'intermediate identity check');
+                        } },
                 );
             },
             async () => {
@@ -283,26 +328,27 @@ async function Buildˉcurrentˉsplitˉprojects() {
         }
     }
 
-    async function Runˉnative(Label, Name, Arguments) {
+    async function Runˉnative(Label, Name, Arguments, Preparingˉcompiler = false) {
         const Extension = process.platform === 'win32' ? '.cmd' : '.sh';
         const Script = path.join(Scriptˉdirectory, `${Name}${Extension}`);
         Requireˉordinaryˉfile(Script, MAXIMUM_INPUT_BYTES, `${Name} script`);
         if (process.platform === 'win32') {
-            await Run(Label, Script, Arguments);
+            await Run(Label, Script, Arguments, Name, Preparingˉcompiler);
             return;
         }
-        await Run(Label, 'bash', [Script, ...Arguments]);
+        await Run(Label, 'bash', [Script, ...Arguments], Name, Preparingˉcompiler);
     }
 
-    async function Runˉnode(Label, Name, Arguments) {
+    async function Runˉnode(Label, Name, Arguments, Preparingˉcompiler = false) {
         await Run(
             Label,
             process.execPath,
             [path.join(Scriptˉdirectory, Name), ...Arguments],
+            Name, Preparingˉcompiler,
         );
     }
 
-    async function Run(Label, Command, Arguments) {
+    async function Run(Label, Command, Arguments, Name, Preparingˉcompiler) {
         Requireˉtime(Workˉdeadline, Label);
         const Currentˉstep = ++Step;
         const Started = Date.now();
@@ -310,8 +356,8 @@ async function Buildˉcurrentˉsplitˉprojects() {
             `START current split project step=${Currentˉstep}/${Totalˉsteps} phase=${Label}\n`,
         );
         await Runˉcompilerˉconstructionˉcommand(
-            Label, Command, Arguments, Workˉdeadline === null ? Started + TOOL_TIMEOUT_MILLISECONDS :
-                Math.min(Started + TOOL_TIMEOUT_MILLISECONDS, Workˉdeadline),
+            Label, Command, Arguments,
+            Currentˉsplitˉcommandˉdeadline(Name, Preparingˉcompiler, Workˉdeadline, Started),
             true,
         );
         Requireˉtime(Workˉdeadline, Label);
@@ -391,7 +437,7 @@ function Sameˉpath(Left, Right) {
 function Usage() {
     throw Object.assign(new Error(
         'Usage: node Tools/Native/Build-Current-Split-Project-Wvb.mjs ' +
-        '[--deadline-ms <absolute-unix-ms>] ' +
+        '[--deadline-ms <absolute-unix-ms>] [--preflight-only] ' +
         '[--compiler-checkpoint <sha256-key> | --prepare-compiler] ' +
         '[--prepared-compiler-only] <project.wvproj> <output.wvb> ' +
         '[<project.wvproj> <output.wvb> ...] or ' +
@@ -436,6 +482,22 @@ function Failureˉcode(Failure) {
     return Status;
 }
 
+function Failureˉdetails(Failure) {
+    if (Failure === null || typeof Failure !== 'object') return '';
+    const Fields = [];
+    for (const [Name, Maximum] of [['code', 64], ['syscall', 64], ['path', 1_024]]) {
+        const Value = Failure[Name];
+        if (typeof Value === 'string' || typeof Value === 'number') {
+            Fields.push(Name + '=' + String(Value).slice(0, Maximum).replace(/[\r\n\t]/gu, ' '));
+        }
+    }
+    const Frames = typeof Failure.stack === 'string'
+        ? Failure.stack.slice(0, 16_384).split('\n').filter(Line => /^\s+at /u.test(Line)).slice(0, 8)
+            .map(Line => Line.slice(0, 256)) : [];
+    return (Fields.length === 0 ? '' : '\nDetails: ' + Fields.join(' ')) +
+        (Frames.length === 0 ? '' : '\n' + Frames.join('\n'));
+}
+
 function Failureˉdiagnostic(Failure) {
     const Pending = [{ Value: Failure, Label: '' }];
     const Seen = new Set();
@@ -446,7 +508,8 @@ function Failureˉdiagnostic(Failure) {
         if (Seen.has(Value)) continue;
         Seen.add(Value);
         const Message = Label + (Value instanceof Error ? Value.message : String(Value));
-        const Part = Message.slice(0, Remaining);
+        const Detail = Failureˉdetails(Value);
+        const Part = (Message.slice(0, Remaining) + Detail).slice(0, Remaining);
         Parts.push(Part);
         Remaining -= Part.length + 1;
         if (Value instanceof AggregateError) {

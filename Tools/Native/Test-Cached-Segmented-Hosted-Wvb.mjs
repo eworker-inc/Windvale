@@ -22,6 +22,8 @@ import {
     Createˉsegmentedˉhostedˉcheckpoint,
     Materializeˉsegmentedˉhostedˉcheckpoint,
     Parseˉsegmentedˉhostedˉarguments,
+    Parseˉbootstrapˉverifierˉkey,
+    Readˉbootstrapˉverifier,
     Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged,
     Runˉboundedˉsegmentedˉhostedˉproducer,
     Segmentedˉhostedˉcommandˉdeadline,
@@ -546,6 +548,26 @@ async function Checkˉdeadlineˉarguments(Directory) {
         await lstat(Output).catch(() => null) !== null) {
         Reject(`Invalid prepared-product mode was accepted: ${JSON.stringify(Invalidˉmode)}`);
     }
+    if (Parseˉbootstrapˉverifierˉkey(undefined) !== null ||
+        Parseˉbootstrapˉverifierˉkey('a'.repeat(64)) !== 'a'.repeat(64)) {
+        Reject('The explicit bootstrap verifier key was not preserved.');
+    }
+    for (const Value of ['', 'latest', '../' + 'a'.repeat(64), 'A'.repeat(64), 'a'.repeat(63)]) {
+        await Expectˉrejection(Promise.resolve().then(() => Parseˉbootstrapˉverifierˉkey(Value)),
+            'WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT must be', 64);
+    }
+    const Invalidˉverifier = spawnSync(process.execPath, [Builder, '5', Input, Output], {
+        encoding: 'utf8', timeout: 10_000, maxBuffer: 65_536, windowsHide: true,
+        env: { ...process.env, WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT: 'latest',
+            WINDVALE_NATIVE_CACHE_ROOT: Cache },
+    });
+    if (Invalidˉverifier.error || Invalidˉverifier.status !== 64 ||
+        !Invalidˉverifier.stderr.includes('WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT must be') ||
+        await lstat(Cache).catch(() => null) !== null ||
+        await lstat(Output).catch(() => null) !== null) {
+        Reject('An invalid bootstrap verifier selection caused input access or cache mutation.');
+    }
+    await Checkˉbootstrapˉverifierˉselection(Directory);
     const Legacy = Parseˉsegmentedˉhostedˉarguments(['5', Input, Output]);
     if (Legacy.Deadline !== null || Legacy.Profile !== '5' ||
         Legacy.Input !== Input || Legacy.Output !== Output) {
@@ -591,6 +613,57 @@ async function Checkˉdeadlineˉarguments(Directory) {
     }
     await Expectˉrejection(Promise.resolve().then(() =>
         Segmentedˉhostedˉcommandˉdeadline(Number.NaN)), 'bounds are invalid', 2);
+}
+
+async function Checkˉbootstrapˉverifierˉselection(Directory) {
+    const Previousˉroot = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Previousˉkey = process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT;
+    const Root = path.join(Directory, 'Verifier-cache');
+    const Family = path.join(Root, 'segmented-hosted-wvb-v1', WINDOWS ? 'windows-x64' : 'linux-x64');
+    const Key = 'd'.repeat(64);
+    const Selected = path.join(Family, Key);
+    const Inputˉpath = path.join(REPOSITORY_ROOT,
+        'Artifacts/Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb');
+    const Payload = await readFile(Inputˉpath);
+    const Input = { path: Inputˉpath, payload: Payload, bytes: Payload.length,
+        sha256: createHash('sha256').update(Payload).digest('hex') };
+    try {
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Root;
+        process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = Key;
+        await Expectˉrejection(Readˉbootstrapˉverifier(), 'prepared bootstrap verifier family');
+        if (await lstat(Root).catch(() => null) !== null) Reject('A selected verifier miss constructed its family.');
+        await mkdir(Family, { recursive: true });
+        await Createˉsegmentedˉhostedˉcheckpoint(Family, Selected, Key, '7', Input,
+            Temporary => Writeˉproduct(Temporary, Buffer.from('bounded verifier fixture\n', 'ascii')));
+        await Expectˉrejection(Readˉbootstrapˉverifier(), 'manifest differs');
+        const Record = path.join(Selected, 'Checkpoint.txt');
+        const Original = await readFile(Record, 'ascii');
+        await writeFile(Record, Original.replace('profile 7', 'profile 8'));
+        const First = await Readˉbootstrapˉverifier();
+        if (First.identity.key !== Key || First.identity.profile !== '8' ||
+            First.identity.inputSha256 !== Input.sha256) Reject('The selected verifier identity differs.');
+        await writeFile(Record, Original.replace('profile 7', 'profile 8').replace(
+            `input-sha256 ${Input.sha256}`, `input-sha256 ${'0'.repeat(64)}`));
+        await Expectˉrejection(Readˉbootstrapˉverifier(), 'manifest differs');
+        await writeFile(Record, Original.replace('profile 7', 'profile 8'));
+        const Product = path.join(Selected, PRODUCT_LEAF);
+        const Changed = Buffer.from('changed verifier fixture\n', 'ascii');
+        await writeFile(Product, Changed);
+        await Expectˉrejection(Readˉbootstrapˉverifier(), 'manifest differs');
+        const Updated = Original.replace('profile 7', 'profile 8')
+            .replace(/product-bytes [0-9]+/u, `product-bytes ${Changed.length}`)
+            .replace(/product-sha256 [0-9a-f]+/u, `product-sha256 ${createHash('sha256').update(Changed).digest('hex')}`);
+        await writeFile(Record, Updated);
+        const Second = await Readˉbootstrapˉverifier();
+        if (JSON.stringify(First.identity) === JSON.stringify(Second.identity)) {
+            Reject('The changed verifier product did not invalidate its construction identity.');
+        }
+    } finally {
+        if (Previousˉroot === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Previousˉroot;
+        if (Previousˉkey === undefined) delete process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT;
+        else process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = Previousˉkey;
+    }
 }
 
 async function Checkˉdeadlineˉstatus() {

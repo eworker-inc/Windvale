@@ -6,12 +6,47 @@ authority application;
 
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
+import Foundationˉmemory as Memory;
 
-export fn Main(Input: bytes) -> bytes {
+fn Statusˉnumber(Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus) -> u32 {
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid { return 0u32; }
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Invalidˉwvb { return 1u32; }
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉprofile { return 2u32; }
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉmodule { return 3u32; }
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction { return 4u32; }
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode { return 5u32; }
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit { return 6u32; }
+    return 7u32;
+}
+
+fn Response(Status: u32, Abi: u32, Codeˉbytes: u32, Object: borrow bytes) -> bytes {
+    let Objectˉbytes: u32 = Bytesˉlength(Object);
+    var Output: bytes = Bytesˉfromˉu32ˉlittle(1380865623u32);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(1u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(32u32 + Objectˉbytes));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Status));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Abi));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Codeˉbytes));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Objectˉbytes));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Output, Object);
+}
+
+export fn Main(Input: borrow bytes, Budget: Memory.Memoryˉbudget) -> bytes effects(memory.allocate) {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    let Normalized: bytes = Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉnormalize(Input);
+    var Loweringˉinput: bytes = Input;
+    if Bytesˉlength(Normalized) != 0u32 { Loweringˉinput = Normalized; }
     let Summary: Nativeˉx64.Compilerˉnativeˉx64ˉsummary =
-        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(Input);
+        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64ˉbounded(
+            borrow Loweringˉinput, borrow mut Parent, 4194272u32);
     if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
-        return Bytesˉslice(Input, 0u32, 0u32);
+        return Response(Statusˉnumber(Summary.Status), 22u32, 0u32,
+            borrow Bytesˉslice(Input, 0u32, 0u32));
     }
-    return Summary.Object;
+    if Bytesˉlength(Summary.Object) > 4194272u32 {
+        return Response(6u32, 22u32, 0u32, borrow Bytesˉslice(Input, 0u32, 0u32));
+    }
+    return Response(0u32, Summary.Abi, Summary.Codeˉbytes, borrow Summary.Object);
 }

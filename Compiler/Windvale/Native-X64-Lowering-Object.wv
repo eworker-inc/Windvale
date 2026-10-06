@@ -9,11 +9,13 @@ import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 import Compilerˉnativeˉx64ˉloweringˉownedˉframes as Ownedˉframes;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
 
 export record Compilerˉnativeˉx64ˉobjectˉregions {
     Valid: bool;
     Prefix: bytes;
     Readˉonlyˉheader: bytes;
+    Readˉonlyˉdata: bytes;
     Symbols: bytes;
     Relocationˉrecords: bytes;
     Objectˉbytes: u32;
@@ -60,7 +62,9 @@ fn Symbolˉrecord(
 fn Relocationˉrecord(
     Relocations: bytes,
     Relocation: u32,
-    Foreignˉsymbol: u32
+    Foreignˉsymbol: u32,
+    Budgetedˉsymbol: u32,
+    Sharedˉsymbol: u32
 ) -> bytes {
     var Result: bytes = Bytesˉfromˉu8(2u8);
     Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
@@ -76,6 +80,8 @@ fn Relocationˉrecord(
         Relocations, Relocation * 8u32 + 4u32
     );
     if Targetˉsymbol == 4294967295u32 { Targetˉsymbol = Foreignˉsymbol; }
+    if Targetˉsymbol == 4294967294u32 { Targetˉsymbol = Budgetedˉsymbol; }
+    if Targetˉsymbol == 4294967293u32 { Targetˉsymbol = Sharedˉsymbol; }
     Result = Bytesˉconcat(
         Result,
         Bytesˉfromˉu32ˉlittle(Targetˉsymbol)
@@ -114,6 +120,7 @@ fn Invalidˉregions(Input: bytes) -> Compilerˉnativeˉx64ˉobjectˉregions {
         Emptyˉvalue,
         Emptyˉvalue,
         Emptyˉvalue,
+        Emptyˉvalue,
         0u32
     );
 }
@@ -127,12 +134,17 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     Mainˉfunction: u32,
     Helper: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
-    Relocations: bytes
+    Relocations: bytes,
+    Abi: u32
 ) -> Compilerˉnativeˉx64ˉobjectˉregions {
     let Helperˉbytes: u32 = Bytesˉlength(Helper);
+    if Abi == 25u32 && !Sharedˉbytes.Helperˉisˉexact(Helper) {
+        return Invalidˉregions(Input);
+    }
     if Helperˉbytes != 0u32 &&
         !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(Helper) &&
-        !Ownedˉframes.Helperˉisˉexact(Helper) {
+        !Ownedˉframes.Helperˉisˉexact(Helper) &&
+        !(Abi == 25u32 && Sharedˉbytes.Helperˉisˉexact(Helper)) {
         return Invalidˉregions(Input);
     }
     if Codeˉbytes > 67108864u32 ||
@@ -200,15 +212,64 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     }
     var Dataˉindex: u32 = 0u32;
     var Expectedˉdataˉoffset: u32 = 0u32;
+    var Sharedˉdirectory: bytes = Empty(Input);
+    if Abi == 25u32 && Bytesˉlength(Data.Bytes) > 4194304u32 {
+        return Invalidˉregions(Input);
+    }
     while Dataˉindex < Data.Count {
+        let Dataˉkind: u8 = Staticˉdata.Compilerˉnativeˉx64ˉdataˉkind(
+            Data, Dataˉindex
+        );
+        if Abi == 25u32 {
+            if Dataˉkind != 3u8 && Dataˉkind != 4u8 && Dataˉkind != 5u8 {
+                return Invalidˉregions(Input);
+            }
+            if Dataˉkind == 4u8 {
+                while Expectedˉdataˉoffset % 4u32 != 0u32 {
+                    if Expectedˉdataˉoffset >= Bytesˉlength(Data.Bytes) ||
+                        Bytesˉreadˉu8(Data.Bytes, Expectedˉdataˉoffset) != 0u8 {
+                        return Invalidˉregions(Input);
+                    }
+                    Expectedˉdataˉoffset = Expectedˉdataˉoffset + 1u32;
+                }
+            }
+        }
         if Staticˉdata.Compilerˉnativeˉx64ˉdataˉoffset(Data, Dataˉindex) !=
             Expectedˉdataˉoffset {
             return Invalidˉregions(Input);
         }
         let Dataˉsize: u32 =
             Staticˉdata.Compilerˉnativeˉx64ˉdataˉsize(Data, Dataˉindex);
+        if Expectedˉdataˉoffset > Bytesˉlength(Data.Bytes) {
+            return Invalidˉregions(Input);
+        }
         if Dataˉsize > Bytesˉlength(Data.Bytes) - Expectedˉdataˉoffset {
             return Invalidˉregions(Input);
+        }
+        if Abi == 25u32 {
+            let Dataˉlength: u32 = Staticˉdata.Compilerˉnativeˉx64ˉdataˉlength(
+                Data, Dataˉindex
+            );
+            if Dataˉkind == 4u8 {
+                if Dataˉlength > 262144u32 || Dataˉsize != Dataˉlength * 4u32 {
+                    return Invalidˉregions(Input);
+                }
+            } else {
+                if Dataˉsize != Dataˉlength { return Invalidˉregions(Input); }
+                if Dataˉkind == 3u8 {
+                    if Dataˉsize > 1048576u32 || !Textˉutf8ˉisˉvalid(
+                        Bytesˉslice(Data.Bytes, Expectedˉdataˉoffset, Dataˉsize)
+                    ) { return Invalidˉregions(Input); }
+                }
+            }
+            Sharedˉdirectory = Bytesˉconcat(Sharedˉdirectory,
+                Bytesˉfromˉu32ˉlittle(Expectedˉdataˉoffset));
+            Sharedˉdirectory = Bytesˉconcat(Sharedˉdirectory,
+                Bytesˉfromˉu32ˉlittle(Dataˉsize));
+            Sharedˉdirectory = Bytesˉconcat(Sharedˉdirectory,
+                Bytesˉfromˉu32ˉlittle(Dataˉsize));
+            Sharedˉdirectory = Bytesˉconcat(Sharedˉdirectory,
+                Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Dataˉkind)));
         }
         Expectedˉdataˉoffset = Expectedˉdataˉoffset + Dataˉsize;
         Dataˉindex = Dataˉindex + 1u32;
@@ -217,6 +278,8 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         return Invalidˉregions(Input);
     }
     var Foreignˉrelocations: u32 = 0u32;
+    var Budgetedˉrelocations: u32 = 0u32;
+    var Sharedˉrelocations: u32 = 0u32;
     var Relocation: u32 = 0u32;
     while Relocation < Relocationˉcount {
         if Bytesˉreadˉu32ˉlittle(
@@ -224,13 +287,30 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         ) == 4294967295u32 {
             Foreignˉrelocations = Foreignˉrelocations + 1u32;
         }
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(
+            Relocations, Relocation * 8u32 + 4u32
+        );
+        if Target == 4294967294u32 { Budgetedˉrelocations = Budgetedˉrelocations + 1u32; }
+        if Target == 4294967293u32 { Sharedˉrelocations = Sharedˉrelocations + 1u32; }
         Relocation = Relocation + 1u32;
     }
     let Hasˉforeign: bool = Foreignˉrelocations > 0u32;
+    let Hasˉbudgeted: bool = Budgetedˉrelocations > 0u32;
+    let Hasˉshared: bool = Sharedˉrelocations > 0u32;
+    if Abi == 25u32 && (!Hasˉbudgeted || !Hasˉshared || Hasˉforeign) {
+        return Invalidˉregions(Input);
+    }
+    if Abi != 25u32 && (Hasˉbudgeted || Hasˉshared) {
+        return Invalidˉregions(Input);
+    }
+    let Hasˉreadˉonly: bool = Data.Count > 0u32 || Abi == 25u32;
     if Data.Count == 0u32 {
-        if Relocationˉcount != Foreignˉrelocations {
+        if Relocationˉcount != Foreignˉrelocations + Budgetedˉrelocations +
+            Sharedˉrelocations {
             return Invalidˉregions(Input);
         }
+    }
+    if !Hasˉreadˉonly {
         if Bytesˉlength(Padding) != 0u32 { return Invalidˉregions(Input); }
     } else {
         if Bytesˉlength(Padding) > 15u32 { return Invalidˉregions(Input); }
@@ -254,7 +334,9 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
             Relocations,
             Relocation * 8u32 + 4u32
         );
-        if Targetˉdata != 4294967295u32 && Targetˉdata >= Data.Count {
+        if Targetˉdata != 4294967295u32 &&
+            !(Abi == 25u32 && (Targetˉdata == 4294967294u32 ||
+                Targetˉdata == 4294967293u32)) && Targetˉdata >= Data.Count {
             return Invalidˉregions(Input);
         }
         if Patchˉoffset > Declaredˉcodeˉbytes { return Invalidˉregions(Input); }
@@ -273,10 +355,13 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     var Sectionˉcount: u32 = 1u32;
     var Symbolˉcount: u32 = Functionˉcount;
     if Helperˉbytes > 0u32 { Symbolˉcount = Symbolˉcount + 1u32; }
-    if Data.Count > 0u32 {
+    if Hasˉreadˉonly {
         Sectionˉcount = 2u32;
         Symbolˉcount = Symbolˉcount + Data.Count;
     }
+    if Abi == 25u32 { Symbolˉcount = Symbolˉcount + 3u32; }
+    if Hasˉbudgeted { Symbolˉcount = Symbolˉcount + 1u32; }
+    if Hasˉshared { Symbolˉcount = Symbolˉcount + 1u32; }
     if Hasˉforeign { Symbolˉcount = Symbolˉcount + 1u32; }
     var Header: bytes = Textˉtoˉutf8("WVO1");
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
@@ -294,12 +379,27 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         Totalˉcodeˉbytes + Bytesˉlength(Padding)
     );
     var Readˉonlyˉheader: bytes = Empty(Input);
+    var Readˉonlyˉdata: bytes = Data.Bytes;
+    var Sharedˉdirectoryˉoffset: u32 = Bytesˉlength(Data.Bytes);
+    if Abi == 25u32 {
+        let Directoryˉpadding: u32 = (4u32 - Sharedˉdirectoryˉoffset % 4u32) % 4u32;
+        if Directoryˉpadding > 4194304u32 - Sharedˉdirectoryˉoffset ||
+            Bytesˉlength(Sharedˉdirectory) >
+                4194304u32 - Sharedˉdirectoryˉoffset - Directoryˉpadding {
+            return Invalidˉregions(Input);
+        }
+        while Sharedˉdirectoryˉoffset % 4u32 != 0u32 {
+            Readˉonlyˉdata = Bytesˉconcat(Readˉonlyˉdata, Bytesˉfromˉu8(0u8));
+            Sharedˉdirectoryˉoffset = Sharedˉdirectoryˉoffset + 1u32;
+        }
+        Readˉonlyˉdata = Bytesˉconcat(Readˉonlyˉdata, Sharedˉdirectory);
+    }
     var Symbols: bytes = Empty(Input);
-    if Data.Count > 0u32 {
+    if Hasˉreadˉonly {
         Readˉonlyˉheader = Sectionˉheader(
             2u8,
             ".rodata",
-            Bytesˉlength(Data.Bytes)
+            Bytesˉlength(Readˉonlyˉdata)
         );
         Dataˉindex = 0u32;
         while Dataˉindex < Data.Count {
@@ -338,6 +438,9 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     if Helperˉbytes > 0u32 {
         var Helperˉname: text = "$native_sha256_hex";
         if Ownedˉframes.Helperˉisˉexact(Helper) { Helperˉname = "$native_owned_frames"; }
+        if Abi == 25u32 && Sharedˉbytes.Helperˉisˉexact(Helper) {
+            Helperˉname = "$native_shared_values";
+        }
         Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
             1u8, 1u8, 0u32, Declaredˉcodeˉbytes, Helperˉbytes,
             Textˉtoˉutf8(Helperˉname)
@@ -357,6 +460,57 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         ),
         Textˉtoˉutf8("Main")
     ));
+    if Abi == 25u32 {
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            2u8, 2u8, 1u32, 0u32, Bytesˉlength(Data.Bytes),
+            Textˉtoˉutf8("Windvale_shared_data_blob")
+        ));
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            2u8, 2u8, 1u32, Sharedˉdirectoryˉoffset,
+            Bytesˉlength(Sharedˉdirectory),
+            Textˉtoˉutf8("Windvale_shared_data_directory")
+        ));
+        let Closeˉoffset: u32 = Sharedˉbytes.Entryˉresultˉcloseˉoffset();
+        let Closeˉbytes: u32 = Sharedˉbytes.Entryˉresultˉcloseˉbytes();
+        let Mainˉbytes: u32 = Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+            Directory, Mainˉfunction
+        );
+        if Mainˉbytes <= Sharedˉbytes.Entryˉbytes() {
+            return Invalidˉregions(Input);
+        }
+        if Closeˉoffset > Mainˉbytes || Closeˉbytes > Mainˉbytes - Closeˉoffset {
+            return Invalidˉregions(Input);
+        }
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            2u8, 1u8, 0u32,
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+                Directory, Mainˉfunction
+            ) + Closeˉoffset,
+            Closeˉbytes,
+            Textˉtoˉutf8("Windvale_shared_result_close")
+        ));
+    }
+    var Nextˉimport: u32 = Symbolˉcount;
+    if Hasˉforeign { Nextˉimport = Nextˉimport - 1u32; }
+    if Hasˉshared { Nextˉimport = Nextˉimport - 1u32; }
+    if Hasˉbudgeted { Nextˉimport = Nextˉimport - 1u32; }
+    let Budgetedˉsymbol: u32 = Nextˉimport;
+    if Hasˉbudgeted {
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            3u8, 1u8, 4294967295u32, 0u32, 0u32,
+            Textˉtoˉutf8("Windvale_budgeted_storage")
+        ));
+        Nextˉimport = Nextˉimport + 1u32;
+    }
+    let Sharedˉsymbol: u32 = Nextˉimport;
+    if Hasˉshared {
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            3u8, 1u8, 4294967295u32, 0u32, 0u32,
+            Textˉtoˉutf8("Windvale_shared_storage")
+        ));
+        Nextˉimport = Nextˉimport + 1u32;
+    }
+    let Foreignˉsymbol: u32 = Nextˉimport;
     if Hasˉforeign {
         Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
             3u8,
@@ -376,7 +530,9 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
             Relocationˉrecord(
                 Relocations,
                 Relocation,
-                Symbolˉcount - 1u32
+                Foreignˉsymbol,
+                Budgetedˉsymbol,
+                Sharedˉsymbol
             )
         );
         Relocation = Relocation + 1u32;
@@ -384,12 +540,13 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     let Prefix: bytes = Bytesˉconcat(Header, Textˉsectionˉheader);
     let Objectˉbytes: u32 = Bytesˉlength(Prefix) + Totalˉcodeˉbytes +
         Bytesˉlength(Padding) + Bytesˉlength(Readˉonlyˉheader) +
-        Bytesˉlength(Data.Bytes) + Bytesˉlength(Symbols) +
+        Bytesˉlength(Readˉonlyˉdata) + Bytesˉlength(Symbols) +
         Bytesˉlength(Relocationˉrecords);
     return Compilerˉnativeˉx64ˉobjectˉregions(
         true,
         Prefix,
         Readˉonlyˉheader,
+        Readˉonlyˉdata,
         Symbols,
         Relocationˉrecords,
         Objectˉbytes
@@ -404,7 +561,26 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Mainˉfunction: u32,
     Helper: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
-    Relocations: bytes
+    Relocations: bytes,
+    Abi: u32
+) -> bytes {
+    return Compilerˉnativeˉx64ˉobjectˉemitˉbounded(
+        Code, Padding, Directory, Functionˉcount, Mainˉfunction,
+        Helper, Data, Relocations, Abi, 0u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉobjectˉemitˉbounded(
+    Code: bytes,
+    Padding: bytes,
+    Directory: bytes,
+    Functionˉcount: u32,
+    Mainˉfunction: u32,
+    Helper: bytes,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    Relocations: bytes,
+    Abi: u32,
+    Maximumˉobjectˉbytes: u32
 ) -> bytes {
     let Regions: Compilerˉnativeˉx64ˉobjectˉregions =
         Compilerˉnativeˉx64ˉobjectˉplan(
@@ -416,9 +592,19 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
             Mainˉfunction,
             Helper,
             Data,
-            Relocations
+            Relocations,
+            Abi
         );
     if !Regions.Valid { return Empty(Code); }
+    // Check the complete layout before joining code/helper or object regions.
+    // Zero preserves the ordinary writer's existing output selection.
+    if Maximumˉobjectˉbytes != 0u32 &&
+        Regions.Objectˉbytes > Maximumˉobjectˉbytes { return Empty(Code); }
+    if Abi == 25u32 && !Sharedˉbytes.Entryˉisˉexact(
+        Code,
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Directory, Mainˉfunction),
+        Layout.Compilerˉnativeˉx64ˉlayoutˉreturnˉtype(Directory, Mainˉfunction)
+    ) { return Empty(Code); }
     var Relocation: u32 = 0u32;
     while Relocation < Bytesˉlength(Relocations) / 8u32 {
         let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
@@ -434,7 +620,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
         Bytesˉconcat(Code, Helper),
         Padding,
         Regions.Readˉonlyˉheader,
-        Data.Bytes,
+        Regions.Readˉonlyˉdata,
         Regions.Symbols,
         Regions.Relocationˉrecords
     );

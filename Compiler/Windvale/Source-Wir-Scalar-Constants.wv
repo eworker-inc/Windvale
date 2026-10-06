@@ -1,0 +1,244 @@
+#!wv/1 en@1
+module Compilerˉsourceˉwirˉscalarˉconstants;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+export record Payload {
+    Valid: bool;
+    Changed: bool;
+    Blocks: bytes;
+    Operations: bytes;
+    Temporaries: bytes;
+    Operands: bytes;
+}
+
+record Chunk { Complete: bytes; Pending: bytes; }
+record Key { Found: bool; Empty: bool; Offset: u32; Index: u32; }
+
+fn Push(Value: Chunk, Entry: bytes) -> Chunk {
+    if Bytesˉlength(Value.Pending) > 4096u32 - Bytesˉlength(Entry) {
+        return Chunk(Bytesˉconcat(Value.Complete, Value.Pending), Entry);
+    }
+    return Chunk(Value.Complete, Bytesˉconcat(Value.Pending, Entry));
+}
+
+fn Finish(Value: Chunk) -> bytes { return Bytesˉconcat(Value.Complete, Value.Pending); }
+
+fn Zeros(Length: u32) -> bytes {
+    var Value: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Value) < Length { Value = Bytesˉconcat(Value, Value); }
+    return Bytesˉslice(Value, 0u32, Length);
+}
+
+fn Set(Value: bytes, Offset: u32, Item: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Value, 0u32, Offset), Bytesˉfromˉu32ˉlittle(Item)),
+        Bytesˉslice(Value, Offset + 4u32, Bytesˉlength(Value) - Offset - 4u32));
+}
+
+fn Find(Table: bytes, Kind: u32, Target: u32) -> Key {
+    let Hash: u32 = (((Target & 65535u32) * 17u32) + (Target >> 16u32) + Kind * 31u32) & 127u32;
+    var Probe: u32 = 0u32;
+    while Probe < 128u32 {
+        let Offset: u32 = ((Hash + Probe) & 127u32) * 12u32;
+        let Stored: u32 = Bytesˉreadˉu32ˉlittle(Table, Offset);
+        if Stored == 0u32 { return Key(false, true, Offset, 0u32); }
+        if Stored == Kind && Bytesˉreadˉu32ˉlittle(Table, Offset + 4u32) == Target {
+            return Key(true, false, Offset, Bytesˉreadˉu32ˉlittle(Table, Offset + 8u32));
+        }
+        Probe = Probe + 1u32;
+    }
+    return Key(false, false, 0u32, 0u32);
+}
+
+fn Mapped(Tags: bytes, Temporary: u32, Constants: u32) -> u32 {
+    let Tag: u32 = Bytesˉreadˉu32ˉlittle(Tags, Temporary * 4u32);
+    if Tag >= 2147483648u32 { return Tag - 2147483648u32; }
+    return Constants + Tag;
+}
+
+// This checks rewrite geometry, not source semantics; published evidence still
+// passes through the existing independent source-WIR validator.
+fn Geometry(Blocks: bytes, Operations: bytes, Temporaries: bytes, Operands: bytes,
+    Firstˉoperation: u32, Firstˉoperand: u32) -> bool {
+    if Bytesˉlength(Blocks) == 0u32 || Bytesˉlength(Blocks) > 4194304u32 || Bytesˉlength(Blocks) % 28u32 != 0u32 ||
+        Bytesˉlength(Operations) > 4194304u32 || Bytesˉlength(Operations) % 28u32 != 0u32 ||
+        Bytesˉlength(Temporaries) > 4194304u32 || Bytesˉlength(Temporaries) % 4u32 != 0u32 ||
+        Bytesˉlength(Operands) > 4194304u32 || Bytesˉlength(Operands) % 4u32 != 0u32 { return false; }
+    let Blockˉcount: u32 = Bytesˉlength(Blocks) / 28u32;
+    let Operationˉcount: u32 = Bytesˉlength(Operations) / 28u32;
+    let Temporaryˉcount: u32 = Bytesˉlength(Temporaries) / 4u32;
+    let Operandˉcount: u32 = Bytesˉlength(Operands) / 4u32;
+    if Firstˉoperation > 4294967295u32 - Operationˉcount || Firstˉoperand > 4294967295u32 - Operandˉcount ||
+        Bytesˉreadˉu32ˉlittle(Blocks, 4u32) != Firstˉoperation { return false; }
+    var Block: u32 = 0u32;
+    var Covered: u32 = 0u32;
+    while Block < Blockˉcount {
+        let Blockˉoffset: u32 = Block * 28u32;
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Blockˉoffset + 4u32);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Blockˉoffset + 8u32);
+        let Value: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Blockˉoffset + 16u32);
+        if Bytesˉreadˉu32ˉlittle(Blocks, Blockˉoffset) != Block || Start < Firstˉoperation ||
+            Start - Firstˉoperation > Operationˉcount || Count > Operationˉcount - (Start - Firstˉoperation) ||
+            Count > Operationˉcount - Covered || (Value != 4294967295u32 && Value >= Temporaryˉcount) { return false; }
+        Covered = Covered + Count;
+        Block = Block + 1u32;
+    }
+    if Covered != Operationˉcount { return false; }
+    var Operation: u32 = 0u32;
+    var Seenˉtemporaries: u32 = 0u32;
+    var Seenˉoperands: u32 = 0u32;
+    while Operation < Operationˉcount {
+        let Entry: u32 = Operation * 28u32;
+        let Owner: u32 = Bytesˉreadˉu32ˉlittle(Operations, Entry);
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(Operations, Entry + 8u32);
+        let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Operations, Entry + 12u32);
+        let Arguments: u32 = Bytesˉreadˉu16ˉlittle(Operations, Entry + 6u32);
+        if Owner >= Blockˉcount || Bytesˉreadˉu32ˉlittle(Operations, Entry + 16u32) != Firstˉoperand + Seenˉoperands ||
+            Arguments > Operandˉcount - Seenˉoperands { return false; }
+        let Ownerˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Owner * 28u32 + 4u32) - Firstˉoperation;
+        if Operation < Ownerˉfirst || Operation - Ownerˉfirst >= Bytesˉreadˉu32ˉlittle(Blocks, Owner * 28u32 + 8u32) { return false; }
+        var Argument: u32 = 0u32;
+        while Argument < Arguments {
+            if Bytesˉreadˉu32ˉlittle(Operands, (Seenˉoperands + Argument) * 4u32) >= Seenˉtemporaries { return false; }
+            Argument = Argument + 1u32;
+        }
+        Seenˉoperands = Seenˉoperands + Arguments;
+        if Shape == 0u32 {
+            if Temporary != 4294967295u32 { return false; }
+        } else {
+            if Temporary != Seenˉtemporaries || Temporary >= Temporaryˉcount ||
+                Bytesˉreadˉu32ˉlittle(Temporaries, Temporary * 4u32) != Shape { return false; }
+            Seenˉtemporaries = Seenˉtemporaries + 1u32;
+        }
+        Operation = Operation + 1u32;
+    }
+    return Seenˉtemporaries == Temporaryˉcount && Seenˉoperands == Operandˉcount;
+}
+
+export fn Pool(Blocks: bytes, Operations: bytes, Temporaries: bytes, Operands: bytes,
+    Firstˉoperation: u32, Firstˉoperand: u32) -> Payload {
+    if !Geometry(Blocks, Operations, Temporaries, Operands, Firstˉoperation, Firstˉoperand) {
+        return Payload(false, false, Blocks, Operations, Temporaries, Operands);
+    }
+    let Unchanged: Payload = Payload(true, false, Blocks, Operations, Temporaries, Operands);
+    let Operationˉcount: u32 = Bytesˉlength(Operations) / 28u32;
+    let Temporaryˉcount: u32 = Bytesˉlength(Temporaries) / 4u32;
+    if Operationˉcount > 4096u32 || Temporaryˉcount > 4096u32 || Bytesˉlength(Operands) / 4u32 > 8192u32 ||
+        Bytesˉlength(Blocks) / 28u32 > 2048u32 { return Unchanged; }
+    let Empty: bytes = Bytesˉslice(Blocks, 0u32, 0u32);
+    var Phiˉinputs: bytes = Zeros(((Temporaryˉcount + 31u32) / 32u32) * 4u32);
+    var Phiˉoperation: u32 = 0u32;
+    while Phiˉoperation < Operationˉcount {
+        let Phiˉentry: u32 = Phiˉoperation * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Operations, Phiˉentry + 4u32) == 64u32 {
+            if Bytesˉreadˉu32ˉlittle(Operations, Phiˉentry) == 0u32 { return Unchanged; }
+            if Bytesˉreadˉu16ˉlittle(Operations, Phiˉentry + 6u32) != 2u32 {
+                return Payload(false, false, Blocks, Operations, Temporaries, Operands);
+            }
+            let Phiˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Operations, Phiˉentry + 16u32) - Firstˉoperand;
+            var Phiˉargument: u32 = 0u32;
+            while Phiˉargument < 2u32 {
+                let Phiˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Operands, (Phiˉfirst + Phiˉargument) * 4u32);
+                let Phiˉword: u32 = (Phiˉtemporary / 32u32) * 4u32;
+                Phiˉinputs = Set(Phiˉinputs, Phiˉword, Bytesˉreadˉu32ˉlittle(Phiˉinputs, Phiˉword) | (1u32 << (Phiˉtemporary % 32u32)));
+                Phiˉargument = Phiˉargument + 1u32;
+            }
+        }
+        Phiˉoperation = Phiˉoperation + 1u32;
+    }
+    var Table: bytes = Zeros(1536u32);
+    var Constants: u32 = 0u32;
+    var Keptˉtemporaries: u32 = 0u32;
+    var Tagsˉchunk: Chunk = Chunk(Empty, Empty);
+    var Constantˉrows: Chunk = Chunk(Empty, Empty);
+    var Constantˉshapes: Chunk = Chunk(Empty, Empty);
+    var Classify: u32 = 0u32;
+    while Classify < Operationˉcount {
+        let Classifyˉentry: u32 = Classify * 28u32;
+        let Kind: u32 = Bytesˉreadˉu16ˉlittle(Operations, Classifyˉentry + 4u32);
+        let Classifyˉshape: u32 = Bytesˉreadˉu32ˉlittle(Operations, Classifyˉentry + 8u32);
+        if Classifyˉshape != 0u32 {
+            let Classifyˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Operations, Classifyˉentry + 12u32);
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Operations, Classifyˉentry + 20u32);
+            var Tag: u32 = Keptˉtemporaries;
+            let Eligible: bool = Kind >= 1u32 && Kind <= 4u32 && Classifyˉshape == Kind &&
+                Bytesˉreadˉu16ˉlittle(Operations, Classifyˉentry + 6u32) == 0u32 &&
+                Bytesˉreadˉu32ˉlittle(Operations, Classifyˉentry + 24u32) == 0u32 &&
+                (Kind != 2u32 || Target <= 255u32) && (Kind != 4u32 || Target <= 1u32) &&
+                (Bytesˉreadˉu32ˉlittle(Phiˉinputs, (Classifyˉtemporary / 32u32) * 4u32) & (1u32 << (Classifyˉtemporary % 32u32))) == 0u32;
+            if Eligible {
+                let Match: Key = Find(Table, Kind, Target);
+                if !Match.Found && !Match.Empty { return Unchanged; }
+                var Constantˉindex: u32 = Match.Index;
+                if Match.Empty {
+                    Constantˉindex = Constants;
+                    Table = Set(Set(Set(Table, Match.Offset, Kind), Match.Offset + 4u32, Target), Match.Offset + 8u32, Constants);
+                    Constantˉrows = Push(Constantˉrows, Bytesˉslice(Operations, Classifyˉentry, 28u32));
+                    Constantˉshapes = Push(Constantˉshapes, Bytesˉfromˉu32ˉlittle(Classifyˉshape));
+                    Constants = Constants + 1u32;
+                }
+                Tag = 2147483648u32 + Constantˉindex;
+            } else { Keptˉtemporaries = Keptˉtemporaries + 1u32; }
+            Tagsˉchunk = Push(Tagsˉchunk, Bytesˉfromˉu32ˉlittle(Tag));
+        }
+        Classify = Classify + 1u32;
+    }
+    if Constants + Keptˉtemporaries == Temporaryˉcount { return Unchanged; }
+    let Tags: bytes = Finish(Tagsˉchunk);
+    let Representatives: bytes = Finish(Constantˉrows);
+    var Outputˉoperations: Chunk = Chunk(Empty, Empty);
+    var Outputˉtemporaries: Chunk = Chunk(Finish(Constantˉshapes), Empty);
+    var Hoist: u32 = 0u32;
+    while Hoist < Constants {
+        let Original: bytes = Bytesˉslice(Representatives, Hoist * 28u32, 28u32);
+        Outputˉoperations = Push(Outputˉoperations, Set(Set(Set(Original, 0u32, 0u32), 12u32, Hoist), 16u32, Firstˉoperand));
+        Hoist = Hoist + 1u32;
+    }
+    var Boundaries: Chunk = Chunk(Empty, Bytesˉfromˉu32ˉlittle(Constants));
+    var Keptˉoperations: u32 = 0u32;
+    var Rewrite: u32 = 0u32;
+    while Rewrite < Operationˉcount {
+        let Rewriteˉentry: u32 = Rewrite * 28u32;
+        let Rewriteˉshape: u32 = Bytesˉreadˉu32ˉlittle(Operations, Rewriteˉentry + 8u32);
+        let Rewriteˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Operations, Rewriteˉentry + 12u32);
+        var Keep: bool = true;
+        if Rewriteˉshape != 0u32 {
+            Keep = Bytesˉreadˉu32ˉlittle(Tags, Rewriteˉtemporary * 4u32) < 2147483648u32;
+        }
+        if Keep {
+            var Rewritten: bytes = Bytesˉslice(Operations, Rewriteˉentry, 28u32);
+            if Rewriteˉshape != 0u32 {
+                Rewritten = Set(Rewritten, 12u32, Mapped(Tags, Rewriteˉtemporary, Constants));
+                Outputˉtemporaries = Push(Outputˉtemporaries, Bytesˉfromˉu32ˉlittle(Rewriteˉshape));
+            }
+            Outputˉoperations = Push(Outputˉoperations, Rewritten);
+            Keptˉoperations = Keptˉoperations + 1u32;
+        }
+        Boundaries = Push(Boundaries, Bytesˉfromˉu32ˉlittle(Constants + Keptˉoperations));
+        Rewrite = Rewrite + 1u32;
+    }
+    let Boundaryˉrows: bytes = Finish(Boundaries);
+    var Outputˉoperands: Chunk = Chunk(Empty, Empty);
+    var Rewriteˉargument: u32 = 0u32;
+    while Rewriteˉargument < Bytesˉlength(Operands) / 4u32 {
+        Outputˉoperands = Push(Outputˉoperands, Bytesˉfromˉu32ˉlittle(Mapped(Tags, Bytesˉreadˉu32ˉlittle(Operands, Rewriteˉargument * 4u32), Constants)));
+        Rewriteˉargument = Rewriteˉargument + 1u32;
+    }
+    var Outputˉblocks: Chunk = Chunk(Empty, Empty);
+    var Rewriteˉblock: u32 = 0u32;
+    while Rewriteˉblock < Bytesˉlength(Blocks) / 28u32 {
+        let Originalˉblock: bytes = Bytesˉslice(Blocks, Rewriteˉblock * 28u32, 28u32);
+        let Oldˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Originalˉblock, 4u32) - Firstˉoperation;
+        let Oldˉcount: u32 = Bytesˉreadˉu32ˉlittle(Originalˉblock, 8u32);
+        var Newˉfirst: u32 = Bytesˉreadˉu32ˉlittle(Boundaryˉrows, Oldˉfirst * 4u32);
+        var Newˉcount: u32 = Bytesˉreadˉu32ˉlittle(Boundaryˉrows, (Oldˉfirst + Oldˉcount) * 4u32) - Newˉfirst;
+        if Rewriteˉblock == 0u32 { Newˉfirst = 0u32; Newˉcount = Newˉcount + Constants; }
+        var Rewrittenˉblock: bytes = Set(Set(Originalˉblock, 4u32, Firstˉoperation + Newˉfirst), 8u32, Newˉcount);
+        let Oldˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Originalˉblock, 16u32);
+        if Oldˉvalue != 4294967295u32 { Rewrittenˉblock = Set(Rewrittenˉblock, 16u32, Mapped(Tags, Oldˉvalue, Constants)); }
+        Outputˉblocks = Push(Outputˉblocks, Rewrittenˉblock);
+        Rewriteˉblock = Rewriteˉblock + 1u32;
+    }
+    return Payload(true, true, Finish(Outputˉblocks), Finish(Outputˉoperations), Finish(Outputˉtemporaries), Finish(Outputˉoperands));
+}

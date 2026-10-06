@@ -1,0 +1,190 @@
+#!wv/1 en@1
+module Nativeˉbyteˉresultˉadmissionˉselfˉtest;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Runtimeˉnativeˉbyteˉresultˉadmission as Admission;
+
+fn Word(Value: bytes, Item: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Item));
+}
+
+fn Replace(Value: bytes, Offset: u32, Item: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Value, 0u32, Offset),
+        Bytesˉfromˉu32ˉlittle(Item)),
+        Bytesˉslice(Value, Offset + 4u32, Bytesˉlength(Value) - Offset - 4u32));
+}
+
+fn Request(Count: u32, Slot: u32, Start: u32, Length: u32, Maximum: u32) -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVRQ");
+    Value = Word(Value, 2u32);
+    Value = Word(Value, 48u32 + Count * 32u32);
+    Value = Word(Value, Count);
+    Value = Word(Value, (Start << 7u32) | Slot);
+    var Generation: u32 = 77u32;
+    if Slot == 0u32 { Generation = 0u32; }
+    Value = Word(Value, Generation);
+    Value = Word(Value, Length);
+    Value = Word(Value, Maximum);
+    Value = Word(Value, 91u32);
+    Value = Word(Value, 0u32);
+    Value = Word(Value, 0u32);
+    Value = Word(Value, 0u32);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        var Rowˉslot: u32 = Index + 1u32;
+        if Count == 1u32 { Rowˉslot = 2u32; }
+        Value = Word(Value, Rowˉslot);
+        Value = Word(Value, 77u32);
+        Value = Word(Value, 1000u32 + Index * 16u32);
+        Value = Word(Value, 9u32);
+        Value = Word(Value, 8u32);
+        Value = Word(Value, 6u32);
+        Value = Word(Value, 2u32);
+        Value = Word(Value, 0u32);
+        Index = Index + 1u32;
+    }
+    return Value;
+}
+
+fn Case(Index: u32) -> bytes {
+    let Base: bytes = Request(1u32, 2u32, 3u32, 2u32, 4u32);
+    if Index == 0u32 { return Base; }
+    if Index == 1u32 { return Request(1u32, 2u32, 5u32, 1u32, 3u32); }
+    if Index == 2u32 {
+        return Replace(Replace(Request(1u32, 2u32, 0u32, 0u32, 0u32),
+            64u32, 0u32), 68u32, 0u32);
+    }
+    if Index == 3u32 {
+        var Value: bytes = Request(1u32, 65u32, 0u32, 0u32, 0u32);
+        Value = Replace(Value, 48u32, 65u32);
+        Value = Replace(Value, 56u32, 0u32);
+        Value = Replace(Value, 60u32, 0u32);
+        Value = Replace(Value, 64u32, 0u32);
+        return Replace(Value, 68u32, 0u32);
+    }
+    if Index == 4u32 { return Request(0u32, 0u32, 0u32, 0u32, 0u32); }
+    if Index == 5u32 { return Replace(Base, 56u32, 4294967294u32); }
+    if Index == 6u32 {
+        return Replace(Replace(Request(1u32, 2u32, 0u32, 4194304u32, 4194304u32),
+            64u32, 4194304u32), 68u32, 4194304u32);
+    }
+    if Index == 7u32 { return Request(66u32, 66u32, 3u32, 2u32, 4u32); }
+    if Index == 8u32 { return Replace(Base, 20u32, 76u32); }
+    if Index == 9u32 { return Replace(Base, 16u32, (3u32 << 7u32) | 3u32); }
+    if Index == 10u32 { return Replace(Base, 72u32, 1u32); }
+    if Index == 11u32 { return Replace(Base, 24u32, 5u32); }
+    if Index == 12u32 { return Replace(Base, 28u32, 4194305u32); }
+    if Index == 13u32 { return Replace(Base, 16u32, 2147484034u32); }
+    if Index == 14u32 { return Replace(Base, 16u32, 384u32); }
+    if Index == 15u32 { return Request(1u32, 2u32, 5u32, 2u32, 2u32); }
+    if Index == 16u32 { return Request(1u32, 2u32, 3u32, 2u32, 6u32); }
+    if Index == 17u32 { return Request(1u32, 2u32, 1u32, 0u32, 0u32); }
+    if Index == 18u32 { return Replace(Replace(Base, 56u32, 0u32), 60u32, 0u32); }
+    if Index == 19u32 {
+        return Replace(Replace(Base, 56u32, 4294967294u32), 60u32, 4294967295u32);
+    }
+    if Index == 20u32 { return Replace(Request(2u32, 2u32, 3u32, 2u32, 4u32), 80u32, 1u32); }
+    if Index == 21u32 { return Replace(Base, 32u32, 0u32); }
+    if Index == 22u32 { return Replace(Base, 40u32, 1u32); }
+    if Index == 23u32 { return Replace(Base, 12u32, 67u32); }
+    if Index == 24u32 { return Bytesˉslice(Base, 0u32, 47u32); }
+    if Index == 25u32 { return Replace(Bytesˉslice(Base, 0u32, 79u32), 8u32, 79u32); }
+    if Index == 26u32 { return Replace(Base, 8u32, 81u32); }
+    if Index == 27u32 { return Replace(Base, 52u32, 0u32); }
+    if Index == 28u32 { return Replace(Base, 48u32, 67u32); }
+    if Index == 29u32 { return Replace(Base, 68u32, 9u32); }
+    if Index == 30u32 { return Request(0u32, 0u32, 0u32, 1u32, 1u32); }
+    if Index == 31u32 { return Replace(Base, 76u32, 1u32); }
+    if Index == 32u32 {
+        return Replace(Replace(Request(1u32, 2u32, 0u32, 0u32, 1u32),
+            64u32, 0u32), 68u32, 0u32);
+    }
+    if Index == 33u32 { return Replace(Base, 0u32, 0u32); }
+    if Index == 34u32 { return Replace(Base, 20u32, 0u32); }
+    if Index == 35u32 { return Replace(Base, 64u32, 4194305u32); }
+    if Index == 36u32 { return Replace(Base, 16u32, (3u32 << 7u32) | 67u32); }
+    if Index == 38u32 || Index == 39u32 {
+        var Pointerˉboundary: bytes = Request(1u32, 2u32, 17u32, 2u32, 2u32);
+        Pointerˉboundary = Replace(Pointerˉboundary, 56u32, 4294967280u32);
+        var High: u32 = 4294967294u32;
+        if Index == 38u32 { High = 4294967295u32; }
+        Pointerˉboundary = Replace(Pointerˉboundary, 60u32, High);
+        Pointerˉboundary = Replace(Pointerˉboundary, 64u32, 32u32);
+        return Replace(Pointerˉboundary, 68u32, 32u32);
+    }
+    // An ordinary version-one empty result must retain its prior response.
+    var Legacy: bytes = Textˉtoˉutf8("WVRQ");
+    Legacy = Word(Legacy, 1u32);
+    Legacy = Word(Legacy, 64u32);
+    Legacy = Word(Legacy, 0u32);
+    var Field: u32 = 16u32;
+    while Field < 64u32 {
+        var Item: u32 = 0u32;
+        if Field == 32u32 { Item = 4096u32; }
+        Legacy = Word(Legacy, Item);
+        Field = Field + 4u32;
+    }
+    return Legacy;
+}
+
+fn Expected(Index: u32) -> u32 {
+    if Index < 8u32 || Index == 37u32 || Index == 39u32 { return 0u32; }
+    if Index == 8u32 || Index == 9u32 || Index == 15u32 ||
+        Index == 16u32 || Index == 32u32 { return 9u32; }
+    if Index == 10u32 || Index == 18u32 || Index == 19u32 || Index == 20u32 ||
+        Index == 27u32 || Index == 28u32 || Index == 29u32 ||
+        Index == 31u32 || Index == 35u32 || Index == 38u32 { return 8u32; }
+    if Index == 21u32 || Index == 22u32 || Index == 23u32 || Index == 25u32 { return 4u32; }
+    if Index == 24u32 || Index == 26u32 { return 1u32; }
+    if Index == 33u32 { return 2u32; }
+    return 5u32;
+}
+
+export fn Check() -> i32 {
+    var Index: u32 = 0u32;
+    while Index < 40u32 {
+        let Input: bytes = Case(Index);
+        let Output: bytes = Admission.Nativeˉbyteˉresultˉadmit(Input);
+        if Bytesˉlength(Output) < 32u32 ||
+            Bytesˉreadˉu32ˉlittle(Output, 0u32) != 1381127767u32 ||
+            Bytesˉreadˉu32ˉlittle(Output, 8u32) != Bytesˉlength(Output) ||
+            Bytesˉreadˉu32ˉlittle(Output, 12u32) != Expected(Index) { return 1; }
+        var Version: u32 = 2u32;
+        if Index == 37u32 { Version = 1u32; }
+        if Bytesˉreadˉu32ˉlittle(Output, 4u32) != Version ||
+            Bytesˉreadˉu32ˉlittle(Output, 24u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Output, 28u32) != 0u32 { return 2; }
+        if Expected(Index) == 0u32 {
+            var Length: u32 = 64u32;
+            if Index == 37u32 { Length = 48u32; }
+            if Bytesˉlength(Output) != Length ||
+                Bytesˉreadˉu32ˉlittle(Output, 16u32) != Bytesˉlength(Input) ||
+                Bytesˉreadˉu32ˉlittle(Output, 20u32) != Length - 32u32 { return 3; }
+            var Byte: u32 = 0u32;
+            while Byte < 16u32 {
+                if Bytesˉreadˉu8(Output, 32u32 + Byte) !=
+                    Bytesˉreadˉu8(Input, 16u32 + Byte) { return 4; }
+                Byte = Byte + 1u32;
+            }
+            if Index != 37u32 {
+                var Low: u32 = 1003u32;
+                var High: u32 = 9u32;
+                if Index == 1u32 { Low = 1005u32; }
+                if Index == 2u32 || Index == 6u32 { Low = 1000u32; }
+                if Index == 3u32 || Index == 4u32 { Low = 0u32; High = 0u32; }
+                if Index == 5u32 { Low = 1u32; High = 10u32; }
+                if Index == 7u32 { Low = 2043u32; }
+                if Index == 39u32 { Low = 1u32; High = 4294967295u32; }
+                if Bytesˉreadˉu32ˉlittle(Output, 48u32) != Low ||
+                    Bytesˉreadˉu32ˉlittle(Output, 52u32) != High ||
+                    Bytesˉreadˉu32ˉlittle(Output, 56u32) != 91u32 ||
+                    Bytesˉreadˉu32ˉlittle(Output, 60u32) != 0u32 { return 5; }
+            }
+        } else if Bytesˉlength(Output) != 32u32 ||
+            Bytesˉreadˉu32ˉlittle(Output, 20u32) != 0u32 { return 6; }
+        Index = Index + 1u32;
+    }
+    return 42;
+}

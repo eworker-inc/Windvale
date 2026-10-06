@@ -2,7 +2,7 @@
 
 > Status: Current language, toolchain and essential-library delivery plan
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-10-03
+> Last reviewed: 2026-10-06
 
 Deliver one usable Windvale language, compiler/runtime and essential library set
 on Windows and Debian/Linux. The maintainer selected this scope on 3 October
@@ -23,7 +23,7 @@ This plan does not accept draft signatures or rewrite frozen source semantics.
 | --- | --- | --- |
 | Language/compiler | [Slice 8 qualification](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) establishes the exact source compiler and target subsets. Current analysis/emission and admission tools are written in Windvale. | Complete later compiler/runtime integration and promote one selected generation; the qualified source scope is not general memory or installed qualification. |
 | Values and collections | The maintained package parser uses canonical Option and immutable borrowing. Candidate interpreter support adds Copy-record collections and owned-budget helpers. | General owner-bearing aggregates, wider mutation/borrowing, consuming value operations and complete public collection APIs remain open. |
-| Native memory | Candidate physical storage, budget adapter, scalar Vector operations, automatic helper-return cleanup and ordinary owned-console startup have focused Windows/Debian evidence. Unused budgets, Vectors and canonical allocation Results release in reverse acquisition order; returned allocations survive parent-budget cleanup. | Broader scope exits, shared immutable last-share release, arbitrary owner aggregates, broader element views, hosted startup and interpreter working storage remain open. |
+| Native memory | Candidate physical storage, budgets, scalar Vectors and owned-console startup have focused Windows/Debian evidence. The WVB 1.44/1.45 path now connects reserved byte builders, shared values, supported aggregate/call cleanup and the compiler serializer through ABI 25/context 11; both compiler hosts have development reconstruction evidence. | Finish this path's final verification and self-lowering, then close broader scope exits, arbitrary owner aggregates, collection/view APIs, hosted startup and interpreter working storage. Pinned tools retain their declared older profiles. |
 | Tools | Native build, admission, execution, assembler, linker and packaging paths exist; prepared current compiler products can be reused. Current-source verification has explicit preparation and an ordinary command that refuses construction. | Inspection/execution still select pinned generations. Publisher/lowerer preparation and affected compiler rebuild cost need a single explicit workflow. |
 | Libraries | Accepted Foundation declarations and reusable implementation leaves exist. | Finish the selected essential API/target mapping and drive integration with maintained compiler/runtime consumers. A filename or isolated fixture cannot close a row. |
 | Delivery | The released preview has installation, offline verification and package lifecycle evidence. | The newer compiler/runtime is not the preview installation. Self-host and qualify the selected current generation, then prove clean-install use. |
@@ -40,7 +40,7 @@ need migration even though it is no longer the selected forward implementation.
 | --- | --- | --- |
 | `Compiler/Windvale` and the Project 4 analysis/emission/admission projects | Current source-language implementation. | Extend this owner; no parallel forward compiler. Reconstruct and promote its selected generation. |
 | `Build-Wvb-Project4.mjs` and `Build-Current-Split-Project-Wvb.mjs` | Current development path. Prepared native Windvale tools perform compilation/authentication; Node owns orchestration and cache handling. Project builds refuse a missing compiler checkpoint. | Make all required tool preparation explicit and select the same generation through ordinary commands. |
-| `Current-Split-Compiler-Cache-Core.mjs` and `Source-Edition-Predecessor-Core.mjs` | Required bootstrap construction. Project 4 reconstruction uses the exact recorded predecessor Git tree, then builds current analysis/emission and admission products. | Retire the predecessor only after an independently reconstructed successor constructs the current source edition without it. Keep its exact provenance until then. |
+| `Current-Split-Compiler-Cache-Core.mjs`, `Source-Edition-Predecessor-Core.mjs` and `Direct-Condition-Analyzer-Intermediate-Core.mjs` | Required bootstrap construction. Project 4 reconstruction uses the exact recorded predecessor Git tree, builds the bounded direct-condition Analyzer intermediate, then builds full current analysis/emission and admission products. [The cache contract](../../Specifications/Compiler-Split-Development-Cache.md#reusable-current-compiler-pair) owns the adaptation, identities and deadlines. | Retire these construction edges only after an independently reconstructed successor builds the full current source without them. Keep exact recovery provenance until then. |
 | `Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap` and `Artifacts/Native-Segmented-Compiler-Toolset-Candidate` | Required pinned construction inputs. Packaging/staging/link/transport tools participate in current compiler reconstruction and cache identity. | Replace and qualify their exact construction edges before removing an artifact family or its wrapper. |
 | `Build-Wvb.cmd/.sh`, `Build-Current-Wvb.cmd/.sh` | Mixed active front doors. Project 4 dispatches to current-source orchestration; older project manifests select different pinned build drivers. | Unify supported forward dispatch and document explicit bootstrap/recovery use. Retire redundant wrappers only after their supported callers migrate. |
 | `Verify-Wvb.mjs --current` | Current-source admission using prepared Windvale verifier products. [The runbook](../Runbooks/Native-Source-To-Wvb.md#current-source-verification) separates bounded preparation from ordinary checking. | Qualify installed delivery and migrate supported callers before removing a required pinned verifier. |
@@ -50,6 +50,23 @@ need migration even though it is no longer the selected forward implementation.
 | `Foundation/` leaves and `Libraries/Foundation/` modules | Mixed reusable implementation leaves and canonical forward public owners. | Inventory by accepted operation; reuse or extract one implementation, then remove superseded duplicates after compiler/tool consumers migrate. |
 | Managed Stage 0 | Recovery-only; C#/.NET source is absent from `main`. | Preserve the immutable [Stage 0 recovery procedure](../../Bootstrap/Stage0/README.md); do not restore managed semantics to the active compiler. |
 | WVDB, secondary applications, full Backend/OS/2.0 lanes | Parked outside this delivery. Existing contracts/evidence remain. | Revisit after language/library delivery; application compatibility does not justify keeping obsolete active implementations. |
+
+The forward completion scope retires the unused monolithic source-memory
+adapter/project and the two byte-packet staging test adapters/projects. Their
+only memory-compiler regeneration caller reads the historical browser compiler
+source from Git; the pinned browser artifacts and that regeneration route remain
+unchanged. The current split compiler is the maintained source-compilation path.
+The portable compiler-core APIs remain available to their supported callers.
+
+The older memory-adapter section of the identity-preserved
+[source-to-WVB specification](../../Specifications/Compiler-Source-Wvb.md#portable-in-memory-adapter)
+describes the historical WVSS1/WVCO consumer, rather than a forward Project4
+entry point. The two retained scalar staging fixtures keep their six Relocations
+and seven Symbols assertions under the existing mixed native owner. They require
+explicit current-product preparation and the true compiler host before ordinary
+console execution; the typed staging parsers, SHA helper and Relocations bridge
+remain maintained construction dependencies. Passing parser construction alone
+does not establish execution of those thirteen assertions.
 
 The immediate audit found delivery generations and older storage mechanics,
 not an active C# compiler competing with the Windvale compiler. Host PowerShell,
@@ -106,6 +123,22 @@ Carry ownership and cleanup through calls, assignments, last uses, aggregate
 transfers, failure propagation and terminal domain teardown. Connect physical
 reuse to budgets/leases and preserve every owner on allocation refusal. Bound
 native scratch and interpreter working state separately from guest allocation.
+
+The maintainer selected larger coherent implementation paths on 3 October 2026.
+Source analysis is a development checkpoint within a memory change, not its
+completion milestone. The next path connects reserved byte construction and
+shared immutable backing through the existing compiler, verifier and execution
+owners, then migrates an actual compiler serializer and its budget-bearing
+entry/callers. An unused helper or a separate probe does not establish consumer
+adoption. Preserve owning byte slices, ordinary alias survival, aggregate fields,
+charged empty values, refusal and failure cleanup while replacing the storage.
+
+During this path, use the narrow checks needed to diagnose implementation defects
+and preserve valid construction checkpoints. After the compiler/runtime/consumer
+change is coherent, run one causal Windows and Debian final plan. Repeated
+selection of the same bundle and checks that execute unaffected pinned tools do
+not add evidence for the changed path. Later memory APIs reuse the same ownership,
+storage and accounting machinery; the full memory exit below remains required.
 
 Exit: maintained compiler/parser/collection consumers use the path. Repeated
 allocation/release, alias survival, refusal and failure cleanup pass on Windows

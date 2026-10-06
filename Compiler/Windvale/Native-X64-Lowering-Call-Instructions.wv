@@ -11,6 +11,8 @@ import Compilerˉnativeˉx64ˉloweringˉdescriptorˉcalls as Descriptorˉcalls;
 import Compilerˉnativeˉx64ˉloweringˉcallˉarguments as Callˉarguments;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉaggregates as Sharedˉaggregates;
 
 export record Compilerˉnativeˉx64ˉcallˉlayout {
     Locals: u32;
@@ -175,6 +177,7 @@ fn Emitˉvalueˉcall(
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Target: u32,
     Shape: Compilerˉnativeˉx64ˉcallˉlayout,
     Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
@@ -214,7 +217,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
     if Returnsˉrecord {
         Output = Records.Compilerˉnativeˉx64ˉemitˉrecordˉcall(
             Output,
-            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Returnˉtype),
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Returnˉtype),
             Bytesˉslice(
                 State.Stackˉslots,
                 Depth * 4u32,
@@ -305,4 +308,259 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
         Nextˉenum,
         Nextˉrecord
     );
+}
+
+fn Sharedˉshapeˉisˉvalid(Type: u8, Identity: u32, Borrowˉkind: u8,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Minor: u32) -> bool {
+    let Typeˉnumber: u32 = U32ˉfromˉu8(Type);
+    if Type == 7u8 { return Identity == 40u32 && Borrowˉkind == 40u8; }
+    if Type == 8u8 {
+        return Identity == 39u32 &&
+            (Borrowˉkind == 0u8 || Borrowˉkind == 37u8 || Borrowˉkind == 41u8);
+    }
+    if Type == 10u8 && Identity == 25u32 {
+        return Borrowˉkind == 0u8 || Borrowˉkind == 36u8 ||
+            (Minor == 45u32 && Borrowˉkind == 41u8);
+    }
+    if Borrowˉkind != 0u8 && Borrowˉkind != 37u8 { return false; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        return Identity == Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type) &&
+            Identity < Types.Count;
+    }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
+        return Identity < Types.Count && Identity ==
+            Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtypeˉindex(Types, Type);
+    }
+    if Type == 5u8 && Identity == 20u32 { return Borrowˉkind == 0u8; }
+    return Identity == 4294967295u32 &&
+        ((Typeˉnumber >= 1u32 && Typeˉnumber <= 6u32) || Type == 9u8 || Type == 10u8);
+}
+
+export fn Sharedˉcallˉbytes(Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Parameterˉtypes: bytes, Parameterˉidentities: bytes, Borrowˉkinds: bytes,
+    Returnˉtype: u8, Returnˉidentity: u32) -> u32 {
+    if Bytesˉlength(Input) < 8u32 { return 4294967295u32; }
+    let Count: u32 = Bytesˉlength(Parameterˉtypes);
+    if Count > Callˉarguments.Compilerˉnativeˉx64ˉcallˉparameterˉlimit() ||
+        Bytesˉlength(Parameterˉidentities) != Count * 4u32 ||
+        Bytesˉlength(Borrowˉkinds) != Count { return 4294967295u32; }
+    var Returnˉborrow: u8 = 0u8;
+    if Returnˉtype == 7u8 { Returnˉborrow = 40u8; }
+    if Returnˉtype == 0u8 {
+        if Returnˉidentity != 4294967295u32 { return 4294967295u32; }
+    } else if !Sharedˉshapeˉisˉvalid(Returnˉtype, Returnˉidentity, Returnˉborrow, Types, Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+        return 4294967295u32;
+    }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype) {
+        let Plan: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Types, Returnˉtype, Returnˉidentity);
+        if !Plan.Valid { return 4294967295u32; }
+    }
+    // Includes the ordinary ten-byte instruction charge owned by Core.
+    var Result: u32 = 15u32 +
+        Callˉarguments.Compilerˉnativeˉx64ˉcallˉargumentˉbytes(Parameterˉtypes) +
+        Descriptorˉcalls.Sharedˉstatusˉbytes(Returnˉtype);
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype) {
+        Result = Result + 30u32;
+    } else if Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Returnˉtype) {
+        Result = Result + 8u32;
+    } else if Returnˉtype == 8u8 || Returnˉtype == 9u8 || Returnˉtype == 10u8 {
+        Result = Result + 8u32;
+        if Returnˉtype == 8u8 || Returnˉidentity == 25u32 { Result = Result + 12u32; }
+    } else if Returnˉtype != 0u8 { Result = Result + 7u32; }
+    var Borrowed: u32 = 0u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Count {
+        let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        let Identity: u32 = Bytesˉreadˉu32ˉlittle(Parameterˉidentities, Parameter * 4u32);
+        let Borrowˉkind: u8 = Bytesˉreadˉu8(Borrowˉkinds, Parameter);
+        if !Sharedˉshapeˉisˉvalid(Type, Identity, Borrowˉkind, Types, Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+            return 4294967295u32;
+        }
+        if Borrowˉkind != 0u8 { Borrowed = Borrowed + 1u32; }
+        var Additional: u32 = 0u32;
+        if Type == 3u8 || Type == 6u8 {
+            Additional = 18u32;
+            if Borrowˉkind != 0u8 { Additional = Sharedˉbytes.Operationˉbytes(); }
+        } else if Type == 7u8 || Type == 8u8 || (Type == 10u8 && Identity == 25u32) {
+            Additional = 18u32;
+        } else if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+            let Parameterˉplan: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Types, Type, Identity);
+            if !Parameterˉplan.Valid { return 4294967295u32; }
+            Additional = 18u32;
+            if Borrowˉkind != 0u8 {
+                Additional = Sharedˉaggregates.Bytes(Parameterˉplan) + Sharedˉaggregates.Clearˉbytes(Parameterˉplan.Width);
+            }
+        }
+        if Additional > 4294967295u32 - Result { return 4294967295u32; }
+        Result = Result + Additional;
+        Parameter = Parameter + 1u32;
+    }
+    if Returnˉtype == 7u8 && Borrowed != 1u32 { return 4294967295u32; }
+    return Result;
+}
+
+fn Invalidˉsharedˉcall(State: Compilerˉnativeˉx64ˉcallˉstate) -> Compilerˉnativeˉx64ˉcallˉstate {
+    return Compilerˉnativeˉx64ˉcallˉstate(Bytesˉslice(State.Result, 0u32, 0u32),
+        State.Stackˉtypes, State.Stackˉslots, State.Stackˉdepth, State.Nextˉi32,
+        State.Nextˉbool, State.Nextˉtext, State.Nextˉu8, State.Nextˉu32,
+        State.Nextˉbytes, State.Nextˉenum, State.Nextˉrecord);
+}
+
+fn Emitˉsharedˉborrowˉcleanup(Initial: bytes, Argumentˉslots: bytes,
+    Parameterˉtypes: bytes, Parameterˉidentities: bytes, Borrowˉkinds: bytes,
+    Input: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Request: u32, Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32) -> bytes {
+    var Output: bytes = Initial;
+    var Parameter: u32 = Bytesˉlength(Parameterˉtypes);
+    while Parameter > 0u32 {
+        Parameter = Parameter - 1u32;
+        let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        let Identity: u32 = Bytesˉreadˉu32ˉlittle(Parameterˉidentities, Parameter * 4u32);
+        let Borrowˉkind: u8 = Bytesˉreadˉu8(Borrowˉkinds, Parameter);
+        let Slot: u32 = Bytesˉreadˉu32ˉlittle(Argumentˉslots, Parameter * 4u32);
+        if Borrowˉkind != 0u8 {
+            if Type == 3u8 || Type == 6u8 {
+                Output = Sharedˉbytes.Emitˉoperation(Output, 1u32, 4294967295u32,
+                    Slot, 4294967295u32, 0u32, 0u8, 0u32, 0u8,
+                    Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+            } else if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                let Plan: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Types, Type, Identity);
+                Output = Sharedˉaggregates.Clear(Sharedˉaggregates.Emit(Output, Plan, Slot, false,
+                    Request, Helperˉtarget, Codeˉbase, Invalidˉtarget), Slot, Plan.Width);
+            } else if Type == 7u8 || Type == 8u8 || (Type == 10u8 && Identity == 25u32) {
+                Output = Sharedˉbytes.Emitˉclear(Output, Slot);
+            }
+        }
+    }
+    return Output;
+}
+
+export fn Emitˉsharedˉcall(
+    Target: u32, Shape: Compilerˉnativeˉx64ˉcallˉlayout,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    Callˉdirectory: bytes, Codeˉbase: u32, Propagateˉoffset: u32,
+    Input: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Calleeˉparameterˉidentities: bytes, Calleeˉborrowˉkinds: bytes,
+    Calleeˉreturnˉidentity: u32, Request: u32, Helperˉtarget: u32,
+    Invalidˉtarget: u32, State: Compilerˉnativeˉx64ˉcallˉstate
+) -> Compilerˉnativeˉx64ˉcallˉstate {
+    if Target >= Bytesˉlength(Callˉdirectory) / Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() ||
+        State.Stackˉdepth > 65536u32 || Bytesˉlength(State.Stackˉtypes) != State.Stackˉdepth ||
+        Bytesˉlength(State.Stackˉslots) != State.Stackˉdepth * 4u32 {
+        return Invalidˉsharedˉcall(State);
+    }
+    let Parameters: u32 = Layout.Compilerˉnativeˉx64ˉlayoutˉparameters(Callˉdirectory, Target);
+    let Returnˉtype: u8 = Layout.Compilerˉnativeˉx64ˉlayoutˉreturnˉtype(Callˉdirectory, Target);
+    if Parameters > State.Stackˉdepth { return Invalidˉsharedˉcall(State); }
+    let Argumentˉtypes: bytes = Bytesˉslice(Callˉdirectory,
+        Target * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() +
+        Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtypesˉoffset(), Parameters);
+    let Measured: u32 = Sharedˉcallˉbytes(Input, Types, Argumentˉtypes,
+        Calleeˉparameterˉidentities, Calleeˉborrowˉkinds, Returnˉtype, Calleeˉreturnˉidentity);
+    if Measured == 4294967295u32 { return Invalidˉsharedˉcall(State); }
+    let Depth: u32 = State.Stackˉdepth - Parameters;
+    if !Sharedˉbytes.Bytesˉareˉequal(Argumentˉtypes, Bytesˉslice(State.Stackˉtypes, Depth, Parameters)) {
+        return Invalidˉsharedˉcall(State);
+    }
+    let Argumentˉslots: bytes = Bytesˉslice(State.Stackˉslots, Depth * 4u32, Parameters * 4u32);
+    let Returnsˉrecord: bool = Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype);
+    let Returnsˉdescriptor: bool = Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Returnˉtype);
+    var Resultˉindex: u32 = State.Nextˉi32;
+    if Returnˉtype == 2u8 { Resultˉindex = State.Nextˉbool; }
+    if Returnˉtype == 3u8 { Resultˉindex = State.Nextˉtext; }
+    if Returnˉtype == 4u8 { Resultˉindex = State.Nextˉu8; }
+    if Returnˉtype == 5u8 || Returnˉtype == 8u8 || Returnˉtype == 9u8 || Returnˉtype == 10u8 {
+        Resultˉindex = State.Nextˉu32;
+    }
+    if Returnˉtype == 6u8 || Returnˉtype == 7u8 { Resultˉindex = State.Nextˉbytes; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Returnˉtype) { Resultˉindex = State.Nextˉenum; }
+    var Resultˉslot: u32 = 0u32;
+    if Returnˉtype != 0u8 { Resultˉslot = Valueˉslot(Shape, Returnˉtype, Resultˉindex); }
+    var Backingˉslot: u32 = 0u32;
+    if Returnsˉrecord {
+        if State.Nextˉrecord >= Bytesˉlength(Storage.Scratchˉoffsets) / 4u32 {
+            return Invalidˉsharedˉcall(State);
+        }
+        Resultˉslot = Shape.Recordˉbase + State.Nextˉrecord;
+        Backingˉslot = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(Storage.Scratchˉoffsets,
+            State.Nextˉrecord * 4u32);
+    }
+    var Output: bytes = State.Result;
+    if Returnsˉrecord {
+        Output = Appendˉu32(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(47169u32)),
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Returnˉtype));
+    }
+    Output = Callˉarguments.Compilerˉnativeˉx64ˉemitˉcallˉarguments(Output, Argumentˉslots, Argumentˉtypes);
+    Output = Callˉarguments.Emitˉsharedˉtransfers(Output, Argumentˉslots, Argumentˉtypes,
+        Calleeˉparameterˉidentities, Calleeˉborrowˉkinds);
+    let Stackˉbytes: u32 = Callˉarguments.Compilerˉnativeˉx64ˉcallˉstackˉbytes(Parameters);
+    // Hidden helper output is RAX and is loaded after all EAX transfer clears.
+    if Returnsˉrecord {
+        Output = Descriptorˉcalls.Compilerˉnativeˉx64ˉemitˉdescriptorˉoutput(Output, Backingˉslot, Stackˉbytes);
+    } else if Returnsˉdescriptor {
+        Output = Descriptorˉcalls.Compilerˉnativeˉx64ˉemitˉdescriptorˉoutput(Output, Resultˉslot, Stackˉbytes);
+    }
+    Output = Appendˉu32(Appendˉbyte(Output, 232u8), Relativeˉu32(
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Callˉdirectory, Target),
+        Codeˉbase + Bytesˉlength(Output) + 5u32));
+    Output = Callˉarguments.Compilerˉnativeˉx64ˉemitˉcallˉstackˉrelease(Output, Parameters);
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        let Type: u8 = Bytesˉreadˉu8(Argumentˉtypes, Parameter);
+        if (Type == 3u8 || Type == 6u8) && Bytesˉreadˉu8(Calleeˉborrowˉkinds, Parameter) == 0u8 {
+            // Callee copied the owning descriptor. Preserve result/status while
+            // removing the caller's transferred share from subsequent cleanup.
+            Output = Sharedˉbytes.Emitˉclearˉpreserveˉrax(Output,
+                Bytesˉreadˉu32ˉlittle(Argumentˉslots, Parameter * 4u32));
+        }
+        Parameter = Parameter + 1u32;
+    }
+    Output = Descriptorˉcalls.Emitˉsharedˉstatus(Output, Returnˉtype, Propagateˉoffset);
+    if Returnsˉrecord {
+        Output = Storeˉrax(Descriptorˉcalls.Compilerˉnativeˉx64ˉemitˉdescriptorˉoutput(
+            Output, Backingˉslot, 0u32), Resultˉslot);
+    } else if Returnˉtype == 8u8 || Returnˉtype == 9u8 || Returnˉtype == 10u8 {
+        Output = Storeˉrax(Output, Resultˉslot);
+        if Returnˉtype == 8u8 || Calleeˉreturnˉidentity == 25u32 {
+            Output = Appendˉu32(Appendˉu32(Bytesˉconcat(Output,
+                Bytesˉfromˉu32ˉlittle(612681544u32)), Resultˉslot * 16u32 + 8u32), 1u32);
+        }
+    } else if Returnˉtype != 0u8 && !Returnsˉdescriptor {
+        Output = Storeˉeax(Output, Resultˉslot);
+    }
+    Output = Emitˉsharedˉborrowˉcleanup(Output, Argumentˉslots, Argumentˉtypes,
+        Calleeˉparameterˉidentities, Calleeˉborrowˉkinds, Input, Types,
+        Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+    if Bytesˉlength(Output) - Bytesˉlength(State.Result) != Measured - 10u32 {
+        return Invalidˉsharedˉcall(State);
+    }
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉtext: u32 = State.Nextˉtext;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    var Nextˉenum: u32 = State.Nextˉenum;
+    var Nextˉrecord: u32 = State.Nextˉrecord;
+    if Returnˉtype == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+    if Returnˉtype == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
+    if Returnˉtype == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
+    if Returnˉtype == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Returnˉtype == 5u8 || Returnˉtype == 8u8 || Returnˉtype == 9u8 || Returnˉtype == 10u8 {
+        Nextˉu32 = Nextˉu32 + 1u32;
+    }
+    if Returnˉtype == 6u8 || Returnˉtype == 7u8 { Nextˉbytes = Nextˉbytes + 1u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Returnˉtype) { Nextˉenum = Nextˉenum + 1u32; }
+    if Returnsˉrecord { Nextˉrecord = Nextˉrecord + 1u32; }
+    var Stackˉtypes: bytes = Bytesˉslice(State.Stackˉtypes, 0u32, Depth);
+    var Stackˉslots: bytes = Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32);
+    var Stackˉdepth: u32 = Depth;
+    if Returnˉtype != 0u8 {
+        Stackˉtypes = Bytesˉconcat(Stackˉtypes, Bytesˉfromˉu8(Returnˉtype));
+        Stackˉslots = Bytesˉconcat(Stackˉslots, Bytesˉfromˉu32ˉlittle(Resultˉslot));
+        Stackˉdepth = Depth + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉcallˉstate(Output, Stackˉtypes, Stackˉslots, Stackˉdepth,
+        Nextˉi32, Nextˉbool, Nextˉtext, Nextˉu8, Nextˉu32, Nextˉbytes, Nextˉenum, Nextˉrecord);
 }

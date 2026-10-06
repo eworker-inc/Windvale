@@ -1,0 +1,16 @@
+#!wv/1 en@1
+module Linkerˉsharedˉcompilerˉbyteˉresultˉadmissionˉadapter;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability file.write_bytes version 1;
+
+import Runtimeˉnativeˉbyteˉresultˉadmission as Admission;
+
+// The launcher binds these exact resource names to private memory buffers.
+export fn Main() -> i32 {
+    let Input: bytes = file.read_bytes("request");
+    file.write_bytes("response", Admission.Nativeˉbyteˉresultˉadmit(Input));
+    return 0;
+}

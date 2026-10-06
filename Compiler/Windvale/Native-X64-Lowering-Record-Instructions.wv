@@ -119,6 +119,7 @@ fn Emitˉfield(
     Instruction: Compilerˉnativeˉx64ˉrecordˉinstruction,
     Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
     State: Compilerˉnativeˉx64ˉrecordˉstate
 ) -> Compilerˉnativeˉx64ˉrecordˉstate {
     let Sourceˉtype: u8 = Bytesˉreadˉu8(
@@ -130,7 +131,7 @@ fn Emitˉfield(
         (State.Stackˉdepth - 1u32) * 4u32
     );
     let Typeˉindex: u32 =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Sourceˉtype);
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Sourceˉtype);
     let Field: u32 = Bytesˉreadˉu32ˉlittle(
         Instruction.Input,
         Instruction.Offset + 1u32
@@ -145,8 +146,8 @@ fn Emitˉfield(
     if Type == 2u8 { Index = State.Nextˉbool; }
     if Type == 3u8 { Index = State.Nextˉtext; }
     if Type == 4u8 { Index = State.Nextˉu8; }
-    if Type == 5u8 || Type == 10u8 { Index = State.Nextˉu32; }
-    if Type == 6u8 { Index = State.Nextˉbytes; }
+    if Type == 5u8 || Type == 8u8 || Type == 9u8 || Type == 10u8 { Index = State.Nextˉu32; }
+    if Type == 6u8 || Type == 7u8 { Index = State.Nextˉbytes; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
         Index = State.Nextˉenum;
     }
@@ -167,8 +168,8 @@ fn Emitˉfield(
     if Type == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
     if Type == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
     if Type == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
-    if Type == 5u8 || Type == 10u8 { Nextˉu32 = Nextˉu32 + 1u32; }
-    if Type == 6u8 { Nextˉbytes = Nextˉbytes + 1u32; }
+    if Type == 5u8 || Type == 8u8 || Type == 9u8 || Type == 10u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Type == 6u8 || Type == 7u8 { Nextˉbytes = Nextˉbytes + 1u32; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
         Nextˉenum = Nextˉenum + 1u32;
     }
@@ -176,9 +177,16 @@ fn Emitˉfield(
     var Result: bytes = State.Result;
     var Nextˉrecord: u32 = State.Nextˉrecord;
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Bytesˉreadˉu16ˉlittle(Instruction.Input, 6u32)) {
+            let Fieldˉtypeˉindex: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type);
+            Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉfieldˉcopy(Result, Fieldˉtypeˉindex,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(Instruction.Input, Types, Fieldˉtypeˉindex),
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(Instruction.Input, Types, Typeˉindex, Field),
+                Source, Target, Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(Storage.Scratchˉoffsets, Nextˉrecord * 4u32));
+        } else {
         Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉfieldˉview(
             Result,
-            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type),
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type),
             Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(
                 Instruction.Input,
                 Types,
@@ -188,6 +196,7 @@ fn Emitˉfield(
             Source,
             Target
         );
+        }
         Nextˉrecord = Nextˉrecord + 1u32;
     } else {
         Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉfield(
@@ -234,7 +243,7 @@ fn Emitˉload(
     );
     let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
     let Typeˉindex: u32 =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type);
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type);
     let Target: u32 = Shape.Recordˉbase + State.Nextˉrecord;
     let Backing: u32 = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
         Storage.Scratchˉoffsets,
@@ -284,7 +293,7 @@ fn Emitˉstore(
     );
     let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
     let Typeˉindex: u32 =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type);
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type);
     let Source: u32 = Bytesˉreadˉu32ˉlittle(
         State.Stackˉslots,
         (State.Stackˉdepth - 1u32) * 4u32
@@ -332,7 +341,7 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉinstruction(
         return Emitˉcreate(Instruction, Shape, Types, Storage, State);
     }
     if Instruction.Opcode == 105u8 {
-        return Emitˉfield(Instruction, Shape, Types, State);
+        return Emitˉfield(Instruction, Shape, Types, Storage, State);
     }
     if Instruction.Opcode == 4u8 || Instruction.Opcode == 205u8 {
         return Emitˉload(

@@ -59,8 +59,19 @@ handbook.
 - GitHub runs affected focused native owners on Linux for ordinary implementation
   and specification pushes and pull requests. It adds the Windows development
   host only for Windows command, PowerShell, platform, or binary changes. Each
-  automatic behavior job has a 15-minute wall-clock bound. Selected authenticated
-  foreign-binding, native lowerer and owned-console development work first prepare their exact compiler and
+  automatic behavior job has a validated complete-plan deadline, retaining
+  15 minutes when the selected native owner total, separate shared-host admission
+  allowance and control allowance fit. Classification adds 600 seconds only for
+  required shared-host admission and 300 seconds for checkout, cache transport,
+  tool setup, metadata checks and final publication. It rounds the combined
+  seconds up to whole minutes, with a 15-minute floor and a 180-minute job cap.
+  Larger plans use deterministic owner shards, preserving every selected owner
+  exactly once and keeping shared execution bundles together. Each shard includes
+  its own admission/control allowance; an inseparable over-cap group refuses.
+  The aggregate gate requires every shard. It never truncates the selected owner
+  total. Selected authenticated
+  foreign-binding, native lowerer, owned-console and reserved-byte source-front-end
+  development work first prepare their exact compiler and
   application products in a separate shared 75-minute command inside a 95-minute
   preparation job. Save
   completed checkpoints before behavior execution, including after preparation
@@ -116,3 +127,48 @@ handbook.
   or required host boundary.
 - Tests for the change classifier must prove both positive routing and important
   exclusions. A new maintained source boundary needs a focused owner mapping.
+
+## Maintained compiler batch routing
+
+The coherent shared-byte compiler batch may select current declared Project4
+implementation closures through existing owners: mixed shared/native lowering,
+bytes-source front door, the generic nominal bundle, and supplied-product analysis
+diagnostics. Their owner total is 5,340 expected and 8,520 maximum seconds; the
+separate required shared-host admission and control allowances yield 157 minutes.
+The shared/native duration includes the measured native construction and
+packaging costs even when compiler products are already prepared. Keep the
+ordinary-feedback improvement open until those costs are removed or reused.
+Explicit cache, stream, callable, foreign, legacy and Seed owners remain selected
+when their own inputs change. Unknown implementations and projects are gaps.
+Actual changed compiler fixture manifests select the maintained compiler-analysis
+products described below. This routing does not prove CI execution
+or waive the separate 33,600-second single-job over-cap refusal.
+
+The existing Front Door development owner additionally supplies `compiler-analysis`
+as the four-product union: Source Analysis (15 semantic groups, producer and validator exit 0),
+Generic WIR (13 semantic groups, exit 42), Generic Analysis Publication (8, exit 42), and Generic
+Collection Publication (5, exit 42). Publication products separately execute the
+wrong-argument-count exit-64 guard and then receive four private output paths.
+All four are authenticated Project4 products packaged through the existing hosted
+profile 8; this protects their changed source tests through the established native
+ABI, without claiming new byte-builder execution through ABI 22. Source Analysis
+separates production and independent validation into two
+executables to keep each closure within the compiler profile. Generic WIR and
+Generic Analysis Publication use the same separation, retaining independent
+validation of every successful product and the original malformed-directory
+rejections. Generic Collection Publication's successful output is admitted by
+the prepared Emitter. Source Analysis's four files are
+validated directly; it does not request WVB emission. The generic publication
+outputs are bounded, cross-checked against their 104-byte manifests, admitted by
+the exact prepared Emitter's existing five-argument interface, and verified as WVB.
+No JS source analyzer or new verifier owner supplies those semantics.
+
+The selection has 41 semantic groups plus 4 argument guards: 296 cases including
+the existing 251 frozen inputs. `bytes-source+compiler-analysis` retains bytes-source
+358 and totals 403 cases. All eleven products total 481. The four new products have
+20-second prepared-cache planning estimates each, which remain unmeasured; the
+600-second behavior ceiling and 5,400-second explicit preparation ceiling are
+unchanged. Cold compiler-product construction belongs to preparation. Explicit
+other owners and unknown gaps remain additive; a 33,600-second total still
+refuses as a single job. Splitting a plan never makes unrelated verification
+causal.

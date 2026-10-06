@@ -15,7 +15,7 @@ const OWNER_SUMMARIES = new Map([
     ],
     [
         'type-layout',
-        'native generic nominal type layout status=Passed cases=56 result=42\n'
+        'native generic nominal type layout status=Passed cases=58 result=42\n'
     ],
     [
         'type-materialization',
@@ -27,10 +27,11 @@ function Reject(Message) {
     throw new Error(Message);
 }
 
-if (process.argv.length !== 3 || !OWNER_SUMMARIES.has(process.argv[2])) {
+if (process.argv.length !== 3 ||
+    (process.argv[2] !== 'all' && !OWNER_SUMMARIES.has(process.argv[2]))) {
     Reject(
         'Usage: node Test-Generic-Nominal-Development-Bundle.mjs ' +
-        '<type-binding|type-layout|type-materialization>'
+        '<all|type-binding|type-layout|type-materialization>'
     );
 }
 const Owner = process.argv[2];
@@ -161,5 +162,11 @@ try {
 }
 
 if (Passed) {
-    process.stdout.write(OWNER_SUMMARIES.get(Owner));
+    if (Owner === 'all') {
+        for (const Summary of OWNER_SUMMARIES.values()) {
+            process.stdout.write(Summary);
+        }
+    } else {
+        process.stdout.write(OWNER_SUMMARIES.get(Owner));
+    }
 }

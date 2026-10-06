@@ -59,6 +59,31 @@ const COMPLETE_WVB = {
 
 // Reuse this owner for supplied-product diagnostics. The snapshot bundle is
 // produced by normal admission/analysis; this selection never builds a compiler.
+if (['--analysis-diagnostics', '--analysis-diagnostics-with-existing'].includes(process.argv[2])) {
+    const WithExisting = process.argv[2] === '--analysis-diagnostics-with-existing';
+    const SelectionDeadline = Date.now() + (WithExisting ? 720_000 : 120_000);
+    try {
+        if (![4, 7].includes(process.argv.length) || !/^[0-9a-f]{64}$/u.test(process.argv[3])) {
+            throw Object.assign(new Error(
+                'Usage: --analysis-diagnostics <current-checkpoint-key> [<admitter> <authenticator> <analyzer>]'
+            ), { exitCode: 64 });
+        }
+        if (WithExisting) {
+            const Previous = await Runˉdevelopmentˉcommand(process.execPath, [fileURLToPath(import.meta.url)],
+                SelectionDeadline - 120_000, true, MAXIMUM_OUTPUT_BYTES);
+            process.stdout.write(Previous.Output); process.stderr.write(Previous.Error);
+            if (Previous.Code !== 0) throw Object.assign(new Error('Existing compiler split checks failed.'),
+                { exitCode: Previous.Code ?? 1 });
+        }
+        const [Key, Admitter, Authenticator, Analyzer] = process.argv.slice(3);
+        await Verifyˉanalysisˉdiagnostics(Key, Admitter, Authenticator, Analyzer, SelectionDeadline);
+        if (WithExisting) console.log('compiler split development mode=existing-and-analysis-diagnostics status=Passed existing-cases=4 analysis-cases=3 maximum-seconds=720');
+    } catch (Error) {
+        process.stderr.write(`${Error.message}\n`);
+        process.exit(Error.exitCode ?? 1);
+    }
+    process.exit(0);
+}
 if (process.argv[2] === '--publisher-cache') {
     if (process.argv.length !== 3) Reject('Usage: --publisher-cache');
     const Result = await Runˉdevelopmentˉcommand(process.execPath,
@@ -194,6 +219,214 @@ try {
         Reject('Refusing to remove an unexpected compiler split test directory.');
     }
     await rm(Resolved, { recursive: true, force: true });
+}
+
+async function Verifyˉanalysisˉdiagnostics(Key, Admitter, Authenticator, Analyzer, SelectedDeadline) {
+    const Deadline = Math.min(Date.now() + 120_000, SelectedDeadline ?? Number.MAX_SAFE_INTEGER);
+    const Started = Date.now();
+    const Checkˉdeadline = () => {
+        if (Date.now() >= Deadline) {
+            throw Object.assign(new Error('Analysis diagnostics exceeded the selected 120-second deadline.'),
+                { exitCode: 124 });
+        }
+    };
+    const {
+        Getˉcurrentˉsplitˉcompilerˉfamily,
+        Getˉcurrentˉsplitˉcompilerˉkey,
+        Readˉpreparedˉsplitˉcompiler,
+    } = await import('./Current-Split-Compiler-Cache-Core.mjs');
+    const Requireˉcurrent = async () => {
+        Checkˉdeadline();
+        if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Key) {
+            throw Object.assign(new Error('Analysis diagnostics require the exact current compiler checkpoint.'),
+                { exitCode: 64 });
+        }
+        Checkˉdeadline();
+    };
+    await Requireˉcurrent();
+    const Checkpoint = await Readˉpreparedˉsplitˉcompiler(
+        await Getˉcurrentˉsplitˉcompilerˉfamily(), Key,
+    );
+    Checkˉdeadline();
+    const Supplied = [Admitter, Authenticator, Analyzer];
+    if (Supplied.some(Value => Value === undefined) && Supplied.some(Value => Value !== undefined)) {
+        throw Object.assign(new Error('Analysis diagnostics require either no tool paths or all three.'), { exitCode: 64 });
+    }
+    const Tools = Supplied.every(Value => Value === undefined)
+        ? ['Admitter', 'Authenticator', 'Analyzer'].map(Role => path.join(Checkpoint.directory,
+            `${Role}.${process.platform === 'win32' ? 'exe' : 'elf'}`))
+        : Supplied.map(Value => path.resolve(Value));
+    const Identities = [];
+    for (const [Index, Role] of ['Admitter', 'Authenticator', 'Analyzer'].entries()) {
+        const Expected = path.join(Checkpoint.directory,
+            `${Role}.${process.platform === 'win32' ? 'exe' : 'elf'}`);
+        if (!Sameˉpath(Tools[Index], Expected)) {
+            throw Object.assign(new Error(`The ${Role} must be selected from the current checkpoint.`),
+                { exitCode: 64 });
+        }
+        Identities.push(await Fileˉevidence(Tools[Index], 67_108_864, `current ${Role}`));
+        Checkˉdeadline();
+    }
+    const Temporaryˉroot = realpathSync.native(os.tmpdir());
+    const Work = await mkdtemp(path.join(Temporaryˉroot, TEMPORARY_PREFIX));
+    const Profile = path.join(REPOSITORY_ROOT, 'Documents', 'Project',
+        'Language-1.0-Localization-Workloads', '01-Source-Profile-Admission', 'Reference-Artifacts');
+    const Normalize = Value => Value.replace(/\r\n/gu, '\n');
+    const Run = (Tool, Arguments) => Runˉdevelopmentˉcommand(
+        Tool, Arguments, Deadline, false, MAXIMUM_DIAGNOSTIC_BYTES,
+    );
+    let Step = 'fixtures';
+    const Progress = setInterval(() => {
+        console.log(`compiler analysis diagnostics step=${Step} status=Active ` +
+            `elapsed-seconds=${Math.floor((Date.now() - Started) / 1_000)}`);
+    }, 30_000);
+    try {
+        // These small mutations protect carried first-failure diagnostics through
+        // the real driver. The larger twenty-field source fixture is independent.
+        const Minimum = path.join(REPOSITORY_ROOT, 'Tests', 'Fixtures', 'Language-1.0',
+            'Minimum-Program.wv');
+        await Fileˉevidence(Minimum, 4_096, 'minimum source fixture');
+        const Source = await readFile(Minimum, 'utf8');
+        if (Source.includes('\r') || Source.split('return 42;').length !== 2 ||
+            !Source.endsWith('\n')) Reject('The minimum source fixture changed its diagnostic anchors.');
+        const Invalidˉsource = Source.replace('return 42;', 'return;');
+        const Duplicateˉsource = Source + 'fn Main() -> i32 { return 0; }\n';
+        const Location = (Value, Index) => {
+            const Prefix = Value.slice(0, Index);
+            return { Offset: Buffer.byteLength(Prefix), Line: Prefix.split('\n').length,
+                Column: Prefix.slice(Prefix.lastIndexOf('\n') + 1).length + 1 };
+        };
+        const Suffix = Position => ` offset=${Position.Offset} line=${Position.Line} column=${Position.Column}\n`;
+        const Cases = [
+            { Name: 'published', Source, Phase: null, Diagnostic: null },
+            { Name: 'duplicate-function', Source: Duplicateˉsource, Phase: 'symbols',
+                Status: 'Duplicate-function', Anchor: 'fn Main() -> i32 { return 0; }', Anchorˉoffset: 3, Diagnostic:
+                    'source analysis status=Sourceˉsymbols symbol-status=Duplicateˉfunction ' +
+                    'binding-status=Sourceˉsymbols wir-status=Sourceˉbindings graph-status=Valid ' +
+                    'failure-module=0 related-module=0 declaration-kind=Function' },
+            { Name: 'invalid-return', Source: Invalidˉsource, Phase: 'wir', Status: 'Invalid-return',
+                Anchor: 'return;', Anchorˉoffset: 0,
+                Diagnostic: 'source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid ' +
+                    'wir-status=Invalidˉreturn failure-module=0 related-module=0 function=0' },
+        ];
+        console.log(`compiler analysis diagnostics status=Started cases=3 host=${HOST} maximum-seconds=120`);
+        for (const [Index, Case] of Cases.entries()) {
+            Checkˉdeadline();
+            Step = `${Case.Name}-admission`;
+            console.log(`compiler analysis diagnostics step=${Step} item=${Index + 1}/3`);
+            const Input = path.join(Work, `${Case.Name}.wv`);
+            const Admitted = path.join(Work, `${Case.Name}-Admitted.wvss`);
+            await writeFile(Input, Case.Source, { flag: 'wx' });
+            const Admission = await Run(process.execPath,
+                [path.join(SCRIPT_DIRECTORY, 'Run-Authenticated-Source-Admission.mjs'), ...Tools.slice(0, 2),
+                    '--source-input-lock', path.join(Profile, 'Source-Inputs.wvlock'),
+                    '9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e',
+                    '--source-profile', path.join(Profile, 'En-Source-Profile.wvsp'),
+                    '--target-descriptor', path.join(REPOSITORY_ROOT, 'Projects', 'Targets',
+                        `${process.platform === 'win32' ? 'Windows' : 'Linux'}-X64-No-Foreign.wvtd`),
+                    Input, Admitted]);
+            if (Admission.Code !== 0 || Admission.Error !== '') {
+                Reject(`The ${Case.Name} source admission failed: ${Admission.Output}${Admission.Error}`);
+            }
+            await Fileˉevidence(Admitted, MAXIMUM_OUTPUT_BYTES, 'admitted diagnostic source');
+            // Admission removes the descriptor bytes but retains its LF. The
+            // lexer reports UTF-8 offsets within that authenticated payload;
+            // columns use UTF-16 width, as defined by the existing lexer owner.
+            const Admittedˉbytes = await readFile(Admitted);
+            const Sourceˉbytes = Buffer.from(Case.Source);
+            if (Admittedˉbytes.length < 36 || Admittedˉbytes.toString('ascii', 0, 4) !== 'WVSS' ||
+                Admittedˉbytes.readUInt16LE(4) !== 2 || Admittedˉbytes.readUInt16LE(6) !== 0 ||
+                Admittedˉbytes.readUInt32LE(8) !== 1 || Admittedˉbytes.readUInt32LE(12) !== 20 ||
+                Admittedˉbytes.readUInt32LE(16) !== 36 ||
+                Admittedˉbytes.readUInt32LE(20) !== Admittedˉbytes.length - 36 ||
+                Admittedˉbytes.readUInt32LE(24) !== 1 || Admittedˉbytes.readUInt32LE(28) !== 1) {
+                Reject('The authenticated diagnostic source changed its single-module WVSS2 contract.');
+            }
+            const Origin = Admittedˉbytes.readUInt32LE(32);
+            if (Origin !== Sourceˉbytes.indexOf(10) ||
+                !Sourceˉbytes.subarray(Origin).equals(Admittedˉbytes.subarray(36))) {
+                Reject('The admitted diagnostic payload changed beyond its source descriptor.');
+            }
+            const Admittedˉsource = Admittedˉbytes.subarray(36).toString('utf8');
+            let Expectedˉdiagnostic = Case.Diagnostic;
+            if (Case.Phase !== null) {
+                const Anchor = Admittedˉsource.indexOf(Case.Anchor);
+                if (Anchor < 0 || Anchor !== Admittedˉsource.lastIndexOf(Case.Anchor)) {
+                    Reject('The admitted diagnostic source changed its unique failure anchor.');
+                }
+                Expectedˉdiagnostic += Suffix(Location(Admittedˉsource, Anchor + Case.Anchorˉoffset));
+            }
+            const Outputs = ['Source.wvss', 'Analysis.wvam', 'Bindings.wvlb', 'Wir.wvir']
+                .map(Name => path.join(Work, `${Case.Name}-${Name}`));
+            Step = `${Case.Name}-analysis`;
+            const Result = await Run(Tools[2], ['--internal-source-set', Admitted, ...Outputs]);
+            Checkˉdeadline();
+            if (Case.Phase === null) {
+                if (Result.Code !== 0 || Result.Error !== '') {
+                    Reject(`Successful analysis failed: ${Result.Output}${Result.Error}`);
+                }
+                const Lengths = [];
+                for (const Output of Outputs) {
+                    Lengths.push((await Fileˉevidence(Output, MAXIMUM_OUTPUT_BYTES, 'analysis publication')).bytes);
+                }
+                const Manifest = await readFile(Outputs[1]);
+                if (Manifest.length !== 104 || Manifest.toString('ascii', 0, 4) !== 'WVCA' ||
+                    Manifest.readUInt16LE(4) !== 1 || Manifest.readUInt16LE(6) !== 0 ||
+                    Manifest.readUInt32LE(8) !== 104 || Manifest.readUInt32LE(12) !== Lengths[0] ||
+                    Manifest.readUInt32LE(16) !== Lengths[2] || Manifest.readUInt32LE(20) !== Lengths[3] ||
+                    Manifest.readUInt32LE(24) !== 1 || Manifest.readUInt32LE(48) !== 1 ||
+                    Manifest.readUInt32LE(80) !== 1 ||
+                    [28, 32, 36, 40, 44, 52, 56, 60, 64, 68, 72, 76, 100]
+                        .some(Offset => Manifest.readUInt32LE(Offset) !== 0) ||
+                    !(await readFile(Admitted)).equals(await readFile(Outputs[0])) ||
+                    Normalize(Result.Output) !== `source analysis status=Published source-bytes=${Lengths[0]} ` +
+                        `manifest-bytes=104 binding-bytes=${Lengths[2]} wir-bytes=${Lengths[3]}\n`) {
+                    Reject('Successful analysis changed its source publication, manifest, or report contract.');
+                }
+            } else {
+                for (const Output of Outputs) {
+                    const Information = await lstat(Output).catch(Error => {
+                        if (Error.code === 'ENOENT') return null;
+                        throw Error;
+                    });
+                    if (Information !== null) Reject('Rejected analysis published an output file.');
+                }
+                if (Result.Code !== 1 || Result.Output !== '' || Normalize(Result.Error) !== Expectedˉdiagnostic) {
+                    Reject(`The ${Case.Name} analysis lost its exact failure evidence: ` +
+                        `code=${Result.Code} stdout=${JSON.stringify(Result.Output)} stderr=${JSON.stringify(Result.Error)}`);
+                }
+                const Diagnostic = path.join(Work, `${Case.Name}.txt`);
+                await writeFile(Diagnostic, Result.Error, { flag: 'wx' });
+                const Checked = await Run(process.execPath,
+                    [path.join(SCRIPT_DIRECTORY, 'Verify-Source-Analysis-Diagnostic.mjs'),
+                        Diagnostic, Case.Phase, Case.Status]);
+                if (Checked.Code !== 0 || Checked.Output !== '' || Checked.Error !== '') {
+                    Reject(`The existing diagnostic reader refused ${Case.Name}: ${Checked.Output}${Checked.Error}`);
+                }
+            }
+            console.log(`compiler analysis diagnostics item=${Index + 1}/3 case=${Case.Name} status=Passed`);
+        }
+        Step = 'checkpoint-recheck';
+        await Checkpoint.Requireˉunchanged();
+        await Requireˉcurrent();
+        for (const [Index, Tool] of Tools.entries()) {
+            Requireˉevidence(await Fileˉevidence(Tool, 67_108_864, 'selected current analysis tool'),
+                Identities[Index], 'selected current analysis tool');
+        }
+        Checkˉdeadline();
+    } finally {
+        clearInterval(Progress);
+        const Resolved = path.resolve(Work);
+        if (!Sameˉpath(path.dirname(Resolved), Temporaryˉroot) ||
+            !path.basename(Resolved).startsWith(TEMPORARY_PREFIX)) {
+            Reject('Refusing to remove an unexpected analysis diagnostic directory.');
+        }
+        await rm(Resolved, { recursive: true, force: true });
+    }
+    Checkˉdeadline();
+    console.log('compiler analysis diagnostics status=Passed cases=3 compiler-source=current ' +
+        `compiler-checkpoint=${Key} analyzer-sha256=${Identities[2].sha256} ` +
+        `maximum-seconds=120 elapsed-ms=${Date.now() - Started}`);
 }
 
 async function Verifyˉadapterˉcontract() {

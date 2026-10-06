@@ -1,0 +1,59 @@
+#!wv/1 en@1
+module Languageˉoneˉgenericˉanalysisˉvalidationˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Compilerˉsourceˉanalysisˉcontract as Contract;
+import Compilerˉsourceˉanalysisˉvalidation as Validation;
+
+fn Status(Suffix: text) -> Contract.Compilerˉsourceˉanalysisˉstatus {
+    let Checked: Validation.Compilerˉsourceˉanalysisˉvalidation =
+        Validation.Compilerˉvalidateˉsourceˉanalysis(
+            file.read_bytes(Textˉconcat(process.argument(0u32), Suffix)),
+            file.read_bytes(Textˉconcat(process.argument(1u32), Suffix)),
+            file.read_bytes(Textˉconcat(process.argument(2u32), Suffix)),
+            file.read_bytes(Textˉconcat(process.argument(3u32), Suffix)));
+    return Checked.Status;
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+        );
+    return Replaced.Value;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+        );
+    return Replaced.Value;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return 64; }
+    if Status("") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 2; }
+    if Status("-distinct") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 4; }
+    if Status("-result") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 5; }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Manifest: bytes = file.read_bytes(process.argument(1u32));
+    let Bindings: bytes = file.read_bytes(process.argument(2u32));
+    let Wir: bytes = file.read_bytes(process.argument(3u32));
+    let Catalogˉoffset: u32 = 32u32 + Bytesˉreadˉu32ˉlittle(Bindings, 16u32) * 16u32;
+    let Badˉbindings: Validation.Compilerˉsourceˉanalysisˉvalidation =
+        Validation.Compilerˉvalidateˉsourceˉanalysis(Input, Manifest,
+            Replaceˉu8(Bindings, Catalogˉoffset, 0u8), Wir);
+    if Badˉbindings.Status != Contract.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings { return 7; }
+    let Badˉwir: Validation.Compilerˉsourceˉanalysisˉvalidation =
+        Validation.Compilerˉvalidateˉsourceˉanalysis(Input, Manifest, Bindings,
+            Replaceˉu32(Wir, 48u32, 1u32));
+    if Badˉwir.Status != Contract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir { return 8; }
+    return 42;
+}

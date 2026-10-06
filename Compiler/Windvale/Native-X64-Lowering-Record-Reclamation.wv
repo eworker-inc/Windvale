@@ -96,7 +96,7 @@ fn Gatherˉtype(
                         Result = Gatherˉfield(Result, Cell);
                     } else if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) {
                         Result = Gatherˉtype(Result, Input, Types,
-                            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Shape.Type), Cell);
+                            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Shape.Type), Cell);
                     }
                     Field = Field + 1u32;
                 }
@@ -118,7 +118,7 @@ fn Gatherˉtype(
                         Input, Types, Typeˉindex, Item
                     );
                 Result = Gatherˉtype(Result, Input, Types,
-                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type), Recordˉcell);
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type), Recordˉcell);
             }
         }
         Item = Item + 1u32;

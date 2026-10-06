@@ -488,7 +488,7 @@ fn Compilerˉsourceˉgenericˉtypeˉcatalogˉentryˉisˉvalid(
     );
     if Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor) == Sentinel ||
         (Kind != 4u32 && Kind != 8u32 && Kind != 10u32 &&
-         Kind != 11u32 && Kind != 12u32) ||
+         Kind != 11u32 && Kind != 12u32 && Kind != 13u32) ||
         Depth == 0u32 || Depth > 32u32 ||
         Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 12u32) ==
             Sentinel ||
@@ -711,7 +711,7 @@ export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
     }
     if Declaration == Sentinel ||
         (Kind != 4u32 && Kind != 8u32 && Kind != 10u32 &&
-         Kind != 11u32 && Kind != 12u32) ||
+         Kind != 11u32 && Kind != 12u32 && Kind != 13u32) ||
         Module == Sentinel || Offset == Sentinel {
         return Compilerˉsourceˉgenericˉtypeˉadmissionˉvalue(
             Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉparameter,

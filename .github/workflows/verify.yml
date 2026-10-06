@@ -42,6 +42,12 @@ jobs:
       windows_required: ${{ steps.host-scope.outputs.windows_required }}
       preparation_required: ${{ steps.native-plan.outputs.preparation_required }}
       preparation_hosts: ${{ steps.native-plan.outputs.preparation_hosts }}
+      shared_compiler_required: ${{ steps.native-plan.outputs.shared_compiler_required }}
+      native_maximum_seconds: ${{ steps.native-plan.outputs.native_maximum_seconds }}
+      native_admission_maximum_seconds: ${{ steps.native-plan.outputs.native_admission_maximum_seconds }}
+      native_control_maximum_seconds: ${{ steps.native-plan.outputs.native_control_maximum_seconds }}
+      development_timeout_minutes: ${{ steps.native-plan.outputs.development_timeout_minutes }}
+      development_shards: ${{ steps.native-plan.outputs.development_shards }}
       qualification_shard: ${{ steps.qualification-selection.outputs.shard }}
       qualification_start_owner: ${{ steps.qualification-selection.outputs.start_owner }}
       qualification_shards: ${{ steps.qualification-selection.outputs.shards }}
@@ -166,14 +172,82 @@ jobs:
           }
           ./Tools/Verify/Verify-Change-Classification.ps1
           ./Tools/Verify/Verify-Verification-Plan.ps1
+          function Get-NativeDevelopmentBudget {
+              param([AllowNull()][object]$NativeExpectedSeconds,
+                  [AllowNull()][object]$NativeMaximumSeconds,
+                  [AllowNull()][object]$NativeOwnerCount,
+                  [AllowNull()][object]$SharedCompilerRequired)
+
+              $Numbers = @{}
+              foreach ($Field in @(
+                  @{ Name = 'Expected'; Value = $NativeExpectedSeconds },
+                  @{ Name = 'Maximum'; Value = $NativeMaximumSeconds },
+                  @{ Name = 'Owners'; Value = $NativeOwnerCount }
+              )) {
+                  $Value = $Field.Value
+                  $Number = [long]0
+                  if (($Value -isnot [string] -and $Value -isnot [int] -and $Value -isnot [long]) -or
+                      [string]$Value -cnotmatch '^(?:0|[1-9][0-9]{0,18})$' -or
+                      ![long]::TryParse([string]$Value, [Globalization.NumberStyles]::None,
+                          [Globalization.CultureInfo]::InvariantCulture, [ref]$Number)) {
+                      throw 'Native development budget fields must be canonical bounded integers.'
+                  }
+                  $Numbers[$Field.Name] = $Number
+              }
+              if ($SharedCompilerRequired -isnot [bool] -or
+                  $Numbers.Expected -gt $Numbers.Maximum -or $Numbers.Owners -gt $Numbers.Maximum -or
+                  (($Numbers.Owners -eq 0) -ne ($Numbers.Expected -eq 0)) -or
+                  (($Numbers.Owners -eq 0) -ne ($Numbers.Maximum -eq 0)) -or
+                  ($SharedCompilerRequired -and $Numbers.Owners -eq 0)) {
+                  throw 'Native development budget totals or admission selection are inconsistent.'
+              }
+              $AdmissionMaximumSeconds = if ($SharedCompilerRequired) { [long]600 } else { [long]0 }
+              $ControlMaximumSeconds = [long]300
+              $MaximumJobMinutes = [long]180
+              $AvailableOwnerSeconds = $MaximumJobMinutes * 60 - $AdmissionMaximumSeconds - $ControlMaximumSeconds
+              if ($Numbers.Maximum -gt $AvailableOwnerSeconds) {
+                  throw 'The selected native development plan exceeds the finite 180-minute CI cap.'
+              }
+              $JobSeconds = $Numbers.Maximum + $AdmissionMaximumSeconds + $ControlMaximumSeconds
+              $TimeoutMinutes = [long][Math]::Max(15, [Math]::Ceiling($JobSeconds / 60.0))
+              [pscustomobject]@{
+                  NativeMaximumSeconds = $Numbers.Maximum
+                  AdmissionMaximumSeconds = $AdmissionMaximumSeconds
+                  ControlMaximumSeconds = $ControlMaximumSeconds
+                  TimeoutMinutes = $TimeoutMinutes
+              }
+          }
           $PreparationRequired = $false
+          $SharedCompilerRequired = $false
+          $NativeExpectedSeconds = [long]0
+          $NativeMaximumSeconds = [long]0
+          $NativeOwnerCount = 0
           if ($env:SCOPE -eq 'development') {
             $Paths = @(git diff --name-only --no-renames --diff-filter=ACDMRTUXB $env:BASE_SHA $env:HEAD_SHA --)
             if ($LASTEXITCODE -ne 0) { throw 'Cannot enumerate preparation inputs.' }
-            $NativePlan = ./Tools/Verify/Get-Native-Changed-Verification-Plan.ps1 -ChangedPath $Paths -PassThru -Quiet
-            $PreparationRequired = $NativePlan.UseOwnedConsoleDevelopment -or $NativePlan.UseCurrentVerifierDevelopment -or $NativePlan.UseFoundationLibraryDevelopment -or @($NativePlan.Suites | Where-Object { $_ -eq 'language-1-authenticated-foreign-binding' -or ($_ -eq 'native-x64-lowering-development' -and !$NativePlan.UseNativeSharedStorageDevelopment) }).Count -ne 0
+            $NativePlan = ./Tools/Verify/Get-Native-Changed-Verification-Plan.ps1 -ChangedPath $Paths -PassThru -Quiet -PreparedProductsOnly
+            $SharedCompilerRequired = $NativePlan.NativeSharedCompilerHostRecordRequired
+            $NativeExpectedSeconds = $NativePlan.ExpectedSeconds
+            $NativeMaximumSeconds = $NativePlan.MaximumSeconds
+            $NativeOwnerCount = @($NativePlan.Suites).Count
+            $PreparationRequired = $NativePlan.UseOwnedConsoleDevelopment -or $NativePlan.UseCurrentVerifierDevelopment -or $NativePlan.UseFoundationLibraryDevelopment -or $NativePlan.UseFoundationBorrowOwnerDevelopment -or $NativePlan.UseLanguage1FrontDoorPreparation -or $NativePlan.UseCallablePreparation -or @($NativePlan.Suites | Where-Object { $_ -eq 'language-1-authenticated-foreign-binding' -or ($_ -eq 'native-x64-lowering-development' -and !$NativePlan.UseNativeSharedStorageDevelopment) }).Count -ne 0
           }
+          $Shards = if ($env:SCOPE -eq 'development') {
+            @(./Tools/Verify/Get-Native-Development-Shards.ps1 -NativePlan $NativePlan)
+          } else {
+            @([pscustomobject]@{ Index = 1; ExpectedSeconds = 0; MaximumSeconds = 0; Suites = @() })
+          }
+          $Budgets = @($Shards | ForEach-Object {
+            Get-NativeDevelopmentBudget -NativeExpectedSeconds $_.ExpectedSeconds -NativeMaximumSeconds $_.MaximumSeconds -NativeOwnerCount @($_.Suites).Count -SharedCompilerRequired $SharedCompilerRequired
+          })
+          $Budget = $Budgets | Sort-Object TimeoutMinutes -Descending | Select-Object -First 1
+          "native_maximum_seconds=$NativeMaximumSeconds" >> $env:GITHUB_OUTPUT
+          "native_admission_maximum_seconds=$($Budget.AdmissionMaximumSeconds)" >> $env:GITHUB_OUTPUT
+          "native_control_maximum_seconds=$($Budget.ControlMaximumSeconds)" >> $env:GITHUB_OUTPUT
+          "development_timeout_minutes=$($Budget.TimeoutMinutes)" >> $env:GITHUB_OUTPUT
+          "development_shards=$(@($Shards.Index) | ConvertTo-Json -Compress -AsArray)" >> $env:GITHUB_OUTPUT
           "preparation_required=$($PreparationRequired.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "shared_compiler_required=$($SharedCompilerRequired.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           $Hosts = if ($env:WINDOWS_REQUIRED -eq 'true') { '["ubuntu-latest","windows-latest"]' } else { '["ubuntu-latest"]' }
           "preparation_hosts=$Hosts" >> $env:GITHUB_OUTPUT
 
@@ -291,7 +365,7 @@ jobs:
           restore-keys: |
             windvale-native-development-v1-${{ runner.os }}-
 
-      - name: Prepare affected native products
+      - name: Prepare affected native products and exact shared host selection
         shell: pwsh
         env:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
@@ -307,11 +381,16 @@ jobs:
           key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-prepared
 
   windows-development:
-    name: Windows focused development verification
+    name: Windows focused development verification (${{ matrix.shard }})
     needs: [classify-changes, native-development-preparation]
     if: ${{ !cancelled() && (needs.native-development-preparation.result == 'success' || needs.native-development-preparation.result == 'skipped') && needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}
     runs-on: windows-latest
-    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: ${{ fromJSON(needs.classify-changes.outputs.development_shards) }}
+    timeout-minutes: ${{ fromJSON(needs.classify-changes.outputs.development_timeout_minutes) }}
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -342,7 +421,8 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT
+          NATIVE_SHARED_COMPILER_SELECTION: ${{ runner.temp }}/windvale-native-development-cache/Native-Shared-Compiler-Host-Selection.windows-x64.json
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT -NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION -NativeDevelopmentShard ${{ matrix.shard }}
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}
@@ -363,14 +443,14 @@ jobs:
         continue-on-error: true
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
-          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior-${{ matrix.shard }}
 
       - name: Upload development verification timing
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         continue-on-error: true
         with:
-          name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}
           path: |
             ${{ runner.temp }}/windvale-development-verification.json
             ${{ runner.temp }}/windvale-development-timing-analysis.json
@@ -378,11 +458,16 @@ jobs:
           retention-days: 14
 
   linux-development:
-    name: Linux focused development verification
+    name: Linux focused development verification (${{ matrix.shard }})
     needs: [classify-changes, native-development-preparation]
     if: ${{ !cancelled() && (needs.native-development-preparation.result == 'success' || needs.native-development-preparation.result == 'skipped') && needs.classify-changes.outputs.scope == 'development' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: ${{ fromJSON(needs.classify-changes.outputs.development_shards) }}
+    timeout-minutes: ${{ fromJSON(needs.classify-changes.outputs.development_timeout_minutes) }}
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -413,7 +498,8 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT
+          NATIVE_SHARED_COMPILER_SELECTION: ${{ runner.temp }}/windvale-native-development-cache/Native-Shared-Compiler-Host-Selection.linux-x64.json
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT -NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION -NativeDevelopmentShard ${{ matrix.shard }}
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}
@@ -434,14 +520,14 @@ jobs:
         continue-on-error: true
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
-          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior
+          key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior-${{ matrix.shard }}
 
       - name: Upload development verification timing
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         continue-on-error: true
         with:
-          name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}
           path: |
             ${{ runner.temp }}/windvale-development-verification.json
             ${{ runner.temp }}/windvale-development-timing-analysis.json

@@ -1,9 +1,12 @@
 import Assert from 'node:assert/strict';
+import { Acquireˉcallableˉproducts, Parseˉcallableˉarguments, Withˉcallableˉenvironment }
+    from './Test-Language-1.0-Callable-Semantics.mjs';
 import { Acquireˉauthenticatedˉanalysis } from './Authenticated-Analysis-Cache-Core.mjs';
 import { Acquireˉcurrentˉwvbˉpublisher } from './Current-Wvb-Publisher-Core.mjs';
 import { Createˉsegmentedˉhostedˉcheckpoint } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
 import { Buildˉcachedˉprojectˉwvb } from './Build-Cached-Project-Wvb.mjs';
-import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
+import { Acquireˉfoundationˉborrowˉtestˉproducts, Parseˉfoundationˉownerˉarguments,
+    Withˉfoundationˉownerˉenvironment } from './Foundation-Borrow-Test-Products-Core.mjs';
 import {
     Constructˉsourceˉeditionˉpredecessor,
     Hasˉuncertainˉconstructionˉcleanup,
@@ -20,11 +23,19 @@ import {
     Readˉpreparedˉsplitˉcompiler,
     CURRENT_ADMISSION_PROJECTS,
 } from './Current-Split-Compiler-Cache-Core.mjs';
+import {
+    Acquireˉdirectˉconditionˉanalyzer,
+    DIRECT_CONDITION_SELECTORS,
+    DIRECT_CONDITION_SELECTOR_VERSION,
+    Projectˉdirectˉconditionˉanalyzer,
+    Requireˉdirectˉconstruction,
+} from './Direct-Condition-Analyzer-Intermediate-Core.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import {
     chmod,
+    lstat,
     mkdtemp,
     mkdir,
     open,
@@ -59,6 +70,12 @@ const TEMPORARY_PREFIX = 'windvale-split-cache-test-';
 const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS = 4_096;
 const FAILURE_TIMEOUT_MILLISECONDS = 30_000;
+
+if (process.argv[2] === '--construction-readiness') {
+    if (process.argv.length !== 3) Reject('Usage: --construction-readiness');
+    await Verifyˉconstructionˉreadiness();
+    process.exit(0);
+}
 
 if (process.argv[2] === '--project4') {
     if (process.argv.length !== 11) Reject('Expected --project4 analyzer analyzer.identity emitter emitter.identity admit auth reader binder.');
@@ -555,8 +572,11 @@ try {
     }
     await Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot);
     await Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot);
-    await Verifyˉcompilerˉconstructionˉbranches(Testˉroot);
+    const Artifactˉcases = await Verifyˉartifactˉreaderˉprojections();
+    const Directˉcases = await Verifyˉcompilerˉconstructionˉcontrols(Testˉroot);
     const Foundationˉcases = await Verifyˉfoundationˉtestˉproducts(Testˉroot);
+    const Foundationˉownerˉcases = await Verifyˉfoundationˉownerˉpreparation(Testˉroot);
+    const Callableˉphaseˉcases = await Verifyˉcallableˉphases(Testˉroot);
     const Deadlineˉcases = await Verifyˉconstructionˉdeadlineˉadmission();
     const Preparationˉcases = await Verifyˉcompilerˉpreparationˉcli(Testˉroot);
     const Processˉcases = await Verifyˉconstructionˉprocessˉstatuses(Testˉroot);
@@ -564,7 +584,7 @@ try {
     const Legacyˉcases = await Verifyˉlegacyˉprojectˉcheckpoint(Testˉroot);
     const Publisherˉcases = await Verifyˉpreparedˉpublisher(Testˉroot);
     console.log(
-        `split project cache test cases=${41 + Foundationˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases + Publisherˉcases} status=Passed current-compiler-pair=Verified ` +
+        `split project cache test cases=${41 + Artifactˉcases + Directˉcases + Foundationˉcases + Foundationˉownerˉcases + Callableˉphaseˉcases + Deadlineˉcases + Preparationˉcases + Processˉcases + Inspectionˉcases + Legacyˉcases + Publisherˉcases} status=Passed current-compiler-pair=Verified ` +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -572,7 +592,7 @@ try {
         'raw-project2-route=Passed symbol-resume=Passed ' +
         'symbol-corruption=Rejected final-product-reuse=Passed ' +
         'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
-        `producer-change=Rejected foundation-test-products=${Foundationˉcases} construction-deadlines=${Deadlineˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases} legacy-project-cache=${Legacyˉcases} prepared-publisher=${Publisherˉcases}`,
+        `producer-change=Rejected foundation-test-products=${Foundationˉcases} foundation-owner-preparation=${Foundationˉownerˉcases} callable-phases=${Callableˉphaseˉcases} construction-deadlines=${Deadlineˉcases} direct-intermediate=${Directˉcases} artifact-readers=${Artifactˉcases} compiler-preparation=${Preparationˉcases} construction-statuses=${Processˉcases} function-limit-diagnostics=${Inspectionˉcases} legacy-project-cache=${Legacyˉcases} prepared-publisher=${Publisherˉcases}`,
     );
     }
     }
@@ -1282,28 +1302,75 @@ async function Verifyˉconstructionˉdeadlineˉadmission() {
     return Cases.length + 3;
 }
 
-async function Verifyˉconstructionˉprocessˉstatuses(Testˉroot) {
+async function Verifyˉconstructionˉprocessˉstatuses(Testˉroot, Actionsˉonly = false) {
     const Builder = pathToFileURL(path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs')).href;
     const Predecessor = pathToFileURL(path.join(SCRIPT_DIRECTORY, 'Source-Edition-Predecessor-Core.mjs')).href;
     const Prelude = `import { Runˉcurrentˉsplitˉprojectˉcli as Cli } from ${JSON.stringify(Builder)};\n` +
         `import { Runˉcompilerˉconstructionˉcommand as Run } from ${JSON.stringify(Predecessor)};\n`;
+    const { Currentˉsplitˉcommandˉdeadline: Commandˉdeadline } = await import(Builder);
+    const Started = 1_000_000;
+    const Workˉdeadline = Started + 1_800_000;
+    for (const Name of ['Package-Segmented-Compiler-Wvb', 'Build-Cached-Segmented-Hosted-Wvb.mjs']) {
+        Assert.equal(Commandˉdeadline(Name, true, Workˉdeadline, Started), Started + 1_050_000);
+        Assert.equal(Commandˉdeadline(Name, false, Workˉdeadline, Started), Started + 600_000);
+        Assert.equal(Commandˉdeadline(Name, true, Started + 50_000, Started), Started + 50_000);
+    }
+    for (const Name of ['Package-Segmented-Compiler-Wvb.cmd', 'path/Package-Segmented-Compiler-Wvb',
+        'Build-Cached-Segmented-Hosted-Wvb.mjs.old', 'Build-Cached-Split-Project-Wvb.mjs']) {
+        Assert.equal(Commandˉdeadline(Name, true, Workˉdeadline, Started), Started + 600_000);
+    }
+    Assert.equal(Commandˉdeadline('Package-Segmented-Compiler-Wvb', true, Workˉdeadline, Started + 1_500_000), Workˉdeadline);
+    Assert.equal(Commandˉdeadline('Package-Segmented-Compiler-Wvb', false, null, Started), Started + 600_000);
     const Child = Text => `Run('probe', process.execPath, ['-e', ${JSON.stringify(Text)}], Date.now() + 3000, false)`;
+    const Primaryˉdetails = {
+        code: 'E'.repeat(80), syscall: 'open\t\r\n' + 's'.repeat(80),
+        path: 'selected\t\r\n' + 'p'.repeat(1_100),
+        stack: 'Error: primary-marker\n' + Array.from({ length: 10 }, (_, Index) =>
+            '    at primary-frame-' + Index + ' ' + 'x'.repeat(300)).join('\n'),
+    };
+    const Windowˉstack = 'Error: primary-timeout\n    at within-window-marker (input:1:1)\n' +
+        'x'.repeat(16_384) + '\n    at beyond-window-marker (input:2:2)';
     const Cases = [
         [Child("process.stderr.write('child-timeout-marker'); process.exit(124);"), 124, /child-timeout-marker/u],
         [Child("process.stderr.write('child-framework-marker'); process.exit(2);"), 2, /child-framework-marker/u],
         [Child("process.stderr.write('unexpected-stderr');"), 2, /unexpected-stderr/u],
         ["Run('git-progress', process.execPath, ['-e', \"process.stderr.write('allowed-git-progress')\"], Date.now()+3000, false, undefined, true)", 0, /^$/u],
         [Child("process.exit(7);"), 7, /status=7/u],
-        ["Run('probe', 'windvale-deliberately-missing-construction-tool', [], Date.now()+3000, false)", 2, /ENOENT/u],
+        ["Run('probe', 'windvale-deliberately-missing-construction-tool', [], Date.now()+3000, false)", 2, /ENOENT/u, Diagnostic => {
+            Assert.match(Diagnostic, /^Details: code=ENOENT syscall=spawn windvale-deliberately-missing-construction-tool path=windvale-deliberately-missing-construction-tool$/mu);
+        }],
         ["Run('probe', process.execPath, ['-e', 'setInterval(()=>{},1000)'], Date.now()+100, false)", 124, /Development command timed out/u],
         ["Promise.reject(new AggregateError([new Error('ordinary-marker'), Object.assign(new Error('timeout-marker'), {exitCode:124})], 'joined-marker'))", 124, /joined-marker[\s\S]*ordinary-marker[\s\S]*timeout-marker/u],
-        ["Promise.reject(Object.assign(new Error('primary-marker'), {exitCode:1, cleanupFailure:Object.assign(new Error('cleanup-marker'), {exitCode:124})}))", 1, /primary-marker[\s\S]*Cleanup: cleanup-marker/u],
-        ["Promise.reject(Object.assign(new Error('primary-timeout'), {exitCode:124, cleanupFailure:Object.assign(new Error('cleanup-framework'), {exitCode:2})}))", 124, /primary-timeout[\s\S]*Cleanup: cleanup-framework/u],
+        ["(()=>{const Failure=Object.assign(new Error('primary-marker'), " + JSON.stringify(Primaryˉdetails) +
+            ", {exitCode:1, cleanupFailure:Object.assign(new Error('cleanup-marker'), {exitCode:124, code:37, syscall:'unlink', path:77, stack:''})});Failure.cause=Failure;return Promise.reject(Failure);})()",
+            1, /primary-marker[\s\S]*Cleanup: cleanup-marker/u, Diagnostic => {
+                Assert.ok(Diagnostic.includes('\nDetails: code=' + 'E'.repeat(64) +
+                    ' syscall=open   ' + 's'.repeat(57) + ' path=selected   ' + 'p'.repeat(1_013) + '\n'));
+                Assert.match(Diagnostic, /^Details: code=37 syscall=unlink path=77$/mu);
+                Assert.equal(Diagnostic.split('\n').filter(Line => Line === 'primary-marker').length, 1);
+                Assert.doesNotMatch(Diagnostic, /[\r\t]/u);
+                const Frames = Diagnostic.split('\n').filter(Line => /^\s+at /u.test(Line));
+                Assert.equal(Frames.length, 8);
+                for (let Index = 0; Index < Frames.length; Index += 1) {
+                    Assert.ok(Frames[Index].startsWith('    at primary-frame-' + Index + ' '));
+                    Assert.equal(Frames[Index].length, 256);
+                }
+                Assert.doesNotMatch(Diagnostic, /primary-frame-[89]/u);
+            }],
+        ["Promise.reject(Object.assign(new Error('primary-timeout'), {exitCode:124, code:'ETIMEDOUT', syscall:'waitpid', path:'selected-timeout', stack:" +
+            JSON.stringify(Windowˉstack) + ", cleanupFailure:Object.assign(new Error('cleanup-framework'), {exitCode:2, stack:''}), cause:Object.assign(new Error('cause-marker'), {code:'ENOENT',syscall:'stat',path:'/portable/missing',stack:''})}))",
+            124, /primary-timeout[\s\S]*Cleanup: cleanup-framework/u, Diagnostic => {
+                Assert.match(Diagnostic, /^Details: code=ETIMEDOUT syscall=waitpid path=selected-timeout$/mu);
+                Assert.deepEqual(Diagnostic.split('\n').filter(Line => /^\s+at /u.test(Line)),
+                    ['    at within-window-marker (input:1:1)']);
+                Assert.doesNotMatch(Diagnostic, /beyond-window-marker/u);
+                Assert.match(Diagnostic, /Cleanup: cleanup-framework[\s\S]*Cause: cause-marker\nDetails: code=ENOENT syscall=stat path=\/portable\/missing/u);
+            }],
         ["Promise.reject(new AggregateError([Object.assign(new Error('timeout-marker'), {exitCode:124}), Object.assign(new Error('uncertain-marker'), {exitCode:2,cleanupUncertain:true})], 'uncertain-join'))", 2, /uncertain-join[\s\S]*timeout-marker[\s\S]*uncertain-marker/u],
         ["Promise.reject(Object.assign(new Error('primary-timeout'), {exitCode:124, cleanupFailure:Object.assign(new Error('cleanup-unproven'), {exitCode:2,cleanupUncertain:true})}))", 2, /primary-timeout[\s\S]*Cleanup: cleanup-unproven/u],
         ["Run('probe', 'ignored', [], Date.now()+3000, false, async()=>({Code:null,Output:'',Error:''}))", 2, /invalid construction process result/u],
     ];
-    for (const [Action, Status, Diagnostic] of Cases) {
+    for (const [Action, Status, Diagnostic, Checkˉdetails] of Cases) {
         const Result = spawnSync(process.execPath, ['--input-type=module', '-e',
             Prelude + `await Cli(() => ${Action});`], {
             cwd: REPOSITORY_ROOT, encoding: 'utf8', windowsHide: true,
@@ -1313,7 +1380,9 @@ async function Verifyˉconstructionˉprocessˉstatuses(Testˉroot) {
         Assert.equal(Result.status, Status);
         Assert.equal(Result.stdout, '');
         Assert.match(Result.stderr, Diagnostic);
+        if (Checkˉdetails !== undefined) Checkˉdetails(Result.stderr);
     }
+    if (Actionsˉonly) return Cases.length;
     const Owner = path.join(SCRIPT_DIRECTORY, 'Test-Language-1.0-Memory-Budget-Split-Execution.mjs');
     for (const [Seconds, Status, Diagnostic] of [
         ['1', 124, /deadline expired|timed out/u],
@@ -1986,17 +2055,31 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
         await mkdir(Projects);
         for (const Name of ['Windvale-Compiler-Analysis-Driver.wvproj',
             'Windvale-Compiler-Emission-Driver.wvproj', ...CURRENT_ADMISSION_PROJECTS.map(([, Name]) => Name)]) {
-            await writeFile(path.join(Projects, Name), `windvale-project ${Edition}\n`);
+            await writeFile(path.join(Projects, Name), Edition === 4 && Name === 'Windvale-Compiler-Analysis-Driver.wvproj'
+                ? await readFile(path.join(REPOSITORY_ROOT, 'Projects', 'Tools', Name))
+                : `windvale-project ${Edition}\n`);
         }
         const Predecessor = {};
         for (const Name of ['Analyzer', 'Emitter', 'Admitter', 'Authenticator', 'Reader', 'Binder']) {
             Predecessor[Name] = path.join(Work, 'Predecessor-' + Name + Suffix);
-            await writeFile(Predecessor[Name], Buffer.from(Name));
+            await writeFile(Predecessor[Name], Buffer.from(Name), { mode: 0o755 });
         }
         for (const Name of ['Analyzer', 'Emitter']) {
             Predecessor[Name + 'ˉidentity'] = path.join(Work, 'Predecessor-' + Name + '.identity');
-            await writeFile(Predecessor[Name + 'ˉidentity'], Buffer.from(Name));
+            const Product = await readFile(Predecessor[Name]);
+            await writeFile(Predecessor[Name + 'ˉidentity'], Buffer.from(
+                `windvale-split-compiler-producer 2\nrole ${Name.toLowerCase()}\n` +
+                `target ${Name === 'Analyzer' ? 'source-analysis-v1' : 'portable-wvb-optimized-v1'}\n` +
+                `host ${process.platform}-${process.arch}\nbytes ${Product.length}\n` +
+                `sha256 ${createHash('sha256').update(Product).digest('hex')}\n`));
         }
+        Predecessor.Construction = { kind: 'source-edition-predecessor-1',
+            revision: '992ba7bbebbbf3356966bdcc0ea1d2b0e5923720',
+            tree: 'c6231310843c24a03b0253f6f5a062d77db9f73f', key: '1'.repeat(64), host: HOST };
+        const Family = path.join(Work, 'Cache', 'current-split-compiler-v2', HOST);
+        await mkdir(Family, { recursive: true });
+        const Constructionˉrequest = { Mode: 'prepare', Key: '2'.repeat(64), Family,
+            Deadline: Date.now() + 120_000, Requireˉunchanged: async () => {} };
         const Calls = [];
         const Completed = new Set();
         let Active = 0;
@@ -2035,7 +2118,22 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                     }
                     await Peer;
                 }
-                if (Name === 'Package-Segmented-Compiler-Wvb') {
+                if (Name === 'Run-Split-Compiler.mjs') {
+                    Assert.equal(Label, 'direct-condition-analyzer-source');
+                    Assert.equal(Arguments.length, 13);
+                    Assert.deepEqual(Arguments.slice(0, 4), [Predecessor.Admitter, Predecessor.Authenticator,
+                        Predecessor.Analyzer, Predecessor.Emitter]);
+                    Assert.deepEqual(Arguments.slice(4, 6), ['--foreign-binder', Predecessor.Binder]);
+                    Assert.equal(Arguments[6], '--workspace');
+                    Assert.equal(Arguments[8], '--project');
+                    Assert.deepEqual(Arguments.slice(10, 12), ['--manifest-reader', Predecessor.Reader]);
+                    const Snapshotˉmanifest = await readFile(Arguments[9], 'utf8');
+                    Assert.equal([...Snapshotˉmanifest.matchAll(/^(?:root|source) /gmu)].length, 23);
+                    Assert.ok(!Snapshotˉmanifest.includes('Source-Wir-Scalar-Constants.wv'));
+                    const Wvb = Buffer.alloc(8);
+                    Wvb.write('WVB1'); Wvb.writeUInt16LE(1, 4); Wvb.writeUInt16LE(11, 6);
+                    await writeFile(Arguments[12], Wvb);
+                } else if (Name === 'Package-Segmented-Compiler-Wvb') {
                     Assert.equal(Arguments.length, 4);
                     Assert.equal(Arguments[3], '--development-cache');
                     Assert.equal(Arguments[0], Label === 'pinned-analyzer-package' ? '7' : '8');
@@ -2045,7 +2143,12 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                     Assert.equal(Arguments.length, 3);
                     await readFile(Arguments[1]);
                     Assert.equal(Arguments[0], Label.includes('emitter') ? 'emitter' : 'analyzer');
-                    await writeFile(Arguments[2], Buffer.from(Label));
+                    if (Label === 'direct-condition-analyzer-identity') {
+                        const Product = await readFile(Arguments[1]);
+                        await writeFile(Arguments[2], Buffer.from(`windvale-split-compiler-producer 2\nrole analyzer\n` +
+                            `target source-analysis-v1\nhost ${HOST}\nbytes ${Product.length}\n` +
+                            `sha256 ${createHash('sha256').update(Product).digest('hex')}\n`));
+                    } else await writeFile(Arguments[2], Buffer.from(Label));
                 } else if (Name === 'Build-Cached-Segmented-Hosted-Wvb.mjs') {
                     Assert.equal(Arguments.length, 3);
                     Assert.equal(Arguments[0], '7');
@@ -2071,7 +2174,9 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
             } finally { Active -= 1; }
         };
         const Construction = Constructˉcurrentˉsplitˉcompiler(Work, Candidate, Run, Run,
-            async () => { Assert.equal(Edition, 4); return Predecessor; }, Projects)
+            async (_, Deadline) => { Assert.equal(Edition, 4);
+                Assert.equal(Deadline, Constructionˉrequest.Deadline); return Predecessor; }, Projects,
+            Edition === 4 ? Constructionˉrequest : null)
             .then(() => { Settled = true; return null; }, Error => { Settled = true; return Error; });
         try {
             if (Mode !== 'preparation-failure') {
@@ -2093,7 +2198,9 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
             if (Mode === 'complete') {
                 Assert.equal(Failure, null);
                 Assert.equal(Maximumˉactive, 2);
-                Assert.equal(Calls.length, Edition === 4 ? 16 : 20);
+                Assert.equal(Calls.length, Edition === 4 ? 19 : 20);
+                if (Edition === 4) Assert.deepEqual(Calls.slice(0, 3), ['direct-condition-analyzer-source',
+                    'direct-condition-analyzer-package', 'direct-condition-analyzer-identity']);
                 const Products = ['Analyzer' + Suffix, 'Analyzer.identity', 'Emitter' + Suffix, 'Emitter.identity',
                     ...CURRENT_ADMISSION_PROJECTS.map(([Name]) => Name + Suffix)];
                 Assert.deepEqual((await readdir(Candidate)).sort(), Products.sort());
@@ -2106,7 +2213,7 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
                 if (Mode === 'preparation-failure') {
                     Assert.equal(Failure.message, Mode);
                     Assert.equal(Arrivals, 0);
-                    Assert.equal(Calls.length, Edition === 4 ? 1 : 5);
+                    Assert.equal(Calls.length, Edition === 4 ? 4 : 5);
                 } else if (Mode === 'admission-failure') {
                     Assert.equal(Failure.message, Mode);
                 } else {
@@ -2122,6 +2229,194 @@ async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
         } finally { clearTimeout(Timer); Release(); await Construction; }
     }
     }
+}
+
+async function Verifyˉartifactˉreaderˉprojections() {
+    // No generated file is written and no compiler or image executes.
+    const Retired = 'Compiler/Windvale/Source-Bindings-Generic-Types-Artifact-Core.wv';
+    await Assert.rejects(() => lstat(path.join(REPOSITORY_ROOT, Retired)), Error => Error.code === 'ENOENT');
+    const Project = await readFile(path.join(REPOSITORY_ROOT,
+        'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj'));
+    Assert.ok(Project.length > 0 && Project.length <= 65_536);
+    Assert.ok(!Project.toString('utf8').includes('"' + Retired + '"'));
+    console.log('artifact reader control item=1/2 case=named-retired-reader-absent status=Passed');
+    const Result = await Runˉdevelopmentˉcommand(process.execPath,
+        [path.join(SCRIPT_DIRECTORY, 'Generate-Compiler-Artifact-Readers.mjs'), '--check'],
+        Date.now() + 30_000, false, MAXIMUM_DIAGNOSTIC_BYTES);
+    Assert.equal(Result.Code, 0, Result.Error);
+    Assert.equal(Result.Error, '');
+    Assert.equal(Result.Output.replaceAll('\r\n', '\n'), 'artifact-reader status=Passed files=17\n');
+    console.log('artifact reader control item=2/2 case=canonical-projections-check status=Passed');
+    return 2;
+}
+
+async function Verifyˉcompilerˉconstructionˉcontrols(Testˉroot) {
+    const Names = ['WINDVALE_PREPARED_PRODUCTS_ONLY', 'WINDVALE_PREPARED_COMPILER_ONLY'];
+    const Previous = Names.map(Name => process.env[Name]);
+    try {
+        // These callbacks write control data only; no compiler or image executes.
+        for (const Name of Names) delete process.env[Name];
+        await Verifyˉcompilerˉconstructionˉbranches(Testˉroot);
+        return await Verifyˉdirectˉconditionˉintermediate(Testˉroot);
+    } finally {
+        for (const [Index, Name] of Names.entries()) {
+            if (Previous[Index] === undefined) delete process.env[Name];
+            else process.env[Name] = Previous[Index];
+        }
+    }
+}
+
+async function Verifyˉdirectˉconditionˉintermediate(Testˉroot) {
+    const Deadline = Date.now() + 120_000;
+    let Cases = 0;
+    function Time() { Assert.ok(Date.now() < Deadline, 'Direct intermediate control deadline expired.'); }
+    function Pass(Name) {
+        Time(); Cases += 1;
+        console.log('direct intermediate cache item=' + Cases + ' case=' + Name + ' status=Passed');
+    }
+    const Core = await readFile(path.join(REPOSITORY_ROOT, 'Compiler/Windvale/Source-Wir-Core.wv'));
+    const Manifest = await readFile(path.join(REPOSITORY_ROOT,
+        'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj'));
+    const Originalˉcore = Buffer.from(Core);
+    const Originalˉmanifest = Buffer.from(Manifest);
+    const Projected = Projectˉdirectˉconditionˉanalyzer(Core, Manifest);
+    Assert.equal(Projected.Inverseˉexact, true);
+    Assert.ok(!Projected.Core.includes(Buffer.from('Scalarˉconstants')));
+    Assert.ok(Projected.Core.includes(Buffer.from('export fn Compilerˉsourceˉwirˉappendˉfunctionˉentry(')));
+    Assert.equal([...Projected.Project.toString('utf8').matchAll(/^(?:root|source) /gmu)].length, 23);
+    Assert.ok(!Projected.Project.includes(Buffer.from('Source-Wir-Scalar-Constants.wv')));
+    Assert.ok(Core.equals(Originalˉcore) && Manifest.equals(Originalˉmanifest));
+    Pass('selected-source-geometry-and-exact-inverse');
+    Assert.equal(DIRECT_CONDITION_SELECTORS.length, 3);
+    Assert.ok(Object.isFrozen(DIRECT_CONDITION_SELECTORS));
+    Assert.deepEqual(Projected.Selectors, DIRECT_CONDITION_SELECTORS);
+    for (const Selector of DIRECT_CONDITION_SELECTORS) {
+        Assert.ok(Object.isFrozen(Selector));
+        Assert.ok(Number.isSafeInteger(Selector.bytes) && Selector.bytes > 0);
+        Assert.match(Selector.sha256, /^[0-9a-f]{64}$/u);
+    }
+    Assert.equal(Core.length - Projected.Core.length,
+        DIRECT_CONDITION_SELECTORS[0].bytes + DIRECT_CONDITION_SELECTORS[1].bytes -
+        DIRECT_CONDITION_SELECTORS[1].replacementBytes);
+    Assert.equal(Manifest.length - Projected.Project.length, DIRECT_CONDITION_SELECTORS[2].bytes);
+    Pass('bounded-selector-identities-and-payload-extents');
+    const Suffixˉbytes = Buffer.from('// unrelated preserved input\n');
+    const Outside = Projectˉdirectˉconditionˉanalyzer(Buffer.concat([Core, Suffixˉbytes]), Manifest);
+    Assert.ok(Outside.Core.equals(Buffer.concat([Projected.Core, Suffixˉbytes])));
+    Assert.ok(Outside.Project.equals(Projected.Project));
+    Pass('unselected-source-preservation');
+    for (const [Source, Project] of [
+        [Buffer.from(Core.toString('utf8').replace('import Compilerˉsourceˉwirˉscalarˉconstants',
+            '//missing Compilerˉsourceˉwirˉscalarˉconstants')), Manifest],
+        [Core, Buffer.concat([Manifest, Buffer.from('source "Compiler/Windvale/Source-Wir-Scalar-Constants.wv"\n')])],
+        [Buffer.from(Core.toString('utf8').replace('fn Compilerˉsourceˉwirˉpoolˉfunction(', 'fn Changed(')), Manifest],
+    ]) Assert.throws(() => Projectˉdirectˉconditionˉanalyzer(Source, Project));
+    Pass('selector-drift-and-repetition-refusal');
+    for (const Value of [null, { Mode: 'behavior' }, { Mode: 'prepare', Key: 'wrong' }]) {
+        Assert.throws(() => Requireˉdirectˉconstruction(Value), /explicit preparation/u);
+    }
+    Pass('explicit-preparation-context-refusal');
+    const Caseˉwork = path.join(Testˉroot, '4-complete');
+    const Family = path.join(Caseˉwork, 'Cache', 'current-split-compiler-v2', HOST);
+    const Construction = { Mode: 'prepare', Key: '2'.repeat(64), Family, Deadline,
+        Requireˉunchanged: async () => {} };
+    Assert.throws(() => Requireˉdirectˉconstruction({ ...Construction, Deadline: 1 }),
+        Failure => Failure.exitCode === 124 && /deadline expired/u.test(Failure.message));
+    Pass('inherited-absolute-deadline-refusal');
+    // Reuse the existing successful mocked construction; none of these products executes.
+    const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
+    const Predecessor = {};
+    for (const Name of ['Analyzer', 'Emitter', 'Reader', 'Admitter', 'Authenticator', 'Binder']) {
+        Predecessor[Name] = path.join(Caseˉwork, 'Predecessor-' + Name + Suffix);
+    }
+    for (const Name of ['Analyzer', 'Emitter']) {
+        Predecessor[Name + 'ˉidentity'] = path.join(Caseˉwork, 'Predecessor-' + Name + '.identity');
+    }
+    Predecessor.Construction = { kind: 'source-edition-predecessor-1',
+        revision: '992ba7bbebbbf3356966bdcc0ea1d2b0e5923720',
+        tree: 'c6231310843c24a03b0253f6f5a062d77db9f73f', key: '1'.repeat(64), host: HOST };
+    let Callbackˉcalls = 0;
+    const Neverˉproduce = async () => {
+        Callbackˉcalls += 1;
+        throw new Error('Unexpected direct intermediate producer callback.');
+    };
+    const Options = { Work: Caseˉwork, Predecessor, Construction,
+        Analysisˉproject: path.join(Caseˉwork, 'Projects', 'Windvale-Compiler-Analysis-Driver.wvproj'),
+        Runˉnative: Neverˉproduce, Runˉnode: Neverˉproduce };
+    Time();
+    const Hit = await Acquireˉdirectˉconditionˉanalyzer(Options);
+    Assert.equal(Callbackˉcalls, 0);
+    Assert.equal(Hit.request.currentKey, Construction.Key);
+    Assert.equal(Hit.request.selectorVersion, DIRECT_CONDITION_SELECTOR_VERSION);
+    const Owner = await readFile(path.join(SCRIPT_DIRECTORY, 'Direct-Condition-Analyzer-Intermediate-Core.mjs'));
+    Assert.deepEqual(Hit.request.owner, { bytes: Owner.length,
+        sha256: createHash('sha256').update(Owner).digest('hex') });
+    Pass('intermediate-cache-hit-zero-producer-callbacks');
+    async function Rejected(Change, Pattern) {
+        Time();
+        await Assert.rejects(() => Acquireˉdirectˉconditionˉanalyzer(Change), Pattern);
+        Assert.equal(Callbackˉcalls, 0);
+        Time();
+    }
+    const Selectedˉmanifest = await readFile(Options.Analysisˉproject);
+    try {
+        await writeFile(Options.Analysisˉproject, Buffer.concat([Selectedˉmanifest, Buffer.from('\n')]));
+        await Rejected(Options, /differs from the selected current repository project/u);
+    } finally { await writeFile(Options.Analysisˉproject, Selectedˉmanifest); }
+    Pass('alternate-manifest-refuses-before-cache-or-producer');
+    const Checkpoint = path.join(path.dirname(Hit.Analyzer), 'Checkpoint.json');
+    const Checkpointˉbytes = await readFile(Checkpoint);
+    try {
+        await writeFile(Checkpoint, Buffer.from('{}\n'));
+        await Rejected(Options, /checkpoint request or product record differs/u);
+    } finally { await writeFile(Checkpoint, Checkpointˉbytes); }
+    Pass('corrupt-intermediate-refuses-without-fallback');
+    const Cachedˉwvb = path.join(path.dirname(Hit.Analyzer), 'Analyzer.wvb');
+    const Wvbˉbytes = await readFile(Cachedˉwvb);
+    const Wrongˉversion = Buffer.from(Wvbˉbytes);
+    Wrongˉversion.writeUInt16LE(10, 6);
+    try {
+        await writeFile(Cachedˉwvb, Wrongˉversion);
+        await Rejected(Options, /exact WVB 1.11/u);
+    } finally { await writeFile(Cachedˉwvb, Wvbˉbytes); }
+    Pass('wrong-source-epoch-refuses-without-fallback');
+    for (const Name of ['WINDVALE_PREPARED_PRODUCTS_ONLY', 'WINDVALE_PREPARED_COMPILER_ONLY']) {
+        const Previous = process.env[Name];
+        try {
+            process.env[Name] = '1';
+            await Rejected(Options, new RegExp('refuses inherited ' + Name, 'u'));
+        } finally {
+            if (Previous === undefined) delete process.env[Name];
+            else process.env[Name] = Previous;
+        }
+        Pass(Name === 'WINDVALE_PREPARED_PRODUCTS_ONLY'
+            ? 'prepared-products-only-refuses-before-callback'
+            : 'prepared-compiler-only-refuses-before-callback');
+    }
+    await Rejected({ ...Options, Construction: { ...Construction,
+        Requireˉunchanged: async () => { throw new Error('Direct unchanged guard failed.'); } } },
+    /Direct unchanged guard failed/u);
+    Pass('identity-guard-failure-is-not-success');
+    let Predecessors = 0;
+    let Commands = 0;
+    const Nullˉwork = path.join(Testˉroot, 'Direct-Null-Context');
+    const Candidate = path.join(Nullˉwork, 'Candidate');
+    await mkdir(Candidate, { recursive: true });
+    await Assert.rejects(() => Constructˉcurrentˉsplitˉcompiler(Nullˉwork, Candidate,
+        async () => { Commands += 1; }, async () => { Commands += 1; },
+        async () => { Predecessors += 1; }, path.join(REPOSITORY_ROOT, 'Projects', 'Tools')),
+    /explicit preparation/u);
+    Assert.equal(Predecessors, 0);
+    Assert.equal(Commands, 0);
+    Assert.equal(Callbackˉcalls, 0);
+    Assert.deepEqual(await readdir(Candidate), []);
+    Pass('missing-context-before-predecessor-or-command');
+    Assert.ok((await readFile(path.join(REPOSITORY_ROOT, 'Compiler/Windvale/Source-Wir-Core.wv'))).equals(Core));
+    Assert.ok((await readFile(path.join(REPOSITORY_ROOT,
+        'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj'))).equals(Manifest));
+    Assert.equal(Cases, 14);
+    Time();
+    return Cases;
 }
 
 async function Verifyˉauthenticatedˉprojectˉcache(Producers) {
@@ -2241,4 +2536,426 @@ async function Verifyˉauthenticatedˉprojectˉcache(Producers) {
         Assert.equal(await realpath(Work), Work);
         await rm(Work, { recursive: true, force: true });
     }
+}
+
+async function Verifyˉfoundationˉownerˉpreparation(Testˉroot) {
+    let Cases = 0;
+    Assert.equal(Parseˉfoundationˉownerˉarguments(['--foundation-borrow']), null);
+    Assert.deepEqual(Parseˉfoundationˉownerˉarguments(['--foundation-borrow-owners']),
+        { Prepare: false, Prepared: false, Maximum: 600 });
+    Assert.deepEqual(Parseˉfoundationˉownerˉarguments(['--foundation-borrow-owners', '--prepare-only', '--maximum-seconds', '4500']),
+        { Prepare: true, Prepared: false, Maximum: 4500 });
+    Assert.deepEqual(Parseˉfoundationˉownerˉarguments(['--foundation-borrow-owners', '--prepared-products-only', '--maximum-seconds', '600']),
+        { Prepare: false, Prepared: true, Maximum: 600 });
+    Cases += 4;
+    for (const Tail of [['--prepare-only'], ['--prepared-products-only'], ['--maximum-seconds', '0'],
+        ['--prepare-only', '--maximum-seconds', '4501'], ['--prepared-products-only', '--maximum-seconds', '601'],
+        ['--prepared-products-only', '--prepare-only', '--maximum-seconds', '600'], ['--unknown']]) {
+        Assert.throws(() => Parseˉfoundationˉownerˉarguments(['--foundation-borrow-owners', ...Tail]),
+            Error => Error.exitCode === 64);
+        Cases += 1;
+    }
+    const Names = ['WINDVALE_PREPARED_COMPILER_ONLY', 'WINDVALE_PREPARED_PRODUCTS_ONLY'];
+    const Original = Names.map(Name => process.env[Name]);
+    try {
+        for (const State of [undefined, '', 'before']) {
+            for (const Name of Names) {
+                if (State === undefined) delete process.env[Name]; else process.env[Name] = State;
+            }
+            await Assert.rejects(() => Withˉfoundationˉownerˉenvironment({Prepare:false, Prepared:true}, async () => {
+                Assert.deepEqual(Names.map(Name => process.env[Name]), ['1', '1']);
+                throw Object.assign(new Error('child refused'), {exitCode:64});
+            }), Error => Error.exitCode === 64);
+            Assert.deepEqual(Names.map(Name => process.env[Name]), [State, State]);
+            Cases += 1;
+        }
+        await Assert.rejects(() => Withˉfoundationˉownerˉenvironment({Prepare:true, Prepared:false},
+            async () => Assert.fail('Prepared construction invoked a child.')), Error => Error.exitCode === 64);
+        Cases += 1;
+        for (const Name of Names) delete process.env[Name];
+        const Key = '9'.repeat(64), Suffix = process.platform === 'win32' ? '.exe' : '.elf';
+        for (const Mode of ['warm', 'prepared-hit', 'compiler-miss', 'source-miss', 'image-miss',
+            'late-source-change', 'late-product-change', 'changed-key']) {
+            const Work = path.join(Testˉroot, 'foundation-owner-' + Mode), Family = path.join(Work, 'Cache');
+            await mkdir(path.join(Family, Key), {recursive:true});
+            for (const Name of ['Analyzer', 'Emitter', 'Admitter', 'Authenticator', 'Reader', 'Binder']) {
+                await writeFile(path.join(Family, Key, Name + Suffix), Buffer.from(Name), {mode:0o755});
+                if (Name === 'Analyzer' || Name === 'Emitter') await writeFile(path.join(Family, Key, Name + '.identity'), Name);
+            }
+            const Calls = [], Deadline = Date.now() + 30_000;
+            let Changed = false, Products;
+            const Request = {Prepare:Mode === 'warm', Prepared:Mode !== 'warm'};
+            const Action = () => Withˉfoundationˉownerˉenvironment(Request, async () => {
+                Products = await Acquireˉfoundationˉborrowˉtestˉproducts({Work, Deadline, Selection:'owners',
+                    Prepareˉcompiler:Request.Prepare,
+                    Getˉkey:async () => Changed && Mode === 'changed-key' ? '8'.repeat(64) : Key,
+                    Getˉfamily:async () => Family,
+                    Acquire:async (Givenˉfamily, Givenˉkey, Produce, Requireˉcompilerˉunchanged) => {
+                        Assert.equal(Givenˉfamily, Family); Assert.equal(Givenˉkey, Key);
+                        if (Mode === 'compiler-miss') await Produce(path.join(Family, Key));
+                        await Requireˉcompilerˉunchanged();
+                        return {status:'Hit', directory:path.join(Family, Key)};
+                    },
+                    Snapshot:async Projects => {
+                        Assert.deepEqual(Projects.map(Project => path.basename(Project)), ['Windvale-Native-Test-Foundation-Owner-Flow.wvproj']);
+                        return 'exact-owner-closure';
+                    },
+                    Requireˉunchanged:async Snapshot => {
+                        Assert.equal(Snapshot, 'exact-owner-closure');
+                        if (Changed && Mode === 'late-source-change') throw new Error('owner source changed');
+                    },
+                    Run:async (Label, Command, Arguments, Boundary) => {
+                        Calls.push(Label); Assert.equal(Command, process.execPath); Assert.equal(Boundary, Deadline);
+                        Assert.deepEqual(Names.map(Name => process.env[Name]), Request.Prepare ? [undefined, undefined] : ['1', '1']);
+                        if (Label === 'foundation-products-build') {
+                            Assert.equal(Request.Prepare, true);
+                            Assert.deepEqual(Arguments.slice(1, 4), ['--prepare-compiler','--deadline-ms',String(Deadline)]);
+                            Assert.equal(Arguments.length, 6);
+                            Assert.equal(path.basename(Arguments[4]), 'Windvale-Native-Test-Foundation-Owner-Flow.wvproj');
+                            await writeFile(Arguments[5], 'owner-wvb'); return;
+                        }
+                        if (Label === 'foundation-products-build-owners') {
+                            Assert.equal(path.basename(Arguments[0]), 'Build-Cached-Split-Project-Wvb.mjs');
+                            Assert.equal(Arguments[7], '--authenticated-project4'); Assert.equal(Arguments.length, 12);
+                            if (Mode === 'source-miss') throw Object.assign(new Error('prepared source cache miss'), {exitCode:64});
+                            await writeFile(Arguments[2], 'owner-wvb'); return;
+                        }
+                        Assert.equal(Label, 'foundation-products-package-owners');
+                        Assert.equal(path.basename(Arguments[0]), 'Build-Cached-Segmented-Hosted-Wvb.mjs');
+                        Assert.deepEqual(Arguments.slice(1, 4), ['--deadline-ms', String(Deadline), '1']);
+                        if (Mode === 'image-miss') throw Object.assign(new Error('prepared image cache miss'), {exitCode:64});
+                        await writeFile(Arguments[5], 'owner-native', {mode:0o755});
+                    },
+                });
+                Assert.equal(Products.Evidence.length, 10);
+                Changed = true;
+                if (Mode === 'late-product-change') await writeFile(Products.Owners, 'changed-native');
+                await Products.Requireˉunchanged();
+                return Products;
+            });
+            if (Mode === 'warm' || Mode === 'prepared-hit') {
+                await Action(); Assert.equal(Calls.length, 2);
+            } else {
+                await Assert.rejects(Action, /checkpoint missing|prepared source cache miss|packaging failed|source changed|product changed|inputs changed/);
+                Assert.equal(Calls.length, Mode === 'compiler-miss' ? 0 : Mode === 'source-miss' ? 1 : 2);
+            }
+            Assert.equal(Calls.some(Label => Label.includes('execute')), false);
+            Assert.deepEqual(Names.map(Name => process.env[Name]), [undefined, undefined]);
+            Cases += 1;
+        }
+    } finally {
+        for (let Index = 0; Index < Names.length; Index += 1) {
+            if (Original[Index] === undefined) delete process.env[Names[Index]];
+            else process.env[Names[Index]] = Original[Index];
+        }
+    }
+    return Cases;
+}
+
+async function Verifyˉcallableˉphases(Testˉroot) {
+    let Cases = 0;
+    Assert.deepEqual(Parseˉcallableˉarguments([]), { Prepare: false, Prepared: false, Maximum: 3600 }); Cases++;
+    Assert.deepEqual(Parseˉcallableˉarguments(['--prepare-only', '--maximum-seconds', '4500']),
+        { Prepare: true, Prepared: false, Maximum: 4500 }); Cases++;
+    Assert.deepEqual(Parseˉcallableˉarguments(['--prepare-only', '--maximum-seconds', '60',
+        '--deadline-ms', '61000'], 1000), { Prepare: true, Prepared: false, Maximum: 60, Deadline: 61000 });
+    Assert.deepEqual(Parseˉcallableˉarguments(['--prepared-products-only', '--maximum-seconds', '3600']),
+        { Prepare: false, Prepared: true, Maximum: 3600 }); Cases++;
+    for (const Arguments of [['--prepare-only'], ['--prepared-products-only'],
+        ['--prepare-only', '--maximum-seconds', '4501'], ['--prepared-products-only', '--maximum-seconds', '3601'],
+        ['--prepare-only', '--maximum-seconds', '0'], ['--prepare-only', '--maximum-seconds', '01'],
+        ['--prepare-only', '--prepared-products-only', '--maximum-seconds', '600'],
+        ['--prepare-only', '--maximum-seconds', '60', '--deadline-ms', '1000'],
+        ['--prepare-only', '--maximum-seconds', '60', '--deadline-ms', '61001'],
+        ['--prepare-only', '--maximum-seconds', '60', '--deadline-ms', '9007199254740992']])
+        Assert.throws(() => Parseˉcallableˉarguments(Arguments, 1000), Error => Error.exitCode === 64);
+    Cases++;
+    const Names = ['WINDVALE_PREPARED_COMPILER_ONLY', 'WINDVALE_PREPARED_PRODUCTS_ONLY'];
+    const Original = Names.map(Name => process.env[Name]);
+    try {
+        for (const Value of [undefined, '', 'kept']) {
+            for (const Name of Names) { if (Value === undefined) delete process.env[Name]; else process.env[Name] = Value; }
+            await Withˉcallableˉenvironment({ Prepare: false, Prepared: true }, async () => {
+                for (const Name of Names) Assert.equal(process.env[Name], '1');
+            });
+            for (const Name of Names) Assert.equal(process.env[Name], Value);
+        }
+        Cases++;
+        const Failure = Object.assign(new Error('seeded child failure'), { exitCode: 23 });
+        await Assert.rejects(() => Withˉcallableˉenvironment({ Prepare: false, Prepared: true }, async () => {
+            throw Failure;
+        }), Error => Error === Failure);
+        for (const Name of Names) Assert.equal(process.env[Name], 'kept'); Cases++;
+        for (const Name of Names) {
+            for (const Other of Names) delete process.env[Other];
+            process.env[Name] = '1';
+            let Calls = 0;
+            await Assert.rejects(() => Withˉcallableˉenvironment({ Prepare: true, Prepared: false }, async () => { Calls++; }),
+                Error => Error.exitCode === 64);
+            Assert.equal(Calls, 0);
+        }
+        Cases++;
+        const Work = await mkdtemp(path.join(Testˉroot, 'callable-phases-'));
+        const Key = 'a'.repeat(64), Commands = [];
+        let Keyˉreads = 0, Drifting = false, Refusal = null, Requireˉprepared = false;
+        const Options = {
+            Work, Deadline: Date.now() + 60_000,
+            Getˉkey: async () => { Keyˉreads++; return Drifting && Keyˉreads > 1 ? 'b'.repeat(64) : Key; },
+            Getˉfamily: async () => Work,
+            Readˉcompiler: async () => ({ status: 'Hit', Requireˉunchanged: async () => {} }),
+            Snapshot: async Projects => { Assert.equal(Projects.length, 8); return { marker: 'source-inputs' }; },
+            Requireˉinputs: async Inputs => { Assert.equal(Inputs.marker, 'source-inputs'); },
+            Evidence: async Path => ({ Path, Bytes: 1, Sha256: Key }),
+            Run: async (Step, Tool, Arguments) => {
+                if (Requireˉprepared) for (const Name of Names) Assert.equal(process.env[Name], '1');
+                Commands.push({ Step, Tool, Arguments });
+                if (Refusal && Step.startsWith(Refusal)) throw Object.assign(new Error('cache miss'), { exitCode: 64 });
+            },
+        };
+        for (const Name of Names) delete process.env[Name];
+        const Prepared = await Acquireˉcallableˉproducts({ ...Options, Prepareˉproducts: true });
+        Assert.equal(Commands.length, 16);
+        for (const Command of Commands) {
+            Assert(!Command.Arguments.includes('--prepare-compiler'));
+            if (Command.Step.startsWith('source-')) {
+                Assert(Command.Arguments.includes('--prepared-compiler-only'));
+                Assert.equal(Command.Arguments[Command.Arguments.indexOf('--compiler-checkpoint') + 1], Key);
+            }
+        }
+        Assert.equal(Prepared.Products.length, 7); Assert.equal(Prepared.Verifier.Profile, '2');
+        Assert.equal(Commands.filter(Command => Command.Step.startsWith('package-')).length, 8); Cases++;
+        Commands.length = 0; Keyˉreads = 0; Requireˉprepared = true;
+        await Withˉcallableˉenvironment({ Prepare: false, Prepared: true }, async () => {
+            await Acquireˉcallableˉproducts(Options);
+            Assert.equal(Commands.length, 16);
+            for (const Command of Commands) {
+                Assert(!Command.Arguments.includes('--prepare-compiler'));
+                if (Command.Step.startsWith('source-')) Assert(Command.Arguments.includes('--prepared-compiler-only'));
+            }
+        }); Cases++;
+        for (const Kind of ['source-', 'package-']) {
+            Refusal = Kind; Commands.length = 0; Keyˉreads = 0;
+            await Withˉcallableˉenvironment({ Prepare: false, Prepared: true }, async () => {
+                await Assert.rejects(() => Acquireˉcallableˉproducts(Options), Error => Error.exitCode === 64);
+            });
+            Assert.equal(Commands.length, Kind === 'source-' ? 1 : 2);
+            Assert(Commands.every(Command => !Command.Arguments.includes('--prepare-compiler')));
+            Cases++;
+        }
+        Refusal = null; Commands.length = 0; Requireˉprepared = false;
+        await Assert.rejects(() => Acquireˉcallableˉproducts({ ...Options, Deadline: Date.now() - 1 }), Error => Error.exitCode === 124);
+        Assert.equal(Commands.length, 0);
+        await Assert.rejects(() => Acquireˉcallableˉproducts({ ...Options,
+            Readˉcompiler: async () => ({ status: 'Miss' }) }), Error => Error.exitCode === 64);
+        Assert.equal(Commands.length, 0); Cases++;
+        Commands.length = 0; Keyˉreads = 0; Drifting = true;
+        await Assert.rejects(() => Acquireˉcallableˉproducts(Options), /compiler inputs changed/u); Cases++;
+        Commands.length = 0;
+        await Withˉcallableˉenvironment({ Prepare: false, Prepared: true }, async () => {
+            await Assert.rejects(() => Acquireˉcallableˉproducts({ ...Options, Prepareˉproducts: true }), Error => Error.exitCode === 64);
+        });
+        Assert.equal(Commands.length, 0); Cases++;
+        Assert.equal(Cases, 14);
+    } finally {
+        for (const [Index, Name] of Names.entries()) {
+            if (Original[Index] === undefined) delete process.env[Name]; else process.env[Name] = Original[Index];
+        }
+    }
+    return Cases;
+}
+
+async function Verifyˉconstructionˉreadiness() {
+    const fs = await import('node:fs/promises');
+    const Temporary = realpathSync.native(os.tmpdir());
+    const Root = await fs.mkdtemp(path.join(Temporary, 'windvale-construction-readiness-'));
+    try {
+    const Work = path.join(Root, 'Control-Scaffold');
+    const Tooling = path.join(Work, 'Tools', 'Native');
+    const Started = Date.now();
+    const Deadline = Started + 30_000;
+    const Cases = [];
+    const Digest = Value => createHash('sha256').update(Value).digest('hex');
+    await fs.mkdir(Tooling, { recursive: true });
+    await fs.mkdir(path.join(Work, 'Inputs'), { recursive: true });
+    await fs.mkdir(path.join(Work, 'Output'), { recursive: true });
+    const Source = path.join(Work, 'Inputs', 'Source.wv');
+    const Project = path.join(Work, 'Inputs', 'Project.wvproj');
+    await fs.writeFile(Source, '#!wv/1/core\nmodule Control profile portable;\nexport fn Main() -> i32 { return 42; }\n');
+    await fs.writeFile(Project, 'windvale-project 4\nroot "Inputs/Source.wv"\nemit wvb\n');
+    await fs.copyFile(path.join(SCRIPT_DIRECTORY, 'Project-Construction-Readiness-Core.mjs'),
+        path.join(Tooling, 'Project-Construction-Readiness-Core.mjs'));
+    const Actualˉmodule = await fs.readFile(path.join(Tooling, 'Project-Construction-Readiness-Core.mjs'),'utf8');
+    const Filesystemˉimport = "from 'node:fs/promises';";
+    Assert.equal(Actualˉmodule.split(Filesystemˉimport).length,2);
+    await fs.writeFile(path.join(Tooling,'Project-Construction-Readiness-Core.mjs'),
+        Actualˉmodule.replace(Filesystemˉimport,"from './Filesystem-Control.mjs';"));
+    await fs.writeFile(path.join(Tooling,'Filesystem-Control.mjs'),`
+    import * as fs from 'node:fs/promises'; import path from 'node:path';
+    export { access,lstat,realpath,unlink } from 'node:fs/promises';
+    export const Control={Cache:null,CacheWrites:0};
+    export async function open(P,...A){if(Control.Cache!==null&&path.dirname(P)===Control.Cache&&path.basename(P).startsWith('.windvale-readiness-')){
+     Control.CacheWrites++;throw Object.assign(Error('Read-only cache'),{code:'EACCES'});}return fs.open(P,...A);}
+    export async function statfs(P,...A){return P===Control.Cache?{bsize:4096n,bavail:0n}:fs.statfs(P,...A);}
+    `);
+    await fs.copyFile(path.join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs'),
+        path.join(Tooling, 'Build-Current-Split-Project-Wvb.mjs'));
+    await fs.writeFile(path.join(Tooling, 'Generate-Compiler-Artifact-Readers.mjs'), '// generator command is mocked; not executed\n');
+    await fs.writeFile(path.join(Tooling, 'Native-Project-Cache-Key-Core.mjs'), `
+    import fs from 'node:fs/promises'; import path from 'node:path'; import { createHash } from 'node:crypto';
+    export const Control = { Requests: 0, Checks: 0, Slow: false, Source: null };
+    const Hash = B => createHash('sha256').update(B).digest('hex');
+    async function Evidence(P) { const B=await fs.readFile(P); return { path:P,bytes:B.length,sha256:Hash(B) }; }
+    export async function Prepareˉnativeˉprojectˉcacheˉcontext(N,P) { return {producerEvidence:await Promise.all(P.map(Evidence))}; }
+    export async function Getˉnativeˉprojectˉcacheˉrequest(C,P) { Control.Requests++; if(Control.Slow) await new Promise(R=>setTimeout(R,30));
+     const S=Control.Source??path.join(path.dirname(P),'Source.wv'), inputEvidence=await Promise.all([P,S].map(Evidence));
+     return { context:C,projectPath:P,inputEvidence,key:Hash(Buffer.from(JSON.stringify(inputEvidence))) }; }
+    export async function Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(R) { Control.Checks++; for(const E of [...R.inputEvidence,...R.context.producerEvidence]) {
+     if((await Evidence(E.path)).sha256!==E.sha256) throw Error('Input changed'); } }
+    `);
+    await fs.writeFile(path.join(Tooling, 'Development-Command-Core.mjs'), `
+    import fs from 'node:fs/promises';
+    export const Control = { Calls: [], Mode: 'Pass', Source: null };
+    export async function Runˉdevelopmentˉcommand(T,A,D,S,M) { Control.Calls.push({T,A,D,S,M});
+     if(Control.Mode==='Timeout') throw Object.assign(Error('mock child timeout'),{exitCode:124});
+     if(Control.Mode==='Change') await fs.appendFile(Control.Source,'// changed\\n');
+     if(Control.Mode==='Fail') return {Code:1,Output:'Mismatch',Error:'Mismatch'};
+     if(Control.Mode==='Fatal') return {Code:2,Output:'Mismatch',Error:'Mismatch'};
+     return {Code:0,Output:T==='git'?'git version 2.50.0\\n':'artifact-reader checks=17\\n',Error:''}; }
+    `);
+    await fs.writeFile(path.join(Tooling, 'Current-Split-Compiler-Cache-Core.mjs'), `
+    export const Control = { Key:0,Family:0,Acquire:0,Construct:0,Read:0 };
+    export const CURRENT_COMPILER_PROJECTS = ['Project.wvproj'];
+    export function Getˉcurrentˉsplitˉcompilerˉcacheˉroot() { return process.env.WINDVALE_NATIVE_CACHE_ROOT; }
+    export async function Getˉcurrentˉsplitˉcompilerˉkey() {Control.Key++;throw Error('Unexpected key');}
+    export async function Getˉcurrentˉsplitˉcompilerˉfamily() {Control.Family++;throw Error('Unexpected family');}
+    export async function Acquireˉcurrentˉsplitˉcompiler() {Control.Acquire++;throw Error('Unexpected acquisition');}
+    export async function Constructˉcurrentˉsplitˉcompiler() {Control.Construct++;throw Error('Unexpected construction');}
+    export async function Readˉpreparedˉsplitˉcompiler() {Control.Read++;throw Error('Unexpected admission');}
+    `);
+    await fs.writeFile(path.join(Tooling, 'Source-Edition-Predecessor-Core.mjs'), `
+    export function Hasˉuncertainˉconstructionˉcleanup(E) { return E?.cleanupUncertain===true; }
+    export async function Constructˉsourceˉeditionˉpredecessor() {throw Error('Unexpected predecessor');}
+    export async function Runˉcompilerˉconstructionˉcommand() {throw Error('Unexpected compiler');}
+    `);
+    const Module = await import(pathToFileURL(path.join(Tooling, 'Project-Construction-Readiness-Core.mjs')).href);
+    const Requests = (await import(pathToFileURL(path.join(Tooling, 'Native-Project-Cache-Key-Core.mjs')).href)).Control;
+    const Commands = (await import(pathToFileURL(path.join(Tooling, 'Development-Command-Core.mjs')).href)).Control;
+    const Compiler = (await import(pathToFileURL(path.join(Tooling, 'Current-Split-Compiler-Cache-Core.mjs')).href)).Control;
+    const Filesystem = (await import(pathToFileURL(path.join(Tooling,'Filesystem-Control.mjs')).href)).Control;
+    const Configuration = () => ({ Repository: Work, Projects: [Project], Temporary: Work,
+        Cache: path.join(Work, 'Not-Created', 'Cache'), Outputs: [path.join(Work, 'Output', 'Output.wvb')],
+        Prepare: false, Preparedˉonly: true, Deadline });
+    function Done(Name) { Cases.push(Name); }
+    Assert.equal(Module.Classifyˉreadinessˉspace(1n, 2n), 'Warning'); Done('Positive-low-space-warns');
+    Assert.equal(Module.Classifyˉreadinessˉspace(2n, 2n), 'Observed'); Done('Advisory-equality');
+    Assert.equal(Module.Classifyˉreadinessˉspace(2n**70n, 2n), 'Observed'); Done('Bigint-space-does-not-wrap');
+    Assert.throws(()=>Module.Classifyˉreadinessˉspace(0n, 0n)); Done('Zero-space-refuses');
+    Assert.throws(()=>Module.Classifyˉreadinessˉspace(-1n, 0n)); Done('Negative-space-refuses');
+    Assert.throws(()=>Module.Classifyˉreadinessˉspace(undefined, 0n)); Done('Unavailable-space-refuses');
+    Assert.throws(()=>Module.Requireˉreadinessˉtime(Date.now()-1), E=>E.exitCode===124); Done('Expired-deadline');
+    const Plain = await Module.Checkˉprojectˉconstructionˉreadiness(Configuration());
+    Assert.equal(Plain.Semanticˉvalidation,'NotRun'); Assert.equal(Plain.Compilerˉadmission,'OrdinaryPathPending');
+    Assert.equal(Plain.Generator,'NoDeclaredGeneratedReader'); Assert.equal(Commands.Calls.length,0);
+    Assert.equal(Plain.Node.Bytes, (await fs.stat(process.execPath)).size); Done('Plain-profile-and-actual-node-metadata');
+    Assert.equal(await fs.lstat(path.join(Work,'Not-Created')).then(()=>true,()=>false),false);
+    Assert.equal((await fs.readdir(Work)).filter(V=>V.startsWith('.windvale-readiness-')).length,0);
+    Done('No-cache-creation-and-probes-removed');
+    const Readˉonlyˉcache = path.join(Work,'Read-Only-Cache');
+    await fs.mkdir(Readˉonlyˉcache,{recursive:true});
+    Filesystem.Cache=Readˉonlyˉcache;
+    const Reused = await Module.Checkˉprojectˉconstructionˉreadiness({...Configuration(),Cache:Readˉonlyˉcache});
+    const Cacheˉobservation=Reused.Resources.find(Value=>Value.Role==='Cache');
+    Assert.equal(Cacheˉobservation.Availableˉbytes,'0');
+    Assert.equal(Cacheˉobservation.Access,'ReadOnlyObservation');Assert.equal(Filesystem.CacheWrites,0);
+    await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness({...Configuration(),Cache:Readˉonlyˉcache,Preparedˉonly:false}),/no available bytes/u);
+    Assert.equal(Filesystem.CacheWrites,0);Filesystem.Cache=null;
+    Done('Prepared-read-only-full-cache-reuse-without-write-probe');
+    const Artifact = path.join(Work, 'Compiler', 'Windvale', 'Source-Missing-Artifact-Core.wv');
+    await fs.mkdir(path.dirname(Artifact), { recursive:true });
+    await fs.writeFile(Artifact,'module Missing_marker profile portable;\n');
+    Requests.Source=Artifact;
+    const Missingˉmarker = await Module.Checkˉprojectˉconstructionˉreadiness(Configuration());
+    Assert.equal(Missingˉmarker.Generator,'CanonicalCheckPassed');
+    Assert.equal(Module.Isˉmaintainedˉartifactˉinput(Work, Source),false);
+    Requests.Source=null; Commands.Calls=[];
+    Done('Maintained-artifact-with-deleted-marker-still-checks-generator');
+    const Generated = '// Generated by Tools/Native/Generate-Compiler-Artifact-Readers.mjs.\nmodule Control;\n';
+    await fs.writeFile(Source,Generated);
+    const Checked = await Module.Checkˉprojectˉconstructionˉreadiness(Configuration());
+    Assert.equal(Checked.Generator,'CanonicalCheckPassed');
+    Assert.deepEqual(Commands.Calls.at(-1).A,[path.join(Tooling,'Generate-Compiler-Artifact-Readers.mjs'),'--check']);
+    Assert.ok(Commands.Calls.at(-1).D<=Deadline); Assert.equal(Commands.Calls.at(-1).S,false);
+    Done('Only-canonical-generator-check-with-inherited-deadline');
+    Commands.Mode='Fail'; await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness(Configuration()),/artifact check failed/u);
+    Done('Generator-mismatch-refuses');
+    Commands.Mode='Fatal'; await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness(Configuration()),E=>E.exitCode===2);
+    Done('Generator-fatal-child-status-retained');
+    await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness({...Configuration(),Prepare:true,Preparedˉonly:false}),E=>E.exitCode===2);
+    Done('Git-fatal-child-status-retained');
+    Commands.Mode='Timeout'; await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness(Configuration()),E=>E.exitCode===124);
+    Done('Generator-timeout-retains-124');
+    Commands.Mode='Change'; Commands.Source=Source;
+    await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness(Configuration()),/Input changed/u);
+    Done('Changed-declared-input-refuses-after-child');
+    Commands.Mode='Pass'; Requests.Slow=true;
+    await Assert.rejects(Module.Checkˉprojectˉconstructionˉreadiness({...Configuration(),Deadline:Date.now()+20}),E=>E.exitCode===124);
+    Requests.Slow=false; Done('Slow-request-cannot-renew-deadline');
+
+    const Saved = { argv:process.argv, exit:process.exitCode, stderr:process.stderr.write, stdout:process.stdout.write,
+        compiler:process.env.WINDVALE_PREPARED_COMPILER_ONLY, products:process.env.WINDVALE_PREPARED_PRODUCTS_ONLY,
+        cache:process.env.WINDVALE_NATIVE_CACHE_ROOT };
+    const Cli = await import(pathToFileURL(path.join(Tooling,'Build-Current-Split-Project-Wvb.mjs')).href);
+    let Errorˉtext='', Outputˉtext='';
+    try {
+        delete process.env.WINDVALE_PREPARED_COMPILER_ONLY; delete process.env.WINDVALE_PREPARED_PRODUCTS_ONLY;
+        process.env.WINDVALE_NATIVE_CACHE_ROOT=path.join(Work,'Not-Created','Cache');
+        process.stderr.write=Value=>{Errorˉtext+=String(Value);return true;};
+        process.stdout.write=Value=>{Outputˉtext+=String(Value);return true;};
+        async function Cliˉrun(Arguments, Action) {
+            Errorˉtext='';Outputˉtext='';process.exitCode=undefined;
+            process.argv=[process.execPath,path.join(Tooling,'Build-Current-Split-Project-Wvb.mjs'),...Arguments];
+            await Cli.Runˉcurrentˉsplitˉprojectˉcli(Action);
+            return { Code:process.exitCode??0,Error:Errorˉtext,Output:Outputˉtext };
+        }
+        const Base=['--preflight-only','--deadline-ms',String(Date.now()+60_000),Project,path.join(Work,'Output','Output.wvb')];
+        Assert.equal((await Cliˉrun(Base)).Code,0); Done('CLI-preflight-only-returns-before-work-key-or-admission');
+        Assert.equal((await Cliˉrun([...Base,'--preflight-only'])).Code,64); Done('CLI-duplicate-flag');
+        process.env.WINDVALE_PREPARED_COMPILER_ONLY='';
+        Assert.equal((await Cliˉrun(Base)).Code,1); delete process.env.WINDVALE_PREPARED_COMPILER_ONLY;
+        Done('CLI-invalid-prepared-environment');
+        Assert.equal((await Cliˉrun(['--preflight-only','--deadline-ms',String(Date.now()-1),Project,path.join(Work,'Output','Output.wvb')])).Code,124);
+        Done('CLI-expired-parent-deadline');
+        const Selected=['--compiler-checkpoint','a'.repeat(64),...Base];
+        Assert.equal((await Cliˉrun(Selected)).Code,0); Done('CLI-preflight-does-not-admit-selected-key');
+        Assert.deepEqual(Compiler,{Key:0,Family:0,Acquire:0,Construct:0,Read:0});
+    } finally {
+        process.argv=Saved.argv; process.exitCode=Saved.exit; process.stderr.write=Saved.stderr;process.stdout.write=Saved.stdout;
+        for(const [Name,Value] of [['WINDVALE_PREPARED_COMPILER_ONLY',Saved.compiler],['WINDVALE_PREPARED_PRODUCTS_ONLY',Saved.products],['WINDVALE_NATIVE_CACHE_ROOT',Saved.cache]]) {
+            if(Value===undefined) delete process.env[Name];else process.env[Name]=Value;
+        }
+    }
+    if(Date.now()>Deadline) throw Error('Control deadline exceeded');
+    const Readinessˉelapsed = Date.now()-Started;
+    const Processˉactions = await Verifyˉconstructionˉprocessˉstatuses(Work, true);
+    Assert.equal(Processˉactions,13);
+    const Report={status:'Pass',cases:Cases.length,names:Cases,elapsedMilliseconds:Readinessˉelapsed,
+        processActions:Processˉactions,packageDeadlineAssertions:12,totalElapsedMilliseconds:Date.now()-Started,
+        readinessControlMaximumMilliseconds:30_000,processActionTimeoutMilliseconds:10_000,
+        actualModuleSha256:Digest(Buffer.from(Actualˉmodule)),
+        filesystemBoundaryAdaptation:'One import specifier; exact body inverse to actual module; modeled full read-only cache',
+        actualCliSha256:Digest(await fs.readFile(path.join(Tooling,'Build-Current-Split-Project-Wvb.mjs'))),
+        mockedDependencies:['NativeProjectRequest','DevelopmentCommand','CurrentCompiler','SourceEditionPredecessor','ReadOnlyFullCacheFilesystem'],
+        actualChecks:['Module code','CLI sequencing','private filesystem write/cleanup','actual Node metadata'],
+        constructors:0,compilerExecutions:0,generatorExecutions:0,nativeExecutions:0,qualified:false};
+    await fs.writeFile(path.join(Root,'Readiness-Controls.json'),JSON.stringify(Report,null,2)+'\n');
+    console.log(JSON.stringify(Report));
+
+    } finally {
+        if (path.dirname(path.resolve(Root)) !== Temporary ||
+            !path.basename(Root).startsWith('windvale-construction-readiness-')) {
+            throw new Error('Readiness control cleanup escaped its allocated parent.');
+        }
+        await fs.rm(Root, { recursive: true, force: true });
+    }
+
 }

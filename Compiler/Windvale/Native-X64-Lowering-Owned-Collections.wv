@@ -414,7 +414,7 @@ export fn Emitˉoperation(
         Output = Word(Bytesˉconcat(Output, Addressˉrax), Backing * 16u32);
         Output = Word(Bytesˉconcat(Output, Storeˉrax), Target * 16u32);
         Stackˉtypes = Bytesˉconcat(Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
-            Bytesˉfromˉu8(Types.Compilerˉnativeˉx64ˉvariantˉtype(Resultˉtype)));
+            Bytesˉfromˉu8(Types.Compilerˉnativeˉx64ˉvariantˉtype(Table, Resultˉtype)));
         Stackˉslots = Bytesˉconcat(Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32), Bytesˉfromˉu32ˉlittle(Target));
         Depth = Depth + 1u32;
         Nextˉrecord = Nextˉrecord + 1u32;
@@ -508,7 +508,7 @@ export fn Analyze(Input: bytes, Instructionˉoffset: u32, Opcode: u8, Localˉtyp
                 (Opcode == 209u8 && !Types.Compilerˉnativeˉx64ˉunitˉallocationˉresultˉisˉexact(Input, Table, Outcome)) {
                 return Analysis(false, Stack, Depth, I32ˉvalues, Boolˉvalues, U8ˉvalues, U32ˉvalues, Recordˉvalues, Bodyˉbytes);
             }
-            Produced = Types.Compilerˉnativeˉx64ˉvariantˉtype(Outcome);
+            Produced = Types.Compilerˉnativeˉx64ˉvariantˉtype(Table, Outcome);
             Recordˉvalues = Recordˉvalues + 1u32;
         }
         if Opcode != 226u8 { Depth = Depth - 1u32; }

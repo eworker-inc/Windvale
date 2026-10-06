@@ -18,35 +18,7 @@ export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() -> u32 {
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() -> u32 {
-    return 1024u32;
-}
-
-export fn Compilerˉnativeˉx64ˉlayoutˉappend(
-    Directory: bytes,
-    Machineˉoffset: u32,
-    Machineˉlength: u32,
-    Parameters: u32,
-    Returnˉtype: u8,
-    Parameterˉtypes: bytes
-) -> bytes {
-    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Machineˉoffset);
-    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Machineˉlength));
-    Entry = Bytesˉconcat(
-        Entry,
-        Bytesˉslice(Bytesˉfromˉu32ˉlittle(Parameters), 0u32, 1u32)
-    );
-    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(Returnˉtype));
-    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu16ˉlittle(0u32));
-    var Parameter: u32 = 0u32;
-    while Parameter < Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() {
-        var Type: u8 = 0u8;
-        if Parameter < Parameters {
-            Type = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
-        }
-        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(Type));
-        Parameter = Parameter + 1u32;
-    }
-    return Bytesˉconcat(Directory, Entry);
+    return 2048u32;
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
@@ -108,10 +80,10 @@ export fn Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
     if Type == 4u8 {
         return Locals + I32ˉslots + Boolˉslots + Textˉslots + Index;
     }
-    if Type == 5u8 || Type == 9u8 || Type == 10u8 {
+    if Type == 5u8 || Type == 8u8 || Type == 9u8 || Type == 10u8 {
         return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots + Index;
     }
-    if Type == 6u8 || Type == 11u8 {
+    if Type == 6u8 || Type == 7u8 || Type == 11u8 {
         return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots +
             U32ˉslots + Index;
     }

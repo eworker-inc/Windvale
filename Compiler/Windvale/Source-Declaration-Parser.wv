@@ -81,6 +81,7 @@ export enum Compilerˉsourceˉdeclarationˉkind: i32 {
     Ownedˉvector = 11;
     Immutableˉsequence = 12;
     Foreign = 13;
+    Borrowedˉslice = 14;
 }
 
 export record Compilerˉparseˉstep {

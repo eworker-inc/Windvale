@@ -22,6 +22,7 @@ export enum Linkerˉcompilerˉwvoˉsegmentedˉstatus: i32 {
     Chunkˉrange = 8;
     Chunkˉcontent = 9;
     Text = 10;
+    Providers = 11;
 }
 
 export enum Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind: i32 {
@@ -162,12 +163,44 @@ fn Readˉonlyˉchunkˉcount(
     return Result;
 }
 
-export fn Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+export fn Linkerˉcompilerˉwvoˉsegmentedˉprovidersˉvalidate(
+    Sharedˉprofile: bool,
+    Moduleˉbytes: u32,
+    Providers: bytes
+) -> bool {
+    if !Sharedˉprofile { return Bytesˉlength(Providers) == 0u32; }
+    if Bytesˉlength(Providers) != 40u32 ||
+        Bytesˉreadˉu8(Providers, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Providers, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Providers, 2u32) != 83u8 ||
+        Bytesˉreadˉu8(Providers, 3u32) != 80u8 ||
+        Bytesˉreadˉu32ˉlittle(Providers, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Providers, 8u32) != 40u32 ||
+        Bytesˉreadˉu32ˉlittle(Providers, 32u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Providers, 36u32) != 0u32 { return false; }
+    let Position: u32 = Bytesˉreadˉu32ˉlittle(Providers, 12u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Providers, 16u32);
+    if Moduleˉbytes > 67108864u32 ||
+        Position != (Moduleˉbytes + 15u32) / 16u32 * 16u32 ||
+        Position > 67108864u32 || Length == 0u32 || Length > 4194304u32 ||
+        Length > 67108864u32 - Position { return false; }
+    let Entry: u32 = Bytesˉreadˉu32ˉlittle(Providers, 20u32);
+    let Budgeted: u32 = Bytesˉreadˉu32ˉlittle(Providers, 24u32);
+    let Shared: u32 = Bytesˉreadˉu32ˉlittle(Providers, 28u32);
+    if Entry < Position || Entry - Position >= Length ||
+        Budgeted < Position || Budgeted - Position >= Length ||
+        Shared < Position || Shared - Position >= Length ||
+        Entry == Budgeted || Entry == Shared || Budgeted == Shared { return false; }
+    return true;
+}
+
+fn Planˉbuild(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
     Readˉonlyˉheader: bytes,
     Symbolˉchunk: bytes,
-    Relocationˉchunk: bytes
+    Relocationˉchunk: bytes,
+    Providers: bytes
 ) -> Linkerˉcompilerˉwvoˉsegmentedˉplan {
     let Manifestˉsummary:
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
@@ -201,6 +234,11 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
         Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
         return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Symbols);
     }
+    if !Linkerˉcompilerˉwvoˉsegmentedˉprovidersˉvalidate(
+        Symbolˉsummary.Sharedˉprofile,
+        Envelopeˉsummary.Textˉbytes + Envelopeˉsummary.Readˉonlyˉbytes,
+        Providers
+    ) { return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Providers); }
     let Relocationˉsummary:
         Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
         Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
@@ -249,6 +287,8 @@ fn Patchˉtextˉchunk(
     Envelopeˉsummary:
         Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary,
     Symbolˉchunk: bytes,
+    Symbolˉsummary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary,
+    Providers: bytes,
     Relocationˉchunk: bytes,
     Position: u32,
     Chunk: bytes
@@ -279,12 +319,18 @@ fn Patchˉtextˉchunk(
                 Relocationˉchunk,
                 Relocationˉentry + 12u32
             );
-            let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbolˉchunk,
-                Targetˉsymbol * 30u32 + 8u32
-            );
-            let Value: u32 = Envelopeˉsummary.Textˉbytes -
-                Patchˉoffset - 4u32 + Targetˉoffset;
+            var Targetˉoffset: u32 = 0u32;
+            if Targetˉsymbol < Symbolˉsummary.Dataˉsymbols {
+                Targetˉoffset = Envelopeˉsummary.Textˉbytes +
+                    Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Targetˉsymbol * 30u32 + 8u32);
+            } else {
+                if Targetˉsymbol == Symbolˉsummary.Budgetedˉsymbol {
+                    Targetˉoffset = Bytesˉreadˉu32ˉlittle(Providers, 24u32);
+                } else {
+                    Targetˉoffset = Bytesˉreadˉu32ˉlittle(Providers, 28u32);
+                }
+            }
+            let Value: u32 = Targetˉoffset - Patchˉoffset - 4u32;
             Result = Bytesˉconcat(
                 Result,
                 Bytesˉfromˉu32ˉlittle(Value)
@@ -299,22 +345,24 @@ fn Patchˉtextˉchunk(
     );
 }
 
-export fn Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+fn Chunkˉlink(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
     Readˉonlyˉheader: bytes,
     Symbolˉchunk: bytes,
     Relocationˉchunk: bytes,
     Chunkˉindex: u32,
-    Chunk: bytes
+    Chunk: bytes,
+    Providers: bytes
 ) -> Linkerˉcompilerˉwvoˉsegmentedˉchunk {
     let Plan: Linkerˉcompilerˉwvoˉsegmentedˉplan =
-        Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+        Planˉbuild(
             Stagingˉmanifest,
             Prefix,
             Readˉonlyˉheader,
             Symbolˉchunk,
-            Relocationˉchunk
+            Relocationˉchunk,
+            Providers
         );
     if Plan.Status != Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
         return Invalidˉchunk(Plan.Status, Chunk);
@@ -384,6 +432,8 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
             Patchˉtextˉchunk(
                 Envelopeˉsummary,
                 Symbolˉchunk,
+                Symbolˉsummary,
+                Providers,
                 Relocationˉchunk,
                 Position,
                 Chunk
@@ -400,6 +450,12 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
                     Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange,
                     Chunk
                 );
+            }
+            if Symbolˉsummary.Sharedˉprofile &&
+                (Position != Readˉonlyˉstart ||
+                    !Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsharedˉdataˉvalidate(
+                        Symbolˉsummary, Symbolˉchunk, Chunk)) {
+                return Invalidˉchunk(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent, Chunk);
             }
             return Acceptedˉchunk(
                 Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Readˉonlyˉdata,
@@ -466,4 +522,38 @@ export fn Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
         Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange,
         Chunk
     );
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉplan {
+    return Planˉbuild(Stagingˉmanifest, Prefix, Readˉonlyˉheader,
+        Symbolˉchunk, Relocationˉchunk, Empty(Prefix));
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉsharedˉplanˉbuild(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes, Providers: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉplan {
+    return Planˉbuild(Stagingˉmanifest, Prefix, Readˉonlyˉheader,
+        Symbolˉchunk, Relocationˉchunk, Providers);
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Chunkˉindex: u32, Chunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉchunk {
+    return Chunkˉlink(Stagingˉmanifest, Prefix, Readˉonlyˉheader,
+        Symbolˉchunk, Relocationˉchunk, Chunkˉindex, Chunk, Empty(Prefix));
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉsharedˉchunkˉlink(
+    Stagingˉmanifest: bytes, Prefix: bytes, Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Chunkˉindex: u32, Chunk: bytes, Providers: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉchunk {
+    return Chunkˉlink(Stagingˉmanifest, Prefix, Readˉonlyˉheader,
+        Symbolˉchunk, Relocationˉchunk, Chunkˉindex, Chunk, Providers);
 }

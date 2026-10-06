@@ -9,6 +9,7 @@ import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉtemplates as Sharedˉtemplates;
 
 export enum Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus: i32 {
     Valid = 0;
@@ -25,6 +26,7 @@ export enum Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus: i32 {
     Placeholder = 11;
     Padding = 12;
     Helper = 13;
+    Entry = 14;
 }
 
 export record Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
@@ -162,6 +164,15 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
 
     var Relocation: u32 = 0u32;
     var Previousˉoffset: u32 = 0u32;
+    var Entryˉproviders: bytes = Bytesˉslice(Prefix, 0u32, 0u32);
+    var Budgetedˉentryˉseen: bool = false;
+    var Sharedˉentryˉseen: bool = false;
+    if Symbolˉsummary.Sharedˉprofile {
+        if Symbolˉsummary.Mainˉbytes <= Sharedˉtemplates.Entryˉbytes() {
+            return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Entry);
+        }
+        Entryˉproviders = Sharedˉtemplates.Entryˉproviderˉrelocations(Symbolˉsummary.Mainˉoffset);
+    }
     while Relocation < Envelopeˉsummary.Relocations {
         let Entry: u32 = Relocation * 20u32;
         if Bytesˉreadˉu8(Relocationˉchunk, Entry) != 2u8 ||
@@ -192,16 +203,33 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
                 );
             }
         }
-        if Bytesˉreadˉu32ˉlittle(
-            Relocationˉchunk,
-            Entry + 12u32
-        ) >= Symbolˉsummary.Dataˉsymbols {
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 12u32);
+        if Target >= Symbolˉsummary.Dataˉsymbols &&
+            !(Symbolˉsummary.Sharedˉprofile &&
+                (Target == Symbolˉsummary.Budgetedˉsymbol ||
+                    Target == Symbolˉsummary.Sharedˉsymbol)) {
             return Invalid(
                 Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Target
             );
         }
+        if Symbolˉsummary.Sharedˉprofile &&
+            Offset < Symbolˉsummary.Mainˉoffset + Sharedˉtemplates.Entryˉbytes() &&
+            Offset + 4u32 > Symbolˉsummary.Mainˉoffset {
+            if Offset == Bytesˉreadˉu32ˉlittle(Entryˉproviders, 0u32) &&
+                Target == Symbolˉsummary.Budgetedˉsymbol && !Budgetedˉentryˉseen {
+                Budgetedˉentryˉseen = true;
+            } else if Offset == Bytesˉreadˉu32ˉlittle(Entryˉproviders, 8u32) &&
+                Target == Symbolˉsummary.Sharedˉsymbol && !Sharedˉentryˉseen {
+                Sharedˉentryˉseen = true;
+            } else {
+                return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Entry);
+            }
+        }
         Previousˉoffset = Offset;
         Relocation = Relocation + 1u32;
+    }
+    if Symbolˉsummary.Sharedˉprofile && (!Budgetedˉentryˉseen || !Sharedˉentryˉseen) {
+        return Invalid(Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Entry);
     }
     return Accepted(
         Codeˉlength,
@@ -238,6 +266,9 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
         Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
         return Summary.Status;
     }
+    let Symbolˉsummary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
     let Envelopeˉsummary:
         Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
         Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
@@ -265,6 +296,20 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
     if Position < 49u32 || Position >= Textˉend ||
         Length > Textˉend - Position {
         return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉindex;
+    }
+    if Symbolˉsummary.Sharedˉprofile {
+        let Mainˉposition: u32 = 49u32 + Symbolˉsummary.Mainˉoffset;
+        let Entryˉbytes: u32 = Sharedˉtemplates.Entryˉbytes();
+        if Symbolˉsummary.Mainˉbytes <= Entryˉbytes {
+            return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Entry;
+        }
+        if Position < Mainˉposition + Entryˉbytes && Position + Length > Mainˉposition {
+            if Mainˉposition < Position || Mainˉposition - Position > Length ||
+                Entryˉbytes > Length - (Mainˉposition - Position) ||
+                !Sharedˉtemplates.Entryˉisˉexact(Chunk, Mainˉposition - Position, 6u8) {
+                return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Entry;
+            }
+        }
     }
     let Declaredˉcodeˉend: u32 =
         49u32 + Summary.Declaredˉcodeˉbytes;
@@ -297,8 +342,16 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
             if Helperˉposition < Declaredˉcodeˉend {
                 Helperˉposition = Declaredˉcodeˉend;
             }
-            let Canonical: bytes =
-                Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelper();
+            var Canonical: bytes = Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelper();
+            if Symbolˉsummary.Sharedˉprofile {
+                Canonical = Sharedˉtemplates.Helper();
+                if Position <= Declaredˉcodeˉend &&
+                    Summary.Helperˉbytes <= Chunkˉend - Declaredˉcodeˉend &&
+                    !Sharedˉtemplates.Helperˉisˉexact(Bytesˉslice(Chunk,
+                        Declaredˉcodeˉend - Position, Summary.Helperˉbytes)) {
+                    return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Helper;
+                }
+            }
             var Helperˉindex: u32 = Helperˉposition;
             while Helperˉindex < Chunkˉend {
                 if Bytesˉreadˉu8(

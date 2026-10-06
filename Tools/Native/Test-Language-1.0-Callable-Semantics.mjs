@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import {
+    lstat,
     mkdtemp,
     readFile,
     realpath,
@@ -9,7 +10,13 @@ import {
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
-import { spawn } from 'node:child_process';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
+import { Getˉcurrentˉsplitˉcompilerˉkey, Getˉcurrentˉsplitˉcompilerˉfamily,
+    Readˉpreparedˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
+import { Prepareˉnativeˉprojectˉcacheˉcontext, Getˉnativeˉprojectˉcacheˉrequest,
+    Requireˉnativeˉprojectˉcacheˉrequestˉunchanged } from './Native-Project-Cache-Key-Core.mjs';
+import { Prepareˉhostedˉapplicationˉcontext, Readˉboundedˉhostedˉfile } from './Native-Hosted-Application-Cache-Core.mjs';
+import { Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
 import { fileURLToPath } from 'node:url';
 import {
     CALLABLE_WVB_BASE64,
@@ -66,79 +73,183 @@ function Reject(Message) {
     throw new Error(Message);
 }
 
-function Runˉcommand(Tool, Argumentsˉvalue) {
-    return new Promise((Resolveˉresult, Rejectˉpromise) => {
-        if (WINDOWS && [Tool, ...Argumentsˉvalue].some(
-            Argument => /[\r\n&|<>^%!"]/u.test(Argument))) {
-            Rejectˉpromise(new Error(
-                'A Windows test argument contains shell metacharacters.'
-            ));
-            return;
-        }
-        const Isˉcommand = WINDOWS && Tool.toLowerCase().endsWith('.cmd');
-        const Executable = Isˉcommand
-            ? process.env.ComSpec ?? 'cmd.exe'
-            : Tool;
-        const Producerˉarguments = Isˉcommand
-            ? [
-                '/d', '/v:off', '/s', '/c',
-                `"${[Tool, ...Argumentsˉvalue]
-                    .map(Argument => `"${Argument}"`)
-                    .join(' ')}"`
-            ]
-            : Argumentsˉvalue;
-        const Child = spawn(Executable, Producerˉarguments, {
-            cwd: REPOSITORY_ROOT,
-            stdio: ['ignore', 'pipe', 'pipe'],
-            windowsHide: true,
-            windowsVerbatimArguments: Isˉcommand
-        });
-        const Started = Date.now();
-        const Heartbeat = setInterval(() => {
-            process.stdout.write(
-                `INFO  language 1 callable semantics active ` +
-                `tool=${basename(Tool)} elapsed-ms=${Date.now() - Started}\n`
-            );
-        }, HEARTBEAT_INTERVAL_MILLISECONDS);
-        Heartbeat.unref();
-        const Output = [];
-        const Errorˉoutput = [];
-        var Outputˉbytes = 0;
-        var Errorˉbytes = 0;
-        var Exceeded = false;
-        Child.stdout.on('data', Chunk => {
-            Outputˉbytes += Chunk.length;
-            if (Outputˉbytes <= MAXIMUM_OUTPUT_BYTES) {
-                Output.push(Chunk);
-            } else {
-                Exceeded = true;
-                Child.kill();
-            }
-        });
-        Child.stderr.on('data', Chunk => {
-            Errorˉbytes += Chunk.length;
-            if (Errorˉbytes <= MAXIMUM_OUTPUT_BYTES) {
-                Errorˉoutput.push(Chunk);
-            } else {
-                Exceeded = true;
-                Child.kill();
-            }
-        });
-        Child.once('error', Errorˉvalue => {
-            clearInterval(Heartbeat);
-            Rejectˉpromise(Errorˉvalue);
-        });
-        Child.once('close', Code => {
-            clearInterval(Heartbeat);
-            Resolveˉresult({
-                Code,
-                Output: Buffer.concat(Output),
-                Error: Buffer.concat(Errorˉoutput),
-                Exceeded
-            });
-        });
-    });
+let Callableˉdeadline = null;
+async function Runˉcommand(Tool, Argumentsˉvalue) {
+    if (!Number.isSafeInteger(Callableˉdeadline) || Date.now() >= Callableˉdeadline)
+        throw Object.assign(new Error('Callable command deadline expired.'), { exitCode: 124 });
+    const Started = Date.now();
+    const Heartbeat = setInterval(() => process.stdout.write(
+        'INFO language 1 callable semantics tool=' + basename(Tool) + ' elapsed-ms=' +
+        (Date.now() - Started) + ' remaining-ms=' + Math.max(0, Callableˉdeadline - Date.now()) + '\n'),
+        HEARTBEAT_INTERVAL_MILLISECONDS);
+    Heartbeat.unref();
+    try {
+        const Result = await Runˉdevelopmentˉcommand(Tool, Argumentsˉvalue, Callableˉdeadline,
+            false, MAXIMUM_OUTPUT_BYTES);
+        return { Code: Result.Code, Output: Buffer.from(Result.Output),
+            Error: Buffer.from(Result.Error), Exceeded: false };
+    } finally { clearInterval(Heartbeat); }
 }
+
+export function Parseˉcallableˉarguments(Arguments, Now = Date.now()) {
+    const Usage = () => { throw Object.assign(new Error('Callable phases require --prepare-only or ' +
+        '--prepared-products-only --maximum-seconds N.'), { exitCode: 64 }); };
+    if (!Array.isArray(Arguments) || Arguments.some(Value => typeof Value !== 'string')) Usage();
+    if (Arguments.length === 0) return Object.freeze({ Prepare: false, Prepared: false, Maximum: 3600 });
+    if (![3, 5].includes(Arguments.length) || !['--prepare-only', '--prepared-products-only'].includes(Arguments[0]) ||
+        Arguments[1] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(Arguments[2])) Usage();
+    const Prepare = Arguments[0] === '--prepare-only', Maximum = Number(Arguments[2]);
+    if (Maximum > (Prepare ? 4500 : 3600)) Usage();
+    if (Arguments.length === 3) return Object.freeze({ Prepare, Prepared: !Prepare, Maximum });
+    if (Arguments[3] !== '--deadline-ms' || !/^[1-9][0-9]*$/u.test(Arguments[4])) Usage();
+    const Deadline = Number(Arguments[4]);
+    if (!Number.isSafeInteger(Now) || !Number.isSafeInteger(Deadline) || Deadline <= Now || Deadline > Now + Maximum * 1000) Usage();
+    return Object.freeze({ Prepare, Prepared: !Prepare, Maximum, Deadline });
+}
+
+export async function Withˉcallableˉenvironment(Request, Action) {
+    if (!Request || typeof Request.Prepare !== 'boolean' || typeof Request.Prepared !== 'boolean' ||
+        Request.Prepare && Request.Prepared || typeof Action !== 'function')
+        throw Object.assign(new Error('Invalid callable phase environment.'), { exitCode: 64 });
+    const Names = ['WINDVALE_PREPARED_COMPILER_ONLY', 'WINDVALE_PREPARED_PRODUCTS_ONLY'];
+    const Before = Names.map(Name => process.env[Name]);
+    if (Request.Prepare && Before.some(Value => Value !== undefined))
+        throw Object.assign(new Error('Callable preparation refuses prepared behavior flags.'), { exitCode: 64 });
+    try {
+        if (Request.Prepared) for (const Name of Names) process.env[Name] = '1';
+        return await Action();
+    } finally {
+        for (const [Index, Name] of Names.entries()) {
+            if (Before[Index] === undefined) delete process.env[Name];
+            else process.env[Name] = Before[Index];
+        }
+    }
+}
+
+async function Callableˉevidence(Path, Check) {
+    Check();
+    const Maximum = Path === process.execPath ? 134_217_728 :
+        Path.endsWith('.wvb') ? 16_777_216 : 67_108_864;
+    const Bytes = await Readˉboundedˉhostedˉfile(Path, 'callable input/product', Maximum);
+    Check();
+    return Object.freeze({ Path, Bytes: Bytes.length, Sha256: createHash('sha256').update(Bytes).digest('hex') });
+}
+
+async function Snapshotˉcallableˉinputs(Projects, Check) {
+    const Extension = WINDOWS ? 'cmd' : 'sh';
+    const Context = await Prepareˉnativeˉprojectˉcacheˉcontext('callable-test-inputs-v1', [
+        fileURLToPath(import.meta.url),
+        ...['Language-1.0-Callable-Wvb-Fixtures.mjs', 'Current-Split-Compiler-Cache-Core.mjs',
+            'Build-Current-Split-Project-Wvb.mjs', 'Build-Cached-Split-Project-Wvb.mjs',
+            'Build-Cached-Segmented-Hosted-Wvb.mjs', 'Native-Project-Cache-Key-Core.mjs',
+            'Native-Hosted-Application-Cache-Core.mjs', 'Build-Cached-Segmented-Project.mjs',
+            'Development-Command-Core.mjs', `Check-Wvo.${Extension}`, `Link-Wvo.${Extension}`,
+            `Package-Console.${Extension}`].map(Name => join(SCRIPT_DIRECTORY, Name)),
+        join(REPOSITORY_ROOT, 'Artifacts/Native-Wvb-To-Wvo-Candidate', WINDOWS ? 'Wvb-To-Wvo.exe' : 'Wvb-To-Wvo.elf'),
+    ]);
+    const Requests = [];
+    for (const Project of Projects) { Check(); Requests.push(await Getˉnativeˉprojectˉcacheˉrequest(Context, Project)); }
+    // These immutable ABI22 tools still own the eight independent AOT checks.
+    // They are distinct from the segmented hosted packager's producer inventory.
+    const Aotˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext('callable-aot-inputs-v1', [
+        join(SCRIPT_DIRECTORY, `Publish-Console.${Extension}`),
+        join(SCRIPT_DIRECTORY, 'Check-Console-Publication-Candidate.mjs'),
+        join(REPOSITORY_ROOT, 'Artifacts/Native-Wvo-Object-Candidate', WINDOWS ? 'Wvo-Object.exe' : 'Wvo-Object.elf'),
+        join(REPOSITORY_ROOT, 'Artifacts/Native-Wv-Linker-Candidate', WINDOWS ? 'Wv-Linker.exe' : 'Wv-Linker.elf'),
+        join(REPOSITORY_ROOT, 'Artifacts/Native-Console-Packager-Candidate', WINDOWS ? 'Console-Packager.exe' : 'Console-Packager.elf'),
+        join(REPOSITORY_ROOT, 'Artifacts/Native-Console-Application-Publisher-Candidate',
+            WINDOWS ? 'windows-x64-wvappublish.exe' : 'linux-x64-wvappublish.elf'),
+    ]);
+    Check();
+    Requests.push(await Getˉnativeˉprojectˉcacheˉrequest(Aotˉcontext, Projects[0]));
+    const Hosted = await Prepareˉhostedˉapplicationˉcontext(WINDOWS ? 'windows' : 'linux',
+        join(SCRIPT_DIRECTORY, `Package-Hosted-Wvb.${Extension}`));
+    Check();
+    return { Requests, Node: await Callableˉevidence(process.execPath, Check),
+        Hosted: Hosted.producerFields.map(Field => ({ label: Field.label, bytes: Buffer.from(Field.bytes) })) };
+}
+
+async function Requireˉcallableˉinputsˉunchanged(Snapshot, Check) {
+    for (const Request of Snapshot.Requests) { Check(); await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request); }
+    await Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged();
+    const Hosted = await Prepareˉhostedˉapplicationˉcontext(WINDOWS ? 'windows' : 'linux',
+        join(SCRIPT_DIRECTORY, `Package-Hosted-Wvb.${WINDOWS ? 'cmd' : 'sh'}`));
+    if (Hosted.producerFields.length !== Snapshot.Hosted.length || Hosted.producerFields.some((Field, Index) =>
+        Field.label !== Snapshot.Hosted[Index].label || !Field.bytes.equals(Snapshot.Hosted[Index].bytes)))
+        Reject('Callable hosted packaging inputs changed.');
+    const Node = await Callableˉevidence(process.execPath, Check);
+    if (Node.Bytes !== Snapshot.Node.Bytes || Node.Sha256 !== Snapshot.Node.Sha256) Reject('Callable Node producer changed.');
+    Check();
+}
+
+// Scoped phases use the exact ordinary source/image caches and only admit an
+// already prepared current6 checkpoint. Injected callbacks serve the existing pure cache owner.
+export async function Acquireˉcallableˉproducts({ Work, Deadline, Run,
+    Prepareˉproducts = false,
+    Getˉkey = Getˉcurrentˉsplitˉcompilerˉkey, Getˉfamily = Getˉcurrentˉsplitˉcompilerˉfamily,
+    Readˉcompiler = Readˉpreparedˉsplitˉcompiler, Snapshot = Snapshotˉcallableˉinputs,
+    Requireˉinputs = Requireˉcallableˉinputsˉunchanged, Evidence = Callableˉevidence }) {
+    if (typeof Work !== 'string' || !Number.isSafeInteger(Deadline) || typeof Prepareˉproducts !== 'boolean' ||
+        ![Run, Getˉkey, Getˉfamily, Readˉcompiler, Snapshot, Requireˉinputs, Evidence]
+            .every(Value => typeof Value === 'function') || Work !== resolve(Work)) Reject('Invalid callable acquisition.');
+    function Check() {
+        if (Date.now() >= Deadline) throw Object.assign(new Error('Callable deadline expired.'), { exitCode: 124 });
+    }
+    Check();
+    const Information = await lstat(Work, { bigint: true });
+    if (!Information.isDirectory() || Information.isSymbolicLink() || await realpath(Work) !== Work || Work === REPOSITORY_ROOT)
+        Reject('Callable products require an ordinary scoped work directory.');
+    if (Prepareˉproducts && ['WINDVALE_PREPARED_COMPILER_ONLY', 'WINDVALE_PREPARED_PRODUCTS_ONLY']
+        .some(Name => process.env[Name] !== undefined))
+        throw Object.assign(new Error('Callable construction is forbidden in prepared behavior.'), { exitCode: 64 });
+    const Projects = [...TESTS.map(Test => join(REPOSITORY_ROOT, 'Projects/Tests', Test.Project)),
+        join(REPOSITORY_ROOT, 'Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj')];
+    const Inputs = await Snapshot(Projects, Check);
+    const Key = await Getˉkey();
+    if (typeof Key !== 'string' || !/^[0-9a-f]{64}$/u.test(Key)) Reject('Invalid current compiler identity.');
+    Check();
+    const Targets = [...TESTS.map(Test => ({ Name: Test.Name, Test, Profile: '1' })),
+        { Name: 'verifier', Profile: '2' }];
+    const Measurements = [];
+    for (const Target of Targets) {
+        Target.Module = join(Work, Target.Name + '.wvb');
+        Target.Application = join(Work, Target.Name + (WINDOWS ? '.exe' : '.elf'));
+    }
+    const Compiler = await Readˉcompiler(await Getˉfamily(), Key);
+    if (Compiler.status !== 'Hit' || typeof Compiler.Requireˉunchanged !== 'function')
+        throw Object.assign(new Error('Callable phases require the existing exact current6 checkpoint; ' +
+            'prepare it explicitly before entering this owner.'), { exitCode: 64 });
+    for (const [Index, Target] of Targets.entries()) {
+        Check();
+        await Run('source-' + Target.Name, process.execPath,
+            [join(SCRIPT_DIRECTORY, 'Build-Current-Split-Project-Wvb.mjs'), '--deadline-ms', String(Deadline),
+                '--compiler-checkpoint', Key, '--prepared-compiler-only', Projects[Index], Target.Module]);
+        Measurements.push(await Evidence(Target.Module, Check));
+        await Run('package-' + Target.Name, process.execPath,
+            [join(SCRIPT_DIRECTORY, 'Build-Cached-Segmented-Hosted-Wvb.mjs'), '--deadline-ms', String(Deadline),
+                Target.Profile, Target.Module, Target.Application]);
+        Measurements.push(await Evidence(Target.Application, Check));
+    }
+    async function Requireˉunchanged() {
+        Check();
+        const Current = await lstat(Work, { bigint: true });
+        if (!Current.isDirectory() || Current.isSymbolicLink() || Current.dev !== Information.dev || Current.ino !== Information.ino)
+            Reject('Callable work directory changed.');
+        await Requireˉinputs(Inputs, Check);
+        await Compiler.Requireˉunchanged();
+        if (await Getˉkey() !== Key) Reject('Callable current compiler inputs changed.');
+        for (const Before of Measurements) {
+            const After = await Evidence(Before.Path, Check);
+            if (Before.Bytes !== After.Bytes || Before.Sha256 !== After.Sha256)
+                Reject('Callable prepared product changed: ' + Before.Path);
+        }
+        Check();
+    }
+    await Requireˉunchanged();
+    return Object.freeze({ Products: Targets.slice(0, -1), Verifier: Targets.at(-1),
+        Compilerˉkey: Key, Requireˉunchanged });
+}
+
 
 async function Requireˉbuild(Build, Test, Module) {
     const Project = join(REPOSITORY_ROOT, 'Projects', 'Tests', Test.Project);
@@ -405,6 +516,9 @@ async function Removeˉwork(Work, Temporaryˉroot) {
     await rm(Work, { recursive: true, force: false, maxRetries: 2 });
 }
 
+async function Main(Request) {
+const Started = Date.now(), Deadline = Request.Deadline ?? Started + Request.Maximum * 1000;
+Callableˉdeadline = Deadline - 30_000;
 const Temporaryˉroot = resolve(tmpdir());
 const Work = await realpath(await mkdtemp(join(
     Temporaryˉroot, 'windvale-callable-semantics-'
@@ -412,7 +526,31 @@ const Work = await realpath(await mkdtemp(join(
 const Evidence = [];
 var Passed = false;
 var Completedˉcases = 0;
+let Scopedˉproducts = null;
+const Phaseˉheartbeat = setInterval(() => process.stdout.write('INFO callable owner phase=' +
+    (Request.Prepare ? 'preparation' : Request.Prepared ? 'prepared-behavior' : 'default') +
+    ' elapsed-ms=' + (Date.now() - Started) + ' remaining-ms=' + Math.max(0, Deadline - Date.now()) + '\n'),
+    HEARTBEAT_INTERVAL_MILLISECONDS);
+Phaseˉheartbeat.unref();
 try {
+    if (Request.Prepare || Request.Prepared) {
+        Scopedˉproducts = await Acquireˉcallableˉproducts({ Work, Deadline: Callableˉdeadline,
+            Prepareˉproducts: Request.Prepare,
+            Run: async (Step, Tool, Arguments) => {
+                process.stdout.write('START callable products step=' + Step + '\n');
+                const Result = await Runˉcommand(Tool, Arguments);
+                if (Result.Code !== 0 || Result.Error.length !== 0) throw Object.assign(
+                    new Error('Callable product ' + Step + ' failed: ' + Result.Code + '\n' +
+                        Result.Error.toString('utf8') + Result.Output.toString('utf8')),
+                    { exitCode: Number.isInteger(Result.Code) && Result.Code !== 0 ? Result.Code : 1 });
+            } });
+        if (Request.Prepare) {
+            await Scopedˉproducts.Requireˉunchanged();
+            process.stdout.write('native language 1 callable preparation status=Prepared products=8 ' +
+                'behavior-execution=skipped compiler-construction=forbidden\n');
+            return;
+        }
+    }
     const Extension = WINDOWS ? 'cmd' : 'sh';
     const Build = join(SCRIPT_DIRECTORY, `Build-Wvb.${Extension}`);
     const Packager = join(
@@ -430,7 +568,7 @@ try {
             `START language 1 callable semantics phase=build ` +
             `item=${Item}/${Totalˉitems} test=${Test.Name}\n`
         );
-        await Requireˉbuild(Build, Test, Module);
+        if (Scopedˉproducts === null) await Requireˉbuild(Build, Test, Module);
         const Moduleˉbytes = await readFile(Module);
         Evidence.push({
             Name: Test.Name,
@@ -446,7 +584,7 @@ try {
         });
     }
 
-    for (var Start = 0; Start < Products.length; Start += PACKAGE_CONCURRENCY) {
+    for (var Start = 0; Scopedˉproducts === null && Start < Products.length; Start += PACKAGE_CONCURRENCY) {
         const Batch = Products.slice(Start, Start + PACKAGE_CONCURRENCY);
         await Promise.all(Batch.map(Product => {
             Item += 1;
@@ -509,7 +647,7 @@ try {
         `START language 1 callable semantics phase=verifier-build ` +
         `item=${Item}/${Totalˉitems}\n`
     );
-    await Requireˉprojectˉbuild(
+    if (Scopedˉproducts === null) await Requireˉprojectˉbuild(
         Build,
         'callable verifier',
         join(
@@ -524,7 +662,7 @@ try {
         `START language 1 callable semantics phase=verifier-package ` +
         `item=${Item}/${Totalˉitems}\n`
     );
-    await Requireˉhostedˉpackage(
+    if (Scopedˉproducts === null) await Requireˉhostedˉpackage(
         Hostedˉpackager, 'callable verifier', '2',
         Verifierˉmodule, Verifier, Target
     );
@@ -668,9 +806,13 @@ try {
         Bytes: Closureˉobject.Bytes,
         Digest: Closureˉobject.Digest
     });
+    if (Completedˉcases !== 64 || Evidence.length !== 11) Reject('Callable semantic case inventory differs.');
+    if (Scopedˉproducts !== null) await Scopedˉproducts.Requireˉunchanged();
     Passed = true;
 } finally {
+    clearInterval(Phaseˉheartbeat);
     await Removeˉwork(Work, Temporaryˉroot);
+    if (Date.now() >= Deadline) throw Object.assign(new Error('Callable deadline exceeded during cleanup.'), { exitCode: 124 });
 }
 
 if (Passed) {
@@ -683,9 +825,16 @@ if (Passed) {
         )).join('\n'))
         .digest('hex');
     process.stdout.write(
-        'native language 1 callable semantics status=Passed ' +
-        `cases=${Completedˉcases} result=42 modules=${Evidence.length} ` +
-        `evidence-bytes=${Totalˉbytes} native-aot-cases=8 ` +
-        `evidence-sha256=${Evidenceˉdigest}\n`
+        `INFO callable product identities evidence-bytes=${Totalˉbytes} evidence-sha256=${Evidenceˉdigest}\n` +
+        'native language 1 callable semantics status=Passed cases=64 result=42 modules=11 native-aot-cases=8\n'
     );
+}
+
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+    try {
+        const Request = Parseˉcallableˉarguments(process.argv.slice(2));
+        await Withˉcallableˉenvironment(Request, () => Main(Request));
+    } catch (Error) { process.stderr.write(Error.message + '\n'); process.exitCode = Error.exitCode ?? 1; }
 }

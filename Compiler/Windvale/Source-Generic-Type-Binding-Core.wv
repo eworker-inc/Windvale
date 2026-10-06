@@ -607,6 +607,11 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
             Input, Scan, Symbols.Lookup, Owner,
             Source, Token.Offset, Qualifiedˉlength
         );
+    let Sliceˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Token.Offset, Qualifiedˉlength, 15u32
+        );
     var Collectionˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
         Vectorˉmodule;
     var Collectionˉkind: u32 = 11u32;
@@ -618,6 +623,12 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
         Collectionˉkind = 12u32;
         Collectionˉdeclarationˉkind =
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence;
+    }
+    if Sliceˉmodule.Found {
+        Collectionˉmodule = Sliceˉmodule;
+        Collectionˉkind = 13u32;
+        Collectionˉdeclarationˉkind =
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Borrowedˉslice;
     }
     if Constructorˉnameˉlength == 0u32 && Collectionˉmodule.Found {
         let Collectionˉleft: Sourceˉlexer.Compilerˉsourceˉtoken =

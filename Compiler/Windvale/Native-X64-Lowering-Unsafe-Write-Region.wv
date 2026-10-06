@@ -344,6 +344,7 @@ export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉbytes(Minor: u32) -> u32
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉunsafeˉwriteˉregion(
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Input: bytes,
     Offset: u32,
     Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
@@ -387,7 +388,7 @@ export fn Compilerˉnativeˉx64ˉemitˉunsafeˉwriteˉregion(
         Bytesˉconcat(
             Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
             Bytesˉfromˉu8(
-                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Resultˉtype)
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Resultˉtype)
             )
         ),
         Bytesˉconcat(

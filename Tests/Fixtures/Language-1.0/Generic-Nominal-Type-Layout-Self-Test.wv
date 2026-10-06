@@ -551,10 +551,53 @@ export fn Main() -> i32 {
             Packet.Catalogˉevidence, Packet.Failureˉoffset,
             Packet.Failureˉline, Packet.Failureˉcolumn
         );
+    let Tamperedˉread: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Tampered, 0u32
+        );
     if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
             Input, Scan, Symbols, Tampered
-        ) {
+        ) || Tamperedˉread.Found {
         return 16;
+    }
+    let Tamperedˉfieldˉevidence: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Packetˉvalue.Nameˉoffset + 1u32),
+        Bytesˉslice(Packet.Fieldˉevidence, 4u32,
+            Bytesˉlength(Packet.Fieldˉevidence) - 4u32)
+    );
+    let Tamperedˉfield: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout(
+            Packet.Genericˉstatus, Packet.Symbolˉstatus,
+            Packet.Instance, Packet.Shape, Packet.Kind,
+            Packet.Declaration, Packet.Module, Packet.Items,
+            Packet.Fields, Packet.Itemˉevidence, Tamperedˉfieldˉevidence,
+            Packet.Catalogˉstatus, Packet.Catalogˉevidence,
+            Packet.Failureˉoffset, Packet.Failureˉline, Packet.Failureˉcolumn
+        );
+    let Tamperedˉfieldˉread: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Tamperedˉfield, 0u32
+        );
+    if Tamperedˉfieldˉread.Found {
+        return 122;
+    }
+    let Truncatedˉfields: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout(
+            Choice.Genericˉstatus, Choice.Symbolˉstatus,
+            Choice.Instance, Choice.Shape, Choice.Kind,
+            Choice.Declaration, Choice.Module, Choice.Items, Choice.Fields,
+            Choice.Itemˉevidence,
+            Bytesˉslice(Choice.Fieldˉevidence, 0u32,
+                Bytesˉlength(Choice.Fieldˉevidence) - 1u32),
+            Choice.Catalogˉstatus, Choice.Catalogˉevidence,
+            Choice.Failureˉoffset, Choice.Failureˉline, Choice.Failureˉcolumn
+        );
+    let Truncatedˉfieldˉread: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Truncatedˉfields, 1u32, 0u32
+        );
+    if Truncatedˉfieldˉread.Found {
+        return 123;
     }
     let Invalidˉinstance:
         Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =

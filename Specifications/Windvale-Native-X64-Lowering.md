@@ -6,6 +6,192 @@
 
 This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). The Windvale-native compiler is the normal implementation for this accepted subset. Wider recovery and differential evidence remains outside the normal build and execution path.
 
+The coherent WVB-1.44 memory integration remains a candidate under
+[Decision 0980](../Documents/Decisions/0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md).
+It connects generation-checked shared bytes/text, owning ranges, borrowed views,
+unique reserved byte builders, budget transfers and aggregate/call cleanup to
+ABI 25/context 11 in this same backend. Its compiler serializer and actual host
+caller follow [Decision 0981](../Documents/Decisions/0981-Bootstrap-The-Current-Native-Compiler-With-A-Temporary-Serializer-Projection.md).
+Development reconstruction has produced current compiler hosts on Windows and
+Debian. Final verification, self-lowering and Windows/Debian qualification remain
+open; retained executable identities keep their recorded behavior.
+
+Candidate WVB 1.45 completes direct budget helper authority under
+[Decision 0982](../Documents/Decisions/0982-Complete-Direct-Budget-Helper-Authority-In-WVB-1.45.md).
+Its exact mutable wrapper 41 followed by 25 is a non-owning budget view;
+immutable shape 36 remains unable to Split. An owned budget helper return uses
+the existing ownership move. Borrowed cleanup clears the alias without
+releasing or refunding its parent. The complete verifier must prove exclusive
+roots, reject overlapping call arguments and stale views, and prevent borrowed
+parent consumption or owning return before lowering. Minor 44 keeps its exact
+builder-only wrapper rule. Minor 45 uses the shared 4 MiB profile, ABI 25 and
+context 11; it is not admitted through the older owned-collection profile.
+Budget-bearing indirect/callable descriptors remain refused. The reconstructed
+compiler hosts support focused execution of this extension; complete target
+qualification and installed delivery remain open.
+
+The candidate byte bridge bounds each backing and returned byte value to 4 MiB,
+read-only directory rows to 512, functions to 2,048, complete native frames
+(including outgoing call arguments and scratch) to 65,536 bytes and call depth
+to 64. It admits the existing E1 borrow-root evidence once, then computes bounded
+per-function local lifetimes, releases dead owning locals and carries selected
+return ownership through the same plan used for measurement and emission.
+Directory admission is bounded to 16 MiB of work; directory plus one function
+is bounded to 96 MiB of cumulative reads and copies. These are work limits,
+not live-storage limits or a bound on the entire native lowering phase.
+Functions without E1 loan dependencies use reverse control-flow reachability
+for resource-bearing locals, stopping across definitions. Each reached block
+is processed once per resource local. Functions with loan dependencies retain
+the bounded fixed-point analysis. Its non-publishing instruction passes retain
+one working live boundary instead of a recursive chain of prior boundaries.
+Publishing uses leaves of at most sixteen instructions and balanced row joins;
+all materialized copies remain charged to the same work limit. Resource-local
+classification includes every admitted record and variant tag through the
+canonical nominal-type predicate. Both paths publish the same instruction-level
+ownership rows, and an incomplete analysis refuses instead of authorizing
+release. Before constructing row tables, the planner refuses a result larger
+than the 4 MiB byte-value profile. The focused owner includes a 320-block chain
+with 1,024 locals and
+an 8 MiB work threshold, loop/back-edge lifetimes and borrowed stack views.
+An oversized 17,000-instruction case must refuse within 4 MiB of work without
+publishing rows. Unsupported owner-bearing fixed arrays, indirect borrowed
+calls, old context-10 collections
+and hosted provider families remain outside this initial candidate. Terminal
+traps close the enclosing domain; normal and typed failure returns perform the
+selected frame cleanup. The decision owns the exact supported shapes and limits.
+
+For a direct helper returning a borrowed Slice, the complete verifier retains
+the evaluated byte argument's named owner in the lifetime evidence. A byte
+result without a named owner clears the operand position's previous origin;
+it must acquire a named owner before lending a returned range. The origin lookup
+scans the bounded event trace and charges the existing loan-analysis work limit.
+Consumed Slice temporaries are cleared before their physical slots can be
+reused for owning byte values.
+
+Normal shared-value returns stage the result before jumping to one cleanup
+tail per function. That tail releases remaining owning locals in the existing
+reverse order, restores a scalar result from the reserved return cell, and
+restores the frame and call-depth charge. Descriptor and aggregate results
+move to caller-owned storage before cleanup; transferred cells are cleared.
+Measurement and emission include the same tail and branch offsets. Cleanup
+code therefore grows with the owned-local layout rather than its product with
+the number of returns. This candidate changes machine bytes, while retaining
+the ABI, frame limits and source release contract. The existing helper case
+exercises both narrow and full-width scalar return branches while releasing
+byte owners; execution against the reconstructed compiler remains pending.
+
+Each shared-value operation initializes its complete 64-byte private request
+once. Wide stores combine version/size and the zero-extended action/flags;
+explicit operand stores and a zero reserved tail complete the packet without
+clearing fields that will immediately be overwritten. The base sequence is
+145 machine bytes, plus six bytes per indirect cell address, compared with the
+earlier 203-byte base. It retains per-call initialization and requires no
+previous request contents or extra frame state.
+
+Within an admitted, serialized ABI-25 execution domain, the private value helper
+checks immutable reads, retains and nonfinal releases against the addressed
+entry's generation, kind, range and physical or mapped backing. It does not
+rescan unrelated accounting entries for each byte access. The authenticated
+entry first validates the complete domain; generated source has no authority to
+write its control metadata. Allocation, builder operations, final release and
+teardown continue through the fully checked provider and preserve that domain
+invariant. The private access helper uses 72 bytes of local call storage and
+preserves the execution counters and nonvolatile registers. Unsupported requests
+and local refusals fall back to the unchanged provider. This optimization does
+not relax the public storage leaf's complete-state corruption checks or permit
+foreign mutation of an active private domain.
+
+Shared requests, aggregate cleanup and each local-release sequence are assembled
+as separate fragments and appended to the function once. Function-exit cleanup
+and last-use cleanup do not recopy the function body for each local.
+Empty cleanup returns the existing bytes. Exit cleanup divides at most 2,048
+locals into balanced groups of at most eight, bounding concatenation within
+each group and using at most eight recursive splits.
+Instruction cleanup reads the existing lifetime bitmaps in groups of 32 locals,
+skips empty masks, and visits selected locals in descending order. The mask
+includes a newly stored value when it is dead after the store. It performs at
+most 64 group reads per instruction under the local limit, rather than querying
+each local's before/after state separately. Layout coverage compares masks to
+the scalar lifetime queries at byte, word and maximum-local boundaries.
+Conditional branches additionally release owning locals that are live in the
+union of successors but dead at the selected successor. Each nonempty edge
+uses a cleanup stub followed by a five-byte jump; measurement and emission
+include those same bytes. Borrowed parameters remain excluded, and borrowed
+root dependencies participate in the destination lifetime mask. Loop and
+record-branch cases cover both release and survival; a source case requires
+branch release to restore the budget before replacement allocation. Native
+execution of the reconstructed compiler with this correction remains pending.
+Branch origins include the existing prefix;
+the emitted bytes and release order are unchanged. This bounds copying of the
+existing function during each request or cleanup operation, including the
+temporary bootstrap construction path. It does not change storage ownership
+or establish a bound for the complete compiler workload.
+
+Aggregate cleanup planning walks each record's fields in source order with a
+bounded cursor and accumulates nested backing offsets. It retains field-name,
+shape and extent validation while avoiding repeated scans of preceding fields.
+The focused layout owner compares cursor reads with indexed reads across 64
+fields, checks nested backing positions, and rejects truncated shapes and
+invalid names. Shared-value admission also prepares immutable aggregate plans
+once per nominal type and carries them with the admitted type table through
+analysis and emission. The internal cache contains at most 256 entries and
+4 MiB including its directory. Unsupported shapes and entries that do not fit
+use the original bounded planner when requested, preserving admission of
+unused unsupported types. The layout owner compares cached and uncached plans
+and checks missing entries, truncated directories and invalid cached extents.
+Exact source/evidence binding compares full byte values in bounded groups of
+four little-endian words, then one word and individual tail bytes. This avoids
+a byte-at-a-time loop over the whole module at every publication batch without
+replacing equality with a hash or omitting the source-binding check. The layout
+owner covers lengths zero through 65 and a mismatch at every byte position.
+
+The 2,048-function capacity is a current-source candidate. Retained staging and
+linker tools keep their 1,024-function profile until separately reconstructed
+and qualified. The explicit temporary construction pair in Decision 0981
+crosses that capacity boundary without changing WVB, WVO or ABI encoding.
+Module signature cursors and shared-liveness function offsets are at most
+8,192 bytes. Per-function instruction, control-flow, stack, frame and aggregate
+bounds remain unchanged; raising module capacity does not widen those limits.
+
+The capacity owner uses the [current-source WVO reader](Wvo-Object-Core.md#current-source-symbol-validation)
+for the 2,048-function output. Preparation warms that reader through the current
+compiler and hosted-application caches. The same owner checks the reader's
+4,096-symbol and 255-byte-name boundaries, binding-group cursor resets and
+duplicate diagnostic priority. An explicit current `--lowerer` may select
+`--compiler-boundaries` to run just the two function-capacity cases and ten
+typed Foreign rejections, including these twelve object-reader checks. This
+selection resumes a reported incomplete run; it does not replace the other
+native memory, record or execution cases.
+
+The retained native symbol-capacity fixture constructs decimal name bytes
+directly, so its console execution does not require a host formatting service.
+Its test entry grants a finite 6,000,000-instruction budget for the combined
+2,048-function acceptance and 2,049-function refusal cases; the measured workload
+uses approximately 5.31 million instructions. This fixture allowance does not
+change the ordinary console launcher's instruction limit.
+
+The current-source candidate assigns the 64 internal variant slots by variant
+ordinal, independently of preceding records and enums. WVB shapes and operands
+retain their complete declaration indices within the 256-type bound. Encoding,
+decoding, borrowed views, calls and aggregate cleanup use the same admitted type
+table; a 65th variant still refuses. Each mapping visits at most 256 entries and
+adds no retained table. Retained native executables keep
+their recorded index restriction until separately rebuilt and qualified.
+
+Candidate variant construction consumes every declared payload field in order.
+Analysis, scratch tracking and machine emission share the existing case field
+count and backing layout, including nested record fields. The 64-cell flattened
+backing bound still applies; two case-header cells leave room for at most 62
+scalar fields in the multi-field encoding. Allocation-failure byte counts must
+be ordinary `u64` values, rather than budget handles sharing their native value
+group. The focused native type/layout owner covers these boundaries; complete
+compiler and consumer execution remains a separate gate.
+
+The allocating 76-byte directory serializer is owned by
+`Native-X64-Lowering-Layout-Writer.wv`. `Native-X64-Lowering-Layout.wv` owns the
+pure limits and directory readers. Consumers that only read layout metadata
+therefore do not acquire the builder declarations or their WVB/runtime profile.
+
 [Decision 0802](../Documents/Decisions/0802-Share-X64-Encoding-Without-Compiling-Through-WVA.md)
 keeps this as a direct typed lowering path. It must not serialize or invoke WVA.
 Its current specialized machine-byte and WVO writers remain implemented
@@ -28,11 +214,28 @@ Retained bootstrap executable identities remain separate from current-source
 lowering and are not refreshed by changing this source.
 
 ```text
-Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
-    -> Compilerˉnativeˉx64ˉsummary
+Compilerˉlowerˉwvbˉnativeˉx64(
+    Input: borrow bytes,
+    Budget: borrow mut Foundationˉmemory.Memoryˉbudget
+) -> Compilerˉnativeˉx64ˉsummary effects(memory.allocate)
 ```
 
-The summary contains a stable status, WVO object bytes on success, a reserved zero `Value` field, selected native ABI `22` or `23`, and the computed code size. Failure returns an empty object and never publishes a partial WVO.
+This current-source candidate borrows the caller's allocation budget for its
+reserved function-directory serializer. The caller funds that budget before
+invocation and retains its ownership; a serializer reservation refusal returns
+`Outputˉlimit`. Retained executable identities preserve their earlier one-input
+entry and do not acquire this interface through source edits.
+
+The summary contains a stable status, WVO object bytes on success, a reserved
+zero `Value` field, selected native ABI and the computed code size. The retained
+subset selects ABI `22` or `23`; the owned-collection candidate selects `24`,
+and the shared-value candidate selects `25` within its declared profile.
+Failure returns an empty object and never publishes a partial WVO.
+
+Planning diagnostics identify the function crossing an aggregate output bound:
+`Outputˉlimit` detail `1` means the 64 MiB code bound and detail `2` means the
+512 KiB relocation-table bound. Other output failures retain their existing
+diagnostics.
 
 The status vocabulary is:
 
@@ -52,8 +255,8 @@ The shared lowering core accepts exactly:
 
 - WVB 1.11, 1.16, 1.30, 1.31, 1.33, 1.34, 1.35, 1.36, 1.37, or 1.38 with seven canonical sections, no trailing bytes, and a valid module identifier; 1.11 and 1.16 contain no callable descriptor or operation, 1.30 contains at least one `D3` or `D4` and no `D5`, 1.31 contains at least one `D5`, 1.33 contains exact unsafe-scratch evidence, 1.34 contains at least one immutable borrowed-budget parameter, 1.35 contains at least one exact `DD` scratch-length observation, 1.36 contains at least one exact `DE` write-region operation, 1.37 contains at least one exact `DF` write-pointer operation, and 1.38 contains at least one exact registered `E0` Foreign-call operation;
 - portable profile with no capabilities, hosted profile with canonically ordered declarations drawn from the six exact generic service signatures `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`, plus the exact ABI-23 `filesystem.directory_read_v1(text,u32,u32)->bytes`, `storage.random_access_v1(u32,u64,u64,u32,bytes)->bytes`, `standard_output.write_v1(bytes)->bytes`, `model.catalog_v1(bytes)->bytes`, `model.inference_v1(bytes)->bytes`, and candidate `terminal.line_read_v1(bytes)->bytes` provider signatures when selected by an application, or the exact capability-free System profile for WVB 1.33/1.34/1.35/1.36/1.37/1.38; generic service calls retain ABI 22 and provider calls select ABI 23; WVB 1.38 additionally requires the exact `linux.x86_64.sysv_amd64_c_v1` platform target;
-- zero through 256 canonical type declarations with at most 116 records, 64 enums, 64 variants, and 128 terminal callable descriptors within that total; every encodable variant has declaration index below 64, one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; every callable descriptor has the containing module's exact profile, one admitted scalar or enum result, and zero through 64 admitted scalar or enum parameters; and zero through 512 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
-- one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes`, or the exact WVB 1.33/1.34/1.35/1.36/1.37/1.38 `Main(Memoryˉbudget) -> i32`, at any ordinal and every other function non-exported;
+- zero through 256 canonical type declarations with at most 116 records, 64 enums, 64 variants, and 128 terminal callable descriptors within that total; each variant uses its distinct internal ordinal slot, has one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; every callable descriptor has the containing module's exact profile, one admitted scalar or enum result, and zero through 64 admitted scalar or enum parameters; and zero through 512 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
+- one through 2,048 functions in the current-source capacity candidate, with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes`, or the exact WVB 1.33/1.34/1.35/1.36/1.37/1.38 `Main(Memoryˉbudget) -> i32`, at any ordinal and every other function non-exported; retained tools preserve their 1,024-function profile;
 - parameterless `Main() -> i32` or `Main() -> bytes`, zero through 64 `i32`, `bool`, `text`, `u8`, `u32`, `i64`, `u64`, `bytes`, admitted enum, admitted record, or admitted variant helper parameters and those same primitive or nominal helper returns, declared locals using those eight primitive types plus admitted enum, record, or variant identities, fewer than 2,048 combined parameters and declared locals per function, a declared maximum stack depth from one through 1,024, at most 131,072 code bytes and 32,768 decoded instructions per function, adjacent exact code ranges, and no unclaimed function-section bytes; record/variant-bearing functions retain the narrower 1,024-basic-block, 8,192-instruction, 1,024-declared-record-local, 256-produced-record-value-per-block, and immutable-record-parameter limits;
 - one control-flow graph per function of at most 8,192 instructions drawn from the existing scalar, descriptor, enum, record, call, and control families, including `bytes.sha256_hex`, plus `variant.create`, `variant.is_case`, and `variant.payload`; every variant instruction names an admitted declaration and case, consumes the exact case payload shape, and preserves its nominal identity; every data, enum, record, variant, direct-call, or capability operation names an in-range declaration and consumes and produces its exact typed stack shape; and
 - instruction-aligned forward or backward targets, empty stacks at every block edge, complete fixed-point reachability from entry, valid typed local uses and stack effects, an exact declared maximum depth, and a combined local/value frame of at most 2,048 ABI cells. Locals retain WVB's zero-initialized entry semantics.
@@ -418,6 +621,24 @@ publish a file, widen `bytes`, or change `file.write_bytes` semantics.
 
 ### Bounded function artifacts
 
+The current-source candidate constructs this plan through:
+
+```text
+Compilerˉnativeˉx64ˉplanˉbuild(
+    Input: borrow bytes,
+    Budget: borrow mut Foundationˉmemory.Memoryˉbudget
+) -> Compilerˉnativeˉx64ˉplan effects(memory.allocate)
+```
+
+For `N` admitted functions it reserves two builders of maximum length `76 * N`,
+funding both committed charges before writing either directory. Each charge is
+`((76 * N + 31) / 16) * 16` with integer division; at the 2,048-function bound
+each payload is 155,648 bytes and the combined charge is 311,328 bytes.
+Allocation or append refusal returns
+`Outputˉlimit`. The frozen directory retains its charge while a plan share
+survives; the temporary signature backing credits its budget on final release.
+This candidate path and its budgeted caller await generated-code qualification.
+
 The lowering core exposes one immutable analysis plan after WVB structure,
 module/profile, capability, data, type, function, export, code, and aggregate
 output validation succeeds. The plan owns the canonical 76-byte function
@@ -452,6 +673,19 @@ payload, preserving its exact bytes and behavior.
 The ordinary complete-object entry currently requests one 4 MiB batch and
 requires it to contain every function, preserving exact ordinary WVO bytes.
 It does not join multiple batches.
+
+The additive `Compilerˉlowerˉwvbˉnativeˉx64ˉbounded(Input: borrow bytes,
+Budget: borrow mut Memoryˉbudget, Maximumˉobjectˉbytes: u32)` entry uses the
+same plan and batch. A nonzero maximum selects a finite profile: both the
+maximum and the input byte length must be at most 4 MiB. Either excess returns
+the exact empty `Outputˉlimit` summary before planning or acquiring serializer
+authority, leaving the supplied budget unchanged. Within that profile the
+maximum bounds the complete measured WVO,
+including headers, helper, padding, read-only data, symbols and relocations.
+The existing object writer computes its region plan once and rejects an
+oversized object with `Outputˉlimit` before joining code and helper or serializing
+the complete object body. Zero selects the ordinary entry's existing behavior;
+the separate segmented-publication limit remains unchanged.
 
 The private record-storage evidence is version 2. Its validated header owns
 persistent-field count, maximum per-block scratch-field count, global scratch
@@ -609,9 +843,12 @@ declared function code; and one final exported `Main` fills the one omitted
 ordinal and exact declared-code gap. Reserved fields, bindings, kinds, section
 indices, names, ranges, data coverage, function coverage, helper contiguity,
 and the optional zero-through-15-byte text padding are checked. The complete
-chunk must be consumed, with at most 512 data symbols, 1,024 functions, and
-1,537 symbols total. The additional symbol is available only for the one
+chunk must be consumed, with at most 512 data symbols, 2,048 functions, and
+2,561 symbols total in the current-source candidate. Retained readers preserve
+their 1,024-function and 1,537-symbol profiles. The additional symbol is available only for the one
 private helper; it does not widen either admitted data or function inventory.
+The existing ABI-25 shared tail allows five additional named symbols, giving a
+2,566-symbol ceiling without changing the 4,096-symbol envelope bound.
 The symbol chunk's end is the exact relocation position. A nonempty
 relocation table must be one following manifest chunk of `count * 20` bytes
 ending at the object extent; with no relocations, the symbol chunk ends the
@@ -764,13 +1001,66 @@ reconstruction or execution, qualification, or promotion.
 
 ## Adapters
 
-`Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv` exposes `Main(Input: bytes) -> bytes` and returns either the complete WVO or empty bytes. `Compiler/Windvale/Native-X64-Lowering-Tool.wv` is the hosted shell:
+The current-source `Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv`
+exposes `Main(Input: borrow bytes, Budget: Memoryˉbudget) -> bytes
+effects(memory.allocate)` and returns a private `WVNR 1` response. The 32-byte
+header contains eight little-endian u32 words: magic `WVNR`, version 1, complete
+response byte count, lowering status, native ABI, code byte count, WVO byte count
+and zero reserved word. Status 0 carries the unchanged complete WVO after the
+header. Statuses 1 through 6 respectively mean `Invalidˉwvb`,
+`Unsupportedˉprofile`, `Unsupportedˉmodule`, `Unsupportedˉfunction`,
+`Unsupportedˉcode` and `Outputˉlimit`; their response is exactly 32 bytes with
+ABI 22 and zero code/WVO counts. The response reports the existing summary and
+does not rerun planning or claim a failure location that summary does not carry.
+
+The adapter applies the existing metadata normalization when it returns a
+nonempty result, matching the hosted tool's input selection. The shared result
+leaf remains bounded to 4 MiB, so this adapter's raw WVO limit is 4 MiB minus
+32 bytes. The adapter selects this complete-object ceiling through the bounded
+lowering entry before object serialization. An otherwise successful larger
+object produces `Outputˉlimit`. It accepts the same already supported WVB
+inputs as ordinary lowering; the response ceiling belongs to this ABI-25
+source entry rather than the input WVB edition.
+Existing immutable byte construction funds this private header through the
+explicit runtime bootstrap budget independently of the supplied application
+budget. The shared compiler host validates the live descriptor independently,
+then validates the response and success WVO header, copies only the WVO payload,
+releases the result and closes the domain. It writes the WVO and exact success
+report only after closure. A typed refusal instead emits the finite lowering
+status report, exits 1 and makes no output-file call. Malformed responses,
+terminal traps, admission, cleanup and host I/O failures remain host failures.
+
+Host construction reads the compiler's existing segmented `WVOP 1` object:
+at most 64 MiB in 518 chunks of at most 4 MiB each. It validates the complete
+manifest geometry before reading any chunk payload. Its authenticated input
+inventory allows at most 1,024 files and 512 MiB in total, including the object
+chunks and construction dependencies. These construction bounds do not widen
+the running compiler's 4 MiB byte-result response limit. The selected linker
+package uses existing hosted Profile 7, whose 64 file-input slots leave room
+for at most 62 object chunks, their manifest and the provider packet. The
+construction reader's format ceiling does not imply that this launcher can
+consume all 518 chunks in one process. The capacity bridge's separate Profile-8
+linker remains limited to 32 input slots and is not selected for this full
+compiler host construction.
+
+It owns the supplied budget and lends it exclusively to the core. This
+ABI-25/context-11 entry and its shared compiler host are candidates; their
+generated execution remains pending. Retained adapters preserve the earlier
+one-input interface and recorded qualification. The hosted shell remains
+`Compiler/Windvale/Native-X64-Lowering-Tool.wv`:
 
 ```text
 wvnative <input.wvb> <output.wvo>
 ```
 
-It reads the input once, calls the portable core in memory, writes exactly once only after success, and reports the ABI and exact output sizes. Invalid or unsupported input produces a deterministic diagnostic and no output call. The checked-in Project 1 manifests build both adapters as WVB. The paired `WVHN 1` profile packages the hosted shell as a direct Windows/Linux candidate without adding platform assembly.
+The retained hosted tool reads the input once, calls the portable core in
+memory, writes exactly once only after success, and reports the ABI and exact
+output sizes. Invalid or unsupported input produces a deterministic diagnostic
+and no output call. The source now carries the budget through these calls;
+general hosted ABI-25 execution remains outside the initial capability-free
+bridge and requires integration and qualification before that source becomes
+the hosted successor. The paired `WVHN 1` profile describes the retained hosted
+candidate.
 
 ## Conformance and limits
 
@@ -782,7 +1072,7 @@ It reads the input once, calls the portable core in memory, writes exactly once 
 
 `Wvb-To-Wvo-Diagnostic-Write-Line.wv` writes one immutable `A` diagnostic line and returns 42. The reference interpreter and Stage 0 native execution both produce exact `A` plus LF on the diagnostic channel, while both Windvale adapters and the direct native package retain Stage 0's exact object bytes. Existing output-service tests retain separate-channel, Unicode, empty-line, authorization, rejection, and partial-sink coverage.
 
-`Wvb-To-Wvo-Large-Envelope.wv` declares nine immutable data items, nine nominal types, and ten functions. Its WVO contains canonical `$data_0008` and `$function_0008` symbols and agrees byte for byte through Stage 0, the Windvale memory adapter, and the hosted Windvale tool. The explicit 512-data, 64-record plus 64-enum, and 1,024-function limits cover the current compiler-scale source while retaining the existing 64-parameter, 2,048-physical-cell, per-entry, instruction, aggregate-code, and relocation boundaries. The focused data-reader boundary admits exactly 512 entries and rejects 513 before entry allocation. A module-scale function-count rejection retains the sentinel function index and reports the rejected count in the plan detail field.
+`Wvb-To-Wvo-Large-Envelope.wv` declares nine immutable data items, nine nominal types, and ten functions. Its WVO contains canonical `$data_0008` and `$function_0008` symbols and agrees byte for byte through Stage 0, the Windvale memory adapter, and the hosted Windvale tool. That recorded checkpoint uses the 512-data, 64-record plus 64-enum, and 1,024-function profile, retaining the existing 64-parameter, 2,048-physical-cell, per-entry, instruction, aggregate-code, and relocation boundaries. The current-source 2,048-function capacity candidate requires its own execution evidence. The focused data-reader boundary admits exactly 512 entries and rejects 513 before entry allocation. A module-scale function-count rejection retains the sentinel function index and reports the rejected count in the plan detail field.
 
 `Wvb-To-Wvo-Descriptor-Calls.wv` passes and returns borrowed `text`, borrowed `bytes` slices, and arena-owned concatenation results, retains a returned value across later allocation, and returns 42. Its six-parameter helper mixes descriptor and scalar register positions, then carries an `i32` and a complete `bytes` descriptor through the fifth and sixth stack cells. The reference interpreter and Stage 0 native execution agree, while the memory adapter and hosted Windvale tool reproduce Stage 0's complete WVO byte for byte.
 

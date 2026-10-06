@@ -96,8 +96,10 @@ export async function Constructˉsourceˉeditionˉpredecessor(Work, Deadline = n
         console.log(`source-edition predecessor step=${Label} status=Complete`);
         return Output;
     }
+    // The bounded preserved tree can contain 768 MiB; copying it is distinct
+    // from small Git identity/cleanup commands and shares the outer deadline.
     const Git = (Label, Arguments, Cleanup = false) => Run(Label, 'git', ['-C', REPOSITORY_ROOT, ...Arguments],
-        120_000, Label !== 'source-inventory', Cleanup);
+        Label === 'source-checkout' ? 600_000 : 120_000, Label !== 'source-inventory', Cleanup);
     try {
         const Tree = await Git('source-identity', ['rev-parse', `${SOURCE_EDITION_PREDECESSOR}^{tree}`]);
         if (Tree.trim() !== PREDECESSOR_TREE) throw new Error('The predecessor Git source tree differs.');
@@ -172,6 +174,9 @@ export async function Constructˉsourceˉeditionˉpredecessor(Work, Deadline = n
         Requireˉtime(Workˉdeadline, 'publication');
         console.log('source-edition predecessor status=Constructed source=' + SOURCE_EDITION_PREDECESSOR +
             ' products=' + JSON.stringify(Evidence));
+        Result.Construction = { kind: 'source-edition-predecessor-1',
+            revision: SOURCE_EDITION_PREDECESSOR, tree: PREDECESSOR_TREE, key: Key,
+            host: `${process.platform}-${process.arch}` };
         return Result;
     } catch (Failure) {
         Primaryˉfailure = Failure instanceof Error ? Failure : new Error(String(Failure));

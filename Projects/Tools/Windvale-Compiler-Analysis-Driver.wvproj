@@ -21,6 +21,7 @@ source "Compiler/Windvale/Source-Lexer-Core.wv"
 source "Compiler/Windvale/Source-Set-Core.wv"
 source "Compiler/Windvale/Source-Symbols-Core.wv"
 source "Compiler/Windvale/Source-Wir-Core.wv"
+source "Compiler/Windvale/Source-Wir-Scalar-Constants.wv"
 source "Foundation/Byte-Construction.wv"
 emit wvb
 source-input-lock "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock"

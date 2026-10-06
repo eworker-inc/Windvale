@@ -6,6 +6,7 @@ authority library;
 
 
 import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉgenericˉlowering as Genericˉfunctions;
@@ -108,9 +109,13 @@ fn Bindingsˉwithˉforeignˉgenericˉtypes(
     );
     let Foreign: u32 = Symbolˉofˉkind(Symbolsˉvalue, 9u32);
     if Foreign >= Entries {
-        return Bindings.Compilerˉsourceˉbindingsˉfinishˉphase(
-            Input, Scan, Symbolsˉvalue, Phase
-        );
+        let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+            Bindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+                Input, Scan, Symbolsˉvalue, Phase
+            );
+        return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+                Input, Scan, Symbolsˉvalue, Phase, Published, Symbolsˉvalue.Functions
+            );
     }
     let Foreignˉentry: u32 = 16u32 + Foreign * 24u32;
     let Module: u32 = Bytesˉreadˉu32ˉlittle(
@@ -156,9 +161,13 @@ fn Bindingsˉwithˉforeignˉgenericˉtypes(
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty()
         );
     if Bound.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
-        return Bindings.Compilerˉsourceˉbindingsˉfinishˉphase(
-            Input, Scan, Symbolsˉvalue, Phase
-        );
+        let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+            Bindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+                Input, Scan, Symbolsˉvalue, Phase
+            );
+        return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+                Input, Scan, Symbolsˉvalue, Phase, Published, Symbolsˉvalue.Functions
+            );
     }
     return Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphaseˉproduct(
         Input, Scan, Symbolsˉvalue, Phase, Symbolsˉvalue.Functions,
@@ -205,7 +214,7 @@ export fn Languageˉoneˉtypedˉforeignˉcallˉwirˉvalidationˉcase() -> i32 {
         return 103;
     }
     let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
-        Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
             Bindingsˉvalue.Directory
         );
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(

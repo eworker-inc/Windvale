@@ -102,7 +102,7 @@ as the priority on 27 September 2026. Close that path before further consumer
 expansion that depends on it. This direction is accepted; the complete native
 implementation and its qualification remain work to do.
 
-Current native execution still uses bootstrap-era byte/text arena mechanics:
+Historical native byte/text operations retain bootstrap-era arena mechanics:
 checked allocation, restricted buffer reuse, and function-return checkpoints.
 The current source lowerer compacts the byte/text ranges reachable from record
 and variant returns, reclaiming other allocations above the call's entry
@@ -142,6 +142,19 @@ connects a fresh process-local domain to ordinary Windows/Linux packaging and
 startup for capability-free ABI 24 Core applications. It checks physical and
 budget-domain closure before exit; hosted services and installed delivery remain
 outside that profile.
+
+The forward WVB 1.44/1.45 candidate under
+[the shared-value integration decision](Documents/Decisions/0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md)
+connects the canonical `Foundationˉbytes` import, reserved builders, immutable
+shares and ranges, supported aggregate/call cleanup and budget helpers to
+ABI 25/context 11. Its maintained consumer is the compiler's signature and
+machine-code-directory serializer. Current Windows and Debian compiler hosts
+have been reconstructed through the explicit
+[temporary bootstrap projection](Documents/Decisions/0981-Bootstrap-The-Current-Native-Compiler-With-A-Temporary-Serializer-Projection.md).
+This is candidate development evidence; final verification, self-lowering and
+installed-toolchain promotion remain separate obligations. Retained artifacts
+keep their recorded contracts until separately replaced and qualified.
+
 Broader scope exits, mutable element views, broader borrowed helpers, arbitrary owner-bearing
 aggregates, hosted launchers and interpreter working state still need integration.
 Connect those lifetimes and charges before describing the

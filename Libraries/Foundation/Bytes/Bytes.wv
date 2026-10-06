@@ -1,0 +1,15 @@
+#!wv/1 en@1
+module Foundationˉbytes;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
+import Foundationˉcollections as Collections;
+
+// bytes remains the language's shared immutable primitive. Bytesˉbuilder is a
+// compiler-supplied, representation-hidden, move-owned Foundation identity.
+// This module owns the canonical import for reserved construction, atomic
+// append, consuming freeze, and borrowed byte observations without publishing
+// forgeable records, backing handles, allocation leases, or native pointers.

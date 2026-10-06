@@ -9,6 +9,13 @@ connects the existing generation-safe budget accounting state to
 consumes a budget into a lease and owns real committed backing; release returns
 that backing and credits the accounting tree. Refusal changes neither resource.
 
+The candidate version-two extension selected by
+[Decision 0980](../Documents/Decisions/0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md)
+adds two immutable mapped owners to this same adapter. Each consumes a real
+canonical budget into a lease charged for its exact mapped length. The physical
+allocator remains the sole allocator. Version one retains exact size dispatch;
+pinned artifacts and earlier qualification identities are unchanged.
+
 The candidate [native owned-collections path](Windvale-Native-Owned-Collections.md)
 uses this adapter for scalar Vector reservation, replacement growth and release. Wider collection
 code and interpreter working storage still need integration. Source signatures,
@@ -19,7 +26,7 @@ interpreter process-memory improvement or installed qualification is claimed.
 
 The adapter has no host calls or ambient allocation. Its caller supplies an
 initialized owned-storage domain, an existing canonical 2,616-byte budget state,
-1,088 bytes of adapter metadata and one request. The backing arena and all four
+1,088 bytes of version-one adapter metadata and one request. The backing arena and all four
 other extents are exclusive, complete, mapped, writable and pairwise disjoint.
 The physical domain and adapter share one nonzero, never-reused epoch. The
 caller must uphold the same mapped-pointer and borrow-lifetime preconditions as
@@ -41,6 +48,14 @@ header are charged separately. This profile retains the physical leaf's 64-slot,
 4 MiB per-allocation and 16 MiB arena limits. These are provider limits, not
 universal Language 1.0 limits.
 
+Version two prepays 1,216 adapter bytes, for 5,944 lower-domain metadata bytes.
+Its two additional spans are immutable, completely mapped and readable until
+their leases are released. They are disjoint from the controls, physical arena,
+each other and the bounded callee stack. A zero-length span requires a zero
+pointer and still owns a real zero-charge lease and accounting slot. Mapped
+owners consume the same 65-entry canonical accounting tree as physical owners
+and budgets; two mapped owners do not permit 64 simultaneous dynamic leases.
+
 ## Canonical accounting relationship
 
 The adapter uses the exact private state and token layouts implemented by
@@ -50,6 +65,11 @@ It does not introduce another budget-token encoding. The native
 the header, all 65 entries, parent indices, active/owner flags, nonzero
 generations, acyclic ancestor chains, byte limits, child counts and checked
 64-bit sums of child maxima before the adapter can write either state.
+The complete structure pass also records the highest active entry. Later
+accounting scans stop there because every remaining entry was proved inactive;
+they still count zero-charge children. Inactive fields are checked together,
+preserving retired generations. This adds no cached trust or persistent state
+and does not increase the callee stack bound.
 
 An accounting token contains a 32-bit identity followed by a 32-bit generation.
 Odd generations own budgets; even generations own leases. A lease adds its
@@ -83,7 +103,8 @@ All integer fields are unsigned and little-endian. R8 points to a
 request. EAX returns status; nonvolatile registers and R10/R11 survive. The
 existing native x64 shadow-space and stack-alignment requirements apply.
 The adapter uses 392 bytes below its entry stack pointer, plus the bounded
-nested validator or physical-leaf call. Its temporary request and extent table
+nested validator or physical-leaf call, for a deepest path of 560 bytes.
+Its temporary request and extent table
 are stack-owned and do not outlive the call.
 
 | Adapter offset | Width | Meaning |
@@ -182,6 +203,40 @@ in the physical contract.
     for the candidate [shared-storage adapter](Windvale-Native-Shared-Storage.md).
     It works when no budget or backing owner remains. Previously pinned
     artifacts retain their recorded operation set; no public ABI changes here.
+13. **Adopt immutable mapping, version two only:** +64 supplies an owned budget,
+    +96 the immutable pointer and +104 its byte length, at most 4,194,304.
+    Consume that budget into an exact-length canonical lease with alignment
+    ceiling one and publish mapped handle +24, charge +44, pointer +48 and the
+    complete lease +64. No physical payload or header is allocated. Existing
+    mapped owners support exact-lease inspect/release through operations 4/3;
+    mutation, resize and replacement refuse. Operations 5/12 include every
+    mapped owner in complete teardown/validation.
+
+Version two selects state version/size `2/1216` and request `2/112`; version
+one selects `1/1088` and `1/96`. Mixed versions or other sizes refuse. Request
++108 is reserved zero; +96/+104 are zero outside operation 13. Physical provider
+requests remain version one. State offsets 0 through 1087 retain their meanings.
+Two 64-byte mapped entries at 1088 and 1152 have indices 65/66. Each contains:
+
+| Entry offset | Width | Meaning |
+| --- | --- | --- |
+| 0 | 4 | Nonzero generation, preserved on retirement |
+| 4 | 4 | Active flag, zero or one |
+| 8 | 8 | Immutable mapped pointer |
+| 16 | 4 | Capacity, equal to mapped length |
+| 20 | 4 | Logical length, equal to capacity |
+| 24 | 8 | Retained charge, exactly the mapped length |
+| 32 | 8 | Canonical lease token |
+| 40 | 8 | Lease maximum, exactly the mapped length |
+| 48 | 8 | Lease current, exactly the mapped length |
+| 56 | 4 | Alignment ceiling one |
+| 60 | 4 | Reserved zero |
+
+An inactive entry is zero except for its retained generation. Handles encode
+that generation in the high u32 and index 65/66 in the low u32. Complete
+preflight requires distinct real owned leases for all physical and mapped
+bindings; final release credits the same parent tree. Mapped constructor
+refusals preserve both domains under this adapter's ordinary refusal rules.
 
 Replacement advances an inactive nonroot accounting slot exactly as a split
 followed by lease construction would, skipping slots whose next even generation
@@ -207,6 +262,8 @@ are not concurrently observable. The budget state uses at most 65 bounded
 ancestor walks and 65-by-64 child scans. Binding checks visit 64 slots and at
 most 2016 earlier bindings. The physical validator retains its existing bounds.
 Release and teardown are bounded local operations independent of provider loss.
+Version two adds two bounded binding checks and includes mapped extents in
+complete preflight, including stack exclusion before saved-register writes.
 
 ## Verification and remaining integration
 
@@ -236,3 +293,11 @@ prepared behavior phase must reuse them and may not reconstruct the compiler.
 Owned helper transfer, general aggregate cleanup, shared immutable
 backing, in-place capacity growth and interpreter migration remain integrations
 after the bounded native Vector path.
+
+Four candidate mapped cases in the existing
+[shared-storage helper](../Tools/Native/Native-Shared-Storage-Cases.mjs), plus the
+version-two [domain cases](../Tools/Native/Native-Owned-Domain-Cases.mjs), exercise
+actual leases, exact charges, aliases, empty mappings, generation reuse,
+accounting/slot exhaustion, complete refusal snapshots and teardown. Narrow
+Windows native development runs passed. These are not Debian/full qualification,
+current generated-body execution or delivery evidence.

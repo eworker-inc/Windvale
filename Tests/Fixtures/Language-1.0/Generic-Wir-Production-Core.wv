@@ -1,0 +1,75 @@
+#!wv/1 en@1
+module Languageˉoneˉgenericˉwirˉproduction;
+profile hosted;
+platform linux, windows;
+authority library;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
+
+export fn Manifest(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVCA");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(104u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Input)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Bindings.Directory)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Wir.Directory)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Modules));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Capabilities));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Data));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Records));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Enums));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Variants));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Fields));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Members));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Cases));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Parameters));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Bindings.Directory, 8u32))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bindings.Parameters));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bindings.Locals));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Blocks));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Operations));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Temporaries));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Wir.Operands));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+// Independent consumers validate these exact files after producer assertions.
+export fn Prepare(Input: bytes, Suffix: text) -> Sourceˉwir.Compilerˉsourceˉwirˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        let Failedˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(Input, Symbols);
+        return Sourceˉwir.Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Failedˉbindings);
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Product: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(Input, Scan, Symbols);
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Product);
+    if Product.Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+            Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(Symbols, Product);
+        file.write_bytes(Textˉconcat(process.argument(0u32), Suffix), Input);
+        file.write_bytes(Textˉconcat(process.argument(1u32), Suffix), Manifest(Input, Symbols, Bindings, Summary));
+        file.write_bytes(Textˉconcat(process.argument(2u32), Suffix), Bindings.Directory);
+        file.write_bytes(Textˉconcat(process.argument(3u32), Suffix), Summary.Directory);
+    }
+    return Summary;
+}

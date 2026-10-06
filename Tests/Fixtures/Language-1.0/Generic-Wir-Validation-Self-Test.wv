@@ -1,0 +1,32 @@
+#!wv/1 en@1
+module Languageˉoneˉgenericˉwirˉvalidationˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+
+import Compilerˉsourceˉanalysisˉcontract as Contract;
+import Compilerˉsourceˉanalysisˉvalidation as Validation;
+
+fn Status(Suffix: text) -> Contract.Compilerˉsourceˉanalysisˉstatus {
+    let Checked: Validation.Compilerˉsourceˉanalysisˉvalidation =
+        Validation.Compilerˉvalidateˉsourceˉanalysis(
+            file.read_bytes(Textˉconcat(process.argument(0u32), Suffix)),
+            file.read_bytes(Textˉconcat(process.argument(1u32), Suffix)),
+            file.read_bytes(Textˉconcat(process.argument(2u32), Suffix)),
+            file.read_bytes(Textˉconcat(process.argument(3u32), Suffix)));
+    return Checked.Status;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return 64; }
+    if Status("") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 1; }
+    if Status("-predicates") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 4; }
+    if Status("-payload") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 8; }
+    if Status("-view-storage") != Contract.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings { return 11; }
+    if Status("-copy") != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 12; }
+    if Status("-mutation") != Contract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir { return 13; }
+    return 42;
+}

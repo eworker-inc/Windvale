@@ -45,7 +45,7 @@ fn Readˉroots(Input: bytes, Localˉtypes: bytes,
         var Width: u32 = 0u32;
         if Type == 3u8 || Type == 6u8 { Width = 1u32; }
         if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
-            let Index: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type);
+            let Index: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type);
             if Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(Input, Types, Index) {
                 Width = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Index);
             }
@@ -180,7 +180,7 @@ fn Cleanup(Input: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
                 Result = Reclamation.Compilerˉnativeˉx64ˉgatherˉdescriptor(Result);
             } else {
                 let Gather: bytes = Reclamation.Compilerˉnativeˉx64ˉgatherˉrecord(Input, Types,
-                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type));
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type));
                 if Bytesˉlength(Gather) > 65536u32 { return Empty(Input); }
                 Result = Word(Bytesˉconcat(Result, Loadˉrecord), Offset);
                 Result = Word(Bytesˉconcat(Result, Guardˉrecord), Bytesˉlength(Gather));

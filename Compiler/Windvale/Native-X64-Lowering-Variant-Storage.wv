@@ -70,7 +70,7 @@ fn Recordˉwidth(
     return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
         Input,
         Types,
-        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type)
     );
 }
 
@@ -186,23 +186,27 @@ fn Variantˉcreateˉstep(
     let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Codeˉoffset + Cursor + 5u32
     );
-    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
-            Input, Types, Typeˉindex, Caseˉindex
-        );
-    if !Payload.Valid { return Invalid(Input); }
-    let Consumed: Variantˉpayloadˉstate = Consumeˉpayload(
-        Input,
-        Payload.Type,
-        State.Stackˉrecords,
-        State.Depth,
-        State.Usedˉrecords
-    );
-    if !Consumed.Valid { return Invalid(Input); }
+    let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(
+        Input, Types, Typeˉindex, Caseˉindex);
+    if Fields > 64u32 || Fields > State.Depth { return Invalid(Input); }
+    var Consumed: Variantˉpayloadˉstate = Variantˉpayloadˉstate(
+        true, State.Stackˉrecords, State.Depth, State.Usedˉrecords);
+    // Operands arrive in declaration order; consume from the stack top.
+    var Field: u32 = Fields;
+    while Field > 0u32 {
+        Field = Field - 1u32;
+        let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+            Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+                Input, Types, Typeˉindex, Caseˉindex, Field);
+        if !Payload.Valid { return Invalid(Input); }
+        Consumed = Consumeˉpayload(Input, Payload.Type, Consumed.Stackˉrecords,
+            Consumed.Depth, Consumed.Usedˉrecords);
+        if !Consumed.Valid { return Invalid(Input); }
+    }
     return Finishˉrecord(
         Input,
         Types,
-        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex),
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex),
         Compilerˉnativeˉx64ˉvariantˉstorageˉinput(
             Consumed.Stackˉrecords,
             Consumed.Depth,
@@ -310,12 +314,12 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(
             return Invalid(Input);
         }
         let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 5u32);
-        if Viewˉtype >= 64u32 ||
+        if Viewˉtype >= Types.Count ||
             Nominalˉtypes.Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
                 Input, Types, Viewˉtype
             ) != 1u8 { return Invalid(Input); }
         return Finishˉrecord(Input, Types,
-            Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype), State);
+            Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Viewˉtype), State);
     }
     if Opcode == 151u8 {
         return Variantˉcreateˉstep(Input, Codeˉoffset, Cursor, Types, State);

@@ -9,16 +9,21 @@ reserved byte builders and immutable backing over the current
 [budgeted storage](Windvale-Native-Budgeted-Storage.md) adapter.
 The existing native owned-storage verifier owns its behavior checks.
 
-This contract controls private runtime metadata and calls. It does not expose
-source representations or change WVB, native ABI 24, context 10, pinned
-bootstrap artifacts or the frozen Language 1.0 source contract. Source byte
-owners, automatic shared lifetime cleanup, text, mutable buffers, interpreter
-working storage and installed delivery remain unfinished.
+The candidate version-two mapped extension is selected by
+[Decision 0980](../Documents/Decisions/0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md).
+It adds two immutable mappings backed by real canonical leases, using the same
+allocator and accounting domain. Exact version-one behavior remains available.
+
+This contract controls private runtime metadata and calls. The separately
+selected descriptor/context successor does not change pinned ABI 24/context 10
+artifacts or frozen source semantics. Leaf development evidence does not
+establish current generated-body execution, complete shared lifetime cleanup,
+Debian/full qualification, interpreter working storage or installed delivery.
 
 ## Ownership and limits
 
-Calls are serialized. All supplied control and backing extents are complete,
-mapped, writable and pairwise disjoint; borrowed input spans must be mapped and
+Calls are serialized. All supplied control and physical backing extents are complete,
+mapped, writable and pairwise disjoint; immutable mapped and borrowed input spans must be mapped and
 readable for their complete length. These are trusted runtime preconditions,
 not authority to dereference arbitrary source-provided host pointers. The leaf
 has no host calls or allocation outside the supplied domain.
@@ -29,6 +34,12 @@ bounded call scratch are separate. There are 64 shared slots, scoped to one
 nonzero, never-reused lower-domain epoch. Physical handle generations retain
 the lower allocator's stale-handle checks. Reference counts are unsigned 32-bit
 and may not wrap. There is no concurrency or atomic-reference-count guarantee.
+
+Version two prepays 2,176 shared bytes and 5,944 lower-domain bytes, for 8,120
+fixed metadata bytes before context, requests, directory and scratch. It has
+66 shared entries: 64 physical indices and two mapped indices 65/66. The latter
+consume ordinary nonroot canonical accounting entries, alongside budgets and
+dynamic leases. This is not capacity for 64 dynamic owners plus two mappings.
 
 Every shared entry must match one current lower binding. Lower bindings may
 also belong to other owners, including scalar Vectors, without a shared entry.
@@ -55,8 +66,8 @@ All integer fields are unsigned and little-endian. The exported symbol is
 `Windvale_shared_storage`. R8 points to 16-byte-aligned shared state; R9 points
 to an 8-byte-aligned request. EAX returns status. Nonvolatile registers and
 R10/R11 survive. The ordinary native x64 stack alignment and shadow-space
-requirements apply. The leaf uses 456 bytes below its entry stack pointer;
-the current deepest nested path uses 1,024 bytes. Pointer preflight excludes
+requirements apply. The current leaf uses 520 bytes below its entry stack pointer;
+the deepest nested path uses 1,088 bytes. Pointer preflight excludes
 the conservative interval from entry stack pointer minus 8,192 through plus 8.
 
 | Shared state offset | Width | Meaning |
@@ -76,6 +87,13 @@ kind at +12 (1 mutable builder, 2 immutable bytes), logical length at +16,
 admitted maximum at +20, and reserved zero at +24. A builder has exactly one
 reference. An immutable entry has at least one. Inactive entries are all zero.
 Metadata contains no duplicate payload header or separate budget-token format.
+
+Version two changes header version/size/count to `2/2176/66`, points +16 at the
+1,216-byte lower adapter, and appends entries 65/66 at offsets 2112/2144.
+Their immutable kind is two. They contain the lower mapped handle's complete
+generation/index, shares, and equal logical length/admitted maximum. The first
+64 entries retain their physical meanings. State and request versions must
+agree exactly; the request is 128 bytes in both versions.
 
 | Request offset | Width | Meaning |
 | --- | --- | --- |
@@ -124,7 +142,7 @@ pointers grant a borrow, never additional ownership or mutable authority.
    bounded 64-bit software-division work per digit.
 6. **Append mapped immutable span:** +56 addresses argument-1 bytes, at most
    4,194,304; argument 0 is zero. The span must not overlap control extents, the lower arena or call
-   scratch. An empty span requires a zero pointer. Check the whole append before
+   scratch; version two also excludes its registered mapped owners. An empty span requires a zero pointer. Check the whole append before
    copying any byte. Use operation 13 for immutable backing in this domain.
 7. **Freeze:** consume the unique builder into one immutable reference without
    copying, compaction, allocation or charge change. Subsequent appends refuse.
@@ -145,6 +163,24 @@ pointers grant a borrow, never additional ownership or mutable authority.
     and +56 is its byte length. Validate both owners, checked source range and
     complete destination capacity before copying. The borrow changes no source
     reference count or charge.
+14. **Adopt mapped immutable backing, version two only:** +24 is zero, +32 is
+    the consumed budget token, argument 0 is the mapped byte length and +56 its
+    immutable pointer. Argument 1 and output/reserved fields are zero. Length
+    is at most 4,194,304; empty requires pointer zero. Delegate to lower mapped
+    adoption, then publish one immutable share with length and admitted maximum
+    equal to the span length. Charge is exactly length, without a physical
+    payload/header allocation. Even an empty mapping owns a real zero-charge
+    lease, handle and share. Publish the same handle and observation fields as
+    reserve. Construction refusals follow the reserve consumption rule.
+
+Mapped span extents are disjoint from all controls, the complete physical arena,
+each other and the prospective callee scratch before any saved-register write.
+All live mapped bindings participate in validation and teardown. Retain, view,
+same-domain append and final release use the same generation/count checks as
+physical immutable backing. Final mapped release credits its actual canonical
+lease; it never frees or zeroes caller-owned immutable mapped bytes. A runtime
+may retain module/input anchors until invocation closure; those anchors keep
+their real charges throughout application copies and borrowed views.
 
 Borrowed ranges are valid only while a semantic owner keeps their backing live
 and before terminal teardown. Source compilation must enforce this lifetime.
@@ -157,7 +193,7 @@ Preflight validates control alignment, checked extents, mutual and stack
 disjointness, versions, exact sizes, epoch, open state, reserved fields, all
 shared entries and canonical lower bindings before mutation. Lower operation
 12 validates the complete accounting/physical relationship once per preflight.
-The shared pass then visits at most 64 entries. It rejects duplicate, stale or
+The shared pass then visits at most 64/66 entries for version one/two. It rejects duplicate, stale or
 mismatched bindings, invalid kinds/counts, and lengths or maxima inconsistent
 with committed backing.
 
@@ -200,3 +236,12 @@ proofs, versioned native descriptor/context integration, cleanup through all
 exits and aggregates, a maintained compiler consumer, and exact Windows/Debian
 qualification. No interpreter working-set or installed-product claim follows
 from a native assembly fixture.
+
+The existing helper has 21 cases: 17 physical/shared cases and four mapped
+successor cases. The latter cover actual lease charges and aliases, mapped
+same-domain append, zero-charge mapped ownership, generation reuse, budget/map
+slot exhaustion, immutable mutation refusal and complete malformed/corrupt
+snapshots. Narrow Windows native development runs passed. Existing fixed-live
+and malformed version-one cases also passed against the changed leaves. No
+Debian/full qualification or current generated-body claim follows from these
+runs.

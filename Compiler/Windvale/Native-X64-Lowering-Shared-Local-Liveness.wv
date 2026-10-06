@@ -1,0 +1,1247 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉsharedˉlocalˉliveness;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+
+// Pure allocation planning over admitted WVB and its same-input H evidence.
+// Rows: relative instruction offset, packed live-before, packed live-after.
+// Virtual dependencies retain the exact twelve-byte E1 event/slot/root cells.
+// Target bounds: <2,048 locals, <=64 parameters, <=131,072 code bytes,
+// <=32,768 instructions, <=1,024 blocks/function, <=2,048 functions,
+// and <=8,192 E1 rows/function.
+// Virtual borrowed slots add at most 4,096 stack positions; roots are locals.
+// Directory admission charges at most 16 MiB. Directory plus one function
+// charges at most 96 MiB of cumulative reads/copies, not live storage.
+export record Directory {
+    Valid: bool;
+    Source: bytes;
+    Borrowˉroots: bytes;
+    Offsets: bytes;
+    Work: u32;
+}
+
+export record Plan {
+    Valid: bool;
+    Source: bytes;
+    Borrowˉroots: bytes;
+    Rows: bytes;
+    Virtualˉdependencies: bytes;
+    Locals: u32;
+    Rowˉbytes: u32;
+    Work: u32;
+}
+
+record Buffer {
+    Valid: bool;
+    Value: bytes;
+    Work: u32;
+}
+
+record Evidence {
+    Valid: bool;
+    Dependencies: bytes;
+    Work: u32;
+}
+
+record Flow {
+    Valid: bool;
+    Rows: bytes;
+    Before: bytes;
+    Work: u32;
+}
+
+const DIRECTORY_WORK_LIMIT: u32 = 16777216u32;
+const WORK_LIMIT: u32 = 100663296u32;
+const INVALID_INDEX: u32 = 4294967295u32;
+
+fn Emptyˉbytes(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+fn Invalid(Input: bytes, Work: u32) -> Plan {
+    let Value: bytes = Emptyˉbytes(Input);
+    return Plan(false, Input, Value, Value, Value, 0u32, 0u32, Work);
+}
+fn Rejected(Input: bytes, Work: u32) -> Buffer {
+    return Buffer(false, Emptyˉbytes(Input), Work);
+}
+fn Flowˉrejected(Input: bytes, Work: u32) -> Flow {
+    return Flow(false, Emptyˉbytes(Input), Emptyˉbytes(Input), Work);
+}
+fn Packedˉbytes(Locals: u32) -> u32 { return (Locals + 7u32) / 8u32; }
+
+// Older ABI control analysis carries an explicit unavailable plan. A caller
+// must require Valid before using any bitmap to authorize a shared release.
+export fn Empty(Input: bytes, Locals: u32) -> Plan {
+    let Value: bytes = Emptyˉbytes(Input);
+    if Locals >= 2048u32 { return Invalid(Input, 0u32); }
+    return Plan(false, Input, Value, Value, Value, Locals,
+        4u32 + Packedˉbytes(Locals) * 2u32, 0u32);
+}
+
+// Work charges all materialized extents, concatenation copies and bounded
+// scalar scans conservatively. No failure publishes a partial bitmap.
+fn Joined(First: bytes, Second: bytes, Limit: u32) -> Buffer {
+    let Firstˉlength: u32 = Bytesˉlength(First);
+    let Secondˉlength: u32 = Bytesˉlength(Second);
+    if Firstˉlength > Limit || Secondˉlength > Limit - Firstˉlength {
+        return Rejected(First, 0u32);
+    }
+    let Length: u32 = Firstˉlength + Secondˉlength;
+    return Buffer(true, Bytesˉconcat(First, Second), Length);
+}
+fn Zeroes(Input: bytes, Length: u32, Limit: u32) -> Buffer {
+    if Length == 0u32 { return Buffer(true, Emptyˉbytes(Input), 0u32); }
+    if Length > Limit { return Rejected(Input, 0u32); }
+    var Chunk: bytes = Bytesˉfromˉu8(0u8);
+    var Result: bytes = Emptyˉbytes(Input);
+    var Remaining: u32 = Length;
+    var Work: u32 = 1u32;
+    while Remaining != 0u32 {
+        if Remaining % 2u32 != 0u32 {
+            let Next: Buffer = Joined(Result, Chunk, Limit - Work);
+            if !Next.Valid { return Rejected(Input, Work); }
+            Result = Next.Value;
+            Work = Work + Next.Work;
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining != 0u32 {
+            let Doubled: Buffer = Joined(Chunk, Chunk, Limit - Work);
+            if !Doubled.Valid { return Rejected(Input, Work); }
+            Chunk = Doubled.Value;
+            Work = Work + Doubled.Work;
+        }
+    }
+    return Buffer(true, Result, Work);
+}
+fn Live(Values: bytes, Local: u32) -> bool {
+    return (U32ˉfromˉu8(Bytesˉreadˉu8(Values, Local / 8u32)) &
+        (1u32 << (Local % 8u32))) != 0u32;
+}
+fn Setˉlive(Values: bytes, Local: u32, Value: bool, Limit: u32) -> Buffer {
+    if Limit == 0u32 { return Rejected(Values, 0u32); }
+    if Live(Values, Local) == Value { return Buffer(true, Values, 1u32); }
+    let Length: u32 = Bytesˉlength(Values);
+    let Cost: u32 = Length * 4u32 + 8u32;
+    if Cost > Limit { return Rejected(Values, 0u32); }
+    let Index: u32 = Local / 8u32;
+    let Mask: u32 = 1u32 << (Local % 8u32);
+    var Byte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Values, Index));
+    if Value { Byte = Byte | Mask; } else { Byte = Byte & (255u32 - Mask); }
+    return Buffer(true, Bytesˉconcat(Bytesˉconcat(
+        Bytesˉslice(Values, 0u32, Index),
+        Bytesˉslice(Bytesˉfromˉu32ˉlittle(Byte), 0u32, 1u32)),
+        Bytesˉslice(Values, Index + 1u32, Length - Index - 1u32)), Cost);
+}
+
+// Stable merge by event, borrowed slot and root. Divide-and-conquer output
+// avoids repeatedly appending an entire growing dependency directory.
+fn Compare(First: bytes, Firstˉrow: u32, Second: bytes, Secondˉrow: u32) -> i32 {
+    var Field: u32 = 0u32;
+    while Field < 3u32 {
+        let A: u32 = Bytesˉreadˉu32ˉlittle(First, Firstˉrow * 12u32 + Field * 4u32);
+        let B: u32 = Bytesˉreadˉu32ˉlittle(Second, Secondˉrow * 12u32 + Field * 4u32);
+        if A < B { return -1; }
+        if A > B { return 1; }
+        Field = Field + 1u32;
+    }
+    return 0;
+}
+fn Merge(First: bytes, Firstˉstart: u32, Firstˉend: u32,
+    Second: bytes, Secondˉstart: u32, Secondˉend: u32,
+    Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 32u32 { return Rejected(First, 0u32); }
+    if Firstˉstart == Firstˉend {
+        let Length: u32 = (Secondˉend - Secondˉstart) * 12u32;
+        if Length > Limit { return Rejected(First, 0u32); }
+        return Buffer(true, Bytesˉslice(Second, Secondˉstart * 12u32, Length), Length);
+    }
+    if Secondˉstart == Secondˉend {
+        let Firstˉlength: u32 = (Firstˉend - Firstˉstart) * 12u32;
+        if Firstˉlength > Limit { return Rejected(First, 0u32); }
+        return Buffer(true, Bytesˉslice(First, Firstˉstart * 12u32, Firstˉlength), Firstˉlength);
+    }
+    let Middle: u32 = Firstˉstart + (Firstˉend - Firstˉstart) / 2u32;
+    var Low: u32 = Secondˉstart;
+    var High: u32 = Secondˉend;
+    var Work: u32 = 0u32;
+    while Low < High {
+        if Limit - Work < 24u32 { return Rejected(First, Work); }
+        Work = Work + 24u32;
+        let Index: u32 = Low + (High - Low) / 2u32;
+        if Compare(Second, Index, First, Middle) < 0 { Low = Index + 1u32; }
+        else { High = Index; }
+    }
+    let Left: Buffer = Merge(First, Firstˉstart, Middle,
+        Second, Secondˉstart, Low, Depth + 1u32, Limit - Work);
+    Work = Work + Left.Work;
+    if !Left.Valid { return Rejected(First, Work); }
+    let Right: Buffer = Merge(First, Middle + 1u32, Firstˉend,
+        Second, Low, Secondˉend, Depth + 1u32, Limit - Work);
+    Work = Work + Right.Work;
+    if !Right.Valid || Limit - Work < 12u32 { return Rejected(First, Work); }
+    let Cell: bytes = Bytesˉslice(First, Middle * 12u32, 12u32);
+    Work = Work + 12u32;
+    let Prefix: Buffer = Joined(Left.Value, Cell, Limit - Work);
+    Work = Work + Prefix.Work;
+    if !Prefix.Valid { return Rejected(First, Work); }
+    let Result: Buffer = Joined(Prefix.Value, Right.Value, Limit - Work);
+    Work = Work + Result.Work;
+    return Buffer(Result.Valid, Result.Value, Work);
+}
+fn Sorted(Values: bytes, First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 16u32 { return Rejected(Values, 0u32); }
+    if End - First <= 1u32 {
+        let Length: u32 = (End - First) * 12u32;
+        if Length > Limit { return Rejected(Values, 0u32); }
+        return Buffer(true, Bytesˉslice(Values, First * 12u32, Length), Length);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Sorted(Values, First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Sorted(Values, Middle, End, Depth + 1u32, Limit - Left.Work);
+    let Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Values, Work); }
+    let Result: Buffer = Merge(Left.Value, 0u32, Bytesˉlength(Left.Value) / 12u32,
+        Right.Value, 0u32, Bytesˉlength(Right.Value) / 12u32, 0u32, Limit - Work);
+    return Buffer(Result.Valid, Result.Value, Work + Result.Work);
+}
+
+fn Directoryˉrejected(Input: bytes, Roots: bytes, Work: u32) -> Directory {
+    return Directory(false, Input, Roots, Emptyˉbytes(Input), Work);
+}
+fn Evidenceˉrejected(Input: bytes, Work: u32) -> Evidence {
+    return Evidence(false, Emptyˉbytes(Input), Work);
+}
+fn Words(Input: bytes, Count: u32, Value: u32, Limit: u32) -> Buffer {
+    if Count == 0u32 { return Buffer(true, Emptyˉbytes(Input), 0u32); }
+    if Count > 2048u32 || Limit < 4u32 { return Rejected(Input, 0u32); }
+    var Chunk: bytes = Bytesˉfromˉu32ˉlittle(Value);
+    var Result: bytes = Emptyˉbytes(Input);
+    var Remaining: u32 = Count;
+    var Work: u32 = 4u32;
+    while Remaining != 0u32 {
+        if Remaining % 2u32 != 0u32 {
+            let Next: Buffer = Joined(Result, Chunk, Limit - Work);
+            Work = Work + Next.Work;
+            if !Next.Valid { return Rejected(Input, Work); }
+            Result = Next.Value;
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining != 0u32 {
+            let Doubled: Buffer = Joined(Chunk, Chunk, Limit - Work);
+            Work = Work + Doubled.Work;
+            if !Doubled.Valid { return Rejected(Input, Work); }
+            Chunk = Doubled.Value;
+        }
+    }
+    return Buffer(true, Result, Work);
+}
+
+// Core authenticates this exact Source/Borrow-roots pair once after H. This
+// index performs complete structural admission once, including absent entries.
+// It does not reproduce H's semantic ownership proof.
+export fn Directoryˉindex(Input: bytes, Borrowˉdirectory: bytes) -> Directory {
+    let Bytes: u32 = Bytesˉlength(Borrowˉdirectory);
+    if Bytes < 16u32 || Bytes > DIRECTORY_WORK_LIMIT {
+        return Directoryˉrejected(Input, Borrowˉdirectory, 0u32);
+    }
+    var Work: u32 = 16u32;
+    if Bytesˉreadˉu8(Borrowˉdirectory, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Borrowˉdirectory, 1u32) != 118u8 ||
+        Bytesˉreadˉu8(Borrowˉdirectory, 2u32) != 76u8 ||
+        Bytesˉreadˉu8(Borrowˉdirectory, 3u32) != 82u8 ||
+        Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, 4u32) != 1u32 {
+        return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+    }
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, 8u32);
+    let Records: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, 12u32);
+    if Functions == 0u32 || Functions > 2048u32 || Records > Functions {
+        return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+    }
+    var Cursor: u32 = 16u32;
+    var Record: u32 = 0u32;
+    var Previous: u32 = 0u32;
+    var Previousˉend: u32 = 0u32;
+    var Indexed: u32 = 0u32;
+    var Offsets: bytes = Emptyˉbytes(Input);
+    while Record < Records {
+        if Bytes - Cursor < 28u32 || DIRECTORY_WORK_LIMIT - Work < 28u32 {
+            return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+        }
+        Work = Work + 28u32;
+        let Header: u32 = Cursor;
+        let Function: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor);
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + 4u32);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + 8u32);
+        let Public: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + 12u32);
+        let Slots: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + 16u32);
+        let Mapˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + 20u32);
+        let Dependencyˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + 24u32);
+        Cursor = Cursor + 28u32;
+        if Function >= Functions || (Record != 0u32 && Function <= Previous) ||
+            Start > Bytesˉlength(Input) || Count == 0u32 || Count > 131072u32 ||
+            Count > Bytesˉlength(Input) - Start ||
+            (Record != 0u32 && Start < Previousˉend) || Public > Slots ||
+            Slots > 8192u32 || Mapˉbytes != Slots * 4u32 ||
+            Dependencyˉbytes == 0u32 || Dependencyˉbytes % 12u32 != 0u32 ||
+            Dependencyˉbytes > 98304u32 || Mapˉbytes > Bytes - Cursor {
+            return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+        }
+        let Dependencyˉstart: u32 = Cursor + Mapˉbytes;
+        if Dependencyˉbytes > Bytes - Dependencyˉstart {
+            return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+        }
+        var Slot: u32 = 0u32;
+        var Loan: u32 = 0u32;
+        while Slot < Slots {
+            if DIRECTORY_WORK_LIMIT - Work < 4u32 {
+                return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+            }
+            Work = Work + 4u32;
+            let Value: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Cursor + Slot * 4u32);
+            if Value != INVALID_INDEX {
+                if Value != Loan { return Directoryˉrejected(Input, Borrowˉdirectory, Work); }
+                Loan = Loan + 1u32;
+            }
+            Slot = Slot + 1u32;
+        }
+        var Row: u32 = 0u32;
+        while Row < Dependencyˉbytes {
+            if DIRECTORY_WORK_LIMIT - Work < 16u32 {
+                return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+            }
+            Work = Work + 16u32;
+            let Offset: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Dependencyˉstart + Row);
+            let Borrowed: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Dependencyˉstart + Row + 4u32);
+            let Owner: u32 = Bytesˉreadˉu32ˉlittle(Borrowˉdirectory, Dependencyˉstart + Row + 8u32);
+            if Offset >= Count || Borrowed >= Slots + 4096u32 || Owner >= Slots ||
+                (Borrowed < Slots && Bytesˉreadˉu32ˉlittle(
+                    Borrowˉdirectory, Cursor + Borrowed * 4u32) == INVALID_INDEX) {
+                return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+            }
+            Row = Row + 12u32;
+        }
+        let Gap: Buffer = Words(Input, Function - Indexed, INVALID_INDEX, DIRECTORY_WORK_LIMIT - Work);
+        Work = Work + Gap.Work;
+        if !Gap.Valid { return Directoryˉrejected(Input, Borrowˉdirectory, Work); }
+        let Prefix: Buffer = Joined(Offsets, Gap.Value, DIRECTORY_WORK_LIMIT - Work);
+        Work = Work + Prefix.Work;
+        if !Prefix.Valid || DIRECTORY_WORK_LIMIT - Work < 4u32 {
+            return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+        }
+        Work = Work + 4u32;
+        let Next: Buffer = Joined(Prefix.Value, Bytesˉfromˉu32ˉlittle(Header), DIRECTORY_WORK_LIMIT - Work);
+        Work = Work + Next.Work;
+        if !Next.Valid { return Directoryˉrejected(Input, Borrowˉdirectory, Work); }
+        Offsets = Next.Value;
+        Indexed = Function + 1u32;
+        Cursor = Dependencyˉstart + Dependencyˉbytes;
+        Previous = Function;
+        Previousˉend = Start + Count;
+        Record = Record + 1u32;
+    }
+    if Cursor != Bytes { return Directoryˉrejected(Input, Borrowˉdirectory, Work); }
+    let Tailˉgap: Buffer = Words(Input, Functions - Indexed, INVALID_INDEX, DIRECTORY_WORK_LIMIT - Work);
+    Work = Work + Tailˉgap.Work;
+    if !Tailˉgap.Valid { return Directoryˉrejected(Input, Borrowˉdirectory, Work); }
+    let All: Buffer = Joined(Offsets, Tailˉgap.Value, DIRECTORY_WORK_LIMIT - Work);
+    Work = Work + All.Work;
+    if !All.Valid || Bytesˉlength(All.Value) != Functions * 4u32 {
+        return Directoryˉrejected(Input, Borrowˉdirectory, Work);
+    }
+    return Directory(true, Input, Borrowˉdirectory, All.Value, Work);
+}
+
+fn Readˉevidence(Input: bytes, Code: u32, Length: u32, Parameters: u32,
+    Locals: u32, Index: Directory, Function: u32, Limit: u32) -> Evidence {
+    if !Index.Valid || Bytesˉlength(Index.Offsets) == 0u32 ||
+        Bytesˉlength(Index.Offsets) > 8192u32 || Bytesˉlength(Index.Offsets) % 4u32 != 0u32 ||
+        Function >= Bytesˉlength(Index.Offsets) / 4u32 || Limit < 4u32 {
+        return Evidenceˉrejected(Input, 0u32);
+    }
+    var Work: u32 = 4u32;
+    let Header: u32 = Bytesˉreadˉu32ˉlittle(Index.Offsets, Function * 4u32);
+    if Header == INVALID_INDEX { return Evidence(true, Emptyˉbytes(Input), Work); }
+    let Directory: bytes = Index.Borrowˉroots;
+    let Bytes: u32 = Bytesˉlength(Directory);
+    if Header > Bytes || Bytes - Header < 28u32 || Limit - Work < 28u32 {
+        return Evidenceˉrejected(Input, Work);
+    }
+    Work = Work + 28u32;
+    let Slots: u32 = Bytesˉreadˉu32ˉlittle(Directory, Header + 16u32);
+    let Mapˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, Header + 20u32);
+    let Dependencyˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, Header + 24u32);
+    if Bytesˉreadˉu32ˉlittle(Directory, Header) != Function ||
+        Bytesˉreadˉu32ˉlittle(Directory, Header + 4u32) != Code ||
+        Bytesˉreadˉu32ˉlittle(Directory, Header + 8u32) != Length ||
+        Bytesˉreadˉu32ˉlittle(Directory, Header + 12u32) != Parameters ||
+        Slots != Locals || Mapˉbytes != Slots * 4u32 ||
+        Dependencyˉbytes == 0u32 || Dependencyˉbytes % 12u32 != 0u32 ||
+        Dependencyˉbytes > 98304u32 || Mapˉbytes > Bytes - Header - 28u32 {
+        return Evidenceˉrejected(Input, Work);
+    }
+    let Start: u32 = Header + 28u32 + Mapˉbytes;
+    if Dependencyˉbytes > Bytes - Start || Dependencyˉbytes > Limit - Work {
+        return Evidenceˉrejected(Input, Work);
+    }
+    Work = Work + Dependencyˉbytes;
+    let Dependencies: bytes = Bytesˉslice(Directory, Start, Dependencyˉbytes);
+    let Sort: Buffer = Sorted(Dependencies, 0u32,
+        Dependencyˉbytes / 12u32, 0u32, Limit - Work);
+    Work = Work + Sort.Work;
+    if !Sort.Valid { return Evidenceˉrejected(Input, Work); }
+    var Row: u32 = 0u32;
+    while Row < Bytesˉlength(Sort.Value) / 12u32 {
+        if Limit - Work < 40u32 { return Evidenceˉrejected(Input, Work); }
+        Work = Work + 40u32;
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Sort.Value, Row * 12u32);
+        let Borrowed: u32 = Bytesˉreadˉu32ˉlittle(Sort.Value, Row * 12u32 + 4u32);
+        let Owner: u32 = Bytesˉreadˉu32ˉlittle(Sort.Value, Row * 12u32 + 8u32);
+        if Offset >= Length || Borrowed >= Locals + 4096u32 || Owner >= Locals ||
+            (Borrowed < Locals && Bytesˉreadˉu32ˉlittle(
+                Directory, Header + 28u32 + Borrowed * 4u32) == INVALID_INDEX) ||
+            (Row != 0u32 && Compare(Sort.Value, Row - 1u32, Sort.Value, Row) == 0) {
+            return Evidenceˉrejected(Input, Work);
+        }
+        Row = Row + 1u32;
+    }
+    return Evidence(true, Sort.Value, Work);
+}
+
+fn Eventˉstart(Dependencies: bytes, Offset: u32) -> u32 {
+    var Low: u32 = 0u32;
+    var High: u32 = Bytesˉlength(Dependencies) / 12u32;
+    while Low < High {
+        let Middle: u32 = Low + (High - Low) / 2u32;
+        if Bytesˉreadˉu32ˉlittle(Dependencies, Middle * 12u32) < Offset {
+            Low = Middle + 1u32;
+        } else { High = Middle; }
+    }
+    return Low;
+}
+fn Closure(Values: bytes, Locals: u32, Dependencies: bytes,
+    First: u32, End: u32, Virtualˉuses: bool, Limit: u32) -> Buffer {
+    var Result: bytes = Values;
+    var Work: u32 = 0u32;
+    var Pass: u32 = 0u32;
+    var Changed: bool = true;
+    while Changed {
+        if Pass > Locals { return Rejected(Values, Work); }
+        Changed = false;
+        var Row: u32 = First;
+        while Row < End {
+            if Limit - Work < 12u32 { return Rejected(Values, Work); }
+            Work = Work + 12u32;
+            let Borrowed: u32 = Bytesˉreadˉu32ˉlittle(Dependencies, Row * 12u32 + 4u32);
+            let Owner: u32 = Bytesˉreadˉu32ˉlittle(Dependencies, Row * 12u32 + 8u32);
+            var Used: bool = false;
+            if Borrowed < Locals { Used = Live(Result, Borrowed); }
+            else { Used = Virtualˉuses; }
+            if Used && Owner < Locals && !Live(Result, Owner) {
+                let Next: Buffer = Setˉlive(Result, Owner, true, Limit - Work);
+                Work = Work + Next.Work;
+                if !Next.Valid { return Rejected(Values, Work); }
+                Result = Next.Value;
+                Changed = true;
+            }
+            Row = Row + 1u32;
+        }
+        Pass = Pass + 1u32;
+    }
+    return Buffer(true, Result, Work);
+}
+fn Readsˉlocal(Opcode: u8) -> bool {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    return Opcode == 4u8 || Opcode == 205u8 || Opcode == 206u8 ||
+        Opcode == 225u8 || (Opcodeˉnumber >= 230u32 && Opcodeˉnumber <= 235u32) || Opcode == 239u8;
+}
+fn Transfer(Input: bytes, Code: u32, Offset: u32, Size: u32,
+    Locals: u32, Dependencies: bytes, After: bytes, Limit: u32) -> Flow {
+    if Limit < 128u32 { return Flowˉrejected(Input, 0u32); }
+    // Two logarithmic event bounds inspect at most fourteen cells each.
+    var Work: u32 = 128u32;
+    let First: u32 = Eventˉstart(Dependencies, Offset);
+    let End: u32 = Eventˉstart(Dependencies, Offset + 1u32);
+    let Closedˉafter: Buffer = Closure(After, Locals, Dependencies,
+        First, End, false, Limit - Work);
+    Work = Work + Closedˉafter.Work;
+    if !Closedˉafter.Valid { return Flowˉrejected(Input, Work); }
+    var Before: bytes = Closedˉafter.Value;
+    let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Offset);
+    if Opcode == 5u8 || Readsˉlocal(Opcode) {
+        if Size < 5u32 { return Flowˉrejected(Input, Work); }
+        let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
+        if Local >= Locals { return Flowˉrejected(Input, Work); }
+        let Next: Buffer = Setˉlive(Before, Local, Opcode != 5u8, Limit - Work);
+        Work = Work + Next.Work;
+        if !Next.Valid { return Flowˉrejected(Input, Work); }
+        Before = Next.Value;
+    }
+    let Closedˉbefore: Buffer = Closure(Before, Locals, Dependencies,
+        First, End, true, Limit - Work);
+    Work = Work + Closedˉbefore.Work;
+    if !Closedˉbefore.Valid { return Flowˉrejected(Input, Work); }
+    return Flow(true, Closedˉafter.Value, Closedˉbefore.Value, Work);
+}
+
+// Fixed-point passes retain one live boundary. Published rows use bounded
+// sixteen-instruction leaves and balanced joins instead of growing prepends.
+fn Instructionsˉflow(Input: bytes, Code: u32, Instructions: bytes,
+    Offsets: bytes, First: u32, End: u32, Locals: u32,
+    Dependencies: bytes, After: bytes, Publish: bool, Depth: u32, Limit: u32) -> Flow {
+    if Depth > 16u32 { return Flowˉrejected(Input, 0u32); }
+    if First == End { return Flow(true, Emptyˉbytes(Input), After, 0u32); }
+    if !Publish || End - First <= 16u32 {
+        var Leafˉbefore: bytes = After;
+        var Leafˉrows: bytes = Emptyˉbytes(Input);
+        var Work: u32 = 0u32;
+        var Cursor: u32 = End;
+        while Cursor > First {
+            Cursor = Cursor - 1u32;
+            let Offset: u32 = Bytesˉreadˉu32ˉlittle(Offsets, Cursor * 4u32);
+            let Size: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Instructions, Offset));
+            let State: Flow = Transfer(Input, Code, Offset, Size,
+                Locals, Dependencies, Leafˉbefore, Limit - Work);
+            Work = Work + State.Work;
+            if !State.Valid { return Flowˉrejected(Input, Work); }
+            Leafˉbefore = State.Before;
+            if Publish {
+                if Limit - Work < 4u32 { return Flowˉrejected(Input, Work); }
+                let Prefix: Buffer = Joined(Bytesˉfromˉu32ˉlittle(Offset),
+                    State.Before, Limit - Work - 4u32);
+                Work = Work + 4u32 + Prefix.Work;
+                if !Prefix.Valid { return Flowˉrejected(Input, Work); }
+                let Row: Buffer = Joined(Prefix.Value, State.Rows, Limit - Work);
+                Work = Work + Row.Work;
+                if !Row.Valid { return Flowˉrejected(Input, Work); }
+                let Joinedˉrows: Buffer = Joined(Row.Value, Leafˉrows, Limit - Work);
+                Work = Work + Joinedˉrows.Work;
+                if !Joinedˉrows.Valid { return Flowˉrejected(Input, Work); }
+                Leafˉrows = Joinedˉrows.Value;
+            }
+        }
+        return Flow(true, Leafˉrows, Leafˉbefore, Work);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Right: Flow = Instructionsˉflow(Input, Code, Instructions, Offsets,
+        Middle, End, Locals, Dependencies, After, Publish, Depth + 1u32, Limit);
+    if !Right.Valid { return Right; }
+    let Left: Flow = Instructionsˉflow(Input, Code, Instructions, Offsets,
+        First, Middle, Locals, Dependencies, Right.Before, Publish,
+        Depth + 1u32, Limit - Right.Work);
+    var Combinedˉwork: u32 = Right.Work + Left.Work;
+    if !Left.Valid { return Flowˉrejected(Input, Combinedˉwork); }
+    if !Publish { return Flow(true, Emptyˉbytes(Input), Left.Before, Combinedˉwork); }
+    let Rows: Buffer = Joined(Left.Rows, Right.Rows, Limit - Combinedˉwork);
+    Combinedˉwork = Combinedˉwork + Rows.Work;
+    return Flow(Rows.Valid, Rows.Value, Left.Before, Combinedˉwork);
+}
+
+fn Blockˉindex(Offsets: bytes, Offset: u32) -> u32 {
+    var Low: u32 = 0u32;
+    var High: u32 = Bytesˉlength(Offsets) / 4u32;
+    while Low < High {
+        let Middle: u32 = Low + (High - Low) / 2u32;
+        let Value: u32 = Bytesˉreadˉu32ˉlittle(Offsets, Middle * 4u32);
+        if Value == Offset { return Middle; }
+        if Value < Offset { Low = Middle + 1u32; } else { High = Middle; }
+    }
+    return INVALID_INDEX;
+}
+// Width-map offsets and block control cells are materialized by balanced
+// trees. Output copying is O(n log n), with a small bounded leaf scan.
+fn Instructionˉoffsets(Instructions: bytes, First: u32, End: u32,
+    Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 14u32 { return Rejected(Instructions, 0u32); }
+    if End - First <= 16u32 {
+        var Result: bytes = Emptyˉbytes(Instructions);
+        var Cursor: u32 = First;
+        var Work: u32 = 0u32;
+        while Cursor < End {
+            if Limit - Work < 1u32 { return Rejected(Instructions, Work); }
+            Work = Work + 1u32;
+            if Bytesˉreadˉu8(Instructions, Cursor) != 0u8 {
+                if Limit - Work < 4u32 { return Rejected(Instructions, Work); }
+                Work = Work + 4u32;
+                let Next: Buffer = Joined(Result, Bytesˉfromˉu32ˉlittle(Cursor), Limit - Work);
+                Work = Work + Next.Work;
+                if !Next.Valid { return Rejected(Instructions, Work); }
+                Result = Next.Value;
+            }
+            Cursor = Cursor + 1u32;
+        }
+        return Buffer(true, Result, Work);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Instructionˉoffsets(Instructions, First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Instructionˉoffsets(Instructions, Middle, End,
+        Depth + 1u32, Limit - Left.Work);
+    var Combinedˉwork: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Instructions, Combinedˉwork); }
+    let Combined: Buffer = Joined(Left.Value, Right.Value, Limit - Combinedˉwork);
+    Combinedˉwork = Combinedˉwork + Combined.Work;
+    return Buffer(Combined.Valid, Combined.Value, Combinedˉwork);
+}
+fn Controlˉrows(Input: bytes, Code: u32, Instructions: bytes,
+    Offsets: bytes, Blocks: bytes, Edges: bytes, First: u32, End: u32,
+    Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 11u32 { return Rejected(Input, 0u32); }
+    if End - First == 1u32 {
+        if Limit < 320u32 { return Rejected(Input, 0u32); }
+        let Count: u32 = Bytesˉlength(Blocks) / 4u32;
+        let Start: u32 = Blockˉindex(Offsets, Bytesˉreadˉu32ˉlittle(Blocks, First * 4u32));
+        var Finish: u32 = Bytesˉlength(Offsets) / 4u32;
+        if First + 1u32 < Count {
+            Finish = Blockˉindex(Offsets, Bytesˉreadˉu32ˉlittle(Blocks, (First + 1u32) * 4u32));
+        }
+        if Start == INVALID_INDEX || Finish == INVALID_INDEX || Start >= Finish {
+            return Rejected(Input, 320u32);
+        }
+        let Last: u32 = Bytesˉreadˉu32ˉlittle(Offsets, (Finish - 1u32) * 4u32);
+        let Size: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Instructions, Last));
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Last);
+        let Kind: u8 = Bytesˉreadˉu8(Edges, First * 5u32);
+        let Kindˉnumber: u32 = U32ˉfromˉu8(Kind);
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(Edges, First * 5u32 + 1u32);
+        var A: u32 = INVALID_INDEX;
+        var B: u32 = INVALID_INDEX;
+        if Kindˉnumber > 3u32 || (Kind == 1u8 && (Opcode != 48u8 || Size != 5u32)) ||
+            (Kind == 2u8 && (Opcode != 49u8 || Size != 5u32)) ||
+            (Kind == 3u8 && (Opcode != 81u8 || Size != 1u32)) ||
+            (Kind == 0u8 && (Opcode == 48u8 || Opcode == 49u8 || Opcode == 81u8)) {
+            return Rejected(Input, 320u32);
+        }
+        if Kind == 0u8 || Kind == 2u8 {
+            if First + 1u32 >= Count { return Rejected(Input, 320u32); }
+            A = First + 1u32;
+        }
+        if Kind == 1u8 || Kind == 2u8 {
+            if Bytesˉreadˉu32ˉlittle(Input, Code + Last + 1u32) != Target {
+                return Rejected(Input, 320u32);
+            }
+            let Destination: u32 = Blockˉindex(Blocks, Target);
+            if Destination == INVALID_INDEX { return Rejected(Input, 320u32); }
+            if Kind == 1u8 { A = Destination; } else { B = Destination; }
+        }
+        let Result: bytes = Bytesˉconcat(
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Start), Bytesˉfromˉu32ˉlittle(Finish)),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(A), Bytesˉfromˉu32ˉlittle(B)));
+        return Buffer(true, Result, 320u32);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Controlˉrows(Input, Code, Instructions, Offsets, Blocks,
+        Edges, First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Controlˉrows(Input, Code, Instructions, Offsets, Blocks,
+        Edges, Middle, End, Depth + 1u32, Limit - Left.Work);
+    var Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Input, Work); }
+    let Combined: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    Work = Work + Combined.Work;
+    return Buffer(Combined.Valid, Combined.Value, Work);
+}
+
+fn Unionˉbytes(Entries: bytes, First: u32, Second: u32,
+    Start: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 8u32 { return Rejected(Entries, 0u32); }
+    if End - Start <= 16u32 {
+        var Leaf: bytes = Emptyˉbytes(Entries);
+        var Cursor: u32 = Start;
+        var Leafˉwork: u32 = 0u32;
+        while Cursor < End {
+            let Cost: u32 = Bytesˉlength(Leaf) + 10u32;
+            if Cost > Limit - Leafˉwork { return Rejected(Entries, Leafˉwork); }
+            let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, First + Cursor)) |
+                U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Second + Cursor));
+            Leaf = Bytesˉconcat(Leaf, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32));
+            Leafˉwork = Leafˉwork + Cost;
+            Cursor = Cursor + 1u32;
+        }
+        return Buffer(true, Leaf, Leafˉwork);
+    }
+    let Middle: u32 = Start + (End - Start) / 2u32;
+    let Left: Buffer = Unionˉbytes(Entries, First, Second, Start, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Unionˉbytes(Entries, First, Second, Middle, End, Depth + 1u32, Limit - Left.Work);
+    let Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Entries, Work); }
+    let Result: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    return Buffer(Result.Valid, Result.Value, Work + Result.Work);
+}
+fn Liveˉout(Input: bytes, Block: u32, Blocks: u32, Packed: u32,
+    Edges: bytes, Entries: bytes, Limit: u32) -> Buffer {
+    if Limit < 64u32 { return Rejected(Input, 0u32); }
+    let First: u32 = Bytesˉreadˉu32ˉlittle(Edges, Block * 16u32 + 8u32);
+    let Second: u32 = Bytesˉreadˉu32ˉlittle(Edges, Block * 16u32 + 12u32);
+    if First == INVALID_INDEX && Second == INVALID_INDEX {
+        let Zero: Buffer = Zeroes(Input, Packed, Limit - 64u32);
+        return Buffer(Zero.Valid, Zero.Value, 64u32 + Zero.Work);
+    }
+    if First == INVALID_INDEX || Second == INVALID_INDEX || First == Second {
+        if Packed > Limit - 64u32 { return Rejected(Input, 64u32); }
+        var Selected: u32 = First;
+        if Selected == INVALID_INDEX { Selected = Second; }
+        return Buffer(true, Bytesˉslice(Entries, Selected * Packed, Packed), 64u32 + Packed);
+    }
+    let Union: Buffer = Unionˉbytes(Entries, First * Packed, Second * Packed,
+        0u32, Packed, 0u32, Limit - 64u32);
+    return Buffer(Union.Valid, Union.Value, 64u32 + Union.Work);
+}
+fn Blocksˉflow(Input: bytes, Code: u32, Instructions: bytes, Offsets: bytes,
+    Edges: bytes,
+    First: u32, End: u32, Blocks: u32, Locals: u32,
+    Dependencies: bytes, Entries: bytes, Publish: bool, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 11u32 { return Rejected(Input, 0u32); }
+    if End - First == 1u32 {
+        let Out: Buffer = Liveˉout(Input, First, Blocks, Packedˉbytes(Locals), Edges, Entries, Limit);
+        if !Out.Valid { return Out; }
+        let Values: Flow = Instructionsˉflow(Input, Code, Instructions, Offsets,
+            Bytesˉreadˉu32ˉlittle(Edges, First * 16u32),
+            Bytesˉreadˉu32ˉlittle(Edges, First * 16u32 + 4u32), Locals,
+            Dependencies, Out.Value, Publish, 0u32, Limit - Out.Work);
+        if Publish { return Buffer(Values.Valid, Values.Rows, Out.Work + Values.Work); }
+        return Buffer(Values.Valid, Values.Before, Out.Work + Values.Work);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Blocksˉflow(Input, Code, Instructions, Offsets,
+        Edges, First, Middle, Blocks, Locals,
+        Dependencies, Entries, Publish, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Blocksˉflow(Input, Code, Instructions, Offsets,
+        Edges, Middle, End, Blocks, Locals,
+        Dependencies, Entries, Publish, Depth + 1u32, Limit - Left.Work);
+    var Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Input, Work); }
+    let Joinedˉvalue: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    Work = Work + Joinedˉvalue.Work;
+    return Buffer(Joinedˉvalue.Valid, Joinedˉvalue.Value, Work);
+}
+
+fn Virtualˉrows(Dependencies: bytes, Locals: u32,
+    First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 14u32 { return Rejected(Dependencies, 0u32); }
+    if First == End { return Buffer(true, Emptyˉbytes(Dependencies), 0u32); }
+    if End - First == 1u32 {
+        if Limit < 12u32 { return Rejected(Dependencies, 0u32); }
+        if Bytesˉreadˉu32ˉlittle(Dependencies, First * 12u32 + 4u32) < Locals {
+            return Buffer(true, Emptyˉbytes(Dependencies), 12u32);
+        }
+        if Limit < 24u32 { return Rejected(Dependencies, 0u32); }
+        return Buffer(true, Bytesˉslice(Dependencies, First * 12u32, 12u32), 24u32);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Virtualˉrows(Dependencies, Locals, First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Virtualˉrows(Dependencies, Locals, Middle, End,
+        Depth + 1u32, Limit - Left.Work);
+    var Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Dependencies, Work); }
+    let Result: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    Work = Work + Result.Work;
+    return Buffer(Result.Valid, Result.Value, Work);
+}
+
+// Without loan dependencies, ordinary use/definition liveness is a reverse
+// graph walk. Each reached block is visited once for each local.
+fn Eventˉcell(First: u32, Second: u32, Third: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu32ˉlittle(First),
+        Bytesˉfromˉu32ˉlittle(Second)), Bytesˉfromˉu32ˉlittle(Third));
+}
+fn Localˉevents(Input: bytes, Code: u32, Instructions: bytes, Offsets: bytes,
+    Locals: u32, First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 16u32 { return Rejected(Input, 0u32); }
+    if First == End { return Buffer(true, Emptyˉbytes(Input), 0u32); }
+    if End - First == 1u32 {
+        if Limit < 96u32 { return Rejected(Input, 0u32); }
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Offsets, First * 4u32);
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Offset);
+        if Opcode != 5u8 && !Readsˉlocal(Opcode) { return Buffer(true, Emptyˉbytes(Input), 16u32); }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Instructions, Offset)) < 5u32 { return Rejected(Input, 16u32); }
+        let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
+        if Local >= Locals { return Rejected(Input, 20u32); }
+        var Kind: u32 = 1u32;
+        if Opcode == 5u8 { Kind = 2u32; }
+        return Buffer(true, Eventˉcell(Local, Offset, Kind), 96u32);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Localˉevents(Input, Code, Instructions, Offsets, Locals,
+        First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Localˉevents(Input, Code, Instructions, Offsets, Locals,
+        Middle, End, Depth + 1u32, Limit - Left.Work);
+    let Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Input, Work); }
+    let Result: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    return Buffer(Result.Valid, Result.Value, Work + Result.Work);
+}
+fn Predecessors(Edges: bytes, First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 11u32 { return Rejected(Edges, 0u32); }
+    if End - First == 1u32 {
+        if Limit < 160u32 { return Rejected(Edges, 0u32); }
+        let A: u32 = Bytesˉreadˉu32ˉlittle(Edges, First * 16u32 + 8u32);
+        let B: u32 = Bytesˉreadˉu32ˉlittle(Edges, First * 16u32 + 12u32);
+        var Leaf: bytes = Emptyˉbytes(Edges);
+        if A != INVALID_INDEX { Leaf = Eventˉcell(A, First, 0u32); }
+        if B != INVALID_INDEX && B != A { Leaf = Bytesˉconcat(Leaf, Eventˉcell(B, First, 0u32)); }
+        return Buffer(true, Leaf, 160u32);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Predecessors(Edges, First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Predecessors(Edges, Middle, End, Depth + 1u32, Limit - Left.Work);
+    let Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Edges, Work); }
+    let Result: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    return Buffer(Result.Valid, Result.Value, Work + Result.Work);
+}
+fn Containingˉblock(Blocks: bytes, Offset: u32) -> u32 {
+    var Low: u32 = 0u32;
+    var High: u32 = Bytesˉlength(Blocks) / 4u32;
+    while Low < High {
+        let Middle: u32 = Low + (High - Low) / 2u32;
+        if Bytesˉreadˉu32ˉlittle(Blocks, Middle * 4u32) <= Offset { Low = Middle + 1u32; }
+        else { High = Middle; }
+    }
+    if Low == 0u32 { return INVALID_INDEX; }
+    return Low - 1u32;
+}
+fn Localˉreachability(Events: bytes, Parents: bytes, Blocks: bytes,
+    Zero: bytes, Local: u32, Limit: u32) -> Buffer {
+    if Limit < 128u32 { return Rejected(Events, 0u32); }
+    var Work: u32 = 128u32;
+    let First: u32 = Eventˉstart(Events, Local);
+    let End: u32 = Eventˉstart(Events, Local + 1u32);
+    if First == End { return Buffer(true, Zero, Work); }
+    let Count: u32 = Bytesˉlength(Blocks) / 4u32;
+    var Liveˉin: bytes = Zero;
+    var Defined: bytes = Zero;
+    var Previous: u32 = INVALID_INDEX;
+    var Event: u32 = First;
+    while Event < End {
+        if Limit - Work < 64u32 { return Rejected(Events, Work); }
+        Work = Work + 64u32;
+        let Eventˉblock: u32 = Containingˉblock(Blocks, Bytesˉreadˉu32ˉlittle(Events, Event * 12u32 + 4u32));
+        if Eventˉblock == INVALID_INDEX { return Rejected(Events, Work); }
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Events, Event * 12u32 + 8u32);
+        if Kind == 1u32 && Eventˉblock != Previous {
+            let Next: Buffer = Setˉlive(Liveˉin, Eventˉblock, true, Limit - Work);
+            Work = Work + Next.Work;
+            if !Next.Valid { return Rejected(Events, Work); }
+            Liveˉin = Next.Value;
+        }
+        if Kind == 2u32 {
+            let Nextˉdefinition: Buffer = Setˉlive(Defined, Eventˉblock, true, Limit - Work);
+            Work = Work + Nextˉdefinition.Work;
+            if !Nextˉdefinition.Valid { return Rejected(Events, Work); }
+            Defined = Nextˉdefinition.Value;
+        }
+        Previous = Eventˉblock;
+        Event = Event + 1u32;
+    }
+    var Pending: bytes = Liveˉin;
+    var Cursor: u32 = 0u32;
+    while Cursor < Count {
+        if Limit - Work < 1u32 { return Rejected(Events, Work); }
+        Work = Work + 1u32;
+        if Live(Pending, Cursor) {
+            let Block: u32 = Cursor;
+            let Removed: Buffer = Setˉlive(Pending, Block, false, Limit - Work);
+            Work = Work + Removed.Work;
+            if !Removed.Valid || Limit - Work < 128u32 { return Rejected(Events, Work); }
+            Pending = Removed.Value;
+            Work = Work + 128u32;
+            var Parent: u32 = Eventˉstart(Parents, Block);
+            let Parentˉend: u32 = Eventˉstart(Parents, Block + 1u32);
+            Cursor = Cursor + 1u32;
+            while Parent < Parentˉend {
+                if Limit - Work < 8u32 { return Rejected(Events, Work); }
+                Work = Work + 8u32;
+                let Candidate: u32 = Bytesˉreadˉu32ˉlittle(Parents, Parent * 12u32 + 4u32);
+                if !Live(Defined, Candidate) && !Live(Liveˉin, Candidate) {
+                    let Added: Buffer = Setˉlive(Liveˉin, Candidate, true, Limit - Work);
+                    Work = Work + Added.Work;
+                    if !Added.Valid { return Rejected(Events, Work); }
+                    Liveˉin = Added.Value;
+                    let Queued: Buffer = Setˉlive(Pending, Candidate, true, Limit - Work);
+                    Work = Work + Queued.Work;
+                    if !Queued.Valid { return Rejected(Events, Work); }
+                    Pending = Queued.Value;
+                    if Candidate < Cursor { Cursor = Candidate; }
+                }
+                Parent = Parent + 1u32;
+            }
+        } else { Cursor = Cursor + 1u32; }
+    }
+    return Buffer(true, Liveˉin, Work);
+}
+fn Resourceˉlocal(Types: bytes, Identities: bytes, Local: u32) -> bool {
+    let Type: u8 = Bytesˉreadˉu8(Types, Local);
+    if Type == 3u8 || Type == 6u8 || Type == 7u8 ||
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) { return true; }
+    let Identity: u32 = Bytesˉreadˉu32ˉlittle(Identities, Local * 4u32);
+    return (Type == 8u8 && Identity == 39u32) || (Type == 10u8 && Identity == 25u32);
+}
+fn Localˉmatrix(Events: bytes, Parents: bytes, Blocks: bytes, Zero: bytes,
+    Types: bytes, Identities: bytes,
+    First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 12u32 { return Rejected(Events, 0u32); }
+    if First == End { return Buffer(true, Emptyˉbytes(Events), 0u32); }
+    if End - First == 1u32 {
+        if Limit < 8u32 { return Rejected(Events, 0u32); }
+        if !Resourceˉlocal(Types, Identities, First) { return Buffer(true, Zero, 8u32); }
+        let Leaf: Buffer = Localˉreachability(Events, Parents, Blocks, Zero, First, Limit - 8u32);
+        return Buffer(Leaf.Valid, Leaf.Value, Leaf.Work + 8u32);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Localˉmatrix(Events, Parents, Blocks, Zero, Types, Identities,
+        First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Localˉmatrix(Events, Parents, Blocks, Zero, Types, Identities,
+        Middle, End, Depth + 1u32, Limit - Left.Work);
+    let Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Events, Work); }
+    let Result: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    return Buffer(Result.Valid, Result.Value, Work + Result.Work);
+}
+fn Transposed(Matrix: bytes, Locals: u32, Blocks: u32,
+    First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
+    if Depth > 19u32 { return Rejected(Matrix, 0u32); }
+    if End - First <= 16u32 {
+        var Leaf: bytes = Emptyˉbytes(Matrix);
+        var Leafˉwork: u32 = 0u32;
+        var Cursor: u32 = First;
+        while Cursor < End {
+            let Cost: u32 = Bytesˉlength(Leaf) + 32u32;
+            if Cost > Limit - Leafˉwork { return Rejected(Matrix, Leafˉwork); }
+            let Packed: u32 = Packedˉbytes(Locals);
+            let Block: u32 = Cursor / Packed;
+            let Local: u32 = (Cursor % Packed) * 8u32;
+            var Value: u32 = 0u32;
+            var Bit: u32 = 0u32;
+            while Bit < 8u32 && Local + Bit < Locals {
+                let Byte: u8 = Bytesˉreadˉu8(Matrix, (Local + Bit) * Packedˉbytes(Blocks) + Block / 8u32);
+                if (U32ˉfromˉu8(Byte) & (1u32 << (Block % 8u32))) != 0u32 { Value = Value | (1u32 << Bit); }
+                Bit = Bit + 1u32;
+            }
+            Leaf = Bytesˉconcat(Leaf, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32));
+            Leafˉwork = Leafˉwork + Cost;
+            Cursor = Cursor + 1u32;
+        }
+        return Buffer(true, Leaf, Leafˉwork);
+    }
+    let Middle: u32 = First + (End - First) / 2u32;
+    let Left: Buffer = Transposed(Matrix, Locals, Blocks, First, Middle, Depth + 1u32, Limit);
+    if !Left.Valid { return Left; }
+    let Right: Buffer = Transposed(Matrix, Locals, Blocks, Middle, End, Depth + 1u32, Limit - Left.Work);
+    let Work: u32 = Left.Work + Right.Work;
+    if !Right.Valid { return Rejected(Matrix, Work); }
+    let Result: Buffer = Joined(Left.Value, Right.Value, Limit - Work);
+    return Buffer(Result.Valid, Result.Value, Work + Result.Work);
+}
+fn Reachabilityˉentries(Input: bytes, Code: u32, Instructions: bytes, Offsets: bytes,
+    Types: bytes, Identities: bytes, Blocks: bytes, Edges: bytes, Limit: u32) -> Buffer {
+    let Locals: u32 = Bytesˉlength(Types);
+    let Events: Buffer = Localˉevents(Input, Code, Instructions, Offsets, Locals,
+        0u32, Bytesˉlength(Offsets) / 4u32, 0u32, Limit);
+    if !Events.Valid { return Events; }
+    let Ordered: Buffer = Sorted(Events.Value, 0u32, Bytesˉlength(Events.Value) / 12u32,
+        0u32, Limit - Events.Work);
+    var Work: u32 = Events.Work + Ordered.Work;
+    if !Ordered.Valid { return Rejected(Input, Work); }
+    let Count: u32 = Bytesˉlength(Blocks) / 4u32;
+    let Parents: Buffer = Predecessors(Edges, 0u32, Count, 0u32, Limit - Work);
+    Work = Work + Parents.Work;
+    if !Parents.Valid { return Rejected(Input, Work); }
+    let Parentˉorder: Buffer = Sorted(Parents.Value, 0u32, Bytesˉlength(Parents.Value) / 12u32,
+        0u32, Limit - Work);
+    Work = Work + Parentˉorder.Work;
+    if !Parentˉorder.Valid { return Rejected(Input, Work); }
+    let Zero: Buffer = Zeroes(Input, Packedˉbytes(Count), Limit - Work);
+    Work = Work + Zero.Work;
+    if !Zero.Valid { return Rejected(Input, Work); }
+    let Matrix: Buffer = Localˉmatrix(Ordered.Value, Parentˉorder.Value, Blocks, Zero.Value,
+        Types, Identities, 0u32, Locals, 0u32, Limit - Work);
+    Work = Work + Matrix.Work;
+    if !Matrix.Valid { return Rejected(Input, Work); }
+    let Entries: Buffer = Transposed(Matrix.Value, Locals, Count,
+        0u32, Count * Packedˉbytes(Locals), 0u32, Limit - Work);
+    return Buffer(Entries.Valid, Entries.Value, Work + Entries.Work);
+}
+
+fn Geometry(Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
+    Parameters: u32, Localˉtypes: bytes, Localˉidentities: bytes,
+    Instructions: bytes, Blockˉoffsets: bytes, Controlˉedges: bytes) -> bool {
+    let Locals: u32 = Bytesˉlength(Localˉtypes);
+    let Blocks: u32 = Bytesˉlength(Blockˉoffsets) / 4u32;
+    if Locals >= 2048u32 || Parameters > Locals || Parameters > 64u32 ||
+        Bytesˉlength(Localˉidentities) != Locals * 4u32 ||
+        Codeˉoffset > Bytesˉlength(Input) || Codeˉlength == 0u32 ||
+        Codeˉlength > 131072u32 || Codeˉlength > Bytesˉlength(Input) - Codeˉoffset ||
+        Bytesˉlength(Instructions) != Codeˉlength || Blocks == 0u32 || Blocks > 1024u32 ||
+        Bytesˉlength(Blockˉoffsets) % 4u32 != 0u32 ||
+        Bytesˉlength(Controlˉedges) != Blocks * 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Blockˉoffsets, 0u32) != 0u32 { return false; }
+    return true;
+}
+fn Buildˉrows(Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
+    Parameters: u32, Localˉtypes: bytes, Localˉidentities: bytes,
+    Instructions: bytes, Blockˉoffsets: bytes, Controlˉedges: bytes,
+    Borrowˉdirectory: bytes, Roots: Evidence, Priorˉwork: u32) -> Plan {
+    let Locals: u32 = Bytesˉlength(Localˉtypes);
+    let Blocks: u32 = Bytesˉlength(Blockˉoffsets) / 4u32;
+    if !Geometry(Input, Codeˉoffset, Codeˉlength, Parameters, Localˉtypes,
+        Localˉidentities, Instructions, Blockˉoffsets, Controlˉedges) ||
+        Priorˉwork > WORK_LIMIT || Roots.Work > WORK_LIMIT - Priorˉwork {
+        return Invalid(Input, Priorˉwork);
+    }
+    if !Roots.Valid { return Invalid(Input, Priorˉwork + Roots.Work); }
+    var Work: u32 = Priorˉwork + Roots.Work;
+    var Cursor: u32 = 0u32;
+    var Count: u32 = 0u32;
+    var Block: u32 = 0u32;
+    while Cursor < Codeˉlength {
+        if Count >= 32768u32 || WORK_LIMIT - Work < 64u32 { return Invalid(Input, Work); }
+        Work = Work + 64u32;
+        let Size: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Instructions, Cursor));
+        if Size == 0u32 || Size > Codeˉlength - Cursor { return Invalid(Input, Work); }
+        if Block < Blocks && Bytesˉreadˉu32ˉlittle(Blockˉoffsets, Block * 4u32) == Cursor {
+            Block = Block + 1u32;
+        }
+        if Block < Blocks && Bytesˉreadˉu32ˉlittle(Blockˉoffsets, Block * 4u32) <= Cursor {
+            return Invalid(Input, Work);
+        }
+        var Interior: u32 = 1u32;
+        while Interior < Size {
+            if WORK_LIMIT - Work < 1u32 { return Invalid(Input, Work); }
+            Work = Work + 1u32;
+            if Bytesˉreadˉu8(Instructions, Cursor + Interior) != 0u8 { return Invalid(Input, Work); }
+            Interior = Interior + 1u32;
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Opcode == 48u8 || Opcode == 49u8 || Opcode == 81u8 {
+            var End: u32 = Codeˉlength;
+            if Block < Blocks { End = Bytesˉreadˉu32ˉlittle(Blockˉoffsets, Block * 4u32); }
+            if Cursor + Size != End { return Invalid(Input, Work); }
+        }
+        Count = Count + 1u32;
+        Cursor = Cursor + Size;
+    }
+    if Block != Blocks { return Invalid(Input, Work); }
+    let Rowˉbytes: u32 = 4u32 + Packedˉbytes(Locals) * 2u32;
+    // The work budget does not enlarge the native byte-value profile.
+    if Count > 4194304u32 / Rowˉbytes { return Invalid(Input, Work); }
+    let Offsetˉtable: Buffer = Instructionˉoffsets(Instructions, 0u32,
+        Codeˉlength, 0u32, WORK_LIMIT - Work);
+    Work = Work + Offsetˉtable.Work;
+    if !Offsetˉtable.Valid || Bytesˉlength(Offsetˉtable.Value) != Count * 4u32 {
+        return Invalid(Input, Work);
+    }
+    let Offsets: bytes = Offsetˉtable.Value;
+    if Count > (WORK_LIMIT - Work) / Rowˉbytes { return Invalid(Input, Work); }
+    var Dependency: u32 = 0u32;
+    while Dependency < Bytesˉlength(Roots.Dependencies) / 12u32 {
+        if WORK_LIMIT - Work < 64u32 { return Invalid(Input, Work); }
+        Work = Work + 64u32;
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Roots.Dependencies, Dependency * 12u32);
+        if Bytesˉreadˉu8(Instructions, Offset) == 0u8 { return Invalid(Input, Work); }
+        Dependency = Dependency + 1u32;
+    }
+    let Control: Buffer = Controlˉrows(Input, Codeˉoffset, Instructions,
+        Offsets, Blockˉoffsets, Controlˉedges, 0u32, Blocks, 0u32, WORK_LIMIT - Work);
+    Work = Work + Control.Work;
+    if !Control.Valid || Bytesˉlength(Control.Value) != Blocks * 16u32 {
+        return Invalid(Input, Work);
+    }
+    let Edges: bytes = Control.Value;
+    var Entries: bytes = Emptyˉbytes(Input);
+    if Bytesˉlength(Roots.Dependencies) == 0u32 {
+        let Reached: Buffer = Reachabilityˉentries(Input, Codeˉoffset, Instructions,
+            Offsets, Localˉtypes, Localˉidentities, Blockˉoffsets, Edges, WORK_LIMIT - Work);
+        Work = Work + Reached.Work;
+        if !Reached.Valid { return Invalid(Input, Work); }
+        Entries = Reached.Value;
+    } else {
+        let Zero: Buffer = Zeroes(Input, Blocks * Packedˉbytes(Locals), WORK_LIMIT - Work);
+        Work = Work + Zero.Work;
+        if !Zero.Valid { return Invalid(Input, Work); }
+        Entries = Zero.Value;
+        var Pass: u32 = 0u32;
+        var Changed: bool = true;
+        while Changed {
+            // No incomplete fixed point may authorize a drop. Refuse at the
+            // selected pass/work bound instead of publishing conservative gaps.
+            if Pass > Blocks { return Invalid(Input, Work); }
+            let Next: Buffer = Blocksˉflow(Input, Codeˉoffset, Instructions, Offsets,
+                Edges, 0u32, Blocks, Blocks, Locals,
+                Roots.Dependencies, Entries, false, 0u32, WORK_LIMIT - Work);
+            Work = Work + Next.Work;
+            if !Next.Valid || Bytesˉlength(Next.Value) != Bytesˉlength(Entries) {
+                return Invalid(Input, Work);
+            }
+            Changed = false;
+            var Index: u32 = 0u32;
+            while Index < Bytesˉlength(Entries) {
+                if WORK_LIMIT - Work < 2u32 { return Invalid(Input, Work); }
+                Work = Work + 2u32;
+                if Bytesˉreadˉu8(Entries, Index) != Bytesˉreadˉu8(Next.Value, Index) { Changed = true; }
+                Index = Index + 1u32;
+            }
+            Entries = Next.Value;
+            Pass = Pass + 1u32;
+        }
+    }
+    let Rows: Buffer = Blocksˉflow(Input, Codeˉoffset, Instructions, Offsets,
+        Edges, 0u32, Blocks, Blocks, Locals,
+        Roots.Dependencies, Entries, true, 0u32, WORK_LIMIT - Work);
+    Work = Work + Rows.Work;
+    if !Rows.Valid { return Invalid(Input, Work); }
+    if Bytesˉlength(Rows.Value) != Count * Rowˉbytes { return Invalid(Input, Work); }
+    let Virtual: Buffer = Virtualˉrows(Roots.Dependencies, Locals, 0u32,
+        Bytesˉlength(Roots.Dependencies) / 12u32, 0u32, WORK_LIMIT - Work);
+    Work = Work + Virtual.Work;
+    if !Virtual.Valid { return Invalid(Input, Work); }
+    return Plan(true, Input, Borrowˉdirectory, Rows.Value, Virtual.Value, Locals, Rowˉbytes, Work);
+}
+
+// Production callers use the once-admitted same-input directory. Work includes
+// its one-time admission charge, so directory plus this plan stays within the
+// named cumulative-work bound; the directory keeps its separate 16 MiB cap.
+export fn Buildˉindexed(Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
+    Parameters: u32, Localˉtypes: bytes, Localˉidentities: bytes,
+    Instructions: bytes, Blockˉoffsets: bytes, Controlˉedges: bytes,
+    Index: Directory, Functionˉindex: u32) -> Plan {
+    let Locals: u32 = Bytesˉlength(Localˉtypes);
+    if !Index.Valid || Index.Work > WORK_LIMIT ||
+        !Geometry(Input, Codeˉoffset, Codeˉlength, Parameters, Localˉtypes,
+            Localˉidentities, Instructions, Blockˉoffsets, Controlˉedges) {
+        return Invalid(Input, 0u32);
+    }
+    let Roots: Evidence = Readˉevidence(Input, Codeˉoffset, Codeˉlength,
+        Parameters, Locals, Index, Functionˉindex, WORK_LIMIT - Index.Work);
+    return Buildˉrows(Input, Codeˉoffset, Codeˉlength, Parameters,
+        Localˉtypes, Localˉidentities, Instructions, Blockˉoffsets,
+        Controlˉedges, Index.Borrowˉroots, Roots, Index.Work);
+}
+
+// Focused callers without a batch index retain the original code-based API.
+// The function geometry is already admitted by Core; an absent E1 record is
+// meaningful only after Directory-index has admitted the entire directory.
+export fn Build(Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
+    Parameters: u32, Localˉtypes: bytes, Localˉidentities: bytes,
+    Instructions: bytes, Blockˉoffsets: bytes, Controlˉedges: bytes,
+    Borrowˉdirectory: bytes) -> Plan {
+    if !Geometry(Input, Codeˉoffset, Codeˉlength, Parameters, Localˉtypes,
+        Localˉidentities, Instructions, Blockˉoffsets, Controlˉedges) {
+        return Invalid(Input, 0u32);
+    }
+    let Index: Directory = Directoryˉindex(Input, Borrowˉdirectory);
+    if !Index.Valid { return Invalid(Input, Index.Work); }
+    var Function: u32 = 0u32;
+    var Work: u32 = Index.Work;
+    while Function < Bytesˉlength(Index.Offsets) / 4u32 {
+        if WORK_LIMIT - Work < 8u32 { return Invalid(Input, Work); }
+        Work = Work + 8u32;
+        let Header: u32 = Bytesˉreadˉu32ˉlittle(Index.Offsets, Function * 4u32);
+        if Header != INVALID_INDEX &&
+            Bytesˉreadˉu32ˉlittle(Index.Borrowˉroots, Header + 4u32) == Codeˉoffset {
+            let Locals: u32 = Bytesˉlength(Localˉtypes);
+            if Locals >= 2048u32 { return Invalid(Input, Work); }
+            let Roots: Evidence = Readˉevidence(Input, Codeˉoffset, Codeˉlength,
+                Parameters, Locals, Index, Function, WORK_LIMIT - Work);
+            return Buildˉrows(Input, Codeˉoffset, Codeˉlength, Parameters,
+                Localˉtypes, Localˉidentities, Instructions, Blockˉoffsets,
+                Controlˉedges, Borrowˉdirectory, Roots, Work);
+        }
+        Function = Function + 1u32;
+    }
+    return Buildˉrows(Input, Codeˉoffset, Codeˉlength, Parameters,
+        Localˉtypes, Localˉidentities, Instructions, Blockˉoffsets,
+        Controlˉedges, Borrowˉdirectory, Evidence(true, Emptyˉbytes(Input), 0u32), Work);
+}
+
+export fn Rowˉoffset(Value: Plan, Instruction: u32) -> u32 {
+    if !Value.Valid || Value.Locals >= 2048u32 ||
+        Value.Rowˉbytes != 4u32 + Packedˉbytes(Value.Locals) * 2u32 ||
+        Bytesˉlength(Value.Rows) % Value.Rowˉbytes != 0u32 ||
+        Instruction >= Bytesˉlength(Value.Rows) / Value.Rowˉbytes { return INVALID_INDEX; }
+    return Bytesˉreadˉu32ˉlittle(Value.Rows, Instruction * Value.Rowˉbytes);
+}
+export fn Rowˉindex(Value: Plan, Offset: u32) -> u32 {
+    if !Value.Valid || Value.Locals >= 2048u32 ||
+        Value.Rowˉbytes != 4u32 + Packedˉbytes(Value.Locals) * 2u32 ||
+        Bytesˉlength(Value.Rows) % Value.Rowˉbytes != 0u32 { return INVALID_INDEX; }
+    var Low: u32 = 0u32;
+    var High: u32 = Bytesˉlength(Value.Rows) / Value.Rowˉbytes;
+    while Low < High {
+        let Middle: u32 = Low + (High - Low) / 2u32;
+        let Current: u32 = Rowˉoffset(Value, Middle);
+        if Current == Offset { return Middle; }
+        if Current < Offset { Low = Middle + 1u32; } else { High = Middle; }
+    }
+    return INVALID_INDEX;
+}
+export fn Liveˉbefore(Value: Plan, Instruction: u32, Local: u32) -> bool {
+    if Rowˉoffset(Value, Instruction) == INVALID_INDEX || Local >= Value.Locals { return false; }
+    let Offset: u32 = Instruction * Value.Rowˉbytes + 4u32;
+    return (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Offset + Local / 8u32)) &
+        (1u32 << (Local % 8u32))) != 0u32;
+}
+export fn Liveˉafter(Value: Plan, Instruction: u32, Local: u32) -> bool {
+    if Rowˉoffset(Value, Instruction) == INVALID_INDEX || Local >= Value.Locals { return false; }
+    let Offset: u32 = Instruction * Value.Rowˉbytes + 4u32 + Packedˉbytes(Value.Locals);
+    return (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Offset + Local / 8u32)) &
+        (1u32 << (Local % 8u32))) != 0u32;
+}
+
+// A dead store also ends its new value, even when it was not live before.
+// Groups preserve local indices; callers release set bits in descending order.
+export fn Endingˉmask(Value: Plan, Instruction: u32, First: u32, Stored: u32) -> u32 {
+    if Rowˉoffset(Value, Instruction) == INVALID_INDEX || First % 32u32 != 0u32 ||
+        First >= Value.Locals { return 0u32; }
+    let Packed: u32 = Packedˉbytes(Value.Locals);
+    let Offset: u32 = Instruction * Value.Rowˉbytes + 4u32 + First / 8u32;
+    var Before: u32 = 0u32;
+    var After: u32 = 0u32;
+    if Packed - First / 8u32 >= 4u32 {
+        Before = Bytesˉreadˉu32ˉlittle(Value.Rows, Offset);
+        After = Bytesˉreadˉu32ˉlittle(Value.Rows, Offset + Packed);
+    } else {
+        var Byte: u32 = 0u32;
+        while Byte < Packed - First / 8u32 {
+            Before = Before | (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Offset + Byte)) << (Byte * 8u32));
+            After = After | (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Offset + Packed + Byte)) << (Byte * 8u32));
+            Byte = Byte + 1u32;
+        }
+    }
+    if Stored < Value.Locals && Stored >= First && Stored - First < 32u32 {
+        Before = Before | (1u32 << (Stored - First));
+    }
+    return Before & (4294967295u32 - After);
+}
+
+// A branch keeps the union of its successors alive. Release the shares needed
+// only by another successor after selecting the actual edge.
+export fn Edgeˉendingˉmask(Value: Plan, Instruction: u32, Successor: u32, First: u32) -> u32 {
+    if Rowˉoffset(Value, Instruction) == INVALID_INDEX ||
+        Rowˉoffset(Value, Successor) == INVALID_INDEX || First % 32u32 != 0u32 ||
+        First >= Value.Locals { return 0u32; }
+    let Packed: u32 = Packedˉbytes(Value.Locals);
+    let Source: u32 = Instruction * Value.Rowˉbytes + 4u32 + Packed + First / 8u32;
+    let Target: u32 = Successor * Value.Rowˉbytes + 4u32 + First / 8u32;
+    var Before: u32 = 0u32;
+    var After: u32 = 0u32;
+    if Packed - First / 8u32 >= 4u32 {
+        Before = Bytesˉreadˉu32ˉlittle(Value.Rows, Source);
+        After = Bytesˉreadˉu32ˉlittle(Value.Rows, Target);
+    } else {
+        var Byte: u32 = 0u32;
+        while Byte < Packed - First / 8u32 {
+            Before = Before | (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Source + Byte)) << (Byte * 8u32));
+            After = After | (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Target + Byte)) << (Byte * 8u32));
+            Byte = Byte + 1u32;
+        }
+    }
+    return Before & (4294967295u32 - After);
+}

@@ -4,6 +4,7 @@ import { copyFile, lstat, mkdir, opendir, readFile, realpath, rename, rm, writeF
 import os from 'node:os';
 import path from 'node:path';
 import { Constructˉsourceˉeditionˉpredecessor } from './Source-Edition-Predecessor-Core.mjs';
+import { Acquireˉdirectˉconditionˉanalyzer, Requireˉdirectˉconstruction } from './Direct-Condition-Analyzer-Intermediate-Core.mjs';
 import {
     Getˉnativeˉprojectˉcacheˉrequest,
     Prepareˉnativeˉprojectˉcacheˉcontext,
@@ -27,6 +28,11 @@ export const CURRENT_ADMISSION_PROJECTS = Object.freeze([
     ['Admitter', 'Windvale-Compiler-Admission-Driver.wvproj'],
     ['Authenticator', 'Windvale-Compiler-Source-Authenticator.wvproj'],
     ['Binder', 'Windvale-Compiler-Foreign-Binding-Driver.wvproj'],
+]);
+export const CURRENT_COMPILER_PROJECTS = Object.freeze([
+    'Windvale-Compiler-Analysis-Driver.wvproj',
+    'Windvale-Compiler-Emission-Driver.wvproj',
+    ...CURRENT_ADMISSION_PROJECTS.map(([, Project]) => Project),
 ]);
 const PRODUCT_NAMES = Object.freeze([
     `Analyzer.${EXTENSION}`, 'Analyzer.identity',
@@ -84,6 +90,8 @@ async function Evidence(Candidate, Maximum = MAXIMUM_INPUT_BYTES, Executable = f
 
 // Request identity describes construction, independently of requested test products.
 export async function Getˉcurrentˉsplitˉcompilerˉkey() {
+    const { Readˉbootstrapˉverifier } = await import('./Build-Cached-Segmented-Hosted-Wvb.mjs');
+    const Verifier = await Readˉbootstrapˉverifier();
     const Wrapper = WINDOWS ? 'cmd' : 'sh';
     const Hostˉfamily = WINDOWS ? 'windows-x64' : 'linux-x64';
     const Hash = createHash('sha256');
@@ -91,6 +99,7 @@ export async function Getˉcurrentˉsplitˉcompilerˉkey() {
     Field(Hash, 'host', HOST);
     Field(Hash, 'node', process.version);
     Field(Hash, 'node-binary', JSON.stringify(await Evidence(process.execPath)));
+    Field(Hash, 'bootstrap-complete-verifier', JSON.stringify(Verifier?.identity ?? null));
     const Context = await Prepareˉnativeˉprojectˉcacheˉcontext(NAMESPACE, [
         'Current-Split-Compiler-Cache-Core.mjs',
         'Build-Current-Split-Project-Wvb.mjs',
@@ -103,9 +112,11 @@ export async function Getˉcurrentˉsplitˉcompilerˉkey() {
         'Run-Split-Compiler.mjs',
         'Authenticated-Analysis-Cache-Core.mjs',
         'Native-Hosted-Application-Cache-Core.mjs',
+        'Direct-Condition-Analyzer-Intermediate-Core.mjs',
+        'Project-Construction-Readiness-Core.mjs',
+        'Generate-Compiler-Artifact-Readers.mjs',
     ].map(Name => path.join(REPOSITORY_ROOT, 'Tools', 'Native', Name)));
-    for (const Name of ['Windvale-Compiler-Analysis-Driver.wvproj',
-        'Windvale-Compiler-Emission-Driver.wvproj', ...CURRENT_ADMISSION_PROJECTS.map(([, Project]) => Project)]) {
+    for (const Name of CURRENT_COMPILER_PROJECTS) {
         const Request = await Getˉnativeˉprojectˉcacheˉrequest(Context, path.join(
             REPOSITORY_ROOT, 'Projects', 'Tools', Name));
         Field(Hash, `compiler:${Name}`, Request.key);
@@ -137,7 +148,7 @@ export async function Getˉcurrentˉsplitˉcompilerˉkey() {
     return Hash.digest('hex');
 }
 
-export async function Getˉcurrentˉsplitˉcompilerˉfamily() {
+export function Getˉcurrentˉsplitˉcompilerˉcacheˉroot() {
     const Configured = process.env.WINDVALE_NATIVE_CACHE_ROOT;
     let Root = Configured;
     if (!Root) {
@@ -149,7 +160,11 @@ export async function Getˉcurrentˉsplitˉcompilerˉfamily() {
                 'windvale', 'native-tool-cache');
         }
     }
-    return Directory(path.join(Root, NAMESPACE, HOST), true);
+    return path.resolve(Root);
+}
+
+export async function Getˉcurrentˉsplitˉcompilerˉfamily() {
+    return Directory(path.join(Getˉcurrentˉsplitˉcompilerˉcacheˉroot(), NAMESPACE, HOST), true);
 }
 
 function Identity(Role, Product) {
@@ -275,6 +290,7 @@ export async function Constructˉcurrentˉsplitˉcompiler(
     Work, Candidate, Runˉnative, Runˉnode,
     Getˉpredecessor = Constructˉsourceˉeditionˉpredecessor,
     Projectˉdirectory = path.join(REPOSITORY_ROOT, 'Projects', 'Tools'),
+    Construction = null,
 ) {
     const Suffix = '.' + EXTENSION;
     const Bootstrap = path.join(REPOSITORY_ROOT, 'Artifacts',
@@ -305,9 +321,15 @@ export async function Constructˉcurrentˉsplitˉcompiler(
     let Pinnedˉanalyzerˉidentity = path.join(Work, 'Pinned-Analyzer.identity');
     let Pinnedˉemitterˉidentity = path.join(Work, 'Pinned-Emitter.identity');
     if (Modern) {
-        const Predecessor = await Getˉpredecessor(Work);
-        Pinnedˉanalyzer = Predecessor.Analyzer;
-        Pinnedˉanalyzerˉidentity = Predecessor.Analyzerˉidentity;
+        Requireˉdirectˉconstruction(Construction);
+        await Construction.Requireˉunchanged();
+        const Predecessor = await Getˉpredecessor(Work, Construction.Deadline);
+        const Intermediate = await Acquireˉdirectˉconditionˉanalyzer({
+            Work, Predecessor, Runˉnative, Runˉnode, Construction,
+            Analysisˉproject: Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
+        });
+        Pinnedˉanalyzer = Intermediate.Analyzer;
+        Pinnedˉanalyzerˉidentity = Intermediate.Analyzerˉidentity;
         Pinnedˉemitter = Predecessor.Emitter;
         Pinnedˉemitterˉidentity = Predecessor.Emitterˉidentity;
         Admissionˉarguments = ['--authenticated-project4', Predecessor.Admitter,

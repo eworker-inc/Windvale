@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { Runˉdevelopmentˉcommand as Executeˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
-import { Acquireˉfoundationˉborrowˉtestˉproducts } from './Foundation-Borrow-Test-Products-Core.mjs';
+import { Acquireˉfoundationˉborrowˉtestˉproducts, Parseˉfoundationˉownerˉarguments,
+    Withˉfoundationˉownerˉenvironment } from './Foundation-Borrow-Test-Products-Core.mjs';
 import { Verifyˉvectorˉmutationˉproducts } from './Vector-Mutation-Execution-Cases.mjs';
 import { createHash } from 'node:crypto';
 import {
@@ -69,6 +70,10 @@ const EXPECTED_STRUCTURED_TASK_PROVIDER_RECOVERY_SHA256 =
 const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
+let Foundationˉownerˉphase;
+try { Foundationˉownerˉphase = Parseˉfoundationˉownerˉarguments(process.argv.slice(2)); }
+catch (Error) { process.stderr.write(Error.message + '\n'); process.exit(64); }
+
 // The fast loop must never initiate compiler construction on a cache miss.
 const Preparedˉcompilerˉonly = process.argv[2] === '--vector-borrow-integration' &&
     process.argv.at(-1) === '--prepared-compiler-only';
@@ -101,13 +106,13 @@ const Foundationˉplanˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-plan';
 const Foundationˉdirectoriesˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-directories';
-const Foundationˉownersˉonly = process.argv.length === 3 &&
-    process.argv[2] === '--foundation-borrow-owners';
+const Foundationˉownersˉonly = Foundationˉownerˉphase !== null;
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
 const Developmentˉonly = Vectorˉmutationˉproductsˉonly || Recordˉvectorˉonly || Vectorˉintegrationˉonly || Vectorˉparameterˉonly || Foundationˉownedˉonly || Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
-let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
+let Maximumˉrunˉmilliseconds = Foundationˉownerˉphase === null ? TOOL_TIMEOUT_MILLISECONDS :
+    Foundationˉownerˉphase.Maximum * 1000;
 if ((Foundationˉonly || Vectorˉintegrationˉonly) && process.argv.length >= 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
         Number(process.argv[4]) > 3600) {
@@ -127,14 +132,14 @@ if (Foundationˉonly && process.argv.length === 7 && Foundationˉsourceˉrunner 
 const Started = Date.now();
 // Keep process settlement and scoped cleanup inside the selected integration total.
 const Developmentˉdeadline = Started + Maximumˉrunˉmilliseconds -
-    (Vectorˉintegrationˉonly ? 7_500 : 0);
+    (Vectorˉintegrationˉonly || Foundationˉownerˉphase?.Prepare ? 7_500 : 0);
 const Inspectionˉonly =
     Inspectionˉmode === '--inspect-structured-task' ||
     Inspectionˉmode === '--inspect-function-limits';
 if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
-        '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|--foundation-borrow-components|' +
+        '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners [--prepare-only|--prepared-products-only] [--maximum-seconds <seconds>]|--foundation-borrow-components|' +
         '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>|--native-lowerer <lowerer>]]|--foundation-borrow-runtime <runner>|' +
         '--foundation-enum-metadata <text-fixture.wvb>|--foundation-native-execution <lowerer> <text-fixture.wvb>|' +
         '--foundation-native-staging <producer> <text-fixture.wvb> [--admitter <checker>]|' +
@@ -310,11 +315,18 @@ async function Main() {
             throw Object.assign(Cleanupˉerror, { exitCode: 2 });
         }
     }
+    if (Foundationˉownerˉphase?.Prepare) {
+        const Elapsed = Date.now() - Started;
+        if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Foundation owner preparation exceeded its total budget during cleanup.', 124);
+        process.stdout.write('native language 1 foundation owner preparation status=Prepared products=1 behavior-cases=0 executions=0 ' +
+            'qualification=false elapsed-ms=' + Elapsed + '\n');
+        return;
+    }
     if (Vectorˉintegrationˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Vector borrow integration exceeded its total budget during cleanup.', 124);
-        process.stdout.write('native Vector borrow integration status=Passed cases=553 ' +
-            'components=388 vector-groups=96 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
+        process.stdout.write('native Vector borrow integration status=Passed cases=594 ' +
+            'components=429 vector-groups=96 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
             `qualification=false elapsed-ms=${Elapsed}\n`);
     }
     if (Vectorˉmutationˉproductsˉonly && Date.now() - Started > Maximumˉrunˉmilliseconds) {
@@ -326,7 +338,7 @@ async function Main() {
             Reject('The focused Foundation borrow development budget expired during cleanup.', 124);
         }
         process.stdout.write(
-            `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 388 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 441 : Foundationˉsourceˉrunner === null ? 414 : 417) : Foundationˉplanˉonly ? 27 : Foundationˉdirectoriesˉonly ? 27 : 334} ` +
+            `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 429 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 482 : Foundationˉsourceˉrunner === null ? 455 : 458) : Foundationˉplanˉonly ? 32 : Foundationˉdirectoriesˉonly ? 27 : 370} ` +
             `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
             (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
             (Borrowˉcomponentˉbytes === null ? '' :
@@ -480,6 +492,23 @@ async function Runˉfoundationˉcomponents() {
 
 async function Runˉfoundationˉowners() {
     Requireˉfoundationˉcandidate();
+    if (Foundationˉownerˉphase !== null) {
+        await Withˉfoundationˉownerˉenvironment(Foundationˉownerˉphase, async () => {
+            const Products = await Acquireˉfoundationˉborrowˉtestˉproducts({
+                Work, Deadline: Developmentˉdeadline, Selection: 'owners',
+                Prepareˉcompiler: Foundationˉownerˉphase.Prepare,
+                Run: (Label, Command, Arguments, Childˉdeadline) => Run(Label, Command, Arguments, 0, Childˉdeadline),
+            });
+            Borrowˉownerˉbytes = readFileSync(Products.Ownersˉwvb);
+            if (!Foundationˉownerˉphase.Prepare) {
+                await Products.Requireˉunchanged();
+                const Result = await Run('foundation-borrow-owners-execute', Products.Owners, [], 42, Developmentˉdeadline);
+                if (Result !== '') Reject('The Foundation owner-flow self-test emitted unexpected output.');
+                await Products.Requireˉunchanged();
+            }
+        });
+        return;
+    }
     const Wvb = path.join(Work, 'Borrow-Owners.wvb');
     await Runˉnative('foundation-borrow-owners-build', 'Build-Cached-Project-Wvb', [
         Testˉproject('Windvale-Native-Test-Foundation-Owner-Flow.wvproj'), Wvb,
@@ -1574,7 +1603,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${577 + Growˉmalformedˉcases.length +
+        `cases=${618 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=26 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1587,7 +1616,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=27 foundation-borrow-directory-cases=27 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=40 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=32 foundation-borrow-directory-cases=27 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=145 foundation-borrow-lifetime-cases=51 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         'foundation-source-ownership-cases=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
@@ -3482,9 +3511,18 @@ async function Run(Label, Command, Arguments, Expected = 0, Deadline = null) {
     process.stdout.write(
         `START language 1 memory budget split execution step=${Stepˉnumber} phase=${Label}\n`,
     );
-    const Result = await Runˉdevelopmentˉcommand(
-        Command, Arguments, Selectedˉdeadline, Developmentˉonly, MAXIMUM_DIAGNOSTIC_BYTES,
-    );
+    let Result;
+    const Heartbeat = Foundationˉownerˉphase === null ? null : setInterval(() => {
+        const Now = Date.now();
+        if (Now < Selectedˉdeadline) process.stdout.write('PROGRESS language 1 foundation owner ' +
+            'step=' + Stepˉnumber + ' phase=' + Label + ' elapsed-ms=' + (Now - Start) +
+            ' remaining-ms=' + (Selectedˉdeadline - Now) + '\n');
+    }, 30_000);
+    try {
+        Result = await Runˉdevelopmentˉcommand(
+            Command, Arguments, Selectedˉdeadline, Developmentˉonly, MAXIMUM_DIAGNOSTIC_BYTES,
+        );
+    } finally { if (Heartbeat !== null) clearInterval(Heartbeat); }
     if (Result.Code !== Expected || Result.Error.length !== 0) {
         const Component = Label === 'foundation-borrow-components-execute'
             ? { 1: 'plan', 2: 'directories', 3: 'owners' }[Result.Code] : undefined;

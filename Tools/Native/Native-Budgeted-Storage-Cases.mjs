@@ -133,13 +133,19 @@ export function Buildˉbudgetedˉstorageˉcases(Oracle) {
         ]) { Set(Base, Index, Value); Begin(3); Call(5); Set(Base, Index, Original); }
         Request(5); Call();
     });
-    Case('budget-corruption', 64, ({ Entry, Allocate, Offset, Set }) => {
+    Case('budget-corruption', 64, ({ Entry, Allocate, Offset, Set, Request, Call }) => {
         Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48);
+        // A zero-charge child in the final slot still contributes to the count.
+        Entry(65, 1, 1, 0); Set('rsp', Offset(1) + 20, 2);
+        Request(8); Set('r13', 64, 1); Set('r13', 68, 1); Call();
+        Set('rsp', Offset(1) + 20, 1); Allocate(2, 1, 1, 0, 5);
+        for (let Index = 4; Index < 40; Index += 4) Set('rsp', Offset(65) + Index, 0);
         for (const [Index, Value, Original] of [
             [BUDGET_BASE, 0, 1112364631], [Offset(1) + 32, 49, 48],
             [Offset(2) + 8, 2, 1], [Offset(2) + 12, 2, 1],
             [Offset(2) + 4, 66, 1], [Offset(2) + 4, 2, 1],
             [Offset(2) + 0, 0, 1], [Offset(2) + 32, 49, 0],
+            ...[4, 8, 12, 16, 20, 24, 28, 32, 36].map(Index => [Offset(65) + Index, 1, 0]),
         ]) { Set('rsp', Index, Value); Allocate(2, 1, 1, 0, 5); Set('rsp', Index, Original); }
         Entry(1, 1, 0, 4294967295, 2, 47); Set('rsp', Offset(1) + 28, 4294967295);
         Entry(2, 1, 1, 4294967295); Set('rsp', Offset(2) + 28, 4294967295); Entry(3, 1, 1, 48);

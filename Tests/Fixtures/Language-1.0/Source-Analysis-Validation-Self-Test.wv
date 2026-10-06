@@ -1,0 +1,109 @@
+#!wv/1 en@1
+module Languageˉoneˉsourceˉanalysisˉvalidationˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+
+import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
+import Compilerˉsourceˉanalysisˉvalidation as Analysisˉvalidation;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 1u32, Bytesˉfromˉu8(Value)
+        );
+    return Replaced.Value;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+        );
+    return Replaced.Value;
+}
+
+fn Status(
+    Input: bytes,
+    Manifest: bytes,
+    Bindings: bytes,
+    Wir: bytes
+) -> Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus {
+    let Checked:
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
+        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
+            Input, Manifest, Bindings, Wir
+        );
+    return Checked.Status;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return 64; }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Manifest: bytes = file.read_bytes(process.argument(1u32));
+    let Bindings: bytes = file.read_bytes(process.argument(2u32));
+    let Wir: bytes = file.read_bytes(process.argument(3u32));
+    let Checked:
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
+        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
+            Input, Manifest, Bindings, Wir
+        );
+    if Checked.Status !=
+        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
+        return 4;
+    }
+    if Status(
+        Input,
+        Bytesˉslice(Manifest, 0u32, 103u32),
+        Bindings, Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 5;
+    }
+    if Status(
+        Input, Replaceˉu8(Manifest, 0u32, 0u8),
+        Bindings, Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 6;
+    }
+    if Status(
+        Input, Replaceˉu32(Manifest, 12u32, 0u32),
+        Bindings, Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 7;
+    }
+    if Status(
+        Input, Replaceˉu32(Manifest, 48u32, 0u32),
+        Bindings, Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
+        return 8;
+    }
+    if Status(
+        Input, Replaceˉu32(Manifest, 100u32, 1u32),
+        Bindings, Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+        return 9;
+    }
+    if Status(
+        Input, Manifest,
+        Replaceˉu8(Bindings, 0u32, 0u8), Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings {
+        return 10;
+    }
+    if Status(
+        Input, Manifest, Bindings,
+        Replaceˉu8(Wir, 0u32, 0u8)
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
+        return 11;
+    }
+    if Status(
+        Input, Replaceˉu32(Manifest, 80u32, 0u32),
+        Bindings, Wir
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
+        return 12;
+    }
+    return 0;
+}

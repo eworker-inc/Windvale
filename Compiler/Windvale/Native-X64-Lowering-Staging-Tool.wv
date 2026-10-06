@@ -13,6 +13,7 @@ requires capability process.argument_count version 1;
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+import Foundationˉmemory as Memory;
 
 
 const STAGING_RESOURCE_BYTES: u32 = 1310720u32;
@@ -198,7 +199,8 @@ fn Writeˉnextˉchunk(
     return Invalidˉchunkˉwrite(Cursor);
 }
 
-export fn Main() -> i32 {
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 effects(memory.allocate) {
+    var Parent: Memory.Memoryˉbudget = Budget;
     if process.argument_count() != 3u32 {
         diagnostic.write_line(
             "Usage: wvnative-stage <input.wvb> <chunk-prefix> <manifest.wvop>"
@@ -219,7 +221,7 @@ export fn Main() -> i32 {
 
     let Input: bytes = file.read_bytes(Inputˉpath);
     let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
-        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Input, borrow mut Parent);
     if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
         if Plan.Status ==
             Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode {

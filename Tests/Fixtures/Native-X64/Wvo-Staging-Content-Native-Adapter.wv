@@ -8,6 +8,8 @@ authority application;
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉcontent as Content;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
 
 data Wvb: bytes = [
     87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
@@ -24,13 +26,14 @@ data Wvb: bytes = [
     0, 0, 0
 ];
 
+// Current ABI 22 object: 49-byte prefix, 342-byte code and 24-byte symbols.
 data Stagingˉmanifest: bytes = [
     87, 86, 79, 80, 1, 0, 0, 0,
-    60, 0, 0, 0, 223, 1, 0, 0,
+    60, 0, 0, 0, 159, 1, 0, 0,
     3, 0, 0, 0, 0, 0, 64, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 0,
-    1, 0, 0, 0, 49, 0, 0, 0, 150, 1, 0, 0,
-    2, 0, 0, 0, 199, 1, 0, 0, 24, 0, 0, 0
+    1, 0, 0, 0, 49, 0, 0, 0, 86, 1, 0, 0,
+    2, 0, 0, 0, 135, 1, 0, 0, 24, 0, 0, 0
 ];
 
 fn Statusˉvalue(
@@ -101,9 +104,9 @@ fn Advanceˉempty(
     );
 }
 
-export fn Main() -> i32 {
+fn Stagingˉassertions(Parent: borrow mut Memory.Memoryˉbudget) -> i32 effects(memory.allocate) {
     let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
-        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Wvb);
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Wvb, borrow mut Parent);
     let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
         Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
             Wvb,
@@ -247,7 +250,7 @@ export fn Main() -> i32 {
         Bytesˉlength(Wvb) - 1u32
     );
     let Invalidˉplan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
-        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Invalidˉwvb);
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Invalidˉwvb, borrow mut Parent);
     let Invalidˉregions:
         Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
         Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
@@ -285,4 +288,139 @@ export fn Main() -> i32 {
         );
     if Statusˉvalue(Invalidˉcursorˉresult.Status) != 4u32 { return 11; }
     return 42;
+}
+
+// Full-authority refusal and a successful exact split prove restoration through
+// the frozen budget API; no runtime-private handle or availability accessor.
+fn Budgetˉisˉrestored(
+    Parent: borrow mut Memory.Memoryˉbudget,
+    Maximum: u64
+) -> bool effects(memory.allocate) {
+    let Refused = Memory.Split(borrow mut Parent, Maximum + 1u64, 0u32);
+    let Exactˉrefusal: bool = match Refused {
+        case Results.Result.Valid { Value: Unexpectedˉchild } { false }
+        case Results.Result.Failure { Error: Failure } {
+            Failure.Reason == Memory.Allocationˉreason.Budgetˉexhausted &&
+                Failure.Requestedˉbytes == Maximum + 1u64 &&
+                Failure.Availableˉbytes == Maximum
+        }
+    };
+    if !Exactˉrefusal { return false; }
+    let Accepted = Memory.Split(borrow mut Parent, Maximum, 0u32);
+    return match Accepted {
+        case Results.Result.Valid { Value: Probeˉchild } { true }
+        case Results.Result.Failure { Error: Unavailable } { false }
+    };
+}
+
+fn Checkˉplan(Parent: borrow mut Memory.Memoryˉbudget) -> bool effects(memory.allocate) {
+    let Plan = Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Wvb, borrow mut Parent);
+    if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid ||
+        Plan.Abi != 22u32 || Plan.Functionˉcount != 1u32 ||
+        Plan.Mainˉfunction != 0u32 || Bytesˉlength(Plan.Directory) != 76u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan.Directory, 0u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan.Directory, 4u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan.Directory, 8u32) != 256u32 { return false; }
+    // The first 96-byte signature owner dies in PlanBuild. The second remains
+    // charged through this probe and the following read of its frozen directory.
+    if !Budgetˉisˉrestored(borrow mut Parent, 96u64) { return false; }
+    var Padding: u32 = 12u32;
+    while Padding < 76u32 {
+        if Bytesˉreadˉu8(Plan.Directory, Padding) != 0u8 { return false; }
+        Padding = Padding + 1u32;
+    }
+    return true;
+}
+
+fn Checkˉrefusedˉplan(
+    Input: borrow bytes,
+    Parent: borrow mut Memory.Memoryˉbudget,
+    Expected: Nativeˉx64.Compilerˉnativeˉx64ˉstatus
+) -> bool effects(memory.allocate) {
+    let Plan = Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input, borrow mut Parent);
+    return Plan.Status == Expected && Bytesˉlength(Plan.Directory) == 0u32;
+}
+
+fn Checkˉreservationˉrefusal(
+    Input: borrow bytes,
+    Parent: borrow mut Memory.Memoryˉbudget,
+    Maximum: u64,
+    Expected: Nativeˉx64.Compilerˉnativeˉx64ˉstatus
+) -> bool effects(memory.allocate) {
+    // PlanBuild splits two serializer children; child authority must permit
+    // both so the 96-byte case reaches the second byte reservation.
+    let Split = Memory.Split(borrow mut Parent, Maximum, 2u32);
+    return match Split {
+        case Results.Result.Valid { Value: Child } {
+            var Childˉparent: Memory.Memoryˉbudget = Child;
+            Checkˉrefusedˉplan(Input, borrow mut Childˉparent, Expected) &&
+                Budgetˉisˉrestored(borrow mut Childˉparent, Maximum)
+        }
+        case Results.Result.Failure { Error: Failure } { false }
+    };
+}
+
+fn Checkˉrepeatedˉplans(
+    Parent: borrow mut Memory.Memoryˉbudget,
+    Iterations: u32
+) -> bool effects(memory.allocate) {
+    var Iteration: u32 = 0u32;
+    while Iteration < Iterations {
+        if !Checkˉplan(borrow mut Parent) ||
+            !Budgetˉisˉrestored(borrow mut Parent, 192u64) { return false; }
+        Iteration = Iteration + 1u32;
+    }
+    return true;
+}
+
+fn Checkˉobjectˉceiling(Parent: borrow mut Memory.Memoryˉbudget) -> bool effects(memory.allocate) {
+    // The valid tiny module cannot fit a one-byte complete WVO ceiling.
+    // This exercises the writer's measured refusal without a large byte value.
+    let Summary = Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64ˉbounded(
+        borrow Wvb, borrow mut Parent, 1u32);
+    if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit ||
+        Bytesˉlength(Summary.Object) != 0u32 || Summary.Value != 0 ||
+        Summary.Abi != 22u32 || Summary.Codeˉbytes != 0u32 { return false; }
+    // These ceilings reject before PlanBuild acquires serializer authority.
+    let Invalidˉmaximum = Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64ˉbounded(
+        borrow Wvb, borrow mut Parent, 4294967295u32);
+    if Invalidˉmaximum.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit ||
+        Bytesˉlength(Invalidˉmaximum.Object) != 0u32 || Invalidˉmaximum.Value != 0 ||
+        Invalidˉmaximum.Abi != 22u32 || Invalidˉmaximum.Codeˉbytes != 0u32 { return false; }
+    let Oversizedˉmaximum = Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64ˉbounded(
+        borrow Wvb, borrow mut Parent, 4194305u32);
+    return Oversizedˉmaximum.Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit &&
+        Bytesˉlength(Oversizedˉmaximum.Object) == 0u32 && Oversizedˉmaximum.Value == 0 &&
+        Oversizedˉmaximum.Abi == 22u32 && Oversizedˉmaximum.Codeˉbytes == 0u32;
+}
+
+data Failedˉresponse: bytes = [0];
+
+export fn Main(Input: borrow bytes, Budget: Memory.Memoryˉbudget) -> bytes effects(memory.allocate) {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    if Bytesˉlength(Input) != 4u32 { return Failedˉresponse; }
+    let Iterations: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    if Iterations == 0u32 {
+        if Stagingˉassertions(borrow mut Parent) != 42 ||
+            !Checkˉobjectˉceiling(borrow mut Parent) ||
+            !Budgetˉisˉrestored(borrow mut Parent, 192u64) { return Failedˉresponse; }
+        return Input;
+    }
+    if Iterations != 1u32 && Iterations != 1000u32 { return Failedˉresponse; }
+    if !Checkˉrepeatedˉplans(borrow mut Parent, Iterations) { return Failedˉresponse; }
+    if !Checkˉreservationˉrefusal(borrow Wvb, borrow mut Parent, 95u64,
+        Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit) ||
+        !Budgetˉisˉrestored(borrow mut Parent, 192u64) { return Failedˉresponse; }
+    if !Checkˉreservationˉrefusal(borrow Wvb, borrow mut Parent, 96u64,
+        Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit) ||
+        !Budgetˉisˉrestored(borrow mut Parent, 192u64) { return Failedˉresponse; }
+    // Hosted with no capabilities is valid WVB, but this native target refuses
+    // it only after both committed serializer owners have been constructed.
+    let Hostedˉinput: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Wvb, 0u32, 20u32), Bytesˉfromˉu8(2u8)),
+        Bytesˉslice(Wvb, 21u32, Bytesˉlength(Wvb) - 21u32));
+    if !Checkˉreservationˉrefusal(borrow Hostedˉinput, borrow mut Parent, 192u64,
+        Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉmodule) ||
+        !Budgetˉisˉrestored(borrow mut Parent, 192u64) { return Failedˉresponse; }
+    return Input;
 }

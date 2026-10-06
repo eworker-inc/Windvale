@@ -1,0 +1,330 @@
+#!wv/1 en@1
+module Languageˉoneˉreservedˉbyteˉvalidationˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.read_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+
+import Compilerˉsourceˉanalysisˉcontract as Contract;
+import Compilerˉsourceˉanalysisˉvalidation as Analysis;
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+import Compilerˉsourceˉwirˉconsumer as Consumer;
+import Compilerˉsourceˉwirˉvalidation as Validation;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+// Independent validation of the producer's admitted packets, including
+// eighteen corruptions, two mutable-call retargets and scalar signatures.
+const MALFORMED_CASES: u32 = 18u32;
+
+fn Unaryˉbyteˉcallable(Catalog: bytes, Instance: u32, Mode: u32) -> bool {
+    let Length: u32 = Bytesˉlength(Catalog);
+    if Length < 24u32 { return false; }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Catalog, 8u32);
+    if Count > 256u32 || Instance >= Count { return false; }
+    var Cursor: u32 = 24u32;
+    var Index: u32 = 0u32;
+    while Index <= Instance {
+        if Cursor > Length || Length - Cursor < 32u32 { return false; }
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Catalog, Cursor + 24u32);
+        if Parameters > 64u32 { return false; }
+        let Width: u32 = 32u32 + Parameters * 8u32;
+        if Width > Length - Cursor { return false; }
+        if Index == Instance {
+            if Parameters != 1u32 { return false; }
+            return Bytesˉreadˉu32ˉlittle(Catalog, Cursor + 8u32) == 6u32 &&
+                Bytesˉreadˉu32ˉlittle(Catalog, Cursor + 32u32) == 6u32 &&
+                Bytesˉreadˉu32ˉlittle(Catalog, Cursor + 36u32) == Mode;
+        }
+        Cursor = Cursor + Width;
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+fn Operationsˉoffset(Directory: bytes) -> u32 {
+    return Consumer.Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
+        Bytesˉreadˉu32ˉlittle(Directory, 8u32) * 48u32 +
+        Bytesˉreadˉu32ˉlittle(Directory, 16u32) * 28u32;
+}
+
+fn Findˉoperation(Directory: bytes, Kind: u32) -> u32 {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Base: u32 = Operationsˉoffset(Directory);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Entry: u32 = Base + Index * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Directory, Entry + 4u32) == Kind { return Entry; }
+        Index = Index + 1u32;
+    }
+    return Bytesˉlength(Directory);
+}
+
+fn Operandˉoffset(Directory: bytes, Entry: u32, Index: u32) -> u32 {
+    return Operationsˉoffset(Directory) +
+        Bytesˉreadˉu32ˉlittle(Directory, 24u32) * 28u32 +
+        Bytesˉreadˉu32ˉlittle(Directory, 32u32) * 4u32 +
+        (Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32) + Index) * 4u32;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value));
+    return Replaced.Value;
+}
+
+fn Replaceˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(Input, Offset, 2u32, Bytesˉfromˉu16ˉlittle(Value));
+    return Replaced.Value;
+}
+
+fn Replaceˉresultˉshape(Directory: bytes, Entry: u32, Shape: u32) -> bytes {
+    let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+    let Temporaryˉbase: u32 = Operationsˉoffset(Directory) +
+        Bytesˉreadˉu32ˉlittle(Directory, 24u32) * 28u32;
+    // Family has one source function with temporary ids starting at zero.
+    // Keep both shape copies equal so rejection reaches the operation contract.
+    return Replaceˉu32(Replaceˉu32(Directory, Entry + 8u32, Shape),
+        Temporaryˉbase + Temporary * 4u32, Shape);
+}
+
+fn Corrupt(Directory: bytes, Index: u32) -> bytes {
+    let Construct: u32 = Findˉoperation(Directory, 195u32);
+    let Append: u32 = Findˉoperation(Directory, 196u32);
+    if Index == 0u32 { return Replaceˉresultˉshape(Directory, Construct, 3u32); }
+    if Index == 1u32 { return Replaceˉu16(Directory, Construct + 6u32, 1u32); }
+    if Index == 2u32 { return Replaceˉu32(Directory, Construct + 20u32, 1u32); }
+    if Index == 3u32 { return Replaceˉu32(Directory, Construct + 24u32, 1u32); }
+    if Index == 4u32 {
+        return Replaceˉu32(Directory, Operandˉoffset(Directory, Construct, 0u32),
+            Bytesˉreadˉu32ˉlittle(Directory, Operandˉoffset(Directory, Construct, 1u32)));
+    }
+    if Index == 5u32 {
+        return Replaceˉu32(Directory, Operandˉoffset(Directory, Construct, 1u32),
+            Bytesˉreadˉu32ˉlittle(Directory, Operandˉoffset(Directory, Construct, 0u32)));
+    }
+    if Index == 6u32 { return Replaceˉu32(Directory, Append + 20u32, 4294967295u32); }
+    if Index == 7u32 {
+        let Wideˉappend: u32 = Findˉoperation(Directory, 197u32);
+        return Replaceˉu32(Directory, Operandˉoffset(Directory, Append, 0u32),
+            Bytesˉreadˉu32ˉlittle(Directory, Operandˉoffset(Directory, Wideˉappend, 0u32)));
+    }
+    if Index == 8u32 { return Replaceˉu32(Directory, Findˉoperation(Directory, 202u32) + 20u32, 1u32); }
+    if Index == 9u32 { return Replaceˉu32(Directory, Findˉoperation(Directory, 205u32) + 24u32, 3u32); }
+    if Index == 10u32 {
+        let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+        return Replaceˉu16(Directory, 6u32, Minor - 2u32);
+    }
+    if Index == 11u32 {
+        let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Findˉoperation(Directory, 202u32) + 12u32);
+        let Temporaryˉbase: u32 = Operationsˉoffset(Directory) + Bytesˉreadˉu32ˉlittle(Directory, 24u32) * 28u32;
+        // Family has one source function, so its temporary ids start at zero.
+        return Replaceˉu32(Directory, Temporaryˉbase + Temporary * 4u32, 3u32);
+    }
+    if Index == 12u32 {
+        return Replaceˉresultˉshape(Directory, Construct, Bytesˉreadˉu32ˉlittle(Directory, Append + 8u32));
+    }
+    if Index == 13u32 {
+        return Replaceˉresultˉshape(Directory, Append, Bytesˉreadˉu32ˉlittle(Directory, Construct + 8u32));
+    }
+    let Range: u32 = Findˉoperation(Directory, 205u32);
+    if Index == 14u32 { return Replaceˉresultˉshape(Directory, Range, 6u32); }
+    if Index == 15u32 {
+        let Indexed: u32 = Findˉoperation(Directory, 206u32);
+        return Replaceˉu32(Directory, Operandˉoffset(Directory, Indexed, 0u32),
+            Bytesˉreadˉu32ˉlittle(Directory, Operandˉoffset(Directory, Range, 0u32)));
+    }
+    if Index == 16u32 { return Replaceˉu32(Directory, Findˉoperation(Directory, 207u32) + 20u32, 1u32); }
+    // Input is another bytes-shaped local (parameter slot one), distinct from
+    // Frozen. Accepting its slot would forge the returned view's provenance.
+    return Replaceˉu32(Directory, Range + 20u32, 1u32);
+}
+
+fn Scalarˉsignatureˉboundaries() -> i32 {
+    if Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(0u32, 0u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(0u32, 0u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(0u32, 1u32) {
+        return 155;
+    }
+    if !Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(163u32, 9u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(163u32, 8u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(163u32, 0u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(164u32, 1u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(164u32, 0u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(164u32, 1u32) {
+        return 155;
+    }
+    // Operand helpers preserve their historical default; result/count reject unknown operations.
+    if Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(241u32, 9u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(241u32, 0u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(241u32, 0u32, 10u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(242u32, 9u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(242u32, 0u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(242u32, 4294967295u32, 10u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(4294967295u32, 8u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(4294967295u32, 0u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(4294967295u32, 0u32, 0u32) {
+        return 155;
+    }
+    if !Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(124u32, 8u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(124u32, 2u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(124u32, 0u32, 8u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(124u32, 0u32, 3u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(124u32, 1u32, 3u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(124u32, 1u32, 8u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(124u32, 4294967295u32, 3u32) {
+        return 155;
+    }
+    if !Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(3u32, 268435456u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(3u32, 268439552u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(17u32, 4294967295u32) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(65u32, 64u32) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(65u32, 65u32) {
+        return 155;
+    }
+    return 42;
+}
+
+fn Mutableˉcallsˉareˉrefused(Input: bytes, Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary, Directory: bytes) -> bool {
+    // This graph has Identity, Read, Observe and Main, followed by type-only
+    // Foundation modules. All mutations stay within the validated Main rows.
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+    if (Minor != 39u32 && Minor != 40u32) ||
+        Symbolˉsummary.Functions != 4u32 { return false; }
+    if Consumer.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(Input, Scan, Symbolˉsummary, Bindingˉsummary, 0u32, 0u32) != 0u32 ||
+        Consumer.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(Input, Scan, Symbolˉsummary, Bindingˉsummary, 2u32, 0u32) != 2u32 { return false; }
+    let Headerˉbytes: u32 = Consumer.Compilerˉsourceˉwirˉfunctionsˉoffset(Directory);
+    let Mainˉentry: u32 = Headerˉbytes + 3u32 * 48u32;
+    if Bytesˉreadˉu32ˉlittle(Directory, Mainˉentry) != 0u32 { return false; }
+    let First: u32 = Bytesˉreadˉu32ˉlittle(Directory, Mainˉentry + 12u32);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, Mainˉentry + 16u32);
+    let Base: u32 = Operationsˉoffset(Directory);
+    let Missing: u32 = Bytesˉlength(Directory);
+    var Direct: u32 = Missing;
+    var Reference: u32 = Missing;
+    var Indirect: u32 = Missing;
+    var Range: u32 = Missing;
+    var Readˉslice: u32 = Missing;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Entry: u32 = Base + (First + Index) * 28u32;
+        let Kind: u32 = Bytesˉreadˉu16ˉlittle(Directory, Entry + 4u32);
+        if Kind == 62u32 && Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32) == 0u32 {
+            if Direct != Missing { return false; }
+            Direct = Entry;
+        }
+        if Kind == 177u32 && Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32) == 0u32 {
+            if Reference != Missing { return false; }
+            Reference = Entry;
+        }
+        if Kind == 178u32 {
+            if Indirect != Missing { return false; }
+            Indirect = Entry;
+        }
+        if Kind == 205u32 { Range = Entry; }
+        if Kind == 206u32 { Readˉslice = Entry; }
+        Index = Index + 1u32;
+    }
+    if Direct == Missing || Reference == Missing || Indirect == Missing ||
+        Range == Missing || Readˉslice == Missing ||
+        Range >= Direct || Range >= Indirect || Direct >= Readˉslice ||
+        Indirect >= Readˉslice || Reference >= Indirect { return false; }
+    let Block: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range);
+    if Bytesˉreadˉu32ˉlittle(Directory, Direct) != Block ||
+        Bytesˉreadˉu32ˉlittle(Directory, Reference) != Block ||
+        Bytesˉreadˉu32ˉlittle(Directory, Indirect) != Block ||
+        Bytesˉreadˉu32ˉlittle(Directory, Readˉslice) != Block { return false; }
+    if Bytesˉreadˉu16ˉlittle(Directory, Direct + 6u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, Direct + 8u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, Direct + 24u32) != 0u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, Indirect + 6u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, Indirect + 8u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, Indirect + 24u32) != 0u32 { return false; }
+    let Referenceˉinstance: u32 = Bytesˉreadˉu32ˉlittle(Directory, Reference + 24u32);
+    let Referenceˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Reference + 12u32);
+    if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshapeˉinstance(
+        Bytesˉreadˉu32ˉlittle(Directory, Reference + 8u32)) != Referenceˉinstance ||
+        Referenceˉtemporary >= Bytesˉreadˉu32ˉlittle(Directory, Mainˉentry + 24u32) { return false; }
+    let Callableˉbase: u32 = Base + Bytesˉreadˉu32ˉlittle(Directory, 24u32) * 28u32 +
+        Bytesˉreadˉu32ˉlittle(Directory, 32u32) * 4u32 + Bytesˉreadˉu32ˉlittle(Directory, 40u32) * 4u32;
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Bytesˉslice(Directory, Callableˉbase, Bytesˉreadˉu32ˉlittle(Directory, Headerˉbytes - 8u32)));
+    let Valueˉinstance: u32 = Bytesˉreadˉu32ˉlittle(Directory, Indirect + 20u32);
+    if Valueˉinstance != Referenceˉinstance ||
+        !Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(Catalog) ||
+        !Unaryˉbyteˉcallable(Catalog.Evidence, Valueˉinstance, 0u32) { return false; }
+    // Both targets have the same value shapes but different borrow modes.
+    // The direct mutation violates the live Slice; the indirect mutation
+    // forges a value callable's target into a mutable borrower. This source
+    // profile does not construct function values with borrowed parameters.
+    let Directˉcorrupt: bytes = Replaceˉu32(Directory, Direct + 20u32, 2u32);
+    if Validation.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(Input, Scan, Symbolˉsummary, Bindingˉsummary, Directˉcorrupt) { return false; }
+    let Indirectˉcorrupt: bytes = Replaceˉu32(Directory, Reference + 20u32, 2u32);
+    return !Validation.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(Input, Scan, Symbolˉsummary, Bindingˉsummary, Indirectˉcorrupt);
+}
+
+fn Check(Sourceˉcase: u32) -> i32 {
+    var Suffix: text = Textˉconcat("-source-", U32ˉformat(Sourceˉcase));
+    if Sourceˉcase == 0u32 { Suffix = ""; }
+    if Sourceˉcase == 8u32 { Suffix = "-borrow"; }
+    let Input: bytes = file.read_bytes(Textˉconcat(process.argument(0u32), Suffix));
+    let Manifest: bytes = file.read_bytes(Textˉconcat(process.argument(1u32), Suffix));
+    let Bindingˉdirectory: bytes = file.read_bytes(Textˉconcat(process.argument(2u32), Suffix));
+    let Directory: bytes = file.read_bytes(Textˉconcat(process.argument(3u32), Suffix));
+    let Admitted: Analysis.Compilerˉsourceˉanalysisˉvalidation =
+        Analysis.Compilerˉvalidateˉsourceˉanalysis(Input, Manifest, Bindingˉdirectory, Directory);
+    if Sourceˉcase >= 10u32 {
+        if Admitted.Status == Contract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir { return 42; }
+        return 91;
+    }
+    if Admitted.Status != Contract.Compilerˉsourceˉanalysisˉstatus.Valid { return 90; }
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Analysis.Compilerˉsourceˉanalysisˉvalidatedˉbindings(Input, Manifest, Bindingˉdirectory, Admitted.Symbols);
+    if Sourceˉcase == 8u32 {
+        if !Mutableˉcallsˉareˉrefused(Input, Admitted.Scan, Admitted.Symbols, Bindingˉsummary, Directory) { return 9; }
+        return 42;
+    }
+    if Sourceˉcase != 0u32 { return 42; }
+    var Index: u32 = 0u32;
+    var Failure: i32 = 100;
+    while Index < MALFORMED_CASES {
+        if Validation.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(Input, Admitted.Scan, Admitted.Symbols,
+            Bindingˉsummary, Corrupt(Directory, Index)) { return Failure; }
+        Index = Index + 1u32;
+        Failure = Failure + 1;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    // Four snapshots per process keep the fixture within the retained launcher.
+    if process.argument_count() != 5u32 { return 64; }
+    let Selected: bytes = Textˉtoˉutf8(process.argument(4u32));
+    let Length: u32 = Bytesˉlength(Selected);
+    if Length == 0u32 || Length > 2u32 { return 64; }
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Selected, 0u32));
+    if First < 48u32 || First > 57u32 { return 64; }
+    var Index: u32 = First - 48u32;
+    if Length == 2u32 {
+        let Second: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Selected, 1u32));
+        if Index == 0u32 || Second < 48u32 || Second > 57u32 { return 64; }
+        Index = Index * 10u32 + Second - 48u32;
+    }
+    if Index < 10u32 || Index == 10u32 || Index == 11u32 ||
+        Index == 14u32 || Index == 15u32 || Index == 30u32 || Index == 32u32 ||
+        Index == 33u32 || Index == 34u32 || Index == 37u32 {
+        let Checked: i32 = Check(Index);
+        if Checked != 42 { return Checked; }
+        if Index == 0u32 { return Scalarˉsignatureˉboundaries(); }
+        return 42;
+    }
+    return 64;
+}

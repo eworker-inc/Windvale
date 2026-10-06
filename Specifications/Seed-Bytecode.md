@@ -2063,3 +2063,25 @@ Verification is required before execution and rejects a module unless:
 - Code per function: 1 MiB
 - Instructions per function: 100,000
 - Operand stack: 4,096 values
+
+## Candidate WVB 1.45 direct budget helper authority
+
+The reserved byte-construction family is specified by
+[Decision 0979](../Documents/Decisions/0979-Connect-Reserved-Byte-Construction-To-WVB-1.44.md).
+Its direct budget helper extension is selected by
+[Decision 0982](../Documents/Decisions/0982-Complete-Direct-Budget-Helper-Authority-In-WVB-1.45.md).
+Minor 45 preserves canonical sections, little-endian integers and existing
+opcodes. Shape 41 followed by 25 is exactly a mutable borrowed canonical budget
+formal or compiler-generated view. Earlier minor 44 accepts shape 41 only with
+builder payload 39. Shape 36 remains immutable; ordinary shape 25 is owned.
+Owned direct helper returns use shape 25 and the existing consuming Take.
+Wrong, truncated, older-edition and private-kind encodings reject before
+execution. No borrowed view can become an owner or authorize its release.
+Direct calls require independent root/exclusivity proof; mutation invalidates
+sibling views while permitting a fresh incoming-parent forwarding view.
+Metadata normalization preserves the minor and later borrow-root sections.
+Budget-bearing indirect/callable descriptors remain refused. The shared native
+candidate retains its 4 MiB value bound, ABI 25 and context 11. This does not
+extend the older owned-collection or host-scalar interpreter execution subsets.
+Actual source publication, complete verification and Windows/Debian execution
+remain pending; candidate format selection is not qualification.

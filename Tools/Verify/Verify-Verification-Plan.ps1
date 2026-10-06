@@ -110,6 +110,7 @@ $NativeCases = @(
         Name = 'native borrow machine probe inputs'
         Paths = @(
             'Tests/Fixtures/Native-X64/Native-X64-Foundation-Borrow-Machine-Probe.wv',
+            'Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Runner.wv',
             'Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv'
         )
         Suites = @('native-x64-lowering-development')
@@ -130,7 +131,7 @@ $NativeCases = @(
             'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Adapter.wv',
             'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Native-Adapter.wv'
         )
-        Suites = @('segmented-compiler-toolset-reconstruction')
+        Suites = @('segmented-compiler-toolset-reconstruction', 'native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -655,7 +656,7 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs',
             'Tools/Native/Test-Language-1.0-Callable-Semantics.sh'
         )
-        Suites = @('language-1-callable-semantics')
+        Suites = @('language-1-callable-semantics', 'compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2370,7 +2371,7 @@ $NativeCases = @(
     @{
         Name = 'compiler artifact reader generator routing'
         Paths = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs')
-        Suites = @('wvb-runner-reconstruction', 'compiler-split-development')
+        Suites = @('compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2825,10 +2826,10 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'Windvale compiler'
+        Name = 'unmapped retired monolithic compiler'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv')
-        Suites = @('seed', 'unsafe-wvb', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')
-        Gaps = @()
+        Suites = @()
+        Gaps = @('unmapped-current-compiler:Compiler/Windvale/Source-Wvb-Compiler.wv')
         VerifyPlan = $false
     },
     @{
@@ -5191,7 +5192,7 @@ $NativeCases = @(
     },
     @{
         Name = 'combined deterministic order'
-        Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
+        Paths = @('Compiler/Windvale/Native-Stencil-Core.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
         Suites = @(
             'seed',
             'seed-native-front-door',
@@ -5431,7 +5432,7 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopExpectedOwners[1].PipelineCallSites -ne 62 -or
     $QualificationWorkPlan.TopExpectedOwners[5].Name -ne
         'language-1-front-door' -or
-    $QualificationWorkPlan.TopExpectedOwners[5].PipelineCallSites -ne 237 -or
+    $QualificationWorkPlan.TopExpectedOwners[5].PipelineCallSites -ne 241 -or
     $QualificationWorkPlan.TopObservedOwners[0].Name -ne
         'language-1-front-door' -or
     $QualificationWorkPlan.TopObservedOwners[1].Name -ne
@@ -5467,26 +5468,27 @@ if ($QualificationShardSignature -cne
 }
 $QualificationPipelineExpected = @{
     'Build-Current-Wvb' = '11|41'
-    'Build-Wvb' = '47|217'
+    'Build-Wvb' = '47|219'
     'Build-Cached-Project-Object' = '1|2'
     'Build-Cached-Hosted-Application' = '12|44'
-    'Build-Cached-Split-Project-Wvb' = '3|18'
-    'Build-Cached-Segmented-Hosted-Wvb' = '8|13'
+    'Build-Cached-Split-Project-Wvb' = '4|19'
+    'Build-Cached-Segmented-Hosted-Wvb' = '9|17'
     'Stage-Compiler-Wvb' = '2|8'
     'Lower-Wvb-To-Wvo' = '16|45'
-    'Check-Wvo' = '21|56'
-    'Link-Wvo' = '40|113'
-    'Package-Hosted-Wvb' = '18|99'
-    'Package-Console' = '20|78'
-    'Package-Segmented-Compiler-Wvb' = '21|53'
+    'Check-Wvo' = '21|57'
+    'Link-Wvo' = '40|114'
+    'Package-Hosted-Wvb' = '18|101'
+    'Package-Console' = '20|79'
+    'Package-Segmented-Compiler-Wvb' = '21|55'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|33'
-    'Verify-Source-Analysis-Diagnostic' = '1|11'
+    'Verify-Source-Analysis-Diagnostic' = '2|12'
     'Run-Wvb' = '8|60'
     'Run-Split-Compiler' = '3|100'
     # The split owner's optional maintained diagnostic fixture reuses admission.
-    # These are static call sites, not additional default qualification cases.
-    'Run-Authenticated-Source-Admission' = '3|34'
+    # The inventory also counts exact producer-identity references in source.
+    # These static references do not add default qualification cases.
+    'Run-Authenticated-Source-Admission' = '3|35'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
     $ActualPipelineUse = "$($PipelineUse.Owners)|$($PipelineUse.ScriptCallSites)"
@@ -5891,6 +5893,476 @@ $GenericNominalDevelopmentRoot = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tests/Fixtures/Language-1.0/Generic-Nominal-Development-Bundle-Self-Test.wv')
 $ChangedVerification = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1')
+function Test-PreparedOwnerEnvironment {
+    # Run only the tracked owner invocation, with a bounded Node child reporting its inherited mode.
+    $ErrorActionPreference = 'Stop'
+    $Source = Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1'
+    $SourceHash = (Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash
+    if ([IO.File]::ReadAllText($Source) -cne $ChangedVerification) {
+        throw 'Changed verification changed before prepared-owner controls.'
+    }
+    $Tokens = $null
+    $Errors = $null
+    $Ast = [Management.Automation.Language.Parser]::ParseInput(
+        $ChangedVerification, [ref]$Tokens, [ref]$Errors)
+    if ($Errors.Count -ne 0) { throw 'Changed verification dispatcher did not parse.' }
+    $Assignments = @($Ast.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -ceq '$OwnerActionModel[''preparedProductsOnly'']'
+    }, $true))
+    $PreparedEvidenceScopes = @(
+        '$IsNativeSharedCompiler',
+        '$Suite -eq ''language-1-callable-semantics'' -and $UsePreparedProducts'
+    )
+    if ($Assignments.Count -ne $PreparedEvidenceScopes.Count) {
+        throw 'Prepared-only evidence mode differs from its declared owner scopes.'
+    }
+    $ActualPreparedEvidenceScopes = foreach ($Assignment in $Assignments) {
+        if ($Assignment.Right.Extent.Text -cne '$true') {
+            throw 'Prepared-only evidence mode is not explicit.'
+        }
+        $AssignmentScope = $Assignment.Parent
+        while ($null -ne $AssignmentScope -and
+            $AssignmentScope -isnot [Management.Automation.Language.IfStatementAst]) {
+            $AssignmentScope = $AssignmentScope.Parent
+        }
+        if ($null -eq $AssignmentScope -or $AssignmentScope.Clauses.Count -ne 1) {
+            throw 'Prepared-only evidence mode escaped a unique owner scope.'
+        }
+        $AssignmentScope.Clauses[0].Item1.Extent.Text
+    }
+    if (($ActualPreparedEvidenceScopes | Sort-Object) -join '|' -cne
+        (($PreparedEvidenceScopes | Sort-Object) -join '|')) {
+        throw 'Prepared-only evidence mode escaped its declared owner scopes.'
+    }
+    $Selected = @($Ast.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.TryStatementAst] -and
+        $null -ne $Node.Finally -and
+        $Node.Finally.Extent.Text -match '^\{\s*if \(\$null -ne \$PreparedProductEnvironment\)'
+    }, $true))
+    if ($Selected.Count -ne 1) { throw 'Prepared owner invocation is not unique.' }
+    $Start = $ChangedVerification.LastIndexOf('$PreparedProductEnvironment = $null',
+        $Selected[0].Extent.StartOffset, [StringComparison]::Ordinal)
+    if ($Start -lt 0) { throw 'Prepared owner scope is absent.' }
+    $Invocation = [ScriptBlock]::Create($ChangedVerification.Substring(
+        $Start, $Selected[0].Extent.EndOffset - $Start))
+    $NodeCommands = @(Get-Command node -CommandType Application -ErrorAction Stop)
+    if ($NodeCommands.Count -eq 0) { throw 'Prepared owner controls require the existing Node runtime.' }
+    $NodePath = $NodeCommands[0].Source
+    $Names = @('WINDVALE_PREPARED_PRODUCTS_ONLY', 'WINDVALE_PREPARED_COMPILER_ONLY')
+    $Original = @{}
+    foreach ($Name in $Names) {
+        $Original[$Name] = [Environment]::GetEnvironmentVariable($Name, 'Process')
+    }
+    $OriginalExitCode = $global:LASTEXITCODE
+    $Cases = @(
+        @{Name='Shared-absent'; Shared=$true; Existing=$false; Exit=42; Throws=$false},
+        @{Name='Shared-existing-nonzero'; Shared=$true; Existing=$true; Exit=23; Throws=$false},
+        @{Name='Ordinary-existing'; Shared=$false; Existing=$true; Exit=0; Throws=$false},
+        @{Name='Ordinary-absent'; Shared=$false; Existing=$false; Exit=0; Throws=$false},
+        @{Name='Shared-invocation-failure'; Shared=$true; Existing=$true; Exit=0; Throws=$true},
+        @{Name='Shared-empty'; Shared=$true; Existing=$true; Empty=$true; Exit=0; Throws=$false}
+    )
+    try {
+        foreach ($Case in $Cases) {
+            foreach ($Name in $Names) {
+                $Initial = if ($Case.Empty) { '' } elseif ($Case.Existing) {
+                    'Before-' + $Name
+                } else { [NullString]::Value }
+                [Environment]::SetEnvironmentVariable($Name, $Initial, 'Process')
+            }
+            $BeforeInvocation = @{}
+            foreach ($Name in $Names) {
+                $BeforeInvocation[$Name] = [Environment]::GetEnvironmentVariable($Name, 'Process')
+            }
+            $IsNativeSharedCompiler = $Case.Shared
+            $Coordinator = 'No-coordinator-for-prepared-owner-controls'
+            $OwnerCommand = if ($Case.Throws) {
+                'No-such-prepared-owner-command-' + [Guid]::NewGuid().ToString('N')
+            } else { $NodePath }
+            $OwnerArguments = @('-e',
+                ('process.stdout.write(JSON.stringify([process.env.WINDVALE_PREPARED_PRODUCTS_ONLY??null,' +
+                    'process.env.WINDVALE_PREPARED_COMPILER_ONLY??null]));process.exit(' + $Case.Exit + ')'))
+            $OwnerExitCode = $null
+            $Failed = $false
+            $Captured = @()
+            try { $Captured = @(. $Invocation) } catch {
+                $Failed = $true
+                if (!$Case.Throws) { throw }
+            }
+            if ($Failed -ne $Case.Throws) { throw ('Invocation failure contract: ' + $Case.Name) }
+            if (!$Case.Throws) {
+                if ($OwnerExitCode -ne $Case.Exit) { throw ('Native exit changed: ' + $Case.Name) }
+                $ChildEnvironment = ConvertFrom-Json -InputObject ($Captured -join '') -NoEnumerate
+                if ($ChildEnvironment.Count -ne 2) { throw 'Child environment report changed.' }
+                for ($Index = 0; $Index -lt 2; $Index++) {
+                    $Expected = if ($Case.Shared) { '1' } elseif ($Case.Existing) {
+                        'Before-' + $Names[$Index]
+                    } else { $null }
+                    if ($ChildEnvironment[$Index] -cne $Expected) {
+                        throw ('Child inherited wrong mode: ' + $Case.Name)
+                    }
+                }
+            }
+            foreach ($Name in $Names) {
+                if ([Environment]::GetEnvironmentVariable($Name, 'Process') -cne $BeforeInvocation[$Name]) {
+                    throw ('Environment not restored: ' + $Case.Name)
+                }
+            }
+            Write-Host ('PASS prepared-owner-environment case=' + $Case.Name)
+        }
+        if ((Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash -cne $SourceHash) {
+            throw 'Verify-Changed changed during prepared-owner controls.'
+        }
+        Write-Host 'PASS prepared-owner-environment cases=6 construction=Forbidden'
+    } finally {
+        foreach ($Name in $Names) {
+            $Value = $Original[$Name]
+            if ($null -eq $Value) { $Value = [NullString]::Value }
+            [Environment]::SetEnvironmentVariable($Name, $Value, 'Process')
+        }
+        $global:LASTEXITCODE = $OriginalExitCode
+    }
+}
+function Test-BootstrapVerifierSelection {
+    # Exercise the dispatcher helpers without constructing or executing tools.
+    $Tokens = $null
+    $Errors = $null
+    $Ast = [Management.Automation.Language.Parser]::ParseInput(
+        $ChangedVerification, [ref]$Tokens, [ref]$Errors)
+    if ($Errors.Count -ne 0) { throw 'Changed verification dispatcher did not parse.' }
+    foreach ($Name in @('Get-BootstrapVerifierCacheRoot', 'Assert-BootstrapVerifierDirectory',
+        'Get-BootstrapVerifierSelectionText', 'Read-BootstrapVerifierSelection',
+        'Write-BootstrapVerifierSelection', 'Initialize-BootstrapVerifierSelection')) {
+        $Definition = @($Ast.EndBlock.Statements | Where-Object {
+            $_ -is [Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -ceq $Name
+        })
+        if ($Definition.Count -ne 1) { throw "Missing bootstrap verifier helper $Name." }
+        . ([scriptblock]::Create($Definition[0].Extent.Text))
+    }
+    $PreviousRoot = $env:WINDVALE_NATIVE_CACHE_ROOT
+    $PreviousKey = $env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT
+    $PreviousExitCode = $global:LASTEXITCODE
+    $Work = Join-Path ([IO.Path]::GetTempPath()) ('windvale-verifier-selection-' + [Guid]::NewGuid().ToString('N'))
+    $HostFamily = if ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) { 'windows-x64' } else { 'linux-x64' }
+    $Selection = Join-Path $Work "Bootstrap-Complete-Verifier-Selection.$HostFamily.json"
+    $Identity = [ordered]@{
+        key = 'a' * 64; host = $HostFamily; profile = '8'; inputBytes = 493060
+        inputSha256 = 'b' * 64; productBytes = 128; productSha256 = 'c' * 64
+    }
+    $Reads = [System.Collections.Generic.List[string]]::new()
+    function Get-BootstrapVerifierIdentity {
+        $Reads.Add($env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT)
+        if ($env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT -cne $Identity.key) {
+            throw 'The selected fixture checkpoint is missing.'
+        }
+        return $Identity
+    }
+    function Assert-SelectionRejected {
+        param([scriptblock]$Action, [string]$Expected)
+        $Rejected = $false
+        try { $null = & $Action } catch {
+            if (!$_.Exception.Message.Contains($Expected, [StringComparison]::Ordinal)) { throw }
+            $Rejected = $true
+        }
+        if (!$Rejected) { throw "Bootstrap verifier selection accepted $Expected." }
+        if ($null -ne $env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT) {
+            throw 'A rejected selection changed the environment.'
+        }
+    }
+    try {
+        $env:WINDVALE_NATIVE_CACHE_ROOT = $Work
+        $env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = $null
+        Assert-SelectionRejected { Initialize-BootstrapVerifierSelection -Prepare $false -Deadline 1 } 'missing or unsafe'
+        if ([IO.Directory]::Exists($Work) -or $Reads.Count -ne 0) {
+            throw 'A prepared selection miss constructed a directory or read a product.'
+        }
+        $null = [IO.Directory]::CreateDirectory($Work)
+        foreach ($Payload in @('{', ('x' * 4097))) {
+            [IO.File]::WriteAllText($Selection, $Payload, [Text.UTF8Encoding]::new($false))
+            Assert-SelectionRejected { Read-BootstrapVerifierSelection $Selection $HostFamily } $(if ($Payload.Length -gt 4096) { 'missing or unsafe' } else { 'malformed' })
+        }
+        $Canonical = Get-BootstrapVerifierSelectionText $Identity
+        [IO.File]::WriteAllText($Selection, $Canonical.Replace($HostFamily, 'wrong-host'), [Text.UTF8Encoding]::new($false))
+        Assert-SelectionRejected { Read-BootstrapVerifierSelection $Selection $HostFamily } 'invalid identity or host'
+        if ($Reads.Count -ne 0) { throw 'Malformed selection performed a product read.' }
+        foreach ($Payload in @(
+            $Canonical.Replace('"profile":"8"', '"profile":"7"'),
+            $Canonical.Replace('"key":"' + $Identity.key, '"key":"' + ('d' * 64)),
+            $Canonical.Replace($Identity.productSha256, ('d' * 64)),
+            $Canonical.Replace('"format":', '"format":"duplicate","format":'),
+            $Canonical.TrimEnd(),
+            ([char]0xFEFF + $Canonical))) {
+            [IO.File]::WriteAllText($Selection, $Payload, [Text.UTF8Encoding]::new($false))
+            $Expected = if ($Payload.Contains('"profile":"7"')) { 'invalid identity or host' }
+                elseif ($Payload.Contains('"key":"' + ('d' * 64))) { 'checkpoint is missing' }
+                elseif ($Payload.StartsWith([char]0xFEFF)) { 'malformed' }
+                else { 'differs from the admitted product' }
+            Assert-SelectionRejected { Read-BootstrapVerifierSelection $Selection $HostFamily } $Expected
+        }
+        Write-BootstrapVerifierSelection $Selection $Identity
+        $Actual = Read-BootstrapVerifierSelection $Selection $HostFamily
+        if ($Actual.key -cne $Identity.key -or $env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT -cne $Identity.key) {
+            throw 'A valid prepared selection was not admitted.'
+        }
+        # Explicit selection takes precedence over a corrupt descriptor in both
+        # phases; behavior does not rewrite it or invoke the preparation branch.
+        [IO.File]::WriteAllText($Selection, '{', [Text.UTF8Encoding]::new($false))
+        Initialize-BootstrapVerifierSelection -Prepare $false -Deadline 1
+        if ([IO.File]::ReadAllText($Selection) -cne '{') { throw 'Behavior rewrote the descriptor.' }
+        Initialize-BootstrapVerifierSelection -Prepare $true -Deadline 1
+        if ([IO.File]::ReadAllText($Selection) -cne $Canonical -or
+            [IO.Directory]::GetFileSystemEntries($Work).Count -ne 1) {
+            throw 'Explicit preparation did not publish exactly one canonical descriptor.'
+        }
+        # A mocked existing builder protects the preparation summary handoff
+        # and shared absolute deadline without compiling a profile8 product.
+        $PreparationCalls = [System.Collections.Generic.List[string]]::new()
+        $PreparationDeadline = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + 1000
+        function node {
+            if ($args.Count -ne 6 -or $args[1] -cne '--deadline-ms' -or
+                $args[2] -ne $PreparationDeadline -or $args[3] -cne '8') {
+                throw 'Bootstrap preparation lost the existing builder or absolute deadline.'
+            }
+            $PreparationCalls.Add($args[0])
+            $global:LASTEXITCODE = 0
+            $Target = if ($HostFamily -ceq 'windows-x64') { 'windows' } else { 'linux' }
+            "segmented hosted WVB cache status=Created key=$($Identity.key) host=$HostFamily target=$Target profile=8"
+        }
+        $env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = $null
+        Initialize-BootstrapVerifierSelection -Prepare $true -Deadline $PreparationDeadline
+        if ($PreparationCalls.Count -ne 1 -or [IO.File]::ReadAllText($Selection) -cne $Canonical -or
+            [IO.Directory]::GetFileSystemEntries($Work).Count -ne 1) {
+            throw 'Bootstrap preparation did not preserve its canonical selection and bounded cleanup.'
+        }
+        $Selector = @($Ast.EndBlock.Statements | Where-Object {
+            $_ -is [Management.Automation.Language.AssignmentStatementAst] -and
+            $_.Left.Extent.Text -ceq '$BootstrapVerifierRequired'
+        })
+        if ($Selector.Count -ne 1) { throw 'The causal bootstrap verifier selector is missing.' }
+        $SelectorCode = [scriptblock]::Create($Selector[0].Extent.Text)
+        foreach ($Selected in @(
+            @{ Suite = 'native-x64-lowering-development'; Shared = $false; Expected = $true },
+            @{ Suite = 'native-x64-lowering-development'; Shared = $true; Expected = $false },
+            @{ Suite = 'language-1-authenticated-foreign-binding'; Shared = $false; Expected = $true },
+            @{ Suite = 'native-owned-storage'; Shared = $false; Expected = $false },
+            @{ Suite = 'assembler-golden'; Shared = $false; Expected = $false })) {
+            $Plan = [pscustomobject]@{ Scope = 'development' }
+            $NativePlan = [pscustomobject]@{
+                Suites = @($Selected.Suite); UseNativeSharedStorageDevelopment = $Selected.Shared
+                UseOwnedConsoleDevelopment = $false; UseCurrentVerifierDevelopment = $false
+                UseFoundationLibraryDevelopment = $false; UseLanguage1FrontDoorPreparation = $false
+            }
+            . $SelectorCode
+            if ($BootstrapVerifierRequired -ne $Selected.Expected) { throw 'Bootstrap preparation lost its causal owner selection.' }
+        }
+    } finally {
+        $env:WINDVALE_NATIVE_CACHE_ROOT = $PreviousRoot
+        $env:WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = $PreviousKey
+        $global:LASTEXITCODE = $PreviousExitCode
+        if ([IO.Directory]::Exists($Work)) {
+            Assert-BootstrapVerifierDirectory $Work
+            Remove-Item -LiteralPath $Work -Recurse -Force
+        }
+    }
+}
+
+function Test-NativeSharedCompilerSelection {
+    $Tokens = $null; $Errors = $null
+    $Ast = [Management.Automation.Language.Parser]::ParseInput($ChangedVerification,[ref]$Tokens,[ref]$Errors)
+    if ($Errors.Count -ne 0) { throw 'Shared compiler dispatcher did not parse.' }
+    foreach ($Name in @('Get-BootstrapVerifierCacheRoot','Assert-BootstrapVerifierDirectory',
+        'Get-NativeSharedCompilerSelectionText','Read-NativeSharedCompilerSelection',
+        'Write-NativeSharedCompilerSelection','Initialize-NativeSharedCompilerSelection')) {
+        $Definition = @($Ast.EndBlock.Statements | Where-Object {
+            $_ -is [Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -ceq $Name })
+        if ($Definition.Count -ne 1) { throw "Missing shared compiler helper $Name." }
+        . ([scriptblock]::Create($Definition[0].Extent.Text))
+    }
+    $Reader = @($Ast.EndBlock.Statements | Where-Object {
+        $_ -is [Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -ceq 'Get-NativeSharedCompilerIdentity' })
+    if ($Reader.Count -ne 1 -or !$Reader[0].Extent.Text.Contains('Module.Readˉpreparedˉsharedˉcompilerˉhost') -or
+        !$Reader[0].Extent.Text.Contains('await Host.Requireˉunchanged()')) {
+        throw 'Coordinator shared host admission must use the complete existing read-only boundary.'
+    }
+    $BehaviorBranches = @($Ast.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.IfStatementAst] -and
+        $Node.Clauses[0].Item1.Extent.Text -ceq '$IsNativeSharedCompiler' -and
+        $Node.Extent.Text.Contains('$NativePlan.NativeSharedCompilerBehaviorMaximumSeconds')
+    }, $true))
+    if ($BehaviorBranches.Count -ne 1 -or
+        !$BehaviorBranches[0].Extent.Text.Contains('$ExpectedSeconds = [long]$NativePlan.NativeSharedCompilerBehaviorExpectedSeconds') -or
+        !$BehaviorBranches[0].Extent.Text.Contains('$MaximumSeconds = [long]$NativePlan.NativeSharedCompilerBehaviorMaximumSeconds') -or
+        !$BehaviorBranches[0].Extent.Text.Contains('$ExpectedSeconds -gt $MaximumSeconds') -or
+        !$BehaviorBranches[0].Extent.Text.Contains('+ $MaximumSeconds * 1000') -or
+        !$BehaviorBranches[0].Extent.Text.Contains("'--maximum-seconds', `"`$MaximumSeconds`"") -or
+        !$BehaviorBranches[0].Extent.Text.Contains("'--deadline-ms', `"`$NativeSharedCompilerDeadline`"")) {
+        throw 'Coordinator must pass the selected duration and one absolute shared-owner deadline.'
+    }
+    $PreviousRoot = $env:WINDVALE_NATIVE_CACHE_ROOT
+    $Work = Join-Path ([IO.Path]::GetTempPath()) ('windvale-shared-selection-' + [Guid]::NewGuid().ToString('N'))
+    $HostFamily = if ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) { 'windows-x64' } else { 'linux-x64' }
+    $ActualHost = if ($HostFamily -ceq 'windows-x64') { 'win32-x64' } else { 'linux-x64' }
+    $Selection = Join-Path $Work "Native-Shared-Compiler-Host-Selection.$HostFamily.json"
+    $NativeSharedCompilerHostRecord = $null
+    $NativeSharedCompilerHostRecordSha256 = $null
+    $NativeSharedCompilerHostSelectionPath = $null
+    $Deadline = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + 60000
+    $Identity = [ordered]@{ recordPath = (Join-Path $Work 'Host-Bridge.json'); recordSha256 = ('a' * 64)
+        compilerKey = ('b' * 64); path = (Join-Path $Work 'Host.exe'); bytes = 128; sha256 = ('c' * 64); host = $ActualHost }
+    $Admissions = [System.Collections.Generic.List[string]]::new()
+    $Preparations = [System.Collections.Generic.List[long]]::new()
+    $ProductPreparations = [System.Collections.Generic.List[string]]::new()
+    function Get-NativeSharedCompilerIdentity {
+        param([string]$RecordPath,[string]$RecordSha256,[long]$RequestedDeadline)
+        if ($RecordPath -cne $Identity.recordPath -or $RecordSha256 -cne $Identity.recordSha256) {
+            throw 'The actual host record identity differs.'
+        }
+        if ($RequestedDeadline -ne $Deadline) { throw 'Host admission reset its shared deadline.' }
+        $Admissions.Add($RecordSha256)
+        return $Identity
+    }
+    function Prepare-NativeSharedCompilerHost {
+        param([long]$RequestedDeadline)
+        if ($RequestedDeadline -ne $Deadline) { throw 'Host preparation reset its shared deadline.' }
+        $Preparations.Add($RequestedDeadline)
+        return $Identity
+    }
+    function Invoke-NativeSharedPreparationStep {
+        param([string]$Name,[string[]]$Arguments,[long]$RequestedDeadline)
+        if ($RequestedDeadline -ne $Deadline -or
+            $Name -cnotmatch '^shared-(source|plan|retained)-products$') {
+            throw 'Fixture preparation lost its selected owner or shared deadline.'
+        }
+        $ProductSelection = $Matches[1]
+        $SourceHost = if ($HostFamily -ceq 'windows-x64') { 'windows' } else { 'linux' }
+        $ExpectedArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'),
+            $SourceHost,$RepositoryRoot,'--prepare-shared-source-products',
+            '--compiler-checkpoint',$Identity.compilerKey,'--selection',$ProductSelection,
+            '--maximum-seconds','900','--deadline-ms',"$Deadline")
+        if ($ProductSelection -ceq 'source') {
+            $ExpectedArguments += @('--shared-compiler-host-record',$Identity.recordPath,$Identity.recordSha256)
+        }
+        if (($Arguments -join [char]31) -cne ($ExpectedArguments -join [char]31)) {
+            throw 'Fixture preparation changed its exact compiler, host, selection or limits.'
+        }
+        $ProductPreparations.Add($ProductSelection)
+        return @('fixture preparation mocked; no compiler or application execution')
+    }
+    function Assert-SharedSelectionRejected {
+        param([scriptblock]$Action,[string]$Message)
+        $Rejected = $false
+        try { & $Action | Out-Null } catch {
+            if (!$_.Exception.Message.Contains($Message)) { throw }
+            $Rejected = $true
+        }
+        if (!$Rejected) { throw 'An invalid shared compiler selection was admitted.' }
+    }
+    try {
+        $null = [IO.Directory]::CreateDirectory($Work); $env:WINDVALE_NATIVE_CACHE_ROOT = $Work
+        Assert-SharedSelectionRejected { Initialize-NativeSharedCompilerSelection -Prepare $false -Deadline $Deadline } 'missing or unsafe'
+        if ($Admissions.Count -ne 0 -or $Preparations.Count -ne 0) { throw 'A missing behavior record started preparation.' }
+        $Canonical = Get-NativeSharedCompilerSelectionText $Identity
+        Write-NativeSharedCompilerSelection $Selection $Identity
+        $Actual = Read-NativeSharedCompilerSelection $Selection $Deadline
+        if ($Actual.compilerKey -cne $Identity.compilerKey -or $Admissions.Count -ne 1) { throw 'The exact shared host was not re-admitted.' }
+        foreach ($Payload in @('{', ([char]0xFEFF + $Canonical), ('x' * 131073),
+            $Canonical.Replace('"format":','"extra":0,"format":'),
+            $Canonical.Replace('"recordSha256":"' + ('a' * 64), '"recordSha256":"' + ('d' * 64)),
+            $Canonical.Replace('"sha256":"' + ('c' * 64), '"sha256":"' + ('d' * 64)))) {
+            [IO.File]::WriteAllText($Selection,$Payload,[Text.UTF8Encoding]::new($false))
+            $Message = if ($Payload.StartsWith('{') -and $Payload.Contains('"extra"')) { 'invalid contract' }
+                elseif ($Payload.Contains('"recordSha256":"' + ('d' * 64))) { 'actual host record identity differs' }
+                elseif ($Payload.Contains('"sha256":"' + ('d' * 64))) { 'differs from its authenticated current record' }
+                elseif ($Payload.Length -gt 131072) { 'missing or unsafe' } else { 'malformed' }
+            Assert-SharedSelectionRejected { Read-NativeSharedCompilerSelection $Selection $Deadline } $Message
+        }
+        # Explicit record selection still requires full admission. Behavior leaves
+        # the stale pointer untouched and cannot call the preparation branch.
+        [IO.File]::WriteAllText($Selection,'{',[Text.UTF8Encoding]::new($false))
+        $NativeSharedCompilerHostRecord = $Identity.recordPath
+        $NativeSharedCompilerHostRecordSha256 = $Identity.recordSha256
+        $null = Initialize-NativeSharedCompilerSelection -Prepare $false -Deadline $Deadline
+        if ($Preparations.Count -ne 0 -or [IO.File]::ReadAllText($Selection) -cne '{') { throw 'Behavior changed its selection or prepared a host.' }
+        $NativeSharedCompilerHostRecordSha256 = 'd' * 64
+        Assert-SharedSelectionRejected { Initialize-NativeSharedCompilerSelection -Prepare $false -Deadline $Deadline } 'actual host record identity differs'
+        $NativeSharedCompilerHostRecord = $null; $NativeSharedCompilerHostRecordSha256 = $null
+        $null = Initialize-NativeSharedCompilerSelection -Prepare $true -Deadline $Deadline
+        if ($Preparations.Count -ne 1 -or ($ProductPreparations -join ',') -cne 'source,plan,retained' -or
+            [IO.File]::ReadAllText($Selection) -cne $Canonical -or
+            [IO.Directory]::GetFileSystemEntries($Work).Count -ne 1) { throw 'Explicit preparation lost its exact bounded handoff.' }
+        $null = Initialize-NativeSharedCompilerSelection -Prepare $false -Deadline $Deadline
+        if ($Preparations.Count -ne 1 -or $ProductPreparations.Count -ne 3) { throw 'Prepared behavior reconstructed its host or fixtures.' }
+        $null = Initialize-NativeSharedCompilerSelection -Prepare $true -Deadline $Deadline
+        if ($Preparations.Count -ne 1 -or
+            ($ProductPreparations -join ',') -cne 'source,plan,retained,source,plan,retained') {
+            throw 'Reused host preparation omitted fixture acquisition or reconstructed its host.'
+        }
+    } finally {
+        $env:WINDVALE_NATIVE_CACHE_ROOT = $PreviousRoot
+        if ([IO.Directory]::Exists($Work)) {
+            Assert-BootstrapVerifierDirectory $Work
+            if ([IO.DirectoryInfo]::new($Work).Parent.FullName -ne [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd([IO.Path]::DirectorySeparatorChar)) {
+                throw 'Shared selection cleanup escaped its explicit temporary parent.'
+            }
+            [IO.Directory]::Delete($Work,$true)
+        }
+    }
+}
+
+function Test-NativeSharedCompilerArguments {
+    # Run only the actual bounded argument prefix in an isolated VM. Importing
+    # or executing the owner would cross into compiler/runtime preparation.
+    $ArgumentTest = @'
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+const Source=readFileSync(process.argv[2],'utf8');
+const Start=Source.indexOf('let Oracleˉproduct = null;'),End=Source.indexOf('const Target = process.argv[2];');
+if(Start<0||End<=Start||End-Start>32768)throw Error('Owner argument boundary differs.');
+const Prefix=Source.slice(Start,End),Digest='a'.repeat(64),Now=100000;
+function Arguments(Full,Short=false){const Maximum=Full?7200:5400,Values=['node','owner','windows','repo','--shared-compiler-values',
+    '--shared-compiler-host','Host.exe',Digest,'--maximum-seconds',String(Maximum)];if(Full)Values.push('--full-lowering');
+    Values.push('--deadline-ms',String(Now+(Short?500000:Maximum*1000)),
+        '--shared-compiler-host-record','Host-Bridge.json',Digest);return Values;}
+function Run(Values){const Context={process:{argv:Values,env:{}},resolve:Value=>Value,Date:{now:()=>Now},
+    Usage(){throw Error('usage');},Reject(Message,Code){throw Error('refusal:'+Code);}};vm.createContext(Context);
+    vm.runInContext(Prefix+'\nResult={Deadline:Ownerˉdeadline,Full:Fullˉsharedˉlowering,Shared:Sharedˉcompilerˉvalues,Supplied:Suppliedˉlowerer,Boundaries:Boundariesˉonly,Phase:process.argv[4]};',Context,{timeout:1000});return Context.Result;}
+for(const Full of [false,true])for(const Short of [false,true]){const Result=Run(Arguments(Full,Short));
+    if(Result.Deadline!==Now+(Short?500000:(Full?7200000:5400000))||Result.Full!==Full||
+    Result.Supplied!==Full||!Result.Shared||Result.Phase!==(Full?'--lowerer':'--shared-compiler-values'))throw Error('One selected owner deadline/full route was lost.');}
+const Missing=Arguments(false);Missing.splice(-3);
+const Expired=Arguments(true);Expired[Expired.indexOf('--deadline-ms')+1]=String(Now);
+const Duplicate=Arguments(false);Duplicate.splice(-3,0,'--deadline-ms',String(Now+1000));
+const OversizedFocused=Arguments(false);OversizedFocused[OversizedFocused.indexOf('--maximum-seconds')+1]='5401';
+const OversizedMixed=Arguments(true);OversizedMixed[OversizedMixed.indexOf('--maximum-seconds')+1]='7201';
+for(const [Values,Expected] of [[Missing,'refusal:64'],[Expired,'usage'],[Duplicate,'usage'],
+    [OversizedFocused,'usage'],[OversizedMixed,'usage']]){
+    let Rejected=false;try{Run(Values);}catch(Error){if(Error.message!==Expected)throw Error;Rejected=true;}
+    if(!Rejected)throw Error('Invalid shared owner arguments were admitted.');}
+const Boundary=['node','owner','windows','repo','--lowerer','Host.exe',Digest,'--compiler-boundaries',
+    '--maximum-seconds','600','--deadline-ms',String(Now+500000),'--shared-compiler-host-record','Host-Bridge.json',Digest];
+const BoundaryResult=Run([...Boundary]);
+if(!BoundaryResult.Boundaries||!BoundaryResult.Supplied||BoundaryResult.Shared||BoundaryResult.Deadline!==Now+500000)
+    throw Error('The compiler-boundary continuation lost its exact current host or deadline.');
+const MissingBoundary=[...Boundary];MissingBoundary.splice(-3);
+const HistoricalBoundary=[...Boundary];HistoricalBoundary[4]='--historical-lowerer';
+HistoricalBoundary.splice(-3);HistoricalBoundary.splice(8);
+const DuplicateBoundary=[...Boundary];DuplicateBoundary.splice(8,0,'--compiler-boundaries');
+for(const [Values,Expected] of [[MissingBoundary,'refusal:64'],[HistoricalBoundary,'usage'],[DuplicateBoundary,'usage']]){
+    let Rejected=false;try{Run(Values);}catch(Error){if(Error.message!==Expected)throw Error;Rejected=true;}
+    if(!Rejected)throw Error('Invalid compiler-boundary arguments were admitted.');}
+process.stdout.write('native shared arguments status=Passed cases=13 construction=Forbidden\n');
+'@
+    $Output = @(& node --input-type=module -e $ArgumentTest shared-compiler-arguments `
+        (Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs') 2>&1)
+    if ($LASTEXITCODE -ne 0 -or ($Output -join "`n") -cne 'native shared arguments status=Passed cases=13 construction=Forbidden') {
+        throw "Shared compiler argument handoff differs: $($Output -join '`n')"
+    }
+}
+Test-PreparedOwnerEnvironment
+Test-BootstrapVerifierSelection
+Test-NativeSharedCompilerSelection
+Test-NativeSharedCompilerArguments
 & {
     # Exercise the actual website dispatch without building an unrelated site.
     $Tokens = $null
@@ -5974,6 +6446,9 @@ foreach ($Fragment in @(
     'Getˉverificationˉchangedˉpaths',
     'Confirmˉverificationˉsourceˉstate',
     'const Sentinelˉbefore = await Measureˉsourceˉsentinel',
+    "'./Build-Cached-Segmented-Hosted-Wvb.mjs'",
+    'Bootstrapˉverifier = (await Readˉbootstrapˉverifier()).identity',
+    'bootstrapCompleteVerifier: Bootstrapˉverifier',
     'await Ensureˉstateˉrecord',
     'return ''StateChanged''',
     'await rm(Temporary, { force: true })'
@@ -6028,7 +6503,7 @@ foreach ($Contract in @(
             'if "%Development%"=="1"',
             'phase=value-front-end item=3/13',
             'Test-Language-1.0-Front-Door-Development.mjs',
-            'status=Passed cases=495'
+            'status=Passed cases=598'
         )
     },
     @{
@@ -6039,7 +6514,7 @@ foreach ($Contract in @(
             'if [[ $development == true ]]',
             'phase=value-front-end item=3/13',
             'Test-Language-1.0-Front-Door-Development.mjs',
-            'status=Passed cases=495'
+            'status=Passed cases=598'
         )
     },
     @{
@@ -6150,7 +6625,7 @@ foreach ($Path in $VectorBorrowIntegrationPaths) {
         $IntegrationPlan.MaximumSeconds -ne (3600 + $CacheOwnerPlan.MaximumSeconds) -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentExpectedSeconds -ne 900 -or
         $IntegrationPlan.VectorBorrowIntegrationDevelopmentMaximumSeconds -ne 3600 -or
-        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 553 -or
+        $IntegrationPlan.VectorBorrowIntegrationDevelopmentCaseCount -ne 594 -or
         $IntegrationPlan.UseFoundationBorrowPlanDevelopment -or
         $IntegrationPlan.UseFoundationBorrowDirectoryDevelopment -or
         $IntegrationPlan.UseFoundationBorrowOwnerDevelopment -or
@@ -6187,7 +6662,7 @@ foreach ($Boundary in @(
 foreach ($Fragment in @(
     '$NativePlan.UseVectorBorrowIntegrationDevelopment',
     "@('--vector-borrow-integration', '--maximum-seconds', '3600')",
-    'mode=vector-borrow-integration cases=553 expected-seconds=900 maximum-seconds=3600',
+    'mode=vector-borrow-integration cases=594 expected-seconds=900 maximum-seconds=3600',
     'cold-duration-measured=false',
     'No cold product acquisition was started and no passing evidence was recorded.'
 )) {
@@ -6254,10 +6729,11 @@ $Language1FrontDoorDevelopmentPlan = & $NativePlanner -ChangedPath (
 if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     $Language1FrontDoorDevelopmentPlan.Suites.Count -ne 1 -or
     $Language1FrontDoorDevelopmentPlan.Suites[0] -ne 'language-1-front-door' -or
-    $Language1FrontDoorDevelopmentPlan.ExpectedSeconds -ne 330 -or
+    $Language1FrontDoorDevelopmentPlan.ExpectedSeconds -ne 590 -or
     $Language1FrontDoorDevelopmentPlan.MaximumSeconds -ne 600 -or
-    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentCaseCount -ne 329 -or
-    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 330 -or
+    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentCaseCount -ne 481 -or
+    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 590 -or
+    !$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorPreparation -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentMaximumSeconds -ne 600) {
     throw 'The Language 1 front-door development checkpoint plan differs.'
 }
@@ -6358,6 +6834,86 @@ $MixedSharedPlan = & $NativePlanner -ChangedPath @(
 ) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
 if ($MixedSharedPlan.UseNativeSharedStorageDevelopment) {
     throw 'Private shared-storage routing suppressed compiler lowering coverage.'
+}
+foreach ($SharedCompilerPath in @(
+    'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
+    'Tools/Native/Build-Shared-Compiler-Host.mjs',
+    'Tools/Native/Native-Shared-Value-Cases.mjs',
+    'Linker/Startup/X64-Shared-Compiler-Host.wva',
+    'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
+    'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
+    'Specifications/Windvale-Native-Byte-Result-Admission.md',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj'
+)) {
+    $SharedCompilerPlan = & $NativePlanner -ChangedPath $SharedCompilerPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$SharedCompilerPlan.UseNativeSharedCompilerDevelopment -or
+        !$SharedCompilerPlan.NativeSharedCompilerHostRecordRequired -or
+        $SharedCompilerPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
+        $SharedCompilerPlan.NativeSharedCompilerPreparationGuidance -notmatch 'separately' -or
+        $SharedCompilerPlan.NativeSharedCompilerBehaviorExpectedSeconds -ne 3600 -or
+        $SharedCompilerPlan.NativeSharedCompilerBehaviorMaximumSeconds -ne 5400 -or
+        $SharedCompilerPlan.ExpectedSeconds -gt $SharedCompilerPlan.MaximumSeconds -or
+        $SharedCompilerPlan.ExpectedSeconds -ne 3600 -or $SharedCompilerPlan.MaximumSeconds -ne 5400 -or
+        $SharedCompilerPlan.Suites.Count -ne 1 -or
+        $SharedCompilerPlan.Suites[0] -cne 'native-x64-lowering-development' -or
+        $SharedCompilerPlan.Gaps.Count -ne 0) {
+        throw "Prepared shared-compiler routing differs for '$SharedCompilerPath'."
+    }
+}
+$MemoryAdapterCompanionPlan = & $NativePlanner -ChangedPath @(
+    'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$MemoryAdapterCompanionPlan.UseNativeSharedCompilerDevelopment -or
+    !$MemoryAdapterCompanionPlan.NativeSharedCompilerHostRecordRequired -or
+    $MemoryAdapterCompanionPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
+    $MemoryAdapterCompanionPlan.ExpectedSeconds -ne 3600 -or
+    $MemoryAdapterCompanionPlan.MaximumSeconds -ne 5400 -or
+    $MemoryAdapterCompanionPlan.Gaps.Count -ne 0 -or
+    $MemoryAdapterCompanionPlan.Suites.Count -ne 1 -or
+    $MemoryAdapterCompanionPlan.Suites[0] -cne 'native-x64-lowering-development') {
+    throw 'The maintained native byte entry lost its prepared shared-compiler companion owner.'
+}
+$MixedSharedCompilerPlan = & $NativePlanner -ChangedPath @(
+    'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Tools/Native/Build-Shared-Compiler-Host.mjs',
+    'Compiler/Windvale/Native-X64-Lowering-Core.wv'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($MixedSharedCompilerPlan.UseNativeSharedCompilerDevelopment -or
+    !$MixedSharedCompilerPlan.NativeSharedCompilerBehaviorRequired -or
+    !$MixedSharedCompilerPlan.NativeSharedCompilerHostRecordRequired -or
+    $MixedSharedCompilerPlan.NativeSharedCompilerBehaviorExpectedSeconds -ne 4800 -or
+    $MixedSharedCompilerPlan.NativeSharedCompilerBehaviorMaximumSeconds -ne 7200 -or
+    $MixedSharedCompilerPlan.ExpectedSeconds -gt $MixedSharedCompilerPlan.MaximumSeconds -or
+    $MixedSharedCompilerPlan.Suites -cnotcontains 'native-x64-lowering-development') {
+    throw 'Focused shared-compiler selection suppressed broad native lowering coverage.'
+}
+$StandaloneLoweringOwner = @(Get-Content (Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt') |
+    Where-Object { $_.StartsWith('native-x64-lowering-development|', [StringComparison]::Ordinal) })
+$StandaloneLoweringDuration = @(Get-Content (Join-Path $RepositoryRoot 'Tests/Native/Verification-Duration-Profiles.txt') |
+    Where-Object { $_.StartsWith('slow|', [StringComparison]::Ordinal) })
+if ($StandaloneLoweringOwner.Count -ne 1 -or $StandaloneLoweringDuration.Count -ne 1 -or
+    $StandaloneLoweringOwner[0].Split('|')[4] -cne 'slow' -or
+    $StandaloneLoweringDuration[0].Split('|')[1] -cne '300' -or
+    $StandaloneLoweringDuration[0].Split('|')[2] -cne '600' -or
+    [long]$StandaloneLoweringDuration[0].Split('|')[1] -gt [long]$StandaloneLoweringDuration[0].Split('|')[2]) {
+    throw 'Standalone native lowering lost its registered 300/600 duration profile.'
+}
+foreach ($UnrelatedSharedCompilerPath in @(
+    'Runtime/Native/X64-Shared-Storage.wva',
+    'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+    'Tools/Native/Native-Shared-Storage-Cases.mjs',
+    'Compiler/Windvale/Native-X64-Lowering-Tool.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv'
+)) {
+    $UnrelatedSharedCompilerPlan = & $NativePlanner -ChangedPath $UnrelatedSharedCompilerPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if ($UnrelatedSharedCompilerPlan.UseNativeSharedCompilerDevelopment) {
+        throw "Unrelated native owner entered prepared shared-compiler selection: '$UnrelatedSharedCompilerPath'."
+    }
 }
 $FoundationCompanionPlan = & $NativePlanner -ChangedPath @(
     'Tools/Native/Library-Foundation-Value-Cases.mjs',
@@ -6583,12 +7139,29 @@ foreach ($OtherPublisherPath in @(
         throw "Current-source publisher selection hid frozen reconstruction changes in '$OtherPublisherPath'."
     }
 }
-foreach ($OtherOwnerPath in @(
+foreach ($OwnerDependencyPath in @(
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
-    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv'
+)) {
+    $DependencyPlan = & $NativePlanner -ChangedPath @($OwnerDependencyPath) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    $OwnerPlan = & $NativePlanner -ChangedPath @(
+        'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', $OwnerDependencyPath
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
+        $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
+        $OwnerPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $OwnerPlan.UseFoundationBorrowComponentsDevelopment -or
+        $OwnerPlan.Gaps.Count -ne 0 -or
+        @($DependencyPlan.Suites | Where-Object { $_ -cnotin $OwnerPlan.Suites }).Count -ne 0) {
+        throw "Foundation owner project selection lost dependency evidence for '$OwnerDependencyPath'."
+    }
+}
+foreach ($OtherOwnerPath in @(
     'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
-    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv'
 )) {
     $OwnerPlan = & $NativePlanner -ChangedPath @(
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', $OtherOwnerPath
@@ -6599,6 +7172,13 @@ foreach ($OtherOwnerPath in @(
         $OwnerPlan.UseFoundationBorrowDirectoryDevelopment) {
         throw "Foundation owner selection hid integration changes in '$OtherOwnerPath'."
     }
+}
+$UnmappedOwnerPath = 'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow-Unmapped.wv'
+$UnmappedOwnerPlan = & $NativePlanner -ChangedPath @(
+    'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', $UnmappedOwnerPath
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($UnmappedOwnerPlan.Gaps.Count -ne 1 -or $UnmappedOwnerPlan.Gaps[0] -cne "unmapped:$UnmappedOwnerPath") {
+    throw 'Foundation owner selection hid an unmapped dependency.'
 }
 
 $ComponentPaths = @(
@@ -6676,14 +7256,18 @@ foreach ($IntegrationPath in @(
     'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
     'Tests/Fixtures/Language-1.0/Foundation-Vector-Indexed-Borrow-Executable.wv'
 )) {
+    $DependencyPlan = & $NativePlanner -ChangedPath @($IntegrationPath) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     $ComponentPlan = & $NativePlanner -ChangedPath (@($ComponentPaths) + $IntegrationPath) -PassThru -Quiet `
         -InitializationCache $NativePlannerInitializationCache
-    if ($ComponentPlan.UseFoundationBorrowComponentsDevelopment) {
+    $IsProjectDependency = $ComponentSources -ccontains $IntegrationPath
+    if ($ComponentPlan.UseFoundationBorrowComponentsDevelopment -ne $IsProjectDependency -or
+        @($DependencyPlan.Suites | Where-Object { $_ -cnotin $ComponentPlan.Suites }).Count -ne 0) {
         throw "Foundation component selection hid integration changes in '$IntegrationPath'."
     }
 }
 if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
-    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=388 expected-seconds=180', [StringComparison]::Ordinal)) {
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=429 expected-seconds=180', [StringComparison]::Ordinal)) {
     throw 'The combined Foundation component dispatch differs.'
 }
 
@@ -6729,11 +7313,17 @@ foreach ($Selection in $MixedOwnerSelections) {
         'Documents/Project/Windvale-Language-1.0-Design.md',
         'Unknown/Boundary.bin'
     )) {
+        $DependencyPlan = & $NativePlanner -ChangedPath @($SharedDependency) -PassThru -Quiet `
+            -InitializationCache $NativePlannerInitializationCache
         $Broad = & $NativePlanner -ChangedPath @(
             $Selection.Path, $SharedDependency
         ) -PassThru -Quiet `
             -InitializationCache $NativePlannerInitializationCache
-        if ($Broad.($Selection.Field) -ceq $Selection.Value) {
+        $IndependentMemorySelection = $Selection.Field -ceq 'UseFoundationBorrowOwnerDevelopment' -and
+            $DependencyPlan.Suites -cnotcontains 'language-1-memory-budget-split-execution'
+        if (($Broad.($Selection.Field) -ceq $Selection.Value -and !$IndependentMemorySelection) -or
+            @($DependencyPlan.Suites | Where-Object { $_ -cnotin $Broad.Suites }).Count -ne 0 -or
+            @($DependencyPlan.Gaps | Where-Object { $_ -cnotin $Broad.Gaps }).Count -ne 0) {
             throw "Unproven dependency '$SharedDependency' retained the narrow selection for '$($Selection.Path)'."
         }
     }
@@ -6763,8 +7353,29 @@ foreach ($Selection in @(
     @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj'); Target = 'generic-declarations'; Cases = 254; Seconds = 20 },
     @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Call-Front-End-Self-Test.wv'); Target = 'generic-calls'; Cases = 252; Seconds = 150 },
     @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Call-Front-End-Self-Test.wv', 'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj'); Target = 'generic-declarations+generic-calls'; Cases = 255; Seconds = 170 },
-    @{ Paths = @('Libraries/Foundation/Values/Option.wv'); Target = 'all'; Cases = 329; Seconds = 330 },
-    @{ Paths = @('Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'); Target = 'all'; Cases = 329; Seconds = 330 }
+    @{ Paths = @('Libraries/Foundation/Values/Option.wv'); Target = 'all'; Cases = 481; Seconds = 590 },
+    @{ Paths = @('Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'); Target = 'all'; Cases = 481; Seconds = 590 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Reserved-Byte-Construction-Self-Test.wv'); Target = 'bytes-source'; Cases = 358; Seconds = 180 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Construction.wvproj'); Target = 'bytes-source'; Cases = 358; Seconds = 180 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Validation.wvproj'); Target = 'bytes-source'; Cases = 358; Seconds = 180 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Reserved-Byte-Validation-Self-Test.wv'); Target = 'bytes-source'; Cases = 358; Seconds = 180 },
+    @{ Paths = @('Runtime/Windvale/Native-Byte-Result-Admission-Core.wv'); Target = 'bytes-source'; Cases = 358; Seconds = 180 },
+    @{ Paths = @('Tests/Fixtures/Native-X64/Byte-Result-Admission-Self-Test.wv'); Target = 'bytes-source'; Cases = 358; Seconds = 180 },
+    @{ Paths = @('Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj'); Target = 'source-analysis'; Cases = 267; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv'); Target = 'source-analysis'; Cases = 267; Seconds = 20 },
+    @{ Paths = @('Projects/Tests/Language-1.0-Source-Analysis-Validation-Self-Test.wvproj'); Target = 'source-analysis'; Cases = 267; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Source-Analysis-Validation-Self-Test.wv'); Target = 'source-analysis'; Cases = 267; Seconds = 20 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir.wvproj'); Target = 'generic-wir'; Cases = 265; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Wir-Self-Test.wv'); Target = 'generic-wir'; Cases = 265; Seconds = 20 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir-Validation.wvproj'); Target = 'generic-wir'; Cases = 265; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Wir-Validation-Self-Test.wv'); Target = 'generic-wir'; Cases = 265; Seconds = 20 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Analysis-Publication.wvproj'); Target = 'generic-analysis-publication'; Cases = 260; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Analysis-Publication-Self-Test.wv'); Target = 'generic-analysis-publication'; Cases = 260; Seconds = 20 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Analysis-Validation.wvproj'); Target = 'generic-analysis-publication'; Cases = 260; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Analysis-Validation-Self-Test.wv'); Target = 'generic-analysis-publication'; Cases = 260; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Wir-Production-Core.wv'); Target = 'generic-wir+generic-analysis-publication+generic-collection-publication'; Cases = 280; Seconds = 60 },
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Collection-Analysis-Publication.wvproj'); Target = 'generic-collection-publication'; Cases = 257; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Collection-Analysis-Publication-Self-Test.wv'); Target = 'generic-collection-publication'; Cases = 257; Seconds = 20 }
 )) {
     $Selected = & $NativePlanner -ChangedPath $Selection.Paths -PassThru -Quiet `
         -InitializationCache $NativePlannerInitializationCache
@@ -6782,7 +7393,7 @@ foreach ($Fragment in @(
     'The generic nominal development bundle wrote output.',
     'Execution.Code !== 42',
     'native generic nominal type binding status=Passed cases=59 result=42',
-    'native generic nominal type layout status=Passed cases=56 result=42',
+    'native generic nominal type layout status=Passed cases=58 result=42',
     'native generic nominal type materialization status=Passed cases=28 result=42'
 )) {
     if (!$GenericNominalDevelopmentRunner.Contains(
@@ -6848,8 +7459,11 @@ foreach ($Contract in $GenericNominalWrapperContracts) {
 foreach ($Fragment in @(
     '$NativePlan.UseGenericNominalDevelopmentBundle',
     'mode=development-bundle',
-    'bundle-cases=143',
-    '$OwnerArguments = @(''--development'')'
+    'bundle-cases=145',
+    'Test-Generic-Nominal-Development-Bundle.mjs',
+    '$GenericNominalBundlePassed = $true',
+    'result=CoveredByBundle',
+    'elseif (!$IsGenericNominalBundle)'
 )) {
     if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
         throw "Changed-file generic nominal dispatch is missing '$Fragment'."
@@ -6872,7 +7486,7 @@ if (!$GenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
     $GenericNominalDevelopmentPlan.ExpectedSeconds -ne 330 -or
     $GenericNominalDevelopmentPlan.MaximumSeconds -ne 600 -or
     $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleSelectedOwnerCount -ne 3 -or
-    $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleCaseCount -ne 143) {
+    $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleCaseCount -ne 145) {
     throw 'The three-owner generic nominal development bundle plan differs.'
 }
 $SingleGenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
@@ -6985,6 +7599,10 @@ $RequiredWorkflowFragments = @(
     "cancel-in-progress: `${{ github.event_name != 'workflow_dispatch' }}",
     'queue: single',
     'windows_required: ${{ steps.host-scope.outputs.windows_required }}',
+    'native_maximum_seconds: ${{ steps.native-plan.outputs.native_maximum_seconds }}',
+    'native_admission_maximum_seconds: ${{ steps.native-plan.outputs.native_admission_maximum_seconds }}',
+    'native_control_maximum_seconds: ${{ steps.native-plan.outputs.native_control_maximum_seconds }}',
+    'development_timeout_minutes: ${{ steps.native-plan.outputs.development_timeout_minutes }}',
     'qualification_shard: ${{ steps.qualification-selection.outputs.shard }}',
     'qualification_start_owner: ${{ steps.qualification-selection.outputs.start_owner }}',
     'qualification_shards: ${{ steps.qualification-selection.outputs.shards }}',
@@ -7032,9 +7650,43 @@ foreach ($JobName in @('windows-development', 'linux-development')) {
         $GitHubVerificationWorkflow,
         "(?ms)^  ${JobName}:.*?(?=^  [a-z0-9-]+:|\z)")
     if (!$JobMatch.Success -or
-        !$JobMatch.Value.Contains('timeout-minutes: 15', [StringComparison]::Ordinal)) {
-        throw "The GitHub $JobName job does not have the 15-minute development bound."
+        !$JobMatch.Value.Contains('timeout-minutes: ${{ fromJSON(needs.classify-changes.outputs.development_timeout_minutes) }}', [StringComparison]::Ordinal)) {
+        throw "The GitHub $JobName job does not consume the validated complete-plan deadline."
     }
+}
+
+$BudgetDefinitions = [regex]::Matches($GitHubVerificationWorkflow,
+    '(?ms)^          function Get-NativeDevelopmentBudget \{.*?^          \}')
+if ($BudgetDefinitions.Count -ne 1) { throw 'Classification does not own one native development budget function.' }
+$BudgetDefinition = $BudgetDefinitions[0].Value -replace '(?m)^          ', ''
+$BudgetFunction = [scriptblock]::Create('param([System.Collections.IDictionary]$Arguments)' +
+    [Environment]::NewLine + $BudgetDefinition + [Environment]::NewLine + 'Get-NativeDevelopmentBudget @Arguments')
+foreach ($Case in @(
+    @{ Plan = $SharedCompilerPlan; Minutes = 105; Admission = 600 },
+    @{ Plan = $MixedSharedCompilerPlan; Minutes = 135; Admission = 600 },
+    @{ Plan = $Language1FrontDoorDevelopmentPlan; Minutes = 15; Admission = 0 },
+    @{ Plan = $GenericNominalDevelopmentPlan; Minutes = 15; Admission = 0 }
+)) {
+    $SelectedPlan = $Case.Plan
+    $Budget = & $BudgetFunction @{ NativeExpectedSeconds = $SelectedPlan.ExpectedSeconds;
+        NativeMaximumSeconds = $SelectedPlan.MaximumSeconds; NativeOwnerCount = @($SelectedPlan.Suites).Count;
+        SharedCompilerRequired = [bool]$SelectedPlan.NativeSharedCompilerHostRecordRequired }
+    if ($Budget.NativeMaximumSeconds -ne $SelectedPlan.MaximumSeconds -or
+        $Budget.AdmissionMaximumSeconds -ne $Case.Admission -or
+        $Budget.ControlMaximumSeconds -ne 300 -or $Budget.TimeoutMinutes -ne $Case.Minutes) {
+        throw 'The CI deadline does not preserve a focused owner plan and its separate admission budget.'
+    }
+}
+$AggregatePlans = @($MixedSharedCompilerPlan, $Language1FrontDoorDevelopmentPlan, $GenericNominalDevelopmentPlan)
+$AggregateExpectedSeconds = [long](($AggregatePlans | Measure-Object -Property ExpectedSeconds -Sum).Sum)
+$AggregateMaximumSeconds = [long](($AggregatePlans | Measure-Object -Property MaximumSeconds -Sum).Sum)
+$AggregateOwnerCount = [long](($AggregatePlans | ForEach-Object { @($_.Suites).Count } | Measure-Object -Sum).Sum)
+$AggregateBudget = & $BudgetFunction @{ NativeExpectedSeconds = $AggregateExpectedSeconds;
+    NativeMaximumSeconds = $AggregateMaximumSeconds; NativeOwnerCount = $AggregateOwnerCount; SharedCompilerRequired = $true }
+if ($AggregateMaximumSeconds -ne 8400 -or $AggregateBudget.NativeMaximumSeconds -ne 8400 -or
+    $AggregateBudget.AdmissionMaximumSeconds -ne 600 -or $AggregateBudget.ControlMaximumSeconds -ne 300 -or
+    $AggregateBudget.TimeoutMinutes -ne 155) {
+    throw 'The CI deadline covers only one mixed native owner rather than the complete selected plan.'
 }
 if ([regex]::Matches(
         $GitHubVerificationWorkflow,
@@ -7744,7 +8396,583 @@ foreach ($Case in @(
 
 $NativeCaseIndex = 0
 $NativePlannerCommand = Get-Command -Name $NativePlanner
+
+# The maintained batch substitutes only authenticated declared implementation inputs.
+# Distinct explicit test/tool owners cannot disappear through this substitution.
+$CausalCompilerPaths = @(
+    'Compiler/Windvale/Source-Wir-Core.wv', 'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+    'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
+    'Tests/Fixtures/Language-1.0/Reserved-Byte-Construction-Self-Test.wv'
+)
+$CausalCompilerPlan = & $NativePlanner -ChangedPath $CausalCompilerPaths -PassThru -Quiet
+if (!$CausalCompilerPlan.UseCausalCompilerDevelopment -or
+    !$CausalCompilerPlan.UseAnalysisDiagnosticsDevelopment -or
+    !$CausalCompilerPlan.NativeSharedCompilerHostRecordRequired -or
+    $CausalCompilerPlan.UseNativeSharedCompilerDevelopment -or
+    !$CausalCompilerPlan.UseGenericNominalDevelopmentBundle -or
+    $CausalCompilerPlan.Language1FrontDoorDevelopmentTarget -cne 'bytes-source' -or
+    $CausalCompilerPlan.Language1FrontDoorDevelopmentCaseCount -ne 358 -or
+    $CausalCompilerPlan.ExpectedSeconds -ne 5340 -or $CausalCompilerPlan.MaximumSeconds -ne 8520 -or
+    $CausalCompilerPlan.Gaps.Count -ne 0 -or
+    !([Collections.Generic.HashSet[string]]::new([string[]]$CausalCompilerPlan.Suites,
+        [StringComparer]::Ordinal)).SetEquals([string[]]@('native-x64-lowering-development',
+        'language-1-front-door', 'generic-nominal-type-binding', 'generic-nominal-type-layout',
+        'generic-nominal-type-materialization', 'compiler-split-development'))) {
+    throw 'The causal current compiler plan lost a product, exact selection or finite duration.'
+}
+foreach ($GeneratedEmitterPath in @(
+    'Compiler/Windvale/Source-Symbols-Artifact-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Artifact-Core.wv'
+)) {
+    $GeneratedEmitterStandalone = & $NativePlanner -ChangedPath $GeneratedEmitterPath -PassThru -Quiet
+    if ($GeneratedEmitterStandalone.Gaps.Count -ne 0 -or
+        $GeneratedEmitterStandalone.ExpectedSeconds -ne 300 -or
+        $GeneratedEmitterStandalone.MaximumSeconds -ne 600 -or
+        $GeneratedEmitterStandalone.AnalysisDiagnosticsRequired -or
+        !([Collections.Generic.HashSet[string]]::new([string[]]$GeneratedEmitterStandalone.Suites,
+            [StringComparer]::Ordinal)).SetEquals([string[]]@('compiler-split-development'))) {
+        throw "The exact generated Emitter reader lost its existing generator-check owner: $GeneratedEmitterPath"
+    }
+    $GeneratedEmitterMixed = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+        $GeneratedEmitterPath) -PassThru -Quiet
+    if ($GeneratedEmitterMixed.Gaps.Count -ne 0 -or
+        !$GeneratedEmitterMixed.UseAnalysisDiagnosticsDevelopment -or
+        $GeneratedEmitterMixed.UseAnalysisDiagnosticsWithExisting -or
+        $GeneratedEmitterMixed.ExpectedSeconds -ne $CausalCompilerPlan.ExpectedSeconds -or
+        $GeneratedEmitterMixed.MaximumSeconds -ne $CausalCompilerPlan.MaximumSeconds -or
+        !([Collections.Generic.HashSet[string]]::new([string[]]$GeneratedEmitterMixed.Suites,
+            [StringComparer]::Ordinal)).SetEquals([string[]]$CausalCompilerPlan.Suites)) {
+        throw "The generated Emitter reader widened the authenticated current compiler batch: $GeneratedEmitterPath"
+    }
+}
+foreach ($Distinct in @(
+    @{ Path = 'Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs'; Owner = 'segmented-hosted-wvb-cache'; Expected = 5355; Maximum = 8820 },
+    @{ Path = 'Tools/Native/Verification-Owner-Result-Cache.mjs'; Owner = 'verification-owner-stream'; Expected = 5355; Maximum = 8820 },
+    @{ Path = 'Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv'; Owner = 'language-1-callable-semantics'; Expected = 6240; Maximum = 12120 },
+    @{ Path = 'Tests/Fixtures/Language-1.0/Generic-Nominal-Wvlb-Carrier-Self-Test.wv'; Owner = 'generic-nominal-wvlb-carrier'; Expected = 5640; Maximum = 9120 }
+)) {
+    $DistinctPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths + $Distinct.Path) -PassThru -Quiet
+    if ($DistinctPlan.Suites -cnotcontains $Distinct.Owner -or
+        $DistinctPlan.ExpectedSeconds -ne $Distinct.Expected -or
+        $DistinctPlan.MaximumSeconds -ne $Distinct.Maximum) {
+        throw 'An explicit distinct owner disappeared from the causal compiler batch.'
+    }
+}
+foreach ($Unknown in @(
+    @{ Path = 'Projects/Tests/Unmapped-Current-Consumer.wvproj'; Gap = 'unmapped-project:Projects/Tests/Unmapped-Current-Consumer.wvproj' },
+    @{ Path = 'Compiler/Windvale/Unmapped-Current-Implementation.wv'; Gap = 'unmapped-current-compiler:Compiler/Windvale/Unmapped-Current-Implementation.wv' },
+    @{ Path = 'Compiler/Windvale/Source-Symbols-Unmapped-Artifact-Core.wv'; Gap = 'unmapped-current-compiler:Compiler/Windvale/Source-Symbols-Unmapped-Artifact-Core.wv' },
+    @{ Path = 'Compiler/Windvale/Source-Wvb-Unmapped-Artifact-Core.wv'; Gap = 'unmapped-current-compiler:Compiler/Windvale/Source-Wvb-Unmapped-Artifact-Core.wv' },
+    @{ Path = 'Examples/Unmapped-Current-Consumer.wv'; Gap = 'unmapped-example:Examples/Unmapped-Current-Consumer.wv' }
+)) {
+    $UnknownPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths + $Unknown.Path) -PassThru -Quiet
+    if ($UnknownPlan.Gaps -cnotcontains $Unknown.Gap -or $UnknownPlan.Suites -ccontains 'seed') {
+        throw 'An unknown implementation or project silently selected Seed.'
+    }
+}
+$LegacyPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths + 'Examples/Seed/Sum-Data.wv') -PassThru -Quiet
+if ($LegacyPlan.Suites -cnotcontains 'seed' -or $LegacyPlan.Suites -cnotcontains 'seed-native-front-door' -or
+    $LegacyPlan.Suites -cnotcontains 'seed-native-console-aot') { throw 'Explicit historical Seed ownership was lost.' }
+$CompilerAnalysisFixturePaths = @(
+    'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv',
+    'Tests/Fixtures/Language-1.0/Source-Analysis-Validation-Self-Test.wv',
+    'Projects/Tests/Language-1.0-Source-Analysis-Validation-Self-Test.wvproj',
+    'Tests/Fixtures/Language-1.0/Generic-Wir-Self-Test.wv',
+    'Tests/Fixtures/Language-1.0/Generic-Analysis-Publication-Self-Test.wv',
+    'Tests/Fixtures/Language-1.0/Generic-Collection-Analysis-Publication-Self-Test.wv'
+)
+$CompilerAnalysisPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    $CompilerAnalysisFixturePaths) -PassThru -Quiet
+if ($CompilerAnalysisPlan.Gaps.Count -ne 0 -or
+    $CompilerAnalysisPlan.Language1FrontDoorDevelopmentTarget -cne
+        'bytes-source+source-analysis+generic-wir+generic-analysis-publication+generic-collection-publication' -or
+    $CompilerAnalysisPlan.Language1FrontDoorDevelopmentCaseCount -ne 403 -or
+    $CompilerAnalysisPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 260 -or
+    $CompilerAnalysisPlan.ExpectedSeconds -ne 5420 -or $CompilerAnalysisPlan.MaximumSeconds -ne 8520 -or
+    !$CompilerAnalysisPlan.UseLanguage1FrontDoorPreparation) {
+    throw 'An actual changed compiler fixture lost its manifest-derived product or bounded preparation.'
+}
+$CacheContractPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Tools/Native/Current-Split-Compiler-Cache-Core.mjs') -PassThru -Quiet
+if (!$CacheContractPlan.AnalysisDiagnosticsRequired -or !$CacheContractPlan.UseAnalysisDiagnosticsWithExisting -or
+    $CacheContractPlan.UseAnalysisDiagnosticsDevelopment -or
+    $CacheContractPlan.Suites -cnotcontains 'language-1-authenticated-foreign-binding') {
+    throw 'Diagnostics replaced an explicit cache/construction or foreign-binding owner.'
+}
+$DirectIntermediatePlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Tools/Native/Direct-Condition-Analyzer-Intermediate-Core.mjs') -PassThru -Quiet
+if ($DirectIntermediatePlan.Gaps.Count -ne 0 -or
+    !$DirectIntermediatePlan.AnalysisDiagnosticsRequired -or
+    !$DirectIntermediatePlan.UseAnalysisDiagnosticsWithExisting -or
+    $DirectIntermediatePlan.UseAnalysisDiagnosticsDevelopment -or
+    $DirectIntermediatePlan.Suites -cnotcontains 'compiler-split-development' -or
+    $DirectIntermediatePlan.Suites -ccontains 'seed' -or
+    $DirectIntermediatePlan.Suites -ccontains 'language-1-authenticated-foreign-binding' -or
+    $DirectIntermediatePlan.ExpectedSeconds -ne 5640 -or
+    $DirectIntermediatePlan.MaximumSeconds -ne 9120) {
+    throw 'Direct intermediate construction lost its existing split-cache owner or analysis diagnostics.'
+}
+$NativeSuccessorPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv' +
+    'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj') -PassThru -Quiet
+if ($NativeSuccessorPlan.Gaps.Count -ne 0 -or
+    $NativeSuccessorPlan.MaximumSeconds -ne $CausalCompilerPlan.MaximumSeconds -or
+    !([Collections.Generic.HashSet[string]]::new([string[]]$NativeSuccessorPlan.Suites,
+        [StringComparer]::Ordinal)).SetEquals([string[]]$CausalCompilerPlan.Suites)) {
+    throw 'The actually constructed native successor lost its existing causal owner.'
+}
+$RetiredReaderPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Compiler/Windvale/Source-Bindings-Generic-Types-Artifact-Core.wv') -PassThru -Quiet
+if ($RetiredReaderPlan.Gaps.Count -ne 0 -or !$RetiredReaderPlan.UseAnalysisDiagnosticsWithExisting -or
+    $RetiredReaderPlan.MaximumSeconds -ne 9120 -or $RetiredReaderPlan.Suites -ccontains 'seed') {
+    throw 'The one retired reader lost its generator absence/check owner.'
+}
+$UnknownRetiredPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Compiler/Windvale/Unmapped-Retired-Artifact-Core.wv') -PassThru -Quiet
+if ($UnknownRetiredPlan.Gaps -cnotcontains
+    'unmapped-current-compiler:Compiler/Windvale/Unmapped-Retired-Artifact-Core.wv') {
+    throw 'A named retired-reader exception widened to unknown deleted artifacts.'
+}
+$GeneratorRoutingCases = @(
+    @{ Name = 'generator-only'; Inputs = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs');
+        Suites = @('compiler-split-development'); Expected = 300; Maximum = 600; WithDiagnostics = $false },
+    @{ Name = 'generator-current-compiler'; Inputs = @($CausalCompilerPaths + 'Tools/Native/Generate-Compiler-Artifact-Readers.mjs');
+        Suites = @($CausalCompilerPlan.Suites); Expected = 5640; Maximum = 9120; WithDiagnostics = $true },
+    @{ Name = 'generator-explicit-runner-tool'; Inputs = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs', 'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd');
+        Suites = @('wvb-runner-reconstruction', 'compiler-split-development'); Expected = 1200; Maximum = 4200; WithDiagnostics = $false },
+    @{ Name = 'generator-explicit-runner-artifact'; Inputs = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs', 'Artifacts/Native-Wvb-Runner-Candidate/Manifest.json');
+        Suites = @('seed-native-front-door', 'wvb-runner-reconstruction', 'scripting', 'compiler-split-development'); Expected = 1230; Maximum = 4800; WithDiagnostics = $false },
+    @{ Name = 'generator-explicit-runner-entry'; Inputs = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs', 'Tools/Windvale.Run/Wvb-Runner-Tool.wv');
+        Suites = @('seed-native-front-door', 'wvb-runner-reconstruction', 'scripting', 'language-1-memory-budget-split-execution', 'compiler-split-development'); Expected = 2130; Maximum = 8400; WithDiagnostics = $false },
+    @{ Name = 'generator-explicit-source-ordering'; Inputs = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs', 'Tools/Native/Split-Project-Source-Ordering-Core.mjs');
+        Suites = @('wvb-runner-reconstruction', 'compiler-split-development'); Expected = 1200; Maximum = 4200; WithDiagnostics = $false }
+)
+foreach ($Case in $GeneratorRoutingCases) {
+    $GeneratorPlan = & $NativePlanner -ChangedPath $Case.Inputs -PassThru -Quiet
+    if (!([Collections.Generic.HashSet[string]]::new([string[]]$GeneratorPlan.Suites,
+            [StringComparer]::Ordinal)).SetEquals([string[]]$Case.Suites) -or
+        $GeneratorPlan.Suites.Count -ne $Case.Suites.Count -or
+        $GeneratorPlan.ExpectedSeconds -ne $Case.Expected -or
+        $GeneratorPlan.MaximumSeconds -ne $Case.Maximum -or
+        $GeneratorPlan.Gaps.Count -ne 0 -or $GeneratorPlan.UseAnalysisDiagnosticsDevelopment -or
+        $GeneratorPlan.UseAnalysisDiagnosticsWithExisting -ne $Case.WithDiagnostics) {
+        throw "Causal generator routing or explicit runner coverage differs: $($Case.Name)."
+    }
+}
+Write-Host 'PASS causal-generator-routing cases=6 actual-generator=split-owner explicit-runner=Preserved'
+foreach ($NamedPath in @(
+    'Compiler/Windvale/Source-Wvb-Memory-Adapter.wv',
+    'Projects/Compiler/Windvale-Compiler-Memory.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Relocations.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Symbols.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Relocations-Native.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Symbols-Native.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Native-Adapter.wv'
+)) {
+    $NamedPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths + $NamedPath) -PassThru -Quiet
+    if ($NamedPlan.Gaps.Count -ne 0 -or
+        $NamedPlan.MaximumSeconds -ne $CausalCompilerPlan.MaximumSeconds -or
+        !([Collections.Generic.HashSet[string]]::new([string[]]$NamedPlan.Suites,
+            [StringComparer]::Ordinal)).SetEquals([string[]]$CausalCompilerPlan.Suites)) {
+        throw 'A named retired path or retained native staging root lost its actual existing owner.'
+    }
+}
+$UnknownNativeRetirement = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Unmapped.wvproj') -PassThru -Quiet
+if ($UnknownNativeRetirement.Gaps -cnotcontains
+    'unmapped-project:Projects/Tests/Windvale-Native-Test-Staging-Wvo-Unmapped.wvproj') {
+    throw 'The named native retirement set widened to an unknown project.'
+}
+$BorrowContributionPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv' +
+    'Tools/Native/Verification-Owner-Result-Cache.mjs') -PassThru -Quiet
+if (!$BorrowContributionPlan.UseFoundationBorrowOwnerDevelopment -or
+    $BorrowContributionPlan.Suites -cnotcontains 'verification-owner-stream' -or
+    $BorrowContributionPlan.Suites -cnotcontains 'language-1-memory-budget-split-execution' -or
+    $BorrowContributionPlan.ExpectedSeconds -ne 5535 -or $BorrowContributionPlan.MaximumSeconds -ne 9420) {
+    throw 'An unrelated distinct owner widened or disappeared from Foundation owner-flow selection.'
+}
+$BorrowFullPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv' +
+    'Libraries/Platform/Filesystem/File.wv') -PassThru -Quiet
+if ($BorrowFullPlan.UseFoundationBorrowOwnerDevelopment -or
+    $BorrowFullPlan.Suites -cnotcontains 'language-1-memory-budget-split-execution') {
+    throw 'A memory-owner input outside the complete Foundation manifest was silently omitted.'
+}
+# The Budget45 amendment retains all compiler triggers and independent loan
+# malformed-input evidence; its named summary/spec inputs cannot widen another batch.
+$BudgetHelperPaths = @(
+    'Compiler/Windvale/Native-X64-Lowering-Call-Instructions.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Data.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Shared-Bytes.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Types.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv',
+    'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
+    'Compiler/Windvale/Source-Wir-Core.wv',
+    'Compiler/Windvale/Source-Wir-Validation-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Artifact-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Documents/Decisions/0982-Complete-Direct-Budget-Helper-Authority-In-WVB-1.45.md',
+    'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Construction.wvproj',
+    'Specifications/Compiler-Source-Wir.md',
+    'Specifications/Compiler-Source-Wvb.md',
+    'Specifications/Seed-Bytecode.md',
+    'Specifications/Windvale-Native-X64-Lowering.md',
+    'Tests/Fixtures/Language-1.0/Reserved-Byte-Construction-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
+    'Tests/Native/Verification-Owners.txt',
+    'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
+    'Tools/Native/Native-Shared-Value-Cases.mjs',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
+)
+$BudgetHelperPlan = & $NativePlanner -ChangedPath $BudgetHelperPaths -PassThru -Quiet
+if (!$BudgetHelperPlan.UseCausalBudgetHelperDevelopment -or
+    !$BudgetHelperPlan.UseCausalCompilerDevelopment -or
+    !$BudgetHelperPlan.UseFoundationBorrowOwnerDevelopment -or
+    !$BudgetHelperPlan.UseAnalysisDiagnosticsDevelopment -or
+    !$BudgetHelperPlan.UseGenericNominalDevelopmentBundle -or
+    !$BudgetHelperPlan.NativeSharedCompilerHostRecordRequired -or
+    $BudgetHelperPlan.UseNativeSharedCompilerDevelopment -or
+    $BudgetHelperPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
+    $BudgetHelperPlan.Language1FrontDoorDevelopmentTarget -cne 'bytes-source' -or
+    $BudgetHelperPlan.Language1FrontDoorDevelopmentCaseCount -ne 358 -or
+    !$BudgetHelperPlan.RunPlanVerification -or
+    $BudgetHelperPaths.Count -ne 36 -or
+    $BudgetHelperPlan.ExpectedSeconds -ne 5520 -or $BudgetHelperPlan.MaximumSeconds -ne 9120 -or
+    $BudgetHelperPlan.Gaps.Count -ne 0 -or
+    !([Collections.Generic.HashSet[string]]::new([string[]]$BudgetHelperPlan.Suites,
+        [StringComparer]::Ordinal)).SetEquals([string[]]@($CausalCompilerPlan.Suites +
+            'language-1-memory-budget-split-execution'))) {
+    throw 'The coherent Budget45 batch lost its source, complete verifier, native or finite owner selection.'
+}
+$BudgetComponentPaths = $BudgetHelperPaths +
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv' +
+    'Tools/Native/Verification-Owner-Result-Cache.mjs'
+$BudgetComponentPlan = & $NativePlanner -ChangedPath $BudgetComponentPaths -PassThru -Quiet
+if (!$BudgetComponentPlan.UseFoundationBorrowComponentsDevelopment -or
+    $BudgetComponentPlan.UseFoundationBorrowOwnerDevelopment -or
+    $BudgetComponentPlan.Suites -cnotcontains 'verification-owner-stream' -or
+    $BudgetComponentPlan.ExpectedSeconds -ne ($BudgetHelperPlan.ExpectedSeconds + 15) -or
+    $BudgetComponentPlan.MaximumSeconds -ne ($BudgetHelperPlan.MaximumSeconds + 300) -or
+    $BudgetComponentPlan.Gaps.Count -ne 0) {
+    throw 'Independent cache changes widened the complete Foundation component selection.'
+}
+$BroaderBudgetComponentPlan = & $NativePlanner -ChangedPath ($BudgetComponentPaths +
+    'Libraries/Platform/Filesystem/File.wv') -PassThru -Quiet
+if ($BroaderBudgetComponentPlan.UseFoundationBorrowComponentsDevelopment -or
+    $BroaderBudgetComponentPlan.Suites -cnotcontains 'language-1-memory-budget-split-execution') {
+    throw 'A memory input outside the component bundle lost its broader owner.'
+}
+foreach ($Missing in @($CausalCompilerPaths + @(
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Artifact-Core.wv',
+    'Compiler/Windvale/Source-Wir-Validation-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
+    'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv'
+))) {
+    $PartialBudgetPlan = & $NativePlanner -ChangedPath @($BudgetHelperPaths |
+        Where-Object { $_ -cne $Missing }) -PassThru -Quiet
+    if ($PartialBudgetPlan.UseCausalBudgetHelperDevelopment) {
+        throw 'A partial Budget45 batch acquired coherent owner substitution.'
+    }
+}
+foreach ($Unknown in @('Compiler/Windvale/Budget-Helper-Unmapped-Core.wv',
+    'Projects/Tests/Windvale-Native-Test-Budget-Helper-Unmapped.wvproj')) {
+    $UnknownBudgetPlan = & $NativePlanner -ChangedPath ($BudgetHelperPaths + $Unknown) -PassThru -Quiet
+    if ($UnknownBudgetPlan.Gaps.Count -eq 0) {
+        throw 'A coherent Budget45 batch suppressed an unknown implementation or project gap.'
+    }
+}
+$BudgetLookalikePlan = & $NativePlanner -ChangedPath ($BudgetHelperPaths +
+    'Specifications/Seed-Bytecode-Lookalike.md') -PassThru -Quiet
+foreach ($OrdinaryOwner in @('seed', 'unsafe-wvb', 'wvb-containment')) {
+    if ($BudgetLookalikePlan.Suites -cnotcontains $OrdinaryOwner) {
+        throw 'A lookalike specification acquired the exact Budget45 specification route.'
+    }
+}
+$BudgetDistinctPlan = & $NativePlanner -ChangedPath ($BudgetHelperPaths +
+    'Tools/Native/Verification-Owner-Result-Cache.mjs') -PassThru -Quiet
+if (!$BudgetDistinctPlan.UseFoundationBorrowOwnerDevelopment -or
+    $BudgetDistinctPlan.Suites -cnotcontains 'verification-owner-stream' -or
+    $BudgetDistinctPlan.ExpectedSeconds -ne 5535 -or $BudgetDistinctPlan.MaximumSeconds -ne 9420) {
+    throw 'Budget45 substitution removed or widened an independently contributed owner.'
+}
+$BudgetFullMemoryPlan = & $NativePlanner -ChangedPath ($BudgetHelperPaths +
+    'Libraries/Platform/Filesystem/File.wv') -PassThru -Quiet
+if ($BudgetFullMemoryPlan.UseFoundationBorrowOwnerDevelopment -or
+    $BudgetFullMemoryPlan.Suites -cnotcontains 'language-1-memory-budget-split-execution' -or
+    $BudgetFullMemoryPlan.ExpectedSeconds -ne 6240 -or $BudgetFullMemoryPlan.MaximumSeconds -ne 12120) {
+    throw 'A memory contract outside the Foundation manifest was omitted by Budget45 substitution.'
+}
+$ConstructionReadinessPaths = @(
+    'Tools/Native/Build-Current-Split-Project-Wvb.mjs',
+    'Tools/Native/Current-Split-Compiler-Cache-Core.mjs',
+    'Tools/Native/Project-Construction-Readiness-Core.mjs',
+    'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+    'Specifications/Compiler-Split-Development-Cache.md'
+)
+$ConstructionReadinessPlan = & $NativePlanner -ChangedPath $ConstructionReadinessPaths -PassThru -Quiet
+if (!$ConstructionReadinessPlan.ConstructionReadinessRequired -or
+    !$ConstructionReadinessPlan.UseConstructionReadinessDevelopment -or
+    $ConstructionReadinessPlan.UseConstructionReadinessWithExisting -or
+    $ConstructionReadinessPlan.AnalysisDiagnosticsRequired -or
+    $ConstructionReadinessPlan.ConstructionReadinessSelection -cne '--construction-readiness' -or
+    $ConstructionReadinessPlan.ConstructionReadinessCaseCount -ne 23 -or
+    $ConstructionReadinessPlan.ConstructionReadinessProcessActionCount -ne 13 -or
+    $ConstructionReadinessPlan.ConstructionReadinessPackageDeadlineAssertionCount -ne 12 -or
+    $ConstructionReadinessPlan.ExpectedSeconds -ne 15 -or $ConstructionReadinessPlan.MaximumSeconds -ne 120 -or
+    $ConstructionReadinessPlan.Gaps.Count -ne 0 -or $ConstructionReadinessPlan.Suites.Count -ne 1 -or
+    $ConstructionReadinessPlan.Suites[0] -cne 'compiler-split-development') {
+    throw 'The complete construction-readiness batch lost its focused existing owner or finite bound.'
+}
+$ReadinessHelperPlan = & $NativePlanner -ChangedPath $ConstructionReadinessPaths[2] -PassThru -Quiet
+if (!$ReadinessHelperPlan.UseConstructionReadinessDevelopment -or
+    $ReadinessHelperPlan.AnalysisDiagnosticsRequired -or $ReadinessHelperPlan.Gaps.Count -ne 0 -or
+    $ReadinessHelperPlan.ExpectedSeconds -ne 15 -or $ReadinessHelperPlan.MaximumSeconds -ne 120 -or
+    $ReadinessHelperPlan.Suites.Count -ne 1 -or $ReadinessHelperPlan.Suites[0] -cne 'compiler-split-development') {
+    throw 'The new construction-readiness helper acquired a gap or unrelated compiler construction.'
+}
+foreach ($Missing in $ConstructionReadinessPaths) {
+    $PartialReadinessPlan = & $NativePlanner -ChangedPath @($ConstructionReadinessPaths |
+        Where-Object { $_ -cne $Missing }) -PassThru -Quiet
+    if ($PartialReadinessPlan.UseConstructionReadinessDevelopment -or
+        $PartialReadinessPlan.Suites -cnotcontains 'language-1-authenticated-foreign-binding' -or
+        $PartialReadinessPlan.Suites -cnotcontains 'compiler-split-development' -or
+        ($Missing -cne $ConstructionReadinessPaths[2] -and
+            (!$PartialReadinessPlan.ConstructionReadinessRequired -or
+                !$PartialReadinessPlan.UseConstructionReadinessWithExisting)) -or
+        ($Missing -ceq $ConstructionReadinessPaths[2] -and $PartialReadinessPlan.ConstructionReadinessRequired)) {
+        throw 'A partial readiness batch suppressed ordinary driver or cache contracts.'
+    }
+}
+foreach ($Standalone in @($ConstructionReadinessPaths[0], $ConstructionReadinessPaths[1],
+    $ConstructionReadinessPaths[3])) {
+    $StandaloneReadinessPlan = & $NativePlanner -ChangedPath $Standalone -PassThru -Quiet
+    if ($StandaloneReadinessPlan.UseConstructionReadinessDevelopment -or
+        $StandaloneReadinessPlan.ConstructionReadinessRequired -or
+        $StandaloneReadinessPlan.Suites -cnotcontains 'compiler-split-development') {
+        throw 'A standalone driver or cache owner was replaced by its readiness subgroup.'
+    }
+}
+$SharedReadinessPaths = @($BudgetHelperPaths + $ConstructionReadinessPaths +
+    'Tools/Native/Build-Shared-Compiler-Host.mjs' | Sort-Object -Unique)
+$SharedReadinessPlan = & $NativePlanner -ChangedPath $SharedReadinessPaths -PassThru -Quiet -PreparedProductsOnly
+if ($SharedReadinessPaths.Count -ne 42 -or
+    !$SharedReadinessPlan.UseCausalBudgetHelperDevelopment -or
+    !$SharedReadinessPlan.UseConstructionReadinessDevelopment -or
+    !$SharedReadinessPlan.UseAnalysisDiagnosticsDevelopment -or
+    !$SharedReadinessPlan.AnalysisDiagnosticsRequired -or
+    !$SharedReadinessPlan.UseFoundationBorrowOwnerDevelopment -or
+    !$SharedReadinessPlan.UseGenericNominalDevelopmentBundle -or
+    !$SharedReadinessPlan.NativeSharedCompilerHostRecordRequired -or
+    $SharedReadinessPlan.UseNativeSharedCompilerDevelopment -or
+    $SharedReadinessPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
+    $SharedReadinessPlan.NativeSharedCompilerBehaviorExpectedSeconds -ne 4800 -or
+    $SharedReadinessPlan.NativeSharedCompilerBehaviorMaximumSeconds -ne 7200 -or
+    $SharedReadinessPlan.Language1FrontDoorDevelopmentTarget -cne 'bytes-source' -or
+    $SharedReadinessPlan.Language1FrontDoorDevelopmentCaseCount -ne 358 -or
+    $SharedReadinessPlan.ExpectedSeconds -ne 5535 -or $SharedReadinessPlan.MaximumSeconds -ne 9240 -or
+    $SharedReadinessPlan.Gaps.Count -ne 0 -or
+    !([Collections.Generic.HashSet[string]]::new([string[]]$SharedReadinessPlan.Suites,
+        [StringComparer]::Ordinal)).SetEquals([string[]]$BudgetHelperPlan.Suites)) {
+    throw 'The coherent shared/compiler batch lost Analysis3, complete loan proofs, native behavior or exact costs.'
+}
+$BroaderReadinessPlan = & $NativePlanner -ChangedPath ($SharedReadinessPaths +
+    'Tools/Native/Build-Cached-Split-Project-Wvb.mjs') -PassThru -Quiet -PreparedProductsOnly
+if (!$BroaderReadinessPlan.ConstructionReadinessRequired -or
+    $BroaderReadinessPlan.UseConstructionReadinessDevelopment -or
+    !$BroaderReadinessPlan.UseConstructionReadinessWithExisting -or
+    !$BroaderReadinessPlan.UseAnalysisDiagnosticsWithExisting -or
+    $BroaderReadinessPlan.UseAnalysisDiagnosticsDevelopment -or
+    $BroaderReadinessPlan.ExpectedSeconds -ne 5835 -or $BroaderReadinessPlan.MaximumSeconds -ne 9840) {
+    throw 'Broader cache changes lost their existing four cases or additive Analysis3/readiness checks.'
+}
+$ExplicitForeignReadinessPlan = & $NativePlanner -ChangedPath ($SharedReadinessPaths +
+    'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs') -PassThru -Quiet -PreparedProductsOnly
+if ($ExplicitForeignReadinessPlan.Suites -cnotcontains 'language-1-authenticated-foreign-binding') {
+    throw 'A readiness contribution suppressed an independently changed foreign-binding owner.'
+}
+foreach ($Unknown in @('Tools/Native/Project-Construction-Readiness-Lookalike-Core.mjs',
+    'Compiler/Windvale/Readiness-Unmapped-Core.wv',
+    'Projects/Tests/Windvale-Native-Test-Readiness-Unmapped.wvproj')) {
+    $UnknownReadinessPlan = & $NativePlanner -ChangedPath ($SharedReadinessPaths + $Unknown) -PassThru -Quiet
+    if ($UnknownReadinessPlan.Gaps.Count -eq 0) {
+        throw 'A readiness batch suppressed an unknown implementation or project gap.'
+    }
+}
+if ($BudgetHelperPlan.ConstructionReadinessRequired -or
+    $BudgetHelperPlan.ExpectedSeconds -ne 5520 -or $BudgetHelperPlan.MaximumSeconds -ne 9120) {
+    throw 'Readiness routing changed the prior coherent Budget45 selection.'
+}
+foreach ($Marker in @(
+    '$NativePlan.UseConstructionReadinessDevelopment -and',
+    '!$NativePlan.AnalysisDiagnosticsRequired',
+    '$OwnerActionModel[''continuation'']',
+    '$OwnerExitCode -eq 0 -and $null -ne $OwnerContinuation',
+    'const Deadline = Date.now() + 115000;',
+    'Deadline, false, 1048576);',
+    'if (Result.Output) process.stdout.write(Result.Output);',
+    "expected-seconds=15 maximum-seconds=120 compiler-executions=0")) {
+    if (!$ChangedVerification.Contains($Marker)) {
+        throw 'Readiness dispatch lost additive checks, exact cache authority or bounded process supervision.'
+    }
+}
+Write-Host 'PASS construction-readiness-routing focused=23+13 deadline-assertions=12 shared-scope=42 source-analysis=3 native=270+10+3+13'
+$CacheForeignPreparedPlan = & $NativePlanner -ChangedPath ($CausalCompilerPaths +
+    'Tools/Native/Current-Split-Compiler-Cache-Core.mjs') -PassThru -Quiet -PreparedProductsOnly
+if (!$CacheForeignPreparedPlan.UsePreparedForeignBindingDevelopment -or
+    !$CacheForeignPreparedPlan.PreparedProductsOnly -or
+    $CacheForeignPreparedPlan.MaximumSeconds -ne 9720 -or
+    $CacheForeignPreparedPlan.ExpectedSeconds -ne 6240 -or
+    !([Collections.Generic.HashSet[string]]::new([string[]]$CacheForeignPreparedPlan.Suites,
+        [StringComparer]::Ordinal)).SetEquals([string[]]$CacheContractPlan.Suites) -or
+    $CacheContractPlan.UsePreparedForeignBindingDevelopment -or
+    $CacheContractPlan.MaximumSeconds -ne 12720) {
+    throw 'Prepared foreign execution lost its explicit 600-second contract or changed default construction.'
+}
+$PreparedCorePlan = & $NativePlanner -ChangedPath $CausalCompilerPaths -PassThru -Quiet -PreparedProductsOnly
+if ($PreparedCorePlan.UsePreparedForeignBindingDevelopment -or
+    $PreparedCorePlan.MaximumSeconds -ne $CausalCompilerPlan.MaximumSeconds) {
+    throw 'Prepared foreign accounting changed an unrelated owner plan.'
+}
+foreach ($Marker in @('-PreparedProductsOnly:$UsePreparedProducts')) {
+    if (!$ChangedVerification.Contains($Marker)) { throw 'Prepared dispatch and native plan budget disagree.' }
+}
+# Preparation and behavior retain the authenticated complete owner product.
+foreach ($Marker in @(
+    '$NativePlan.UseFoundationLibraryDevelopment -or $NativePlan.UseFoundationBorrowOwnerDevelopment -or',
+    'Preparation owner=language-1-memory-budget-split-execution mode=foundation-borrow-owners',
+    '$FoundationOwnerSeconds = [int][Math]::Min(4500, $RemainingSeconds)',
+    '--foundation-borrow-owners --prepare-only --maximum-seconds $FoundationOwnerSeconds',
+    "if ($" + "UsePreparedProducts) { $" + "OwnerArguments += @('--prepared-products-only', '--maximum-seconds', '600') }",
+    '!$NativePlan.UseFoundationLibraryDevelopment -and !$NativePlan.UseFoundationBorrowOwnerDevelopment -and'
+)) {
+    if (!$ChangedVerification.Contains($Marker, [StringComparison]::Ordinal)) {
+        throw "Foundation owner preparation or prepared behavior dispatch is missing '$Marker'."
+    }
+}
+if (!$GitHubVerificationWorkflow.Contains('$NativePlan.UseFoundationBorrowOwnerDevelopment -or', [StringComparison]::Ordinal)) {
+    throw 'Automatic Foundation owner behavior lacks its explicit preparation phase.'
+}
+$FoundationOwnerDriver = [IO.File]::ReadAllText((Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs'))
+foreach ($Marker in @('Withˉfoundationˉownerˉenvironment', "Selection: 'owners'",
+    'Prepareˉcompiler: Foundationˉownerˉphase.Prepare', 'if (!Foundationˉownerˉphase.Prepare)',
+    'Products.Requireˉunchanged()', 'status=Prepared products=1 behavior-cases=0 executions=0')) {
+    if (!$FoundationOwnerDriver.Contains($Marker, [StringComparison]::Ordinal)) {
+        throw "Foundation owner lost its existing-product preparation/behavior contract '$Marker'."
+    }
+}
+$ArtifactOwner = [IO.File]::ReadAllText((Join-Path $RepositoryRoot 'Tools/Native/Test-Cached-Split-Project-Wvb.mjs'))
+foreach ($Marker in @('Verifyˉartifactˉreaderˉprojections', 'Generate-Compiler-Artifact-Readers.mjs',
+    'named-retired-reader-absent', 'canonical-projections-check', 'artifact-readers=${Artifactˉcases}')) {
+    if (!$ArtifactOwner.Contains($Marker)) { throw 'The retired reader lost its maintained split-owner check.' }
+}
+# Callable preparation preserves all64 semantic groups and the existing maximum.
+foreach ($CallableCase in @(
+    @{ Inputs = @('Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv') },
+    @{ Inputs = @($CausalCompilerPaths + 'Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv') },
+    @{ Inputs = @('Tools/Native/Test-Language-1.0-Callable-Semantics.mjs') }
+)) {
+    $Inputs = [string[]]$CallableCase.Inputs
+    $OrdinaryCallablePlan = & $NativePlanner -ChangedPath $Inputs -PassThru -Quiet
+    $PreparedCallablePlan = & $NativePlanner -ChangedPath $Inputs -PassThru -Quiet -PreparedProductsOnly
+    if (!$OrdinaryCallablePlan.UseCallablePreparation -or $OrdinaryCallablePlan.UsePreparedCallableDevelopment -or
+        !$PreparedCallablePlan.UseCallablePreparation -or !$PreparedCallablePlan.UsePreparedCallableDevelopment -or
+        $OrdinaryCallablePlan.MaximumSeconds -ne $PreparedCallablePlan.MaximumSeconds -or
+        $OrdinaryCallablePlan.ExpectedSeconds -ne $PreparedCallablePlan.ExpectedSeconds -or
+        $PreparedCallablePlan.Suites -cnotcontains 'language-1-callable-semantics' -or
+        $PreparedCallablePlan.Gaps.Count -ne 0) { throw 'Callable phases lost their exact owner or unmeasured budget.' }
+    if ($Inputs -ccontains 'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs' -and
+        $PreparedCallablePlan.Suites -cnotcontains 'compiler-split-development') {
+        throw 'Callable phase helpers lost their existing pure cache controls.'
+    }
+}
+foreach ($Marker in @('$NativePlan.UseCallablePreparation -or',
+    '$CallablePreparationSeconds = [int][Math]::Min(4500, $RemainingSeconds)',
+    '--prepare-only --maximum-seconds $CallablePreparationSeconds --deadline-ms $CallableOwnerDeadline',
+    "'--prepared-products-only', '--maximum-seconds', '3600'")) {
+    if (!$ChangedVerification.Contains($Marker, [StringComparison]::Ordinal)) { throw 'Callable preparation/behavior dispatch is incomplete.' }
+}
+if (!$GitHubVerificationWorkflow.Contains('$NativePlan.UseCallablePreparation -or', [StringComparison]::Ordinal)) {
+    throw 'Automatic callable behavior lacks its explicit preparation.'
+}
+# Complement the applied scalar CI budget controls without changing their cap.
+$CausalBudgetDefinition = [regex]::Match($GitHubVerificationWorkflow,
+    '(?ms)^          function Get-NativeDevelopmentBudget \{.*?^          \}').Value -replace '(?m)^          ', ''
+if ([string]::IsNullOrEmpty($CausalBudgetDefinition)) { throw 'Missing applied CI budget owner.' }
+$CausalBudgetFunction = [scriptblock]::Create('param([System.Collections.IDictionary]$Arguments)' +
+    [Environment]::NewLine + $CausalBudgetDefinition + [Environment]::NewLine + 'Get-NativeDevelopmentBudget @Arguments')
+foreach ($BudgetControl in @(
+    @{ Paths = $CausalCompilerPaths; Maximum = 8520; Minutes = 157 },
+    @{ Paths = $CausalCompilerPaths + 'Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs'; Maximum = 8820; Minutes = 162 },
+    @{ Paths = $CausalCompilerPaths + 'Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv'; Maximum = 12120; Shards = 2 },
+    @{ Paths = $CausalCompilerPaths + 'Tests/Fixtures/Language-1.0/Generic-Nominal-Wvlb-Carrier-Self-Test.wv'; Maximum = 9120; Minutes = 167 }
+)) {
+    $BudgetPlan = & $NativePlanner -ChangedPath $BudgetControl.Paths -PassThru -Quiet
+    if ($BudgetControl.ContainsKey('Shards')) {
+        $Rejected = $false
+        try {
+            $null = & $CausalBudgetFunction @{ NativeExpectedSeconds = $BudgetPlan.ExpectedSeconds;
+                NativeMaximumSeconds = $BudgetPlan.MaximumSeconds; NativeOwnerCount = @($BudgetPlan.Suites).Count;
+                SharedCompilerRequired = [bool]$BudgetPlan.NativeSharedCompilerHostRecordRequired }
+        } catch { $Rejected = $true }
+        $BudgetShards = @(& (Join-Path $PSScriptRoot 'Get-Native-Development-Shards.ps1') -NativePlan $BudgetPlan)
+        if (!$Rejected -or $BudgetPlan.MaximumSeconds -ne $BudgetControl.Maximum -or
+            $BudgetShards.Count -ne $BudgetControl.Shards -or
+            [long](($BudgetShards | Measure-Object MaximumSeconds -Sum).Sum) -ne $BudgetPlan.MaximumSeconds -or
+            @($BudgetShards | Where-Object { $_.TimeoutMinutes -gt 180 }).Count -ne 0) {
+            throw 'The measured causal CI budget lost its required bounded shards.'
+        }
+        continue
+    }
+    $Budget = & $CausalBudgetFunction @{ NativeExpectedSeconds = $BudgetPlan.ExpectedSeconds;
+        NativeMaximumSeconds = $BudgetPlan.MaximumSeconds; NativeOwnerCount = @($BudgetPlan.Suites).Count;
+        SharedCompilerRequired = [bool]$BudgetPlan.NativeSharedCompilerHostRecordRequired }
+    if ($BudgetPlan.MaximumSeconds -ne $BudgetControl.Maximum -or
+        $Budget.NativeMaximumSeconds -ne $BudgetControl.Maximum -or
+        $Budget.AdmissionMaximumSeconds -ne 600 -or $Budget.ControlMaximumSeconds -ne 300 -or
+        $Budget.TimeoutMinutes -ne $BudgetControl.Minutes) {
+        throw 'The causal CI budget hid an additive owner or separate admission/control allowance.'
+    }
+}
+try {
+    $null = & $CausalBudgetFunction @{ NativeExpectedSeconds = [long]11940;
+        NativeMaximumSeconds = [long]33600; NativeOwnerCount = [long]18; SharedCompilerRequired = $true }
+    throw 'The explicit over-cap legacy plan was accepted.'
+} catch {
+    if ($_.Exception.Message -eq 'The explicit over-cap legacy plan was accepted.') { throw }
+}
+foreach ($Marker in @('$NativePlan.AnalysisDiagnosticsRequired', 'UseAnalysisDiagnosticsWithExisting', '--analysis-diagnostics',
+    'Analysis diagnostics require an admitted explicit current shared compiler selection.',
+    'mode=analysis-diagnostics cases=3 expected-seconds=30 maximum-seconds=120 construction=Forbidden')) {
+    if (!$ChangedVerification.Contains($Marker)) { throw "Missing existing-owner diagnostics dispatch: $Marker" }
+}
+
 Write-Host "START verification plan phase=native-routing item=0/$($NativeCases.Count)"
+$NativeRoutingFailureCount = 0
+$NativeRoutingFailures = [Collections.Generic.List[string]]::new()
 foreach ($Case in $NativeCases) {
     $NativeCaseIndex += 1
     if ($NativeCaseIndex -eq 1 -or $NativeCaseIndex % 10 -eq 0 -or
@@ -7884,7 +9112,8 @@ foreach ($Case in $NativeCases) {
         $DatabaseExpectedSecondsDiffers -or
         $DatabaseMaximumSecondsDiffers
     ) {
-        throw (
+        $NativeRoutingFailureCount += 1
+        $FailureMessage = (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
             "gaps=[$($Case.Gaps -join ', ')], verify-plan=$($Case.VerifyPlan), " +
             "verify-webassembly-engine=$ExpectedWebAssemblyEngineVerification, " +
@@ -7911,7 +9140,15 @@ foreach ($Case in $NativeCases) {
             "database-maximum-seconds=" +
             "$($Plan.DatabaseStorageDevelopmentMaximumSeconds)."
         )
+        if ($NativeRoutingFailures.Count -lt 16) {
+            $NativeRoutingFailures.Add($FailureMessage.Substring(0, [Math]::Min(2048, $FailureMessage.Length)))
+        }
     }
+}
+if ($NativeRoutingFailureCount -ne 0) {
+    throw ("Native routing mismatches=$NativeRoutingFailureCount retained=$($NativeRoutingFailures.Count) " +
+        "maximum-retained=16 maximum-message-characters=2048" + [Environment]::NewLine +
+        ($NativeRoutingFailures -join [Environment]::NewLine))
 }
 Write-Host "PASS  verification plan phase=native-routing item=$($NativeCases.Count)/$($NativeCases.Count)"
 
@@ -7925,6 +9162,69 @@ if (
 ) {
     throw 'An empty changed-path plan did not fail closed to qualification, editor verification, and all Seed areas.'
 }
+
+$ShardPlanner = Join-Path $PSScriptRoot 'Get-Native-Development-Shards.ps1'
+$ShardPaths = $SharedReadinessPaths + @(
+    'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs',
+    'Tools/Native/Source-Edition-Predecessor-Core.mjs',
+    'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs')
+$ShardPlan = & $NativePlanner -ChangedPath $ShardPaths -PassThru -Quiet -PreparedProductsOnly
+$Shards = @(& $ShardPlanner -NativePlan $ShardPlan)
+$ShardOwners = @($Shards | ForEach-Object { $_.Suites })
+if ($Shards.Count -lt 2 -or $ShardOwners.Count -ne $ShardPlan.Suites.Count -or
+    @($ShardOwners | Sort-Object -Unique).Count -ne $ShardOwners.Count -or
+    !([Collections.Generic.HashSet[string]]::new([string[]]$ShardOwners,
+        [StringComparer]::Ordinal)).SetEquals([string[]]$ShardPlan.Suites) -or
+    [long](($Shards | Measure-Object MaximumSeconds -Sum).Sum) -ne $ShardPlan.MaximumSeconds -or
+    [long](($Shards | Measure-Object ExpectedSeconds -Sum).Sum) -ne $ShardPlan.ExpectedSeconds -or
+    @($Shards | Where-Object { $_.TimeoutMinutes -gt 180 -or $_.Count -ne $Shards.Count }).Count -ne 0) {
+    throw 'Development sharding omitted, repeated or underfunded a selected owner.'
+}
+if (($Shards | ConvertTo-Json -Depth 6 -Compress) -cne
+    (@(& $ShardPlanner -NativePlan $ShardPlan) | ConvertTo-Json -Depth 6 -Compress)) {
+    throw 'Development sharding is not deterministic.'
+}
+$GenericShards = @($Shards | Where-Object {
+    @($_.Suites | Where-Object { $_ -cin @('generic-nominal-type-binding',
+        'generic-nominal-type-layout', 'generic-nominal-type-materialization') }).Count -ne 0 })
+if ($GenericShards.Count -ne 1) { throw 'Development sharding split one generic execution bundle.' }
+foreach ($Shard in $Shards) {
+    $Budget = & $BudgetFunction @{ NativeExpectedSeconds = $Shard.ExpectedSeconds;
+        NativeMaximumSeconds = $Shard.MaximumSeconds; NativeOwnerCount = $Shard.Suites.Count;
+        SharedCompilerRequired = [bool]$ShardPlan.NativeSharedCompilerHostRecordRequired }
+    if ($Budget.TimeoutMinutes -ne $Shard.TimeoutMinutes) { throw 'Classification and shard deadlines differ.' }
+}
+$SmallShards = @(& $ShardPlanner -NativePlan $SharedCompilerPlan)
+if ($SmallShards.Count -ne 1 -or $SmallShards[0].MaximumSeconds -ne $SharedCompilerPlan.MaximumSeconds) {
+    throw 'A focused development selection changed its original budget.'
+}
+foreach ($Mutation in @(
+    { param($Value) $Value.OwnerBudgets[0].ExpectedSeconds = -1 },
+    { param($Value) $Value.OwnerBudgets[0].MaximumSeconds = 10801 },
+    { param($Value) $Value.OwnerBudgets[0].Name = 'unselected-owner' },
+    { param($Value) $Value.OwnerBudgets[0].Group = '../invalid' },
+    { param($Value) $Value.MaximumSeconds++ },
+    { param($Value) $Value.Gaps = @('unknown-input') },
+    { param($Value) $Value.NativeSharedCompilerHostRecordRequired = 'true' }
+)) {
+    $Malformed = $ShardPlan | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+    & $Mutation $Malformed
+    $Rejected = $false
+    try { $null = & $ShardPlanner -NativePlan $Malformed } catch { $Rejected = $true }
+    if (!$Rejected) { throw 'Malformed development shard input was admitted.' }
+}
+$CapPlan = [pscustomobject]@{ Suites = @('bounded-owner'); ExpectedSeconds = 9900L; MaximumSeconds = 9900L;
+    Gaps = @(); NativeSharedCompilerHostRecordRequired = $true;
+    OwnerBudgets = @([pscustomobject]@{ Name = 'bounded-owner'; Group = 'bounded-owner';
+        ExpectedSeconds = 9900L; MaximumSeconds = 9900L }) }
+if ((@(& $ShardPlanner -NativePlan $CapPlan))[0].TimeoutMinutes -ne 180) {
+    throw 'The exact development job boundary was rejected.'
+}
+$CapPlan.MaximumSeconds++; $CapPlan.OwnerBudgets[0].MaximumSeconds++
+$Rejected = $false
+try { $null = & $ShardPlanner -NativePlan $CapPlan } catch { $Rejected = $true }
+if (!$Rejected) { throw 'An inseparable over-cap owner was admitted.' }
+Write-Host 'PASS development-shards complete-selection=Preserved bundles=Together deadlines=Bounded malformed-cases=8'
 
 Write-Host (
     "Changed-file verification planning passed " +

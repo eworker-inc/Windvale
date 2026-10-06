@@ -1,7 +1,9 @@
 import { Buildˉstorageˉfixture } from './Native-Storage-Fixture.mjs';
-import { Buildˉownedˉdomainˉcases } from './Native-Owned-Domain-Cases.mjs';
+import { Buildˉownedˉdomainˉcases, Buildˉownedˉentryˉcases } from './Native-Owned-Domain-Cases.mjs';
 import { Buildˉbudgetedˉstorageˉcases, Readˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
 import { Buildˉsharedˉstorageˉcases } from './Native-Shared-Storage-Cases.mjs';
+import { Buildˉsharedˉvalueˉcases, Checkˉsharedˉvalueˉtemplate } from './Native-Shared-Value-Cases.mjs';
+import { Prepareˉassemblyˉobjectˉcache, Acquireˉassemblyˉobject } from './Native-Assembly-Object-Cache-Core.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -11,6 +13,9 @@ export async function Prepareˉownedˉstorageˉobjects(Context) {
     const { Repository, Work, Target, Requireˉsuccess } = Context;
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
+    // Narrow bridge debugging reuses admitted objects. The complete owner still
+    // runs its independent repeated assembly and byte comparison below.
+    const Cache = Context.Valuesˉonly ? await Prepareˉassemblyˉobjectˉcache(Context.Deadline) : null;
     const Objects = [];
     for (const [Name, Source] of [
         ['Owned', 'Runtime/Native/X64-Owned-Storage.wva'],
@@ -18,10 +23,17 @@ export async function Prepareˉownedˉstorageˉobjects(Context) {
         ['Budget-Validation', 'Runtime/Native/X64-Memory-Budget-Validation.wva'],
         ['Budgeted', 'Runtime/Native/X64-Budgeted-Storage.wva'],
         ...(Context.Sharedˉonly ? [] : [['Domain', 'Runtime/Native/X64-Owned-Domain.wva']]),
-        ...(Context.Includeˉshared || Context.Sharedˉonly ? [['Shared', 'Runtime/Native/X64-Shared-Storage.wva']] : []),
+        ['Shared', 'Runtime/Native/X64-Shared-Storage.wva'],
+        ...(!Context.Sharedˉonly && !Context.Domainˉonly ? [['Value', 'Runtime/Native/X64-Shared-Value-Operations.wva']] : []),
+        ...(Context.Sharedˉonly || Context.Valuesˉonly ? [] : [['Entry', 'Runtime/Native/X64-Owned-Entry.wva']]),
     ]) {
         process.stdout.write(`native owned storage step=assemble leaf=${Name}\n`);
         const Object = join(Work, `${Name}.wvo`);
+        if (Cache !== null) {
+            await Acquireˉassemblyˉobject(Cache, join(Repository, Source), Object);
+            Objects.push(Object);
+            continue;
+        }
         const Repeat = join(Work, `${Name}-repeat.wvo`);
         await Requireˉsuccess(Tool('Assemble-Wva'), [join(Repository, Source), Object], `owned-${Name}-assemble`);
         await Requireˉsuccess(Tool('Assemble-Wva'), [join(Repository, Source), Repeat], `owned-${Name}-repeat`);
@@ -31,6 +43,9 @@ export async function Prepareˉownedˉstorageˉobjects(Context) {
         await Requireˉsuccess(Tool('Check-Wvo'), [Object], `owned-${Name}-validate`);
         Objects.push(Object);
     }
+    if (Objects.includes(join(Work, 'Value.wvo'))) {
+        await Checkˉsharedˉvalueˉtemplate(Context, join(Work, 'Value.wvo'));
+    }
     return Objects;
 }
 
@@ -39,15 +54,26 @@ export async function Runˉownedˉstorageˉcases(Context) {
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
     const Objects = await Prepareˉownedˉstorageˉobjects({ ...Context, Includeˉshared: !Context.Domainˉonly });
-    const Oracle = Context.Domainˉonly || Context.Sharedˉonly ? null : await Readˉbudgetˉoracle(Context);
+    const Oracle = Context.Domainˉonly || Context.Sharedˉonly || Context.Valuesˉonly ? null : await Readˉbudgetˉoracle(Context);
     const Sharedˉcases = Context.Domainˉonly ? [] : Buildˉsharedˉstorageˉcases();
-    const Cases = Context.Sharedˉonly ? Sharedˉcases :
+    const Cases = Context.Valuesˉonly ? Buildˉsharedˉvalueˉcases() : Context.Sharedˉonly ? Sharedˉcases :
         [...(Context.Domainˉonly ? [] : [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle),
-            ...Sharedˉcases]), ...Buildˉownedˉdomainˉcases()];
+            ...Sharedˉcases, ...Buildˉsharedˉvalueˉcases()]), ...Buildˉownedˉdomainˉcases(), ...Buildˉownedˉentryˉcases()];
     // Two independent fixtures bound concurrent tool memory. Drain both workers
     // on failure before the owner removes their shared temporary directory.
     let Next = 0;
     let Failure = null;
+    let Packageˉtail = Promise.resolve();
+    async function Package(Case, Image, Entry, Application) {
+        const Produce = () => Requireˉsuccess(Tool('Package-Console'),
+            [`${Target}-x64-console-v1`, Image, Entry, Application], `owned-${Case.Name}-package`);
+        if (Target !== 'windows') return Produce();
+        // The pinned Windows wrapper seeds its private path from CMD RANDOM.
+        // Concurrent invocations in one clock tick can choose the same path.
+        const Result = Packageˉtail.then(Produce);
+        Packageˉtail = Result.catch(() => {});
+        return Result;
+    }
     async function Worker() {
         while (Failure === null && Next < Cases.length) {
             const Index = Next++, Case = Cases[Index];
@@ -58,12 +84,21 @@ export async function Runˉownedˉstorageˉcases(Context) {
                 const Source = Prefix + '.wva', Object = Prefix + '.wvo', Image = Prefix + '.bin';
                 const Application = Prefix + (Target === 'windows' ? '.exe' : '.elf');
                 await writeFile(Source, Case.Source);
-                await Requireˉsuccess(Tool('Assemble-Wva'), [Source, Object], `owned-${Case.Name}-assemble`);
-                const Providers = Case.Substituteˉbudgeted ? Objects.filter(Path => Path !== join(Work, 'Budgeted.wvo')) : Objects;
+                if (Context.Valuesˉonly) {
+                    const Cache = await Prepareˉassemblyˉobjectˉcache(Context.Deadline);
+                    await Acquireˉassemblyˉobject(Cache, Source, Object);
+                } else {
+                    await Requireˉsuccess(Tool('Assemble-Wva'), [Source, Object], `owned-${Case.Name}-assemble`);
+                }
+                const Providers = Objects.filter(Path =>
+                    (Path !== join(Work, 'Entry.wvo') || Case.ExtraRuntime === 'Entry') &&
+                    (Path !== join(Work, 'Value.wvo') || Case.ExtraRuntime === 'Value') &&
+                    !(Case.Substituteˉbudgeted && Path === join(Work, 'Budgeted.wvo')) &&
+                    !(Case.Substituteˉshared && Path === join(Work, 'Shared.wvo')));
                 const Linked = await Requireˉsuccess(Tool('Link-Wvo'), ['0', 'Main', Image, Object, ...Providers], `owned-${Case.Name}-link`);
                 const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
                 if (Entry === null) throw new Error('Owned storage test entry point is missing.');
-                await Requireˉsuccess(Tool('Package-Console'), [`${Target}-x64-console-v1`, Image, Entry[1], Application], `owned-${Case.Name}-package`);
+                await Package(Case, Image, Entry[1], Application);
                 const Start = performance.now();
                 const Result = await Runˉprocess(Application, [], 30_000, `owned-${Case.Name}-execute`);
                 if (Result.Code !== 42 || Result.Exceeded || Result.Timedˉout || Result.Output !== '') {
@@ -75,12 +110,14 @@ export async function Runˉownedˉstorageˉcases(Context) {
     }
     await Promise.all([Worker(), Worker()]);
     if (Failure !== null) throw Failure;
-    if (Context.Sharedˉonly) {
-        process.stdout.write(`native shared storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 request-bytes=128 iterations=1,1000,32768 stress-arena=64 stress-peak-charge=48 metadata-bytes=7928 workers=2 qualification=false\n`);
+    if (Context.Valuesˉonly) {
+        process.stdout.write(`native shared values status=Passed cases=${Cases.length} iterations=1,1000,32768 arena-bytes=64 peak-physical-charge=32 final-physical-charge=0 final-parent-available=48 metadata-bytes=8120 workers=2 generated-source=false qualification=false\n`);
+    } else if (Context.Sharedˉonly) {
+        process.stdout.write(`native shared storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 request-bytes=128 iterations=1,1000,32768 stress-arena=64 stress-peak-charge=48 metadata-bytes=7928 mapped-v2-cases=4 mapped-slots=2 v2-state-bytes=2176 v2-metadata-bytes=8120 workers=2 qualification=false\n`);
     } else if (Context.Domainˉonly) {
-        process.stdout.write(`native owned domain status=Passed cases=${Cases.length} metadata-bytes=5952 request-bytes=112 pairs=15 snapshot-bytes=6144 workers=2 qualification=false\n`);
+        process.stdout.write(`native owned domain status=Passed cases=${Cases.length} v1-cases=7 metadata-bytes=5952 request-bytes=112 pairs=15 snapshot-bytes=6144 v2-cases=9 v2-entry-cases=9 v2-metadata-bytes=8120 v2-request-bytes=192 v2-context-bytes=192 v2-pairs=45 workers=2 qualification=false\n`);
     } else {
-        process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=18 domain-cases=7 shared-storage-cases=${Sharedˉcases.length} accounting-states=14 budgeted-metadata-bytes=5816 shared-metadata-bytes=7928 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
+        process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=18 domain-cases=25 domain-v2-cases=9 domain-v2-entry-cases=9 shared-storage-cases=${Sharedˉcases.length} shared-value-cases=10 mapped-v2-cases=4 accounting-states=14 budgeted-metadata-bytes=5816 shared-metadata-bytes=7928 v2-metadata-bytes=8120 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
     }
     return Cases.length;
 }

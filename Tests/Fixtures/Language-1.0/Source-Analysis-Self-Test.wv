@@ -1,14 +1,19 @@
 #!wv/1 en@1
 module Languageˉoneˉsourceˉanalysisˉselfˉtest;
-profile core;
-platform linux, windows, windvale;
+profile hosted;
+platform linux, windows;
 authority application;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
 
 
 import Compilerˉsourceˉanalysis as Analysis;
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
-import Compilerˉsourceˉanalysisˉvalidation as Analysisˉvalidation;
-import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgraph as Sourceˉgraph;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
 
 fn One(Source: text) -> bytes {
     let Body: bytes = Textˉtoˉutf8(Source);
@@ -24,22 +29,6 @@ fn One(Source: text) -> bytes {
     return Bytesˉconcat(Result, Body);
 }
 
-fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
-    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
-        Byteˉconstruction.Foundationˉbytesˉreplace(
-            Input, Offset, 1u32, Bytesˉfromˉu8(Value)
-        );
-    return Replaced.Value;
-}
-
-fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
-    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
-        Byteˉconstruction.Foundationˉbytesˉreplace(
-            Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
-        );
-    return Replaced.Value;
-}
-
 fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
     let Length: u32 = Bytesˉlength(Left);
     if Length != Bytesˉlength(Right) { return false; }
@@ -53,21 +42,66 @@ fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
     return true;
 }
 
-fn Status(
-    Input: bytes,
-    Manifest: bytes,
-    Bindings: bytes,
-    Wir: bytes
-) -> Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus {
-    let Checked:
-        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
-        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
-            Input, Manifest, Bindings, Wir
-        );
-    return Checked.Status;
+fn Failureˉevidence() -> i32 {
+    let Prefix: text = "module Failureˉfixture profile portable; ";
+    let First: text = "fn Same() -> i32 { return 0; } ";
+    let Beforeˉduplicate: text = Textˉconcat(Prefix, First);
+    let Duplicate: Analysis.Compilerˉsourceˉanalysis =
+        Analysis.Compilerˉprepareˉsourceˉanalysis(One(Textˉconcat(
+            Beforeˉduplicate, "fn Same() -> i32 { return 1; }"
+        )));
+    if Duplicate.Status !=
+            Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols ||
+        Duplicate.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉfunction ||
+        Duplicate.Failureˉgraphˉstatus !=
+            Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Valid ||
+        Duplicate.Failureˉkind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function ||
+        Duplicate.Failureˉmodule != 0u32 ||
+        Duplicate.Failureˉrelatedˉmodule != 0u32 ||
+        Duplicate.Failureˉfunction != 4294967295u32 ||
+        Duplicate.Failureˉoffset !=
+            Bytesˉlength(Textˉtoˉutf8(Beforeˉduplicate)) + 3u32 ||
+        Duplicate.Failureˉline != 1u32 || Duplicate.Failureˉcolumn == 0u32 ||
+        Duplicate.Failureˉwirˉfunctions != 0u32 ||
+        Duplicate.Failureˉwirˉblocks != 0u32 ||
+        Duplicate.Failureˉwirˉoperations != 0u32 ||
+        Duplicate.Failureˉwirˉtemporaries != 0u32 ||
+        Duplicate.Failureˉwirˉoperands != 0u32 ||
+        Bytesˉlength(Duplicate.Manifest) != 0u32 ||
+        Bytesˉlength(Duplicate.Bindings) != 0u32 ||
+        Bytesˉlength(Duplicate.Wir) != 0u32 {
+        return 13;
+    }
+    let Beforeˉreturn: text = Textˉconcat(
+        Prefix, "export fn Main() -> i32 { "
+    );
+    let Invalidˉreturn: Analysis.Compilerˉsourceˉanalysis =
+        Analysis.Compilerˉprepareˉsourceˉanalysis(One(Textˉconcat(
+            Beforeˉreturn, "return; }"
+        )));
+    if Invalidˉreturn.Status !=
+            Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉwir ||
+        Invalidˉreturn.Wirˉstatus !=
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉreturn ||
+        Invalidˉreturn.Failureˉmodule != 0u32 ||
+        Invalidˉreturn.Failureˉrelatedˉmodule != 0u32 ||
+        Invalidˉreturn.Failureˉfunction != 0u32 ||
+        Invalidˉreturn.Failureˉoffset !=
+            Bytesˉlength(Textˉtoˉutf8(Beforeˉreturn)) ||
+        Invalidˉreturn.Failureˉline != 1u32 ||
+        Invalidˉreturn.Failureˉcolumn == 0u32 ||
+        Bytesˉlength(Invalidˉreturn.Manifest) != 0u32 ||
+        Bytesˉlength(Invalidˉreturn.Bindings) != 0u32 ||
+        Bytesˉlength(Invalidˉreturn.Wir) != 0u32 {
+        return 14;
+    }
+    return 0;
 }
 
 export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return 64; }
     let Input: bytes = One(Textˉconcat(
         "module Analysisˉfixture profile portable; ",
         "export fn Main() -> i32 { return 7; }"
@@ -90,63 +124,23 @@ export fn Main() -> i32 {
         !Bytesˉequal(Prepared.Wir, Repeated.Wir) {
         return 3;
     }
-    let Checked:
-        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
-        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
-            Input, Prepared.Manifest, Prepared.Bindings, Prepared.Wir
-        );
-    if Checked.Status !=
-        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
-        return 4;
+    if Prepared.Failureˉmodule != 4294967295u32 ||
+        Prepared.Failureˉrelatedˉmodule != 4294967295u32 ||
+        Prepared.Failureˉfunction != 4294967295u32 ||
+        Prepared.Failureˉoffset != 0u32 ||
+        Prepared.Failureˉline != 0u32 || Prepared.Failureˉcolumn != 0u32 ||
+        Prepared.Failureˉwirˉfunctions != 0u32 ||
+        Prepared.Failureˉwirˉblocks != 0u32 ||
+        Prepared.Failureˉwirˉoperations != 0u32 ||
+        Prepared.Failureˉwirˉtemporaries != 0u32 ||
+        Prepared.Failureˉwirˉoperands != 0u32 {
+        return 15;
     }
-    if Status(
-        Input,
-        Bytesˉslice(Prepared.Manifest, 0u32, 103u32),
-        Prepared.Bindings, Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
-        return 5;
-    }
-    if Status(
-        Input, Replaceˉu8(Prepared.Manifest, 0u32, 0u8),
-        Prepared.Bindings, Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
-        return 6;
-    }
-    if Status(
-        Input, Replaceˉu32(Prepared.Manifest, 12u32, 0u32),
-        Prepared.Bindings, Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
-        return 7;
-    }
-    if Status(
-        Input, Replaceˉu32(Prepared.Manifest, 48u32, 0u32),
-        Prepared.Bindings, Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
-        return 8;
-    }
-    if Status(
-        Input, Replaceˉu32(Prepared.Manifest, 100u32, 1u32),
-        Prepared.Bindings, Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
-        return 9;
-    }
-    if Status(
-        Input, Prepared.Manifest,
-        Replaceˉu8(Prepared.Bindings, 0u32, 0u8), Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings {
-        return 10;
-    }
-    if Status(
-        Input, Prepared.Manifest, Prepared.Bindings,
-        Replaceˉu8(Prepared.Wir, 0u32, 0u8)
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
-        return 11;
-    }
-    if Status(
-        Input, Replaceˉu32(Prepared.Manifest, 80u32, 0u32),
-        Prepared.Bindings, Prepared.Wir
-    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
-        return 12;
-    }
+    let Failed: i32 = Failureˉevidence();
+    if Failed != 0 { return Failed; }
+    file.write_bytes(process.argument(0u32), Input);
+    file.write_bytes(process.argument(1u32), Prepared.Manifest);
+    file.write_bytes(process.argument(2u32), Prepared.Bindings);
+    file.write_bytes(process.argument(3u32), Prepared.Wir);
     return 0;
 }

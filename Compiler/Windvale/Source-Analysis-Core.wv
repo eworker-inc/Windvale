@@ -21,6 +21,19 @@ export record Compilerˉsourceˉanalysis {
     Manifest: bytes;
     Bindings: bytes;
     Wir: bytes;
+    Failureˉgraphˉstatus: Sourceˉgraph.Compilerˉsourceˉgraphˉstatus;
+    Failureˉkind: Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind;
+    Failureˉmodule: u32;
+    Failureˉrelatedˉmodule: u32;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Failureˉwirˉfunctions: u32;
+    Failureˉwirˉblocks: u32;
+    Failureˉwirˉoperations: u32;
+    Failureˉwirˉtemporaries: u32;
+    Failureˉwirˉoperands: u32;
 }
 
 fn Compilerˉsourceˉanalysisˉempty(Input: bytes) -> bytes {
@@ -299,7 +312,12 @@ export fn Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
             Symbols.Status,
             Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Sourceˉsymbols,
             Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
-            Empty, Empty, Empty
+            Empty, Empty, Empty,
+            Symbols.Graphˉstatus, Symbols.Failureˉkind,
+            Symbols.Failureˉmodule, Symbols.Failureˉrelatedˉmodule,
+            4294967295u32, Symbols.Failureˉoffset,
+            Symbols.Failureˉline, Symbols.Failureˉcolumn,
+            0u32, 0u32, 0u32, 0u32, 0u32
         );
     }
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
@@ -318,14 +336,26 @@ export fn Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
         return Compilerˉsourceˉanalysis(
             Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉwir,
             Symbols.Status, Bindings.Status, Wir.Status,
-            Empty, Empty, Empty
+            Empty, Empty, Empty,
+            Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Valid,
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+            Wir.Failureˉmodule, Wir.Failureˉrelatedˉmodule,
+            Wir.Failureˉfunction, Wir.Failureˉoffset,
+            Wir.Failureˉline, Wir.Failureˉcolumn,
+            Wir.Functions, Wir.Blocks, Wir.Operations,
+            Wir.Temporaries, Wir.Operands
         );
     }
     return Compilerˉsourceˉanalysis(
         Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid,
         Symbols.Status, Bindings.Status, Wir.Status,
         Compilerˉsourceˉanalysisˉmanifest(Input, Symbols, Bindings, Wir),
-        Bindings.Directory, Wir.Directory
+        Bindings.Directory, Wir.Directory,
+        Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Valid,
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+        4294967295u32, 4294967295u32, 4294967295u32,
+        0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32
     );
 }
 

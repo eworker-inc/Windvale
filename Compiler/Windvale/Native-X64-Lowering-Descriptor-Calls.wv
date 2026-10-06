@@ -147,7 +147,7 @@ fn Emitˉreturn(
 
 export fn Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Type: u8) -> bool {
     if Type == 3u8 { return true; }
-    return Type == 6u8;
+    return Type == 6u8 || Type == 7u8;
 }
 
 export fn Compilerˉnativeˉx64ˉdescriptorˉreturnˉbytes(
@@ -554,4 +554,28 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
         Frameˉbytes
     );
     return Bytesˉconcat(Result, Output);
+}
+
+export fn Sharedˉstatusˉbytes(Returnˉtype: u8) -> u32 {
+    if Returnˉtype == 8u8 || Returnˉtype == 9u8 || Returnˉtype == 10u8 {
+        return 9u32;
+    }
+    return 16u32;
+}
+
+export fn Emitˉsharedˉstatus(Initial: bytes, Returnˉtype: u8,
+    Propagateˉoffset: u32) -> bytes {
+    var Output: bytes = Initial;
+    if Returnˉtype != 8u8 && Returnˉtype != 9u8 && Returnˉtype != 10u8 {
+        // Ordinary status occupies the high word; wide owner/scalar results
+        // carry their independent status in RDX.
+        Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(1220708680u32));
+        Output = Bytesˉconcat(Output, Bytesˉconcat(
+            Bytesˉfromˉu16ˉlittle(60097u32), Bytesˉfromˉu8(32u8)));
+    }
+    Output = Bytesˉconcat(Output, Bytesˉconcat(
+        Bytesˉfromˉu16ˉlittle(34120u32), Bytesˉfromˉu8(210u8)));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(34063u32));
+    return Appendˉu32(Output,
+        Relativeˉu32(Propagateˉoffset, Bytesˉlength(Output) + 4u32));
 }

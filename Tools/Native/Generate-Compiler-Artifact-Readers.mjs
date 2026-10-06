@@ -21,7 +21,6 @@ const Readers = [
             'Compilerˉsourceˉbindingsˉrangesˉcount',
             'Compilerˉsourceˉbindingsˉentriesˉoffset',
             'Compilerˉsourceˉbindingsˉrangeˉoffset',
-            'Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid',
             'Compilerˉsourceˉbindingsˉidentifierˉisˉvalid',
             'Compilerˉsourceˉbindingsˉphaseˉempty',
             'Compilerˉsourceˉbindingsˉfindˉlocal',
@@ -36,27 +35,7 @@ const Readers = [
         source: 'Compiler/Windvale/Source-Bindings-Closures-Core.wv',
         output: 'Compiler/Windvale/Source-Bindings-Closures-Artifact-Core.wv',
         prefix: 'Compilerˉsourceˉbindingsˉclosuresˉ',
-        roots: [
-            'Compilerˉsourceˉbindingsˉclosuresˉbaseˉfunctions',
-            'Compilerˉsourceˉbindingsˉclosuresˉcatalog',
-            'Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid',
-            'Compilerˉsourceˉbindingsˉclosuresˉentriesˉoffset',
-            'Compilerˉsourceˉbindingsˉclosuresˉfunctionˉcatalog',
-            'Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes',
-            'Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset',
-            'Compilerˉsourceˉbindingsˉclosuresˉranges',
-            'Compilerˉsourceˉbindingsˉclosuresˉtypeˉcatalog'
-        ]
-    },
-    {
-        source: 'Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv',
-        output: 'Compiler/Windvale/Source-Bindings-Generic-Types-Artifact-Core.wv',
-        prefix: 'Compilerˉsourceˉbindingsˉgenericˉtypesˉ',
-        roots: [
-            'Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid',
-            'Compilerˉsourceˉbindingsˉgenericˉtypesˉfunctionˉcatalog',
-            'Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog'
-        ]
+        roots: ['Compilerˉsourceˉbindingsˉclosuresˉdeclaration']
     },
     {
         source: 'Compiler/Windvale/Source-Closure-Captures-Core.wv',
@@ -65,6 +44,8 @@ const Readers = [
         transform: 'artifact-closure-validation',
         roots: [
             'Compilerˉsourceˉclosureˉcapturesˉvalidateˉrangeˉwithˉeffects',
+            'Compilerˉsourceˉclosureˉcaptureˉempty',
+            'Compilerˉsourceˉclosureˉcaptureˉfailure',
             'Compilerˉsourceˉclosureˉcaptureˉmodeˉat',
             'Compilerˉsourceˉclosureˉcaptureˉslotˉat'
         ]
@@ -126,7 +107,15 @@ for (const [Source, Output] of [
     ['Compiler/Windvale/Source-Graph-Core.wv',
         'Compiler/Windvale/Source-Graph-Artifact-Core.wv'],
     ['Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
-        'Compiler/Windvale/Source-Wvb-Temporary-Slots-Artifact.wv']
+        'Compiler/Windvale/Source-Wvb-Temporary-Slots-Artifact.wv'],
+    ['Compiler/Windvale/Source-Wir-Consumer-Core.wv',
+        'Compiler/Windvale/Source-Wir-Consumer-Artifact-Core.wv'],
+    ['Compiler/Windvale/Source-Lexer-Core.wv',
+        'Compiler/Windvale/Source-Lexer-Artifact-Core.wv'],
+    ['Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
+        'Compiler/Windvale/Source-Generic-Type-Layout-Artifact-Core.wv'],
+    ['Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv',
+        'Compiler/Windvale/Source-Generic-Type-Lowering-Artifact-Core.wv']
 ]) {
     Readers.push({
         source: Source,
@@ -198,6 +187,7 @@ function Parseˉfunctions(Source) {
         }
         Functions.set(Match[1].trim(), {
             start: Start,
+            end: Index,
             text: Lines.slice(Start, Index + 1).join('\n')
         });
     }
@@ -207,7 +197,8 @@ function Parseˉfunctions(Source) {
 function Selectˉfunctions(Functions, Roots) {
     const Selected = new Set();
     const Queue = [...Roots];
-    const Reference = /([\p{L}\p{N}ˉ_]+)\s*\(/gu;
+    // A referenced function may be a callback value rather than a direct call.
+    const Reference = /[\p{L}\p{N}ˉ_]+/gu;
     while (Queue.length > 0) {
         const Name = Queue.shift();
         if (Selected.has(Name)) {
@@ -218,9 +209,9 @@ function Selectˉfunctions(Functions, Roots) {
             throw new Error(`Required function is absent: ${Name}`);
         }
         Selected.add(Name);
-        for (const Match of Function.text.matchAll(Reference)) {
-            if (Functions.has(Match[1]) && !Selected.has(Match[1])) {
-                Queue.push(Match[1]);
+        for (const Match of Maskˉsource(Function.text).matchAll(Reference)) {
+            if (Functions.has(Match[0]) && !Selected.has(Match[0])) {
+                Queue.push(Match[0]);
             }
         }
     }
@@ -242,44 +233,107 @@ function Projectˉpaths(Project) {
     return Paths;
 }
 
-function Escapeˉregularˉexpression(Value) {
-    return Value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+function Maskˉsource(Source) {
+    return Source.replace(
+        /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"/gu,
+        (Value) => Value.replace(/[^\n]/gu, ' ')
+    );
+}
+
+const Projectˉclosures = new Map();
+
+function Projectˉclosure(Project) {
+    if (Projectˉclosures.has(Project)) {
+        return Projectˉclosures.get(Project);
+    }
+    const Modules = new Map();
+    const Functions = new Map();
+    let Rootˉmodule;
+    for (const Relativeˉpath of Projectˉpaths(Project)) {
+        const Reader = Readers.find((Candidate) =>
+            Candidate.output === Relativeˉpath || Candidate.source === Relativeˉpath
+        );
+        const Sourceˉpath = path.join(
+            Repositoryˉroot, Reader?.source ?? Relativeˉpath
+        );
+        if (!fs.existsSync(Sourceˉpath)) {
+            throw new Error(`Project source is absent: ${Relativeˉpath}`);
+        }
+        const Source = fs.readFileSync(Sourceˉpath, 'utf8').replaceAll('\r\n', '\n');
+        const Clean = Maskˉsource(Source);
+        const Module = Clean.match(/^module ([^\s;]+);$/mu)?.[1];
+        if (Module === undefined || Modules.has(Module)) {
+            throw new Error(`Project module is absent or duplicated: ${Relativeˉpath}`);
+        }
+        Rootˉmodule ??= Module;
+        const Imports = new Map([...Clean.matchAll(
+            /^import ([^\s;]+) as ([^\s;]+);$/gmu
+        )].map((Match) => [Match[2], Match[1]]));
+        const Parsed = Parseˉfunctions(Source);
+        if (Reader?.transform === 'artifact-closure-validation') {
+            Transformˉartifactˉclosureˉvalidation(Parsed.Functions);
+        }
+        const Declarations = [];
+        let Cursor = 0;
+        for (const Function of Parsed.Functions.values()) {
+            Declarations.push(...Parsed.Lines.slice(Cursor, Function.start));
+            Cursor = Function.end + 1;
+        }
+        Declarations.push(...Parsed.Lines.slice(Cursor));
+        Modules.set(Module, {
+            Imports,
+            Functions: Parsed.Functions,
+            Declarations: Declarations.join('\n')
+        });
+        for (const [Name, Function] of Parsed.Functions) {
+            Functions.set(`${Module}.${Name}`, { Module, Function });
+        }
+    }
+    const Root = `${Rootˉmodule}.Main`;
+    if (!Functions.has(Root)) {
+        throw new Error(`Project root Main is absent: ${Project}`);
+    }
+    const Selected = new Set();
+    const Pending = [Root];
+    const Reference = /(?<![\p{L}\p{N}ˉ_])([\p{L}\p{N}ˉ_]+)(?:\s*\.\s*([\p{L}\p{N}ˉ_]+))?/gu;
+    // Every declaration is retained, including any function-valued initializer.
+    for (const [Module, Entry] of Modules) {
+        for (const Match of Maskˉsource(Entry.Declarations).matchAll(Reference)) {
+            const Owner = Match[2] === undefined
+                ? Module : Entry.Imports.get(Match[1]);
+            const Target = `${Owner}.${Match[2] ?? Match[1]}`;
+            if (Functions.has(Target)) {
+                Pending.push(Target);
+            }
+        }
+    }
+    while (Pending.length > 0) {
+        const Key = Pending.pop();
+        if (Selected.has(Key)) {
+            continue;
+        }
+        Selected.add(Key);
+        const Entry = Functions.get(Key);
+        const Imports = Modules.get(Entry.Module).Imports;
+        for (const Match of Maskˉsource(Entry.Function.text).matchAll(Reference)) {
+            const Module = Match[2] === undefined
+                ? Entry.Module : Imports.get(Match[1]);
+            const Target = `${Module}.${Match[2] ?? Match[1]}`;
+            if (Functions.has(Target) && !Selected.has(Target)) {
+                Pending.push(Target);
+            }
+        }
+    }
+    Projectˉclosures.set(Project, Selected);
+    return Selected;
 }
 
 function Projectˉroots(Reader, Functions, Module) {
     if (Reader.project === undefined) {
         return [];
     }
-    const Roots = new Set();
-    const Import = new RegExp(
-        `^import ${Escapeˉregularˉexpression(Module)} as ([^;]+);$`,
-        'mu'
-    );
-    for (const Relativeˉpath of Projectˉpaths(Reader.project)) {
-        if (Relativeˉpath === Reader.source || Relativeˉpath === Reader.output) {
-            continue;
-        }
-        const Sourceˉpath = path.join(Repositoryˉroot, Relativeˉpath);
-        if (!fs.existsSync(Sourceˉpath)) {
-            throw new Error(`Project source is absent: ${Relativeˉpath}`);
-        }
-        const Source = fs.readFileSync(Sourceˉpath, 'utf8').replaceAll('\r\n', '\n');
-        const Importˉmatch = Source.match(Import);
-        if (Importˉmatch === null) {
-            continue;
-        }
-        const Alias = Importˉmatch[1].trim();
-        const Reference = new RegExp(
-            `${Escapeˉregularˉexpression(Alias)}\\.([\\p{L}\\p{N}ˉ_]+)\\s*\\(`,
-            'gu'
-        );
-        for (const Match of Source.matchAll(Reference)) {
-            if (Functions.has(Match[1])) {
-                Roots.add(Match[1]);
-            }
-        }
-    }
-    return [...Roots];
+    const Selected = Projectˉclosure(Reader.project);
+    return [...Functions.keys()].filter((Name) => Selected.has(`${Module}.${Name}`));
 }
 
 function Transformˉartifactˉclosureˉvalidation(Functions) {
@@ -318,13 +372,6 @@ function Generateˉreader(Reader) {
     const Sourceˉpath = path.join(Repositoryˉroot, Reader.source);
     const Source = fs.readFileSync(Sourceˉpath, 'utf8').replaceAll('\r\n', '\n');
     const Parsed = Parseˉfunctions(Source);
-    const Lateˉdeclaration = Parsed.Lines.slice(Parsed.Firstˉfunction + 1)
-        .find((Line) => /^(?:const |(?:export )?(?:record|enum) )/u.test(Line));
-    if (Lateˉdeclaration !== undefined) {
-        throw new Error(
-            `Artifact reader has a declaration after its first function: ${Reader.source}`
-        );
-    }
     const Moduleˉmatch = Source.match(/^module ([^\s;]+)(?: profile (?:portable|hosted|system))?;$/mu);
     if (Moduleˉmatch === null) {
         throw new Error(`Module declaration is absent: ${Reader.source}`);
@@ -343,9 +390,19 @@ function Generateˉreader(Reader) {
     const Header = Compactˉgeneratedˉsource(
         Parsed.Lines.slice(0, Parsed.Firstˉfunction).join('\n')
     );
-    const Functions = Compactˉgeneratedˉsource(
-        Selected.map((Function) => Function.text).join('\n')
-    );
+    // Preserve declarations between functions as well as the initial header.
+    const Selectedˉstarts = new Set(Selected.map((Function) => Function.start));
+    const Body = [];
+    let Cursor = Parsed.Firstˉfunction;
+    for (const Function of Parsed.Functions.values()) {
+        Body.push(...Parsed.Lines.slice(Cursor, Function.start));
+        if (Selectedˉstarts.has(Function.start)) {
+            Body.push(Function.text);
+        }
+        Cursor = Function.end + 1;
+    }
+    Body.push(...Parsed.Lines.slice(Cursor));
+    const Functions = Compactˉgeneratedˉsource(Body.join('\n'));
     return `${Header}\n` +
         '// Generated by Tools/Native/Generate-Compiler-Artifact-Readers.mjs.\n' +
         '// This compact target-specific implementation retains only artifact contracts and validators.\n' +

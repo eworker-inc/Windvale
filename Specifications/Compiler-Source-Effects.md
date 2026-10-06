@@ -8,6 +8,14 @@ identities to canonical language-effect bits or capability symbols, computes
 transitive effects through direct function calls, and compares explicit clauses
 with the exact result.
 
+Source clause resolution and the shared effect model remain in
+`Compilerˉsourceˉeffects`. The candidate implementation places inference over
+completed WVIR in `Compilerˉsourceˉeffectˉinference`, with
+`Compilerˉanalyzeˉpreparedˉsourceˉeffects` as its entry point. The analyzer
+does not need that later phase in its producer closure. This extraction
+preserves effect rules, WVEF bytes, refusal limits and diagnostics; current
+reconstruction and cross-host qualification remain pending.
+
 This is compiler-private analysis. WVEF does not enter WVB, grant authority, or
 prove that an effect remains available at runtime. A capability requirement is
 still separate from the application's grant and the launcher's rights-limited

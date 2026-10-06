@@ -119,6 +119,9 @@ export fn Compilerˉnativeˉx64ˉdataˉread(
     if Count > Compilerˉnativeˉx64ˉdataˉlimit() { return Invalid(Input); }
 
     let Limit: u32 = Offset + Length;
+    let Sharedˉdata: bool = Bytesˉlength(Input) >= 8u32 &&
+        (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 ||
+            Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32);
     var Cursor: u32 = Offset + 4u32;
     var Kinds: bytes = Empty(Input);
     var Lengths: bytes = Empty(Input);
@@ -158,6 +161,20 @@ export fn Compilerˉnativeˉx64ˉdataˉread(
         let Item: bytes = Bytesˉslice(Input, Cursor, Itemˉbytes);
         if Kind == 3u8 {
             if !Textˉutf8ˉisˉvalid(Item) { return Invalid(Input); }
+        }
+        if Sharedˉdata {
+            if Kind == 4u8 {
+                while Bytesˉlength(Dataˉbytes) % 4u32 != 0u32 {
+                    if Bytesˉlength(Dataˉbytes) >= 4194304u32 {
+                        return Invalid(Input);
+                    }
+                    Dataˉbytes = Bytesˉconcat(Dataˉbytes, Bytesˉfromˉu8(0u8));
+                }
+            }
+            if Bytesˉlength(Dataˉbytes) > 4194304u32 ||
+                Itemˉbytes > 4194304u32 - Bytesˉlength(Dataˉbytes) {
+                return Invalid(Input);
+            }
         }
         Kinds = Bytesˉconcat(Kinds, Bytesˉfromˉu8(Kind));
         Lengths = Bytesˉconcat(Lengths, Bytesˉfromˉu32ˉlittle(Itemˉlength));

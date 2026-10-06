@@ -22,10 +22,13 @@ const SUFFIX = WINDOWS ? '.exe' : '.elf';
 const MAXIMUM_WVB_BYTES = 16_777_216;
 const MAXIMUM_PRODUCT_BYTES = 67_108_864;
 const MAXIMUM_NODE_BYTES = 134_217_728;
-const TARGETS = Object.freeze([
+const BORROW_TARGETS = Object.freeze([
     ['Verifier', 'Tools/Windvale-Compiler-Wvb-Verifier.wvproj', '7'],
     ['Runner', 'Tools/Windvale-Wvb-Runner.wvproj', '5'],
     ['Components', 'Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj', '1'],
+]);
+const OWNER_TARGETS = Object.freeze([
+    ['Owners', 'Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj', '1'],
 ]);
 const COMPILER_NAMES = Object.freeze([
     'Analyzer', 'Emitter', 'Admitter', 'Authenticator', 'Reader', 'Binder',
@@ -88,7 +91,8 @@ async function Snapshotˉinputs(Projects, Check) {
         ...['Current-Split-Compiler-Cache-Core.mjs', 'Build-Current-Split-Project-Wvb.mjs',
             'Build-Cached-Split-Project-Wvb.mjs', 'Build-Cached-Segmented-Hosted-Wvb.mjs',
             'Native-Project-Cache-Key-Core.mjs', 'Native-Hosted-Application-Cache-Core.mjs',
-            'Build-Cached-Segmented-Project.mjs', 'Development-Command-Core.mjs']
+            'Build-Cached-Segmented-Project.mjs', 'Development-Command-Core.mjs',
+            'Test-Language-1.0-Memory-Budget-Split-Execution.mjs']
             .map(Name => path.join(SCRIPT_DIRECTORY, Name)),
     ]);
     const Requests = [];
@@ -114,7 +118,7 @@ async function Requireˉinputsˉunchanged(Snapshot, Check) {
 // and reject a nonzero exit or stderr. This helper owns no process or cache writer.
 // Injected cache/snapshot callbacks are only for the existing focused unit owner.
 export async function Acquireˉfoundationˉborrowˉtestˉproducts({
-    Work, Deadline, Run, Prepareˉcompiler = false,
+    Work, Deadline, Run, Prepareˉcompiler = false, Selection = 'borrow',
     Getˉkey = Getˉcurrentˉsplitˉcompilerˉkey,
     Getˉfamily = Getˉcurrentˉsplitˉcompilerˉfamily,
     Acquire = Acquireˉcurrentˉsplitˉcompiler,
@@ -123,11 +127,17 @@ export async function Acquireˉfoundationˉborrowˉtestˉproducts({
 }) {
     if (typeof Work !== 'string' || !path.isAbsolute(Work) ||
         !Number.isSafeInteger(Deadline) || typeof Run !== 'function' ||
-        typeof Prepareˉcompiler !== 'boolean' ||
+        typeof Prepareˉcompiler !== 'boolean' || !['borrow', 'owners'].includes(Selection) ||
         [Getˉkey, Getˉfamily, Acquire, Snapshot, Requireˉunchanged]
             .some(Callback => typeof Callback !== 'function') ||
         process.arch !== 'x64' || !['win32', 'linux'].includes(process.platform)) {
         Reject('Invalid Foundation test product acquisition request.');
+    }
+    const TARGETS = Selection === 'owners' ? OWNER_TARGETS : BORROW_TARGETS;
+    if (Selection === 'owners' && Prepareˉcompiler &&
+        (process.env.WINDVALE_PREPARED_PRODUCTS_ONLY !== undefined ||
+            process.env.WINDVALE_PREPARED_COMPILER_ONLY !== undefined)) {
+        Reject('Foundation owner preparation requires a construction environment.');
     }
     function Check() {
         if (Date.now() >= Deadline) {
@@ -237,25 +247,74 @@ export async function Acquireˉfoundationˉborrowˉtestˉproducts({
     if (Failures.length !== 0) {
         throw Object.assign(new AggregateError(Failures, 'Foundation test packaging failed.'), {
             exitCode: Failures.some(Error => Error.exitCode === 2) ? 2 :
-                Failures.some(Error => Error.exitCode === 124) ? 124 : 1,
+                Failures.some(Error => Error.exitCode === 124) ? 124 :
+                    Selection === 'owners' && Failures.some(Error => Error.exitCode === 64) ? 64 : 1,
             cleanupUncertain: Failures.some(Error => Error.cleanupUncertain || Error.exitCode === 2),
         });
     }
-    await Requireˉwork();
-    await Requireˉunchanged(Inputs, Check);
-    const Final = await Acquire(Family, Key, Neverˉproduce, Requireˉcompilerˉunchanged);
-    if (Final.status !== 'Hit' || !Sameˉpath(Final.directory, Checkpoint.directory)) {
-        Reject('Foundation test compiler checkpoint changed.');
-    }
-    for (const Before of Measurements) {
-        const After = await Evidence(Before.Path, Before.Path.endsWith('.identity') ? 1_024 :
-            Before.Path.endsWith('.wvb') ? MAXIMUM_WVB_BYTES : MAXIMUM_PRODUCT_BYTES,
-            Before.Path.endsWith(SUFFIX), Check);
-        if (Before.Bytes !== After.Bytes || Before.Sha256 !== After.Sha256) {
-            Reject('Foundation test product changed: ' + Before.Path);
+    async function Requireˉproductsˉunchanged() {
+        await Requireˉwork();
+        await Requireˉunchanged(Inputs, Check);
+        const Final = await Acquire(Family, Key, Neverˉproduce, Requireˉcompilerˉunchanged);
+        if (Final.status !== 'Hit' || !Sameˉpath(Final.directory, Checkpoint.directory)) {
+            Reject('Foundation test compiler checkpoint changed.');
         }
+        for (const Before of Measurements) {
+            const After = await Evidence(Before.Path, Before.Path.endsWith('.identity') ? 1_024 :
+                Before.Path.endsWith('.wvb') ? MAXIMUM_WVB_BYTES : MAXIMUM_PRODUCT_BYTES,
+                Before.Path.endsWith(SUFFIX), Check);
+            if (Before.Bytes !== After.Bytes || Before.Sha256 !== After.Sha256) {
+                Reject('Foundation test product changed: ' + Before.Path);
+            }
+        }
+        Check();
     }
+    await Requireˉproductsˉunchanged();
     Check();
     Products.Evidence = Object.freeze(Measurements.sort((Left, Right) => Left.Path.localeCompare(Right.Path)));
+    Products.Requireˉunchanged = Requireˉproductsˉunchanged;
     return Object.freeze(Products);
+}
+
+// Only this established owner selection may separate construction from behavior.
+export function Parseˉfoundationˉownerˉarguments(Arguments) {
+    if (!Array.isArray(Arguments) || Arguments.some(Value => typeof Value !== 'string'))
+        throw Object.assign(new Error('Invalid Foundation owner arguments.'), { exitCode: 64 });
+    if (Arguments[0] !== '--foundation-borrow-owners') return null;
+    let Prepare = false, Prepared = false, Maximum = 600, Cursor = 1;
+    if (Arguments[Cursor] === '--prepare-only' || Arguments[Cursor] === '--prepared-products-only') {
+        Prepare = Arguments[Cursor] === '--prepare-only';
+        Prepared = !Prepare;
+        Cursor += 1;
+    }
+    if (Cursor !== Arguments.length) {
+        if (Arguments.length !== Cursor + 2 || Arguments[Cursor] !== '--maximum-seconds' ||
+            !/^[1-9][0-9]{0,3}$/u.test(Arguments[Cursor + 1]))
+            throw Object.assign(new Error('Invalid Foundation owner phase or maximum.'), { exitCode: 64 });
+        Maximum = Number(Arguments[Cursor + 1]);
+    } else if (Prepare || Prepared) {
+        throw Object.assign(new Error('A Foundation owner phase requires an explicit maximum.'), { exitCode: 64 });
+    }
+    if (Maximum > (Prepare ? 4500 : 600))
+        throw Object.assign(new Error('Foundation owner maximum exceeds its phase budget.'), { exitCode: 64 });
+    return Object.freeze({ Prepare, Prepared, Maximum });
+}
+
+export async function Withˉfoundationˉownerˉenvironment(Request, Action) {
+    if (!Request || typeof Request.Prepare !== 'boolean' || typeof Request.Prepared !== 'boolean' ||
+        Request.Prepare && Request.Prepared || typeof Action !== 'function')
+        throw Object.assign(new Error('Invalid Foundation owner environment request.'), { exitCode: 64 });
+    const Names = ['WINDVALE_PREPARED_COMPILER_ONLY', 'WINDVALE_PREPARED_PRODUCTS_ONLY'];
+    const Before = Names.map(Name => process.env[Name]);
+    if (Request.Prepare && Before.some(Value => Value !== undefined))
+        throw Object.assign(new Error('Foundation owner preparation refuses a prepared behavior environment.'), { exitCode: 64 });
+    try {
+        if (Request.Prepared) for (const Name of Names) process.env[Name] = '1';
+        return await Action();
+    } finally {
+        for (let Index = 0; Index < Names.length; Index += 1) {
+            if (Before[Index] === undefined) delete process.env[Names[Index]];
+            else process.env[Names[Index]] = Before[Index];
+        }
+    }
 }

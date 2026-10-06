@@ -1,0 +1,570 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉsharedˉbytes;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉloweringˉsharedˉtemplates as Templates;
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉinstructions;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+// Exact byte-value equality without allocation; indices are bounded by both lengths.
+export fn Bytesˉareˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Length - Index >= 16u32 {
+        if Bytesˉreadˉu32ˉlittle(First, Index) != Bytesˉreadˉu32ˉlittle(Second, Index) ||
+            Bytesˉreadˉu32ˉlittle(First, Index + 4u32) != Bytesˉreadˉu32ˉlittle(Second, Index + 4u32) ||
+            Bytesˉreadˉu32ˉlittle(First, Index + 8u32) != Bytesˉreadˉu32ˉlittle(Second, Index + 8u32) ||
+            Bytesˉreadˉu32ˉlittle(First, Index + 12u32) != Bytesˉreadˉu32ˉlittle(Second, Index + 12u32) {
+            return false;
+        }
+        Index = Index + 16u32;
+    }
+    while Length - Index >= 4u32 {
+        if Bytesˉreadˉu32ˉlittle(First, Index) != Bytesˉreadˉu32ˉlittle(Second, Index) { return false; }
+        Index = Index + 4u32;
+    }
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Word(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+fn Relative(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    return 4294967295u32 - (Origin - Target) + 1u32;
+}
+export fn Helper() -> bytes { return Templates.Helper(); }
+export fn Helperˉisˉexact(Input: bytes) -> bool { return Templates.Helperˉisˉexact(Input); }
+export fn Helperˉbytes() -> u32 { return Templates.Helperˉbytes(); }
+export fn Entryˉbytes() -> u32 { return Templates.Entryˉbytes(); }
+export fn Entryˉresultˉcloseˉoffset() -> u32 { return Templates.Entryˉresultˉcloseˉoffset(); }
+export fn Entryˉresultˉcloseˉbytes() -> u32 { return Templates.Entryˉresultˉcloseˉbytes(); }
+export fn Entry(Returnˉtype: u8) -> bytes { return Templates.Entry(Returnˉtype); }
+export fn Entryˉisˉexact(Code: bytes, Offset: u32, Returnˉtype: u8) -> bool {
+    return Templates.Entryˉisˉexact(Code, Offset, Returnˉtype);
+}
+export fn Entryˉproviderˉrelocations(Codeˉbase: u32) -> bytes {
+    return Templates.Entryˉproviderˉrelocations(Codeˉbase);
+}
+export fn Operationˉbytes() -> u32 { return 145u32; }
+export fn Requestˉslots() -> u32 { return 4u32; }
+
+fn Storeˉrax(Output: bytes, Offset: u32) -> bytes {
+    return Word(Bytesˉconcat(Output,
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35144u32),
+        Bytesˉfromˉu16ˉlittle(9348u32))), Offset);
+}
+fn Addressˉrax(Output: bytes, Slot: u32) -> bytes {
+    if Slot == 4294967295u32 {
+        return Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(49201u32),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2425393296u32), Bytesˉfromˉu16ˉlittle(37008u32))));
+    }
+    return Word(Bytesˉconcat(Output,
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(36168u32), Bytesˉfromˉu16ˉlittle(9348u32))), Slot * 16u32);
+}
+fn Numericˉrax(Output: bytes, Value: u32, Mode: u8) -> bytes {
+    // Mode0 canonical zero;1 zero-extended scalar slot;2 full u64 slot;
+    // 3 immediate u32. Every alternative emits exactly8 bytes.
+    if Mode == 0u8 { return Addressˉrax(Output, 4294967295u32); }
+    if Mode == 1u8 {
+        return Bytesˉconcat(Word(Bytesˉconcat(Output,
+            Bytesˉconcat(Bytesˉfromˉu16ˉlittle(33931u32), Bytesˉfromˉu8(36u8))),
+            Value * 16u32), Bytesˉfromˉu8(144u8));
+    }
+    if Mode == 2u8 {
+        return Word(Bytesˉconcat(Output,
+            Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35656u32), Bytesˉfromˉu16ˉlittle(9348u32))), Value * 16u32);
+    }
+    return Bytesˉconcat(Word(Bytesˉconcat(Output, Bytesˉfromˉu8(184u8)), Value),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(37008u32), Bytesˉfromˉu8(144u8)));
+}
+fn Emitˉaddressed(
+    Initial: bytes, Operation: u32, Destination: u32, Source: u32,
+    Argument: u32, Numberˉzero: u32, Zeroˉmode: u8,
+    Numberˉone: u32, Oneˉmode: u8, Request: u32,
+    Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32,
+    Destinationˉoffset: u32, Destinationˉindirect: bool,
+    Sourceˉoffset: u32, Sourceˉindirect: bool
+) -> bytes {
+    // Initialize all 64 request bytes exactly once. Wide stores combine the
+    // fixed version/size and zero-extended action/flags; only the reserved tail
+    // needs an explicit zero. Operand stores below fill every remaining word.
+    // Build the bounded request fragment before copying the existing function.
+    let Prefix: u32 = Bytesˉlength(Initial);
+    var Output: bytes = Word(Word(Bytesˉconcat(Empty(Initial),
+        Bytesˉfromˉu16ˉlittle(47176u32)), 1u32), 64u32);
+    Output = Storeˉrax(Output, Request * 16u32);
+    Output = Storeˉrax(Word(Bytesˉconcat(Output, Bytesˉfromˉu8(184u8)), Operation),
+        Request * 16u32 + 8u32);
+    Output = Storeˉrax(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(49201u32)),
+        Request * 16u32 + 56u32);
+    Output = Storeˉrax(Addressˉat(Output, Destination, Destinationˉoffset, Destinationˉindirect), Request * 16u32 + 16u32);
+    Output = Storeˉrax(Addressˉat(Output, Source, Sourceˉoffset, Sourceˉindirect), Request * 16u32 + 24u32);
+    Output = Storeˉrax(Addressˉrax(Output, Argument), Request * 16u32 + 32u32);
+    Output = Storeˉrax(Numericˉrax(Output, Numberˉzero, Zeroˉmode), Request * 16u32 + 40u32);
+    Output = Storeˉrax(Numericˉrax(Output, Numberˉone, Oneˉmode), Request * 16u32 + 48u32);
+    Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35149u32), Bytesˉfromˉu8(248u8)));
+    Output = Word(Bytesˉconcat(Output,
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(36172u32), Bytesˉfromˉu16ˉlittle(9356u32))), Request * 16u32);
+    Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu8(232u8)),
+        Relative(Helperˉtarget, Codeˉbase + Prefix + Bytesˉlength(Output) + 5u32));
+    Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(49285u32), Bytesˉfromˉu16ˉlittle(34063u32)));
+    return Bytesˉconcat(Initial,
+        Word(Output, Relative(Invalidˉtarget, Prefix + Bytesˉlength(Output) + 4u32)));
+}
+fn Addressˉat(Output: bytes, Slot: u32, Offset: u32, Indirect: bool) -> bytes {
+    if Slot == 4294967295u32 { return Addressˉrax(Output, Slot); }
+    if !Indirect {
+        return Word(Bytesˉconcat(Output,
+            Bytesˉconcat(Bytesˉfromˉu16ˉlittle(36168u32), Bytesˉfromˉu16ˉlittle(9348u32))), Slot * 16u32 + Offset);
+    }
+    var Result: bytes = Numericˉrax(Output, Slot, 2u8);
+    return Word(Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1352u32)), Offset);
+}
+export fn Emitˉoperation(
+    Initial: bytes, Operation: u32, Destination: u32, Source: u32,
+    Argument: u32, Numberˉzero: u32, Zeroˉmode: u8,
+    Numberˉone: u32, Oneˉmode: u8, Request: u32,
+    Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32
+) -> bytes {
+    return Emitˉaddressed(Initial, Operation, Destination, Source,
+        Argument, Numberˉzero, Zeroˉmode, Numberˉone, Oneˉmode,
+        Request, Helperˉtarget, Codeˉbase, Invalidˉtarget,
+        0u32, false, 0u32, false);
+}
+export fn Emitˉcell(Initial: bytes, Operation: u32,
+    Source: u32, Offset: u32, Indirect: bool,
+    Request: u32, Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32
+) -> bytes {
+    return Emitˉaddressed(Initial, Operation, 4294967295u32, Source,
+        4294967295u32, 0u32, 0u8, 0u32, 0u8,
+        Request, Helperˉtarget, Codeˉbase, Invalidˉtarget,
+        0u32, false, Offset, Indirect);
+}
+export fn Emitˉclear(Initial: bytes, Slot: u32) -> bytes {
+    return Storeˉrax(Storeˉrax(Bytesˉconcat(Initial, Bytesˉfromˉu16ˉlittle(49201u32)),
+        Slot * 16u32), Slot * 16u32 + 8u32);
+}
+
+export fn Operationˉisˉsupported(Opcode: u8) -> bool {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    return Opcodeˉnumber >= 229u32 && Opcodeˉnumber <= 241u32;
+}
+export fn Budgetˉisˉsupported(Opcode: u8) -> bool { return Opcode == 80u8 || Opcode == 206u8; }
+export fn Localˉisˉshared(Type: u8, Identity: u32) -> bool {
+    return Type == 3u8 || Type == 6u8 || Type == 8u8 || (Type == 10u8 && Identity == 25u32);
+}
+export fn Localˉaction(Opcode: u8, Type: u8) -> u32 {
+    var Action: u32 = 3u32;
+    if Opcode == 4u8 { Action = 2u32; }
+    if Type == 8u8 {
+        Action = 9u32;
+        if Opcode == 4u8 { Action = 10u32; }
+    }
+    if Type == 10u8 {
+        Action = 17u32;
+        if Opcode == 4u8 { Action = 18u32; }
+    }
+    return Action;
+}
+export fn Legacyˉisˉsupported(Opcode: u8) -> bool {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    return Opcode == 3u8 || Opcode == 7u8 || Opcode == 10u8 ||
+        (Opcodeˉnumber >= 11u32 && Opcodeˉnumber <= 15u32) || Opcode == 110u8 ||
+        (Opcodeˉnumber >= 112u32 && Opcodeˉnumber <= 125u32 && Opcode != 118u8) ||
+        (Opcodeˉnumber >= 185u32 && Opcodeˉnumber <= 190u32);
+}
+export fn Legacyˉoperands(Opcode: u8) -> u32 {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    if Opcode == 3u8 || Opcode == 10u8 { return 0u32; }
+    if Opcode == 12u8 { return 3u32; }
+    if (Opcodeˉnumber >= 13u32 && Opcodeˉnumber <= 15u32) || Opcode == 113u8 ||
+        Opcode == 114u8 || Opcode == 119u8 ||
+        (Opcodeˉnumber >= 185u32 && Opcodeˉnumber <= 189u32) { return 2u32; }
+    return 1u32;
+}
+export fn Legacyˉtype(Opcode: u8) -> u8 {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    if Opcode == 7u8 { return 1u8; }
+    if Opcode == 3u8 || Opcode == 110u8 || Opcode == 112u8 ||
+        Opcode == 113u8 || Opcode == 116u8 || Opcode == 117u8 || Opcode == 125u8 { return 3u8; }
+    if Opcode == 10u8 || Opcode == 12u8 ||
+        (Opcodeˉnumber >= 119u32 && Opcodeˉnumber <= 124u32) || Opcode == 190u8 { return 6u8; }
+    if Opcode == 115u8 || (Opcodeˉnumber >= 185u32 && Opcodeˉnumber <= 188u32) { return 2u8; }
+    if Opcode == 13u8 { return 4u8; }
+    if Opcode == 114u8 { return 1u8; }
+    if Opcode == 189u8 { return 10u8; }
+    return 5u8;
+}
+fn Legacyˉaction(Opcode: u8) -> u32 {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    if Opcode == 3u8 || Opcode == 10u8 { return 4u32; }
+    if Opcode == 7u8 { return 242u32; }
+    if Opcode == 114u8 { return 15u32; }
+    if Opcode == 119u8 { return 118u32; }
+    if Opcode == 124u8 { return 119u32; }
+    if Opcode == 125u8 { return 191u32; }
+    if Opcodeˉnumber >= 185u32 && Opcodeˉnumber <= 188u32 { return 243u32; }
+    return Opcodeˉnumber;
+}
+fn Legacyˉshares(Opcode: u8) -> u32 {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    if Opcode == 113u8 || Opcode == 119u8 ||
+        (Opcodeˉnumber >= 185u32 && Opcodeˉnumber <= 188u32) { return 2u32; }
+    if (Opcodeˉnumber >= 11u32 && Opcodeˉnumber <= 15u32) ||
+        (Opcodeˉnumber >= 114u32 && Opcodeˉnumber <= 117u32) || Opcode == 124u8 ||
+        Opcode == 125u8 || Opcode == 189u8 { return 1u32; }
+    return 0u32;
+}
+export fn Legacyˉbytes(Opcode: u8) -> u32 {
+    return 10u32 + Operationˉbytes() * (1u32 + Legacyˉshares(Opcode));
+}
+export fn Emitˉlegacy(Input: bytes, Offset: u32, Opcode: u8,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Request: u32, Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate)
+    -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    let Operands: u32 = Legacyˉoperands(Opcode);
+    let Produced: u8 = Legacyˉtype(Opcode);
+    let Depth: u32 = State.Stackˉdepth - Operands;
+    var First: u32 = 4294967295u32;
+    var Source: u32 = 4294967295u32;
+    var Argument: u32 = 4294967295u32;
+    var Numberˉzero: u32 = 0u32;
+    var Numberˉone: u32 = 0u32;
+    var Zeroˉmode: u8 = 0u8;
+    var Oneˉmode: u8 = 0u8;
+    if Operands > 0u32 {
+        First = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32);
+        Source = First;
+    }
+    if Opcode == 3u8 || Opcode == 10u8 || Opcode == 7u8 {
+        Numberˉzero = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+        Zeroˉmode = 3u8;
+        if Opcode == 7u8 { Numberˉone = First; Oneˉmode = 1u8; Source = 4294967295u32; }
+    } else if Opcode == 113u8 || Opcode == 119u8 ||
+        (Opcodeˉnumber >= 185u32 && Opcodeˉnumber <= 188u32) {
+        Argument = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 1u32) * 4u32);
+        if Opcode == 186u8 || Opcode == 188u8 { Numberˉzero = 1u32; Zeroˉmode = 3u8; }
+    } else if Opcode == 110u8 || Opcode == 112u8 ||
+        (Opcodeˉnumber >= 120u32 && Opcodeˉnumber <= 123u32) || Opcode == 190u8 {
+        Source = 4294967295u32;
+        Numberˉzero = First;
+        Zeroˉmode = 1u8;
+        if Opcode == 190u8 { Zeroˉmode = 2u8; }
+    } else if Operands >= 2u32 {
+        Numberˉzero = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 1u32) * 4u32);
+        Zeroˉmode = 1u8;
+        if Operands == 3u32 {
+            Numberˉone = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 2u32) * 4u32);
+            Oneˉmode = 1u8;
+        }
+    }
+    var Index: u32 = State.Nextˉu32;
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉtext: u32 = State.Nextˉtext;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    if Produced == 1u8 { Index = Nextˉi32; Nextˉi32 = Nextˉi32 + 1u32; }
+    if Produced == 2u8 { Index = Nextˉbool; Nextˉbool = Nextˉbool + 1u32; }
+    if Produced == 3u8 { Index = Nextˉtext; Nextˉtext = Nextˉtext + 1u32; }
+    if Produced == 4u8 { Index = Nextˉu8; Nextˉu8 = Nextˉu8 + 1u32; }
+    if Produced == 5u8 || Produced == 10u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Produced == 6u8 { Index = Nextˉbytes; Nextˉbytes = Nextˉbytes + 1u32; }
+    let Target: u32 = Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals, Shape.I32ˉslots, Shape.Boolˉslots, Shape.Textˉslots,
+        Shape.U8ˉslots, Shape.U32ˉslots, Shape.Bytesˉslots, Produced, Index);
+    var Output: bytes = Emitˉoperation(State.Result, Legacyˉaction(Opcode), Target,
+        Source, Argument, Numberˉzero, Zeroˉmode, Numberˉone, Oneˉmode,
+        Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+    var Share: u32 = 0u32;
+    while Share < Legacyˉshares(Opcode) {
+        let Consumed: u32 = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + Share) * 4u32);
+        Output = Emitˉoperation(Output, 1u32, 4294967295u32, Consumed,
+            4294967295u32, 0u32, 0u8, 0u32, 0u8,
+            Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+        Share = Share + 1u32;
+    }
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(Output,
+        Bytesˉconcat(Bytesˉslice(State.Stackˉtypes, 0u32, Depth), Bytesˉfromˉu8(Produced)),
+        Bytesˉconcat(Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32), Bytesˉfromˉu32ˉlittle(Target)),
+        Depth + 1u32, Nextˉi32, Nextˉbool, Nextˉtext, Nextˉu8,
+        Nextˉu32, Nextˉbytes, State.Nextˉenum, State.Nextˉrecord);
+}
+export fn Instructionˉbytes(Opcode: u8) -> u32 {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    var Count: u32 = 10u32 + Operationˉbytes();
+    if Opcode == 206u8 || (Opcodeˉnumber >= 229u32 && Opcodeˉnumber <= 235u32) { Count = Count + 22u32; }
+    if Opcode == 234u8 || Opcode == 235u8 ||
+        Opcode == 237u8 || Opcode == 238u8 || Opcode == 239u8 {
+        Count = Count + Operationˉbytes();
+    }
+    if Opcode == 240u8 || Opcode == 241u8 { Count = Count + 18u32; }
+    return Count;
+}
+fn Constructionˉisˉexact(Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Result: u32, Failure: u32, Reason: u32) -> bool {
+    if !Nominalˉtypes.Compilerˉnativeˉx64ˉbytesˉbuilderˉresultˉisˉexact(Input, Types, Result) { return false; }
+    let Error: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Result, 1u32, 0u32);
+    if !Error.Valid || !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Error.Type) ||
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Error.Type) != Failure { return false; }
+    let Reasonˉshape: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Types, Failure, 0u32);
+    return Reasonˉshape.Valid &&
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Reasonˉshape.Type) &&
+        Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtypeˉindex(Types, Reasonˉshape.Type) == Reason;
+}
+export record Analysis {
+    Valid: bool;
+    Stack: bytes;
+    Depth: u32;
+    U8ˉvalues: u32;
+    U32ˉvalues: u32;
+    Bytesˉvalues: u32;
+    Recordˉvalues: u32;
+    Bodyˉbytes: u32;
+}
+export fn Analyze(Input: bytes, Offset: u32, Opcode: u8,
+    Localˉtypes: bytes, Localˉidentities: bytes, Localˉborrows: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Stack: bytes, Depth: u32, U8ˉvalues: u32, U32ˉvalues: u32,
+    Bytesˉvalues: u32, Recordˉvalues: u32, Bodyˉbytes: u32) -> Analysis {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    var Operands: u32 = 1u32;
+    var Expected: u8 = 6u8;
+    var Produced: u8 = 10u8;
+    var Result: u32 = 0u32;
+    var Valid: bool = Operationˉisˉsupported(Opcode) || Budgetˉisˉsupported(Opcode);
+    if Opcode == 80u8 {
+        if Depth == 0u32 || Offset < 5u32 { Valid = false; }
+        if Valid {
+            Expected = Bytesˉreadˉu8(Stack, Depth - 1u32);
+            let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset - 4u32);
+            Valid = Local < Bytesˉlength(Localˉtypes) && (Expected == 8u8 || Expected == 10u8);
+            if Valid {
+                let Identity: u32 = Bytesˉreadˉu32ˉlittle(Localˉidentities, Local * 4u32);
+                Valid = (Expected == 8u8 && Identity == 39u32) || (Expected == 10u8 && Identity == 25u32);
+            }
+        }
+        if !Valid { return Analysis(false, Stack, Depth, U8ˉvalues, U32ˉvalues, Bytesˉvalues, Recordˉvalues, Bodyˉbytes); }
+        return Analysis(true, Bytesˉslice(Stack, 0u32, Depth - 1u32), Depth - 1u32,
+            U8ˉvalues, U32ˉvalues, Bytesˉvalues, Recordˉvalues, Bodyˉbytes + Instructionˉbytes(Opcode));
+    }
+    if Opcode == 206u8 {
+        Operands = 2u32;
+        Expected = 10u8;
+        Result = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+        let Parent: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+        Valid = Valid && Parent < Bytesˉlength(Localˉtypes) &&
+            Nominalˉtypes.Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(Input, Types, Result);
+        if Valid {
+            let Parentˉborrow: u8 = Bytesˉreadˉu8(Localˉborrows, Parent);
+            Valid = Bytesˉreadˉu8(Localˉtypes, Parent) == 10u8 &&
+                Bytesˉreadˉu32ˉlittle(Localˉidentities, Parent * 4u32) == 25u32 &&
+                (Parentˉborrow == 0u8 ||
+                    (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 && Parentˉborrow == 41u8));
+        }
+        Produced = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Result);
+    }
+    if Opcode == 229u8 {
+        Operands = 2u32;
+        Expected = 10u8;
+        Result = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+        Valid = Valid && Constructionˉisˉexact(Input, Types, Result,
+            Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32),
+            Bytesˉreadˉu32ˉlittle(Input, Offset + 9u32));
+        Produced = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Result);
+    }
+    if Opcodeˉnumber >= 230u32 && Opcodeˉnumber <= 235u32 {
+        let Receiver: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+        Result = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+        Valid = Valid && Receiver < Bytesˉlength(Localˉtypes);
+        if Valid {
+            Valid = Bytesˉreadˉu8(Localˉtypes, Receiver) == 8u8 &&
+                Bytesˉreadˉu32ˉlittle(Localˉidentities, Receiver * 4u32) == 39u32 &&
+                Bytesˉreadˉu8(Localˉborrows, Receiver) != 37u8;
+        }
+        Valid = Valid && Nominalˉtypes.Compilerˉnativeˉx64ˉbytesˉappendˉresultˉisˉexact(
+            Input, Types, Result, Bytesˉreadˉu32ˉlittle(Input, Offset + 9u32));
+        Expected = 10u8;
+        if Opcode == 230u8 { Expected = 4u8; }
+        if Opcode == 231u8 { Expected = 5u8; }
+        if Opcode == 234u8 { Expected = 6u8; }
+        if Opcode == 235u8 { Expected = 3u8; }
+        Produced = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Result);
+    }
+    if Opcode == 236u8 { Expected = 8u8; Produced = 6u8; }
+    if Opcode == 238u8 || Opcode == 240u8 { Operands = 2u32; Produced = 4u8; }
+    if Opcode == 239u8 {
+        Operands = 3u32;
+        Produced = 7u8;
+        let Owner: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+        Valid = Valid && Owner < Bytesˉlength(Localˉtypes);
+        if Valid { Valid = Bytesˉreadˉu8(Localˉtypes, Owner) == 6u8; }
+    }
+    if Opcode == 240u8 || Opcode == 241u8 { Expected = 7u8; }
+    Valid = Valid && Depth >= Operands && Bytesˉlength(Stack) == Depth;
+    if Valid {
+        Valid = Bytesˉreadˉu8(Stack, Depth - Operands) == Expected;
+        var Operand: u32 = 1u32;
+        while Operand < Operands {
+            var Numeric: u8 = 10u8;
+            if Opcode == 206u8 { Numeric = 5u8; }
+            if Bytesˉreadˉu8(Stack, Depth - Operands + Operand) != Numeric { Valid = false; }
+            Operand = Operand + 1u32;
+        }
+    }
+    if !Valid { return Analysis(false, Stack, Depth, U8ˉvalues,
+        U32ˉvalues, Bytesˉvalues, Recordˉvalues, Bodyˉbytes); }
+    var Nextˉu8: u32 = U8ˉvalues;
+    var Nextˉu32: u32 = U32ˉvalues;
+    var Nextˉbytes: u32 = Bytesˉvalues;
+    var Nextˉrecord: u32 = Recordˉvalues;
+    if Produced == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Produced == 10u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Produced == 6u8 || Produced == 7u8 { Nextˉbytes = Nextˉbytes + 1u32; }
+    if Opcode == 206u8 || (Opcodeˉnumber >= 229u32 && Opcodeˉnumber <= 235u32) { Nextˉrecord = Nextˉrecord + 1u32; }
+    return Analysis(true,
+        Bytesˉconcat(Bytesˉslice(Stack, 0u32, Depth - Operands), Bytesˉfromˉu8(Produced)),
+        Depth - Operands + 1u32, Nextˉu8, Nextˉu32,
+        Nextˉbytes, Nextˉrecord, Bodyˉbytes + Instructionˉbytes(Opcode));
+}
+
+export fn Emitˉbyteˉinstruction(Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Input: bytes, Offset: u32, Opcode: u8,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    Request: u32, Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate)
+    -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    var Operands: u32 = 1u32;
+    var Produced: u8 = 10u8;
+    if Opcode == 206u8 || Opcode == 229u8 || Opcode == 238u8 || Opcode == 240u8 { Operands = 2u32; }
+    if Opcode == 239u8 { Operands = 3u32; Produced = 7u8; }
+    if Opcode == 236u8 { Produced = 6u8; }
+    if Opcode == 238u8 || Opcode == 240u8 { Produced = 4u8; }
+    let Depth: u32 = State.Stackˉdepth - Operands;
+    let First: u32 = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, Depth * 4u32);
+    if Opcode == 80u8 {
+        var Action: u32 = 8u32;
+        if Bytesˉreadˉu8(State.Stackˉtypes, Depth) == 8u8 { Action = 7u32; }
+        let Output: bytes = Emitˉoperation(State.Result, Action, 4294967295u32, First,
+            4294967295u32, 0u32, 0u8, 0u32, 0u8,
+            Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+        return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(Output,
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth), Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32), Depth,
+            State.Nextˉi32, State.Nextˉbool, State.Nextˉtext, State.Nextˉu8,
+            State.Nextˉu32, State.Nextˉbytes, State.Nextˉenum, State.Nextˉrecord);
+    }
+    var Source: u32 = First;
+    var Argument: u32 = 4294967295u32;
+    var Numberˉzero: u32 = 0u32;
+    var Zeroˉmode: u8 = 0u8;
+    var Numberˉone: u32 = 0u32;
+    var Oneˉmode: u8 = 0u8;
+    var Type: u32 = 0u32;
+    var Target: u32 = 0u32;
+    var Destination: u32 = 0u32;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    var Nextˉrecord: u32 = State.Nextˉrecord;
+    if Opcodeˉnumber <= 235u32 {
+        var Typeˉfield: u32 = 5u32;
+        if Opcode == 229u8 { Typeˉfield = 1u32; }
+        Type = Bytesˉreadˉu32ˉlittle(Input, Offset + Typeˉfield);
+        Produced = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Type);
+        Target = Shape.Recordˉbase + Nextˉrecord;
+        Destination = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(Storage.Scratchˉoffsets, Nextˉrecord * 4u32);
+        Nextˉrecord = Nextˉrecord + 1u32;
+        if Opcode == 229u8 {
+            Numberˉzero = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 1u32) * 4u32);
+            Zeroˉmode = 2u8;
+        } else if Opcode == 206u8 {
+            Source = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+            Numberˉzero = First;
+            Zeroˉmode = 2u8;
+            Numberˉone = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 1u32) * 4u32);
+            Oneˉmode = 1u8;
+        } else {
+            Source = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+            if Opcode == 234u8 || Opcode == 235u8 { Argument = First; }
+            else {
+                Numberˉzero = First;
+                Zeroˉmode = 2u8;
+                if Opcode == 230u8 || Opcode == 231u8 { Zeroˉmode = 1u8; }
+            }
+        }
+    } else {
+        var Index: u32 = State.Nextˉu32;
+        if Produced == 4u8 { Index = State.Nextˉu8; Nextˉu8 = Nextˉu8 + 1u32; }
+        else if Produced == 6u8 || Produced == 7u8 {
+            Index = State.Nextˉbytes;
+            Nextˉbytes = Nextˉbytes + 1u32;
+        } else { Nextˉu32 = Nextˉu32 + 1u32; }
+        Target = Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+            Shape.Locals, Shape.I32ˉslots, Shape.Boolˉslots, Shape.Textˉslots,
+            Shape.U8ˉslots, Shape.U32ˉslots, Shape.Bytesˉslots, Produced, Index);
+        Destination = Target;
+        if Operands >= 2u32 {
+            Numberˉzero = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 1u32) * 4u32);
+            Zeroˉmode = 2u8;
+        }
+        if Operands == 3u32 {
+            Numberˉone = Bytesˉreadˉu32ˉlittle(State.Stackˉslots, (Depth + 2u32) * 4u32);
+            Oneˉmode = 2u8;
+        }
+    }
+    var Builderˉaction: u32 = Opcodeˉnumber;
+    if Opcode == 206u8 { Builderˉaction = 6u32; }
+    var Builderˉoutput: bytes = Emitˉoperation(State.Result, Builderˉaction, Destination,
+        Source, Argument, Numberˉzero, Zeroˉmode, Numberˉone, Oneˉmode,
+        Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+    if Opcodeˉnumber <= 235u32 {
+        Builderˉoutput = Word(Bytesˉconcat(Builderˉoutput, Bytesˉfromˉu16ˉlittle(47169u32)), Type);
+        Builderˉoutput = Storeˉrax(Addressˉrax(Builderˉoutput, Destination), Target * 16u32);
+    }
+    if Opcode == 234u8 || Opcode == 235u8 ||
+        Opcode == 237u8 || Opcode == 238u8 || Opcode == 239u8 {
+        Builderˉoutput = Emitˉoperation(Builderˉoutput, 1u32, 4294967295u32, First,
+            4294967295u32, 0u32, 0u8, 0u32, 0u8,
+            Request, Helperˉtarget, Codeˉbase, Invalidˉtarget);
+    }
+    if Opcode == 240u8 || Opcode == 241u8 { Builderˉoutput = Emitˉclear(Builderˉoutput, First); }
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(Builderˉoutput,
+        Bytesˉconcat(Bytesˉslice(State.Stackˉtypes, 0u32, Depth), Bytesˉfromˉu8(Produced)),
+        Bytesˉconcat(Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32), Bytesˉfromˉu32ˉlittle(Target)),
+        Depth + 1u32, State.Nextˉi32, State.Nextˉbool, State.Nextˉtext,
+        Nextˉu8, Nextˉu32, Nextˉbytes, State.Nextˉenum, Nextˉrecord);
+}
+
+export fn Emitˉtransfer(Initial: bytes, Operation: u32,
+    Destination: u32, Source: u32, Destinationˉindirect: bool,
+    Request: u32, Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32) -> bytes {
+    return Emitˉaddressed(Initial, Operation, Destination, Source, 4294967295u32,
+        0u32, 0u8, 0u32, 0u8, Request, Helperˉtarget, Codeˉbase, Invalidˉtarget,
+        0u32, Destinationˉindirect, 0u32, false);
+}
+export fn Emitˉclearˉpreserveˉrax(Initial: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Bytesˉconcat(Initial, Bytesˉfromˉu16ˉlittle(51505u32));
+    Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(613189960u32)), Slot * 16u32);
+    return Word(Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(613189960u32)), Slot * 16u32 + 8u32);
+}

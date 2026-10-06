@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 3 October 2026
+> Status: Current project snapshot as of 6 October 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-10-03
+> Last reviewed: 2026-10-06
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -33,6 +33,9 @@ materially misleading.
 
 ## What works today
 
+- The Windvale-written Language 1.0 source compiler has Slice 8 qualification
+  within its exact declared targets and subsets. The forward memory integration
+  is a separate candidate, using the compiler and its tools as maintained consumers.
 - Windvale Seed source compiles to canonical WVB, which is verified and runs on
   Windows and Linux. The native toolchain also assembles WVA, verifies WVO,
   links images, and packages supported native applications.
@@ -85,7 +88,12 @@ Name the track when a bytecode version matters:
   through candidate WVB 1.43. Scalar Vector helpers have focused native storage
   integration; Copy-record collection lowering and installed-toolchain promotion
   remain open. Focused checks do not establish independent compiler reconstruction
-  or complete qualification. The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+  or complete qualification.
+- Candidate WVB 1.44/1.45 connects reserved byte construction, shared-value
+  cleanup and budget helpers to native ABI 25/context 11. Current compiler hosts
+  have been reconstructed on Windows and Debian through the explicit temporary
+  bootstrap projection. Final verification, self-lowering and installed promotion
+  remain open. The [completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
   owns the exact current boundary and next consumer.
 
 The [dated library history](https://github.com/eworker-inc/Windvale/blob/928f772e9e65c1840f263cf6ac099ab1bae0df27/Documents/Project/Library-Development-History-2026-09-26.md) preserves

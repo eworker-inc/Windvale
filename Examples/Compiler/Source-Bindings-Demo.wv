@@ -6,6 +6,7 @@ authority application;
 
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
@@ -61,7 +62,7 @@ fn Sourceˉbindingsˉthree(First: text, Second: text, Third: text) -> bytes {
 
 fn Sourceˉbindingsˉstatus(Source: text) -> Sourceˉbindings.Compilerˉsourceˉbindingˉstatus {
     let Input: bytes = Sourceˉbindingsˉone(Source);
-    let Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(Input);
+    let Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(Input);
     return Summary.Status;
 }
 
@@ -82,7 +83,7 @@ fn Sourceˉbindingsˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> byte
 export fn Main() -> i32 {
     let Validˉsource: text = "module Bindingsˉvalid profile hosted; capability console.write_line; data Message: text = \"ready\"; record Pair { Left: i32; Right: i32; } enum State { Ready = 0; } fn Add(Value: i32) -> i32 { return Value + 1; } export fn Main() -> i32 { let Base: i32 = 1; var Result: i32 = Add(Base); if true { let Text: text = Message; console.write_line(Text); Result += Add(Result); } return Result; }";
     let Validˉinput: bytes = Sourceˉbindingsˉone(Validˉsource);
-    let Valid: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(Validˉinput);
+    let Valid: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(Validˉinput);
     if Valid.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid { return 1; }
     if Valid.Modules != 1u32 { return 2; }
     if Valid.Functions != 2u32 { return 3; }
@@ -96,26 +97,26 @@ export fn Main() -> i32 {
     if Bytesˉreadˉu16ˉlittle(Valid.Directory, 6u32) != 1u32 { return 17; }
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Validˉinput);
     let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
-    if !Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+    if !Wirˉconsumer.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols, Valid.Directory
     ) { return 10; }
-    if Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+    if Wirˉconsumer.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols,
         Sourceˉbindingsˉreplaceˉu8(Valid.Directory, 0u32, 0u8)
     ) { return 11; }
-    if Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+    if Wirˉconsumer.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols,
         Sourceˉbindingsˉreplaceˉu32(Valid.Directory, 8u32, 3u32)
     ) { return 12; }
-    if Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+    if Wirˉconsumer.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols,
         Sourceˉbindingsˉreplaceˉu32(Valid.Directory, 16u32, 1u32)
     ) { return 13; }
-    if Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+    if Wirˉconsumer.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols,
         Bytesˉconcat(Valid.Directory, Bytesˉfromˉu8(0u8))
     ) { return 14; }
-    if Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+    if Wirˉconsumer.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols,
         Sourceˉbindingsˉreplaceˉu32(Valid.Directory, 72u32, 1u32)
     ) { return 15; }
@@ -135,7 +136,7 @@ export fn Main() -> i32 {
     if Sourceˉbindingsˉstatus("module Bindingsˉcontrol profile portable; export fn Main() -> i32 { var Value = 0; while true { Value += 1; if Value == 1 { continue; } if Value > 1 && true { break; } } return Value; }") != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid { return 38; }
     if Sourceˉbindingsˉstatus("module Bindingsˉcapabilityˉreference profile hosted; capability console.write_line; fn Copy(Output: console.write_line) -> console.write_line { return Output; } fn Use(Output: console.write_line, Value: text) -> void { Output(Value); } export fn Main() -> i32 { let Output: console.write_line = Copy(console.write_line); if false { Use(Output, \"unused\"); } return 0; }") != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid { return 39; }
 
-    let Inaccessibleˉcall: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(
+    let Inaccessibleˉcall: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(
         Sourceˉbindingsˉthree(
             "module Bindingsˉcallˉroot profile portable; import Bindingsˉcallˉalpha as Alpha; export fn Main() -> i32 { return Alpha.Alpha(); }",
             "module Bindingsˉcallˉalpha profile portable; import Bindingsˉcallˉbeta as Beta; export fn Alpha() -> i32 { return Beta.Beta(); }",
@@ -146,7 +147,7 @@ export fn Main() -> i32 {
     if Inaccessibleˉcall.Failureˉmodule != 1u32 { return 31; }
     if Inaccessibleˉcall.Failureˉrelatedˉmodule != 2u32 { return 32; }
 
-    let Inaccessibleˉname: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(
+    let Inaccessibleˉname: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(
         Sourceˉbindingsˉtwo(
             "module Bindingsˉnameˉroot profile portable; import Bindingsˉnameˉdependency as Dependency; export fn Main() -> text { return Dependency.Dependencyˉvalue; }",
             "module Bindingsˉnameˉdependency profile portable; data Dependencyˉvalue: text = \"private\"; export fn Dependency() -> text { return Dependencyˉvalue; }"
@@ -156,14 +157,14 @@ export fn Main() -> i32 {
     if Inaccessibleˉname.Failureˉmodule != 0u32 { return 34; }
     if Inaccessibleˉname.Failureˉrelatedˉmodule != 1u32 { return 35; }
 
-    let Symbolˉfailure: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(
+    let Symbolˉfailure: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(
         Sourceˉbindingsˉone("module Bindingsˉsymbolˉfailure profile portable; export fn Main(Value: Missing) -> i32 { return 0; }")
     );
     if Symbolˉfailure.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Sourceˉsymbols { return 40; }
     if Symbolˉfailure.Symbolˉstatus != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 41; }
 
     let Metadataˉimport: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(
+        Validateˉsourceˉbindings(
             Sourceˉbindingsˉtwo(
                 "module Bindingsˉmetadataˉroot; platform linux, windows; authority application; import Bindingsˉmetadataˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Value(); }",
                 "module Bindingsˉmetadataˉdependency profile portable; export fn Value() -> i32 { return 42; }"
@@ -171,4 +172,27 @@ export fn Main() -> i32 {
         );
     if Metadataˉimport.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid { return 42; }
     return 0;
+}
+
+fn Validateˉsourceˉbindings(Input: bytes) -> Sourceˉbindings.Compilerˉsourceˉbindingˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
+            Input, Symbols
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Phase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbols, true
+        );
+    let Published: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase
+        );
+    return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+        Input, Scan, Symbols, Phase, Published, Symbols.Functions
+    );
 }

@@ -1,0 +1,695 @@
+#!wv/1 en@1
+module Languageˉoneˉreservedˉbyteˉconstructionˉselfˉtest;
+profile hosted;
+platform linux, windows;
+authority application;
+requires capability file.write_bytes version 1;
+requires capability process.argument version 1;
+requires capability process.argument_count version 1;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉeffects as Effects;
+import Compilerˉsourceˉeffectˉinference as Effectˉinference;
+import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+import Compilerˉsourceˉwir as Wir;
+import Compilerˉsourceˉwirˉconsumer as Consumer;
+import Compilerˉsourceˉwirˉscalarˉconstants as Scalarˉconstants;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Nativeˉbyteˉresultˉadmissionˉselfˉtest as Byteˉresult;
+
+// Fifty-seven cases: ten accepted and twenty-eight rejected edition-1 source
+// graphs, eighteen distinct WVIR corruptions and one WVB publication guard.
+// Forty additional host-result packet cases protect bounded ABI 25 admission.
+// Five tiny construction cases protect exact header charging and preflight.
+// Three bounded groups protect scalar signatures, pooling and condition lowering.
+// One bounded group protects canonical Memory.Split result inference.
+// Accepted case eight also rejects two mutable-call directory retargets while a
+// Slice remains live; these are subcases of the existing accepted source group.
+// This analyser writes source cases that need independent lifetime validation
+// and four publication packets. A separate validator owns the accepted and
+// lifetime-rejected graphs, corruptions and scalar signature checks;
+// the prepared emitter admits publication. Argument guards form one extra group.
+// Native execution of the new byte operations belongs to the native owner.
+const SOURCE_CASES: u32 = 38u32;
+
+fn Appendˉu32(Value: bytes, Item: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Item));
+}
+
+fn Moduleˉsource(Index: u32, Root: text, Variant: u32) -> text {
+    if Index == 0u32 { return Root; }
+    if Index == 1u32 {
+        if Variant == 4u32 {
+            return "#!wv/1 en@1\nmodule Otherˉbytes; profile core; platform linux, windows, windvale; authority library; export record Bytesˉbuilder { Opaqueˉidentity: u64; }";
+        }
+        if Variant == 5u32 {
+            return "#!wv/1 en@1\nmodule Foundationˉbytes; profile core; platform linux, windows, windvale; authority library; export record Bytesˉbuilder { Opaqueˉidentity: u64; }";
+        }
+        if Variant == 6u32 {
+            return "#!wv/1 en@1\nmodule Foundationˉbytes; profile core; platform linux, windows, windvale; authority library; import Foundationˉmemory as Memory; import Otherˉresult as Result; import Foundationˉcollections as Collections;";
+        }
+        return "#!wv/1 en@1\nmodule Foundationˉbytes; profile core; platform linux, windows, windvale; authority library; import Foundationˉmemory as Memory; import Foundationˉresult as Result; import Foundationˉcollections as Collections;";
+    }
+    if Index == 2u32 {
+        var Source: text = "#!wv/1 en@1\nmodule Foundationˉmemory; profile core; platform linux, windows, windvale; authority library; export enum Allocationˉreason: u8 { Budgetˉexhausted = 1u8; Targetˉunaddressable = 2u8; Providerˉunavailable = 3u8; Fragmented = 4u8; } export record Allocationˉfailure { Reason: Allocationˉreason; Requestedˉbytes: ";
+        if Variant == 1u32 { Source = Textˉconcat(Source, "u32;"); }
+        else { Source = Textˉconcat(Source, "u64;"); }
+        Source = Textˉconcat(Source, " Availableˉbytes: u64; } export variant Limitˉfailure { Maximumˉexceeded(Requested: u64, Maximum: ");
+        if Variant == 2u32 { Source = Textˉconcat(Source, "u32);"); }
+        else { Source = Textˉconcat(Source, "u64);"); }
+        return Textˉconcat(Source, " Arithmeticˉoverflow; }");
+    }
+    if Index == 3u32 {
+        if Variant == 6u32 {
+            return "#!wv/1 en@1\nmodule Otherˉresult; profile core; platform linux, windows, windvale; authority library; export variant Result<T, E> { Valid(Value: T); Failure(Error: E); }";
+        }
+        return "#!wv/1 en@1\nmodule Foundationˉresult; profile core; platform linux, windows, windvale; authority library; export variant Result<T, E> { Valid(Value: T); Failure(Error: E); }";
+    }
+    return "#!wv/1 en@1\nmodule Foundationˉcollections; profile core; platform linux, windows, windvale; authority library; import Foundationˉmemory as Memory; export variant Collectionˉfailure { Invalidˉlimit(Field: u32, Observed: u64, Minimum: u64, Maximum: u64); Allocation(Error: Memory.Allocationˉfailure); Capacityˉexhausted(Maximum: u64); Duplicate; Comparisonˉlimit(Maximum: u64); Wrongˉarena; Slotˉoutˉofˉrange(Slot: u64, Maximum: u64); Vacant(Slot: u64); Staleˉgeneration(Expected: u64, Observed: u64); Retired(Slot: u64); } export record Vectorˉappendˉfailure<T> { Error: Collectionˉfailure; Value: T; }";
+}
+
+fn Graph(Root: text, Variant: u32) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(2u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Appendˉu32(Header, 5u32);
+    Header = Appendˉu32(Header, 100u32);
+    var Payload: bytes = Bytesˉslice(Header, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    while Index < 5u32 {
+        // WVSS 2 carries descriptor-free bodies in canonical dependency order.
+        let Original: bytes = Textˉtoˉutf8(Moduleˉsource(Graphˉmodule(Index, Variant), Root, Variant));
+        let Body: bytes = Bytesˉslice(Original, 12u32, Bytesˉlength(Original) - 12u32);
+        Header = Appendˉu32(Header, 116u32 + Bytesˉlength(Payload));
+        Header = Appendˉu32(Header, Bytesˉlength(Body));
+        Header = Appendˉu32(Header, 1u32);
+        Header = Appendˉu32(Header, 1u32);
+        Header = Appendˉu32(Header, 12u32);
+        Payload = Bytesˉconcat(Payload, Body);
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(Header, Payload);
+}
+
+fn Graphˉmodule(Index: u32, Variant: u32) -> u32 {
+    if Index == 0u32 { return 0u32; }
+    if Variant == 4u32 {
+        if Index == 1u32 { return 4u32; }
+        if Index == 2u32 { return 2u32; }
+        if Index == 3u32 { return 3u32; }
+        return 1u32;
+    }
+    if Index == 2u32 { return 4u32; }
+    if Index == 3u32 { return 2u32; }
+    if Index == 4u32 { return 3u32; }
+    return 1u32;
+}
+
+fn Root(Body: text, Variant: u32) -> text {
+    var Source: text = "#!wv/1 en@1\nmodule Reservedˉbyteˉfixture; profile core; platform linux, windows, windvale; authority application; ";
+    if Variant == 4u32 { Source = Textˉconcat(Source, "import Otherˉbytes as Bytes; "); }
+    else { Source = Textˉconcat(Source, "import Foundationˉbytes as Bytes; "); }
+    Source = Textˉconcat(Source, "import Foundationˉmemory as Memory; import Foundationˉcollections as Collections; ");
+    if Variant == 6u32 { Source = Textˉconcat(Source, "import Otherˉresult as Result; "); }
+    else { Source = Textˉconcat(Source, "import Foundationˉresult as Result; "); }
+    return Textˉconcat(Source, Body);
+}
+
+fn Family() -> text {
+    var Body: text = "export fn Main(Budget: Memory.Memoryˉbudget, Input: bytes, Message: text) -> bytes effects(memory.allocate) { let Created: Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure> = Bytes.Constructˉreserved(Budget, 64u64); return match Created { case Result.Result.Valid { Value: Initial } { var Builder: Bytes.Bytesˉbuilder = Initial; ";
+    Body = Textˉconcat(Body, "let A: Result.Result<unit, Memory.Limitˉfailure> = Bytes.Appendˉu8(borrow mut Builder, 42u8); let B = Bytes.Appendˉu32ˉlittle(borrow mut Builder, 16909060u32); let C = Bytes.Appendˉu64ˉlittle(borrow mut Builder, 18446744073709551615u64); let D = Bytes.Appendˉu64ˉdecimal(borrow mut Builder, 18446744073709551615u64); ");
+    Body = Textˉconcat(Body, "let E = Bytes.Appendˉbytes(borrow mut Builder, borrow Input); let F = Bytes.Appendˉutf8(borrow mut Builder, borrow Message); let Frozen: bytes = Bytes.Freeze(Builder); let Length: u64 = Bytes.Length(borrow Frozen); let First: u8 = Bytes.At(borrow Frozen, 0u64); let Range: Collections.Slice<u8> = Bytes.Borrowˉrange(borrow Frozen, 0u64, 1u64); let Element: u8 = Range[0u64]; for Item in Range { let Seen: u8 = Item; } Frozen } case Result.Result.Failure { Error: Failure } { Input } }; }");
+    return Body;
+}
+
+fn Appendˉprogram(Statement: text) -> text {
+    return Textˉconcat(Textˉconcat("export fn Main(Initial: Bytes.Bytesˉbuilder, Input: bytes) -> i32 { var Builder: Bytes.Bytesˉbuilder = Initial; ", Statement), " return 42; }");
+}
+
+fn Sourceˉcase(Index: u32) -> text {
+    if Index == 0u32 { return Family(); }
+    if Index == 1u32 {
+        return "fn Appendˉchecked(Builder: borrow mut Bytes.Bytesˉbuilder) -> Result.Result<unit, Memory.Limitˉfailure> { try Bytes.Appendˉu8(borrow mut Builder, 1u8); return Result.Result.Valid<unit, Memory.Limitˉfailure> { Value: () }; } export fn Main(Budget: Memory.Memoryˉbudget, Input: bytes) -> bytes effects(memory.allocate) { let Created = Bytes.Constructˉreserved(Budget, 0u64); return match Created { case Result.Result.Valid { Value: Initial } { var Builder = Initial; let Accepted = Bytes.Appendˉu8(borrow mut Builder, 0u8); let Propagated = Appendˉchecked(borrow mut Builder); Bytes.Freeze(Builder) } case Result.Result.Failure { Error: Failure } { Input } }; }";
+    }
+    if Index == 2u32 {
+        return "fn Range(Value: borrow bytes) -> Collections.Slice<u8> { return Bytes.Borrowˉrange(borrow Value, 0u64, 1u64); } export fn Main(Value: bytes) -> u8 { let Slice = Range(borrow Value); return Slice[0u64]; }";
+    }
+    if Index == 3u32 {
+        return "fn Forward(Value: Collections.Slice<u8>) -> Collections.Slice<u8> { return Value; } fn Range(Value: borrow bytes) -> Collections.Slice<u8> { return Forward(Bytes.Borrowˉrange(borrow Value, 0u64, 1u64)); } export fn Main(Value: bytes) -> u8 { let View = Range(borrow Value); return View[0u64]; }";
+    }
+    if Index == 4u32 {
+        return "fn Finish(Value: Bytes.Bytesˉbuilder) -> bytes { return Bytes.Freeze(Value); } export fn Main(Value: Bytes.Bytesˉbuilder) -> bytes { let Moved: Bytes.Bytesˉbuilder = Value; return Finish(Moved); }";
+    }
+    if Index == 5u32 {
+        return "export fn Main(Value: Bytes.Bytesˉbuilder) -> i32 { using Scoped = Value { } return 42; }";
+    }
+    if Index == 6u32 {
+        return "fn Maximum() -> u64 { return 8u64; } fn Supply(Value: Memory.Memoryˉbudget) -> Memory.Memoryˉbudget { return Value; } export fn Main(Budget: Memory.Memoryˉbudget) -> Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure> effects(memory.allocate) { return Bytes.Constructˉreserved(Maximumˉoutputˉbytes: Maximum(), Budget: Supply(Budget)); }";
+    }
+    if Index == 7u32 {
+        return Textˉconcat("fn Byte() -> u8 { return 42u8; } ", Appendˉprogram("let Accepted = Bytes.Appendˉu8(Value: Byte(), Builder: borrow mut Builder);"));
+    }
+    if Index == 8u32 {
+        return "fn Identity(Value: bytes) -> bytes effects() { return Value; } fn Read(Value: borrow bytes) -> u8 { return Bytes.At(borrow Value, 0u64); } fn Observe(Value: borrow mut bytes) -> bytes { return Value; } export fn Main(Value: bytes) -> u8 { let Slice: Collections.Slice<u8> = Bytes.Borrowˉrange(borrow Value, 0u64, 1u64); let Shared: bytes = Value; let Copy: bytes = Identity(Value); let Callback = Identity; let Callbackˉcopy: bytes = Callback(Value); let Element: u8 = Slice[0u64]; return Read(borrow Copy); }";
+    }
+    if Index == 9u32 {
+        return "export fn Main(Budget: Memory.Memoryˉbudget) -> Result.Result<Collections.Vector<u32>, Memory.Allocationˉfailure> effects(memory.allocate) { return Collections.Vectorˉconstructˉreserved::<u32>(Budget, 4u64); }";
+    }
+    if Index == 10u32 {
+        return "export fn Main(Value: Bytes.Bytesˉbuilder) -> bytes { let Moved: Bytes.Bytesˉbuilder = Value; return Bytes.Freeze(Value); }";
+    }
+    if Index == 11u32 {
+        return "export fn Main(Value: Bytes.Bytesˉbuilder) -> bytes { let First: bytes = Bytes.Freeze(Value); return Bytes.Freeze(Value); }";
+    }
+    if Index == 12u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu8(borrow Builder, 42u8);"); }
+    if Index == 13u32 { return "export fn Main(Value: bytes) -> u64 { return Bytes.Length(Value); }"; }
+    if Index == 14u32 { return "export fn Main(Value: bytes) -> Collections.Slice<u8> { return Bytes.Borrowˉrange(borrow Value, 0u64, 1u64); }"; }
+    if Index == 15u32 { return "export fn Main(Value: borrow bytes, Other: borrow bytes) -> Collections.Slice<u8> { return Bytes.Borrowˉrange(borrow Value, 0u64, 1u64); }"; }
+    if Index == 16u32 { return "export fn Main(Value: Bytes.Bytesˉbuilder) -> bytes { return Bytes.Freeze(Value); }"; }
+    if Index == 17u32 { return "export fn Main() -> bytes { let Value: Bytes.Bytesˉbuilder = Bytes.Bytesˉbuilder { Opaqueˉidentity: 0u64 }; return Bytes.Freeze(Value); }"; }
+    if Index == 18u32 { return "export fn Main(Budget: Memory.Memoryˉbudget) -> Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure> effects(memory.allocate) { return Bytes.Constructˉreserved(Budget, 8u32); }"; }
+    if Index == 19u32 { return "export fn Main(Value: bytes) -> u8 { return Bytes.At(borrow Value, 0u32); }"; }
+    if Index == 20u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu8(borrow mut Builder, 42u32);"); }
+    if Index == 21u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu32ˉlittle(borrow mut Builder, 42u64);"); }
+    if Index == 22u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu64ˉlittle(borrow mut Builder, 42u32);"); }
+    if Index == 23u32 { return "export fn Main(Budget: Memory.Memoryˉbudget) -> Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure> effects(memory.allocate) { return Bytes.Constructˉreserved(Budget, 8u64); }"; }
+    if Index == 24u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu8(borrow mut Builder, 42u8);"); }
+    if Index == 25u32 { return "export fn Main(Budget: Memory.Memoryˉbudget) -> Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure> effects(memory.allocate) { return Bytes.Constructˉreserved(Budget, 8u64); }"; }
+    if Index == 26u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu8(Builder: borrow mut Builder, Value: 42u8, Value: 1u8);"); }
+    if Index == 27u32 { return Appendˉprogram("let Accepted = Bytes.Appendˉu8(Builder: borrow mut Builder, Unknown: 42u8);"); }
+    if Index == 28u32 {
+        return "record Holder { Value: Collections.Slice<u8>; } export fn Main(Value: borrow bytes) -> Holder { return Holder { Value: Bytes.Borrowˉrange(borrow Value, 0u64, 1u64) }; }";
+    }
+    if Index == 29u32 {
+        return "export fn Main(Value: borrow bytes) -> i32 { let Slice = Bytes.Borrowˉrange(borrow Value, 0u64, 1u64); let Callback = fn [copy Slice] () -> u8 effects() { return Slice[0u64]; }; return 42; }";
+    }
+    if Index == 30u32 {
+        return "export fn Main(Value: bytes, Other: bytes) -> u8 { var Owner: bytes = Value; let Slice = Bytes.Borrowˉrange(borrow Owner, 0u64, 1u64); Owner = Other; return Slice[0u64]; }";
+    }
+    if Index == 31u32 {
+        return "export fn Main(Value: borrow Bytes.Bytesˉbuilder) -> bytes { return Bytes.Freeze(Value); }";
+    }
+    if Index == 32u32 {
+        return "fn Finish(Value: Bytes.Bytesˉbuilder) -> bytes { return Bytes.Freeze(Value); } export fn Main(Value: Bytes.Bytesˉbuilder) -> bytes { var Builder = Value; let Frozen = Finish(Builder); let Accepted = Bytes.Appendˉu8(borrow mut Builder, 42u8); return Frozen; }";
+    }
+    if Index == 33u32 {
+        return "export fn Main(Budget: Memory.Memoryˉbudget, Input: bytes) -> bytes effects(memory.allocate) { let Created = Bytes.Constructˉreserved(Budget, 8u64); let First: bytes = match Created { case Result.Result.Valid { Value: Initial } { Bytes.Freeze(Initial) } case Result.Result.Failure { Error: Failure } { Input } }; return match Created { case Result.Result.Valid { Value: Second } { Bytes.Freeze(Second) } case Result.Result.Failure { Error: Secondˉfailure } { Input } }; }";
+    }
+    if Index == 34u32 {
+        return "export fn Main(Budget: Memory.Memoryˉbudget, Input: bytes) -> bytes effects(memory.allocate) { let Created = Bytes.Constructˉreserved(Budget, 8u64); let Copied = Created; return match Created { case Result.Result.Valid { Value: Initial } { Bytes.Freeze(Initial) } case Result.Result.Failure { Error: Failure } { Input } }; }";
+    }
+    if Index == 35u32 {
+        return "export fn Main(Budget: Memory.Memoryˉbudget) -> Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure> effects() { return Bytes.Constructˉreserved(Budget, 8u64); }";
+    }
+    if Index == 36u32 {
+        return "export fn Main(Value: borrow bytes) -> Collections.Slice<u32> { return Bytes.Borrowˉrange(borrow Value, 0u64, 1u64); }";
+    }
+    return "export fn Main(Owner: borrow bytes, Other: bytes) -> Collections.Slice<u8> { return Bytes.Borrowˉrange(borrow Other, 0u64, 1u64); }";
+}
+
+fn Sourceˉvariant(Index: u32) -> u32 {
+    if Index == 16u32 { return 4u32; }
+    if Index == 17u32 { return 5u32; }
+    if Index == 23u32 { return 1u32; }
+    if Index == 24u32 { return 2u32; }
+    if Index == 25u32 { return 6u32; }
+    return 0u32;
+}
+
+fn Operationsˉoffset(Directory: bytes) -> u32 {
+    return Consumer.Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
+        Bytesˉreadˉu32ˉlittle(Directory, 8u32) * 48u32 +
+        Bytesˉreadˉu32ˉlittle(Directory, 16u32) * 28u32;
+}
+
+fn Findˉoperation(Directory: bytes, Kind: u32) -> u32 {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Base: u32 = Operationsˉoffset(Directory);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Entry: u32 = Base + Index * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Directory, Entry + 4u32) == Kind { return Entry; }
+        Index = Index + 1u32;
+    }
+    return Bytesˉlength(Directory);
+}
+
+fn Operandˉoffset(Directory: bytes, Entry: u32, Index: u32) -> u32 {
+    return Operationsˉoffset(Directory) +
+        Bytesˉreadˉu32ˉlittle(Directory, 24u32) * 28u32 +
+        Bytesˉreadˉu32ˉlittle(Directory, 32u32) * 4u32 +
+        (Bytesˉreadˉu32ˉlittle(Directory, Entry + 16u32) + Index) * 4u32;
+}
+
+fn Familyˉisˉcomplete(Directory: bytes) -> bool {
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+    if Minor != 39u32 && Minor != 40u32 { return false; }
+    var Kind: u32 = 195u32;
+    while Kind <= 207u32 {
+        let Entry: u32 = Findˉoperation(Directory, Kind);
+        if Entry == Bytesˉlength(Directory) { return false; }
+        var Count: u32 = 1u32;
+        if Kind == 195u32 || Kind == 204u32 || Kind == 206u32 { Count = 2u32; }
+        if Kind == 205u32 { Count = 3u32; }
+        if Bytesˉreadˉu16ˉlittle(Directory, Entry + 6u32) != Count { return false; }
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32);
+        let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 24u32);
+        // Canonical module order places Result after Collection/Limit failures.
+        if Kind == 195u32 {
+            if Target != 0u32 || Auxiliary != 3u32 { return false; }
+        } else if Kind <= 201u32 {
+            if Target == 4294967295u32 || Auxiliary != 3u32 { return false; }
+        } else if Kind == 205u32 {
+            if Target == 4294967295u32 || Auxiliary != 6u32 { return false; }
+        } else if Target != 0u32 || Auxiliary != 0u32 { return false; }
+        Kind = Kind + 1u32;
+    }
+    return true;
+}
+
+fn Namedˉorderˉisˉpreserved(Directory: bytes, Constructor: bool) -> bool {
+    // Root declarations are emitted first. Maximum/Byte has function index
+    // zero; Supply is index one. Call targets are WVSD indices, not block ids.
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Base: u32 = Operationsˉoffset(Directory);
+    var Seen: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Entry: u32 = Base + Index * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Directory, Entry + 4u32) == 62u32 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32);
+            if Seen == 0u32 && Target != 0u32 { return false; }
+            if Seen == 1u32 && Constructor && Target != 1u32 { return false; }
+            Seen = Seen + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if Constructor { return Seen == 2u32; }
+    return Seen == 1u32;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value));
+    return Replaced.Value;
+}
+
+fn Publish(Input: bytes, Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary,
+    Product: Wir.Compilerˉsourceˉwirˉcompilation, Suffix: text) -> i32 {
+    var Manifest: bytes = Textˉtoˉutf8("WVCA");
+    Manifest = Bytesˉconcat(Manifest, Bytesˉfromˉu16ˉlittle(1u32));
+    Manifest = Bytesˉconcat(Manifest, Bytesˉfromˉu16ˉlittle(0u32));
+    Manifest = Appendˉu32(Manifest, 104u32);
+    Manifest = Appendˉu32(Manifest, Bytesˉlength(Input));
+    Manifest = Appendˉu32(Manifest, Bytesˉlength(Bindingˉsummary.Directory));
+    Manifest = Appendˉu32(Manifest, Bytesˉlength(Product.Directory));
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Modules);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Capabilities);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Data);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Records);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Enums);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Variants);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Functions);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Fields);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Members);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Cases);
+    Manifest = Appendˉu32(Manifest, Symbolˉsummary.Parameters);
+    Manifest = Appendˉu32(Manifest, Bytesˉreadˉu32ˉlittle(Bindingˉsummary.Directory, 8u32));
+    Manifest = Appendˉu32(Manifest, Bindingˉsummary.Parameters);
+    Manifest = Appendˉu32(Manifest, Bindingˉsummary.Locals);
+    Manifest = Appendˉu32(Manifest, Product.Functions);
+    Manifest = Appendˉu32(Manifest, Product.Blocks);
+    Manifest = Appendˉu32(Manifest, Product.Operations);
+    Manifest = Appendˉu32(Manifest, Product.Temporaries);
+    Manifest = Appendˉu32(Manifest, Product.Operands);
+    Manifest = Appendˉu32(Manifest, 0u32);
+    file.write_bytes(Textˉconcat(process.argument(0u32), Suffix), Input);
+    file.write_bytes(Textˉconcat(process.argument(1u32), Suffix), Manifest);
+    file.write_bytes(Textˉconcat(process.argument(2u32), Suffix), Bindingˉsummary.Directory);
+    file.write_bytes(Textˉconcat(process.argument(3u32), Suffix), Product.Directory);
+    return 42;
+}
+
+fn Allocationˉeffectˉisˉexact(Input: bytes, Accepted: bool) -> bool {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary = Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Product: Wir.Compilerˉsourceˉwirˉcompilation = Wir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(Input, Scan, Symbolˉsummary);
+    if Product.Status != Wir.Compilerˉsourceˉwirˉstatus.Valid { return false; }
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary = Wir.Compilerˉsourceˉwirˉcompilationˉbindings(Symbolˉsummary, Product);
+    let Summary: Effects.Compilerˉsourceˉeffectˉsummary = Effectˉinference.Compilerˉanalyzeˉpreparedˉsourceˉeffects(
+        Input, Scan, Symbolˉsummary, Bindingˉsummary, Product.Directory
+    );
+    if !Summary.Wirˉvalid { return false; }
+    if Accepted {
+        return Summary.Status == Effects.Compilerˉsourceˉeffectˉstatus.Valid &&
+            (Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(Summary.Directory, 0u32) & 1u32) != 0u32;
+    }
+    return Summary.Status == Effects.Compilerˉsourceˉeffectˉstatus.Mismatchedˉeffectˉset;
+}
+
+fn Headerˉevidence() -> i32 {
+    let Empty: bytes = Textˉtoˉutf8("");
+    let Catalog = Generics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    let Base = Wir.Compilerˉsourceˉwirˉbuildˉempty(Empty, 0u32, 0u32, Catalog.Evidence);
+    let Baseˉheader: bytes = Wir.Compilerˉsourceˉwirˉheader(Base);
+    if Bytesˉlength(Baseˉheader) != 48u32 ||
+        Bytesˉreadˉu16ˉlittle(Baseˉheader, 6u32) != 9u32 ||
+        !Wir.Compilerˉsourceˉwirˉevidenceˉfits(Base) ||
+        Bytesˉlength(Wir.Compilerˉsourceˉwirˉdirectory(Base)) != 48u32 {
+        return 150;
+    }
+    // This synthetic operation tests the envelope, not source-operation validity.
+    let Operation = Wir.Compilerˉsourceˉwirˉemit(Base, 195u32, 0u32, Empty, 0u32, 0u32, 0u32, 0u32);
+    let Construct = Wir.Compilerˉsourceˉwirˉvalueˉbuild(Operation);
+    let Constructˉheader: bytes = Wir.Compilerˉsourceˉwirˉheader(Construct);
+    let Directory: bytes = Wir.Compilerˉsourceˉwirˉdirectory(Construct);
+    if Bytesˉlength(Constructˉheader) != 56u32 ||
+        Bytesˉreadˉu16ˉlittle(Constructˉheader, 6u32) != 39u32 ||
+        Bytesˉreadˉu32ˉlittle(Constructˉheader, 48u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Constructˉheader, 52u32) != 1u32 ||
+        !Wir.Compilerˉsourceˉwirˉevidenceˉfits(Construct) ||
+        Bytesˉlength(Directory) != 84u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 60u32) != 195u32 {
+        return 151;
+    }
+    var Byte: u32 = 0u32;
+    while Byte < 56u32 {
+        if Bytesˉreadˉu8(Directory, Byte) != Bytesˉreadˉu8(Constructˉheader, Byte) { return 151; }
+        Byte = Byte + 1u32;
+    }
+    // A function-private build retains global counts but has private payloads.
+    // Whole-directory admission must refuse before attempting feature reads.
+    let Private = Wir.Compilerˉsourceˉwirˉstartˉfunction(Construct, 0u32, 0u32);
+    if Wir.Compilerˉsourceˉwirˉevidenceˉfits(Private) { return 152; }
+    let Invalidˉcatalog = Wir.Compilerˉsourceˉwirˉbuildˉempty(
+        Empty, 0u32, 0u32, Bytesˉconcat(Catalog.Evidence, Bytesˉfromˉu8(0u8))
+    );
+    if Wir.Compilerˉsourceˉwirˉevidenceˉfits(Invalidˉcatalog) { return 153; }
+    let Typeˉcatalog = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    var Combined: bytes = Textˉtoˉutf8("WVGI");
+    Combined = Bytesˉconcat(Combined, Bytesˉfromˉu16ˉlittle(1u32));
+    Combined = Bytesˉconcat(Combined, Bytesˉfromˉu16ˉlittle(0u32));
+    Combined = Appendˉu32(Combined, Bytesˉlength(Catalog.Evidence));
+    Combined = Appendˉu32(Combined, Bytesˉlength(Typeˉcatalog.Evidence));
+    Combined = Bytesˉconcat(Combined, Catalog.Evidence);
+    Combined = Bytesˉconcat(Combined, Typeˉcatalog.Evidence);
+    Combined = Bytesˉconcat(Combined, Textˉtoˉutf8("WVFT"));
+    let Invalidˉtail = Wir.Compilerˉsourceˉwirˉbuildˉempty(Empty, 0u32, 0u32, Combined);
+    if Wir.Compilerˉsourceˉwirˉevidenceˉfits(Invalidˉtail) { return 154; }
+    return 42;
+}
+
+fn Poolˉoperation(Block: u32, Kind: u32, Count: u32, Shape: u32, Temporary: u32,
+    Firstˉoperand: u32, Target: u32, Auxiliary: u32) -> bytes {
+    var Row: bytes = Bytesˉfromˉu32ˉlittle(Block);
+    Row = Bytesˉconcat(Row, Bytesˉfromˉu16ˉlittle(Kind));
+    Row = Bytesˉconcat(Row, Bytesˉfromˉu16ˉlittle(Count));
+    Row = Appendˉu32(Row, Shape);
+    Row = Appendˉu32(Row, Temporary);
+    Row = Appendˉu32(Row, Firstˉoperand);
+    Row = Appendˉu32(Row, Target);
+    return Appendˉu32(Row, Auxiliary);
+}
+
+fn Poolˉblock(Block: u32, First: u32, Count: u32, Terminator: u32, Value: u32,
+    Target: u32, Other: u32) -> bytes {
+    var Row: bytes = Bytesˉfromˉu32ˉlittle(Block);
+    Row = Appendˉu32(Row, First);
+    Row = Appendˉu32(Row, Count);
+    Row = Appendˉu32(Row, Terminator);
+    Row = Appendˉu32(Row, Value);
+    Row = Appendˉu32(Row, Target);
+    return Appendˉu32(Row, Other);
+}
+
+fn Scalarˉpooling() -> i32 {
+    var Blocks: bytes = Poolˉblock(0u32, 100u32, 3u32, 2u32, 0u32, 1u32, 2u32);
+    Blocks = Bytesˉconcat(Blocks, Poolˉblock(1u32, 105u32, 2u32, 1u32, 4294967295u32, 3u32, 4294967295u32));
+    Blocks = Bytesˉconcat(Blocks, Poolˉblock(2u32, 103u32, 2u32, 1u32, 4294967295u32, 3u32, 4294967295u32));
+    Blocks = Bytesˉconcat(Blocks, Poolˉblock(3u32, 107u32, 2u32, 3u32, 7u32, 4294967295u32, 4294967295u32));
+    var Operations: bytes = Poolˉoperation(0u32, 4u32, 0u32, 4u32, 0u32, 400u32, 1u32, 0u32);
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(0u32, 1u32, 0u32, 1u32, 1u32, 400u32, 7u32, 0u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(0u32, 1u32, 0u32, 1u32, 2u32, 400u32, 7u32, 0u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(2u32, 1u32, 0u32, 1u32, 3u32, 400u32, 42u32, 0u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(2u32, 1u32, 0u32, 1u32, 4u32, 400u32, 7u32, 0u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(1u32, 1u32, 0u32, 1u32, 5u32, 400u32, 42u32, 0u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(1u32, 1u32, 0u32, 1u32, 6u32, 400u32, 7u32, 0u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(3u32, 64u32, 2u32, 1u32, 7u32, 400u32, 2u32, 1u32));
+    Operations = Bytesˉconcat(Operations, Poolˉoperation(3u32, 1u32, 0u32, 1u32, 8u32, 402u32, 7u32, 0u32));
+    var Temporaries: bytes = Bytesˉfromˉu32ˉlittle(4u32);
+    var Shape: u32 = 0u32;
+    while Shape < 8u32 { Temporaries = Appendˉu32(Temporaries, 1u32); Shape = Shape + 1u32; }
+    let Operands: bytes = Appendˉu32(Bytesˉfromˉu32ˉlittle(3u32), 5u32);
+    let Pooled: Scalarˉconstants.Payload = Scalarˉconstants.Pool(Blocks, Operations, Temporaries, Operands, 100u32, 400u32);
+    if !Pooled.Valid || !Pooled.Changed || Bytesˉlength(Pooled.Operations) != 140u32 || Bytesˉlength(Pooled.Temporaries) != 20u32 ||
+        Bytesˉreadˉu32ˉlittle(Pooled.Blocks, 8u32) != 2u32 || Bytesˉreadˉu32ˉlittle(Pooled.Blocks, 32u32) != 103u32 ||
+        Bytesˉreadˉu32ˉlittle(Pooled.Blocks, 60u32) != 102u32 || Bytesˉreadˉu32ˉlittle(Pooled.Blocks, 88u32) != 104u32 ||
+        Bytesˉreadˉu32ˉlittle(Pooled.Blocks, 100u32) != 4u32 || Bytesˉreadˉu32ˉlittle(Pooled.Blocks, 16u32) != 0u32 { return 156; }
+    if Bytesˉreadˉu32ˉlittle(Pooled.Operations, 56u32) != 2u32 || Bytesˉreadˉu32ˉlittle(Pooled.Operations, 76u32) != 42u32 ||
+        Bytesˉreadˉu32ˉlittle(Pooled.Operations, 84u32) != 1u32 || Bytesˉreadˉu32ˉlittle(Pooled.Operations, 104u32) != 42u32 ||
+        Bytesˉreadˉu16ˉlittle(Pooled.Operations, 116u32) != 64u32 || Bytesˉreadˉu32ˉlittle(Pooled.Operations, 132u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Pooled.Operations, 136u32) != 1u32 || Bytesˉlength(Pooled.Operands) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Pooled.Operands, 0u32) != 2u32 || Bytesˉreadˉu32ˉlittle(Pooled.Operands, 4u32) != 3u32 { return 156; }
+    let Truncated: Scalarˉconstants.Payload = Scalarˉconstants.Pool(Blocks, Bytesˉslice(Operations, 0u32, Bytesˉlength(Operations) - 1u32), Temporaries, Operands, 100u32, 400u32);
+    if Truncated.Valid || Truncated.Changed { return 157; }
+    let Empty: bytes = Bytesˉslice(Blocks, 0u32, 0u32);
+    var Uniqueˉoperations: bytes = Empty;
+    var Uniqueˉtemporaries: bytes = Empty;
+    var Unique: u32 = 0u32;
+    while Unique < 130u32 {
+        var Key: u32 = Unique;
+        if Unique > 0u32 { Key = Unique - 1u32; }
+        Uniqueˉoperations = Bytesˉconcat(Uniqueˉoperations, Poolˉoperation(0u32, 3u32, 0u32, 3u32, Unique, 500u32, Key, 0u32));
+        Uniqueˉtemporaries = Appendˉu32(Uniqueˉtemporaries, 3u32);
+        Unique = Unique + 1u32;
+    }
+    let Uniqueˉblocks: bytes = Poolˉblock(0u32, 200u32, 130u32, 3u32, 129u32, 4294967295u32, 4294967295u32);
+    let Limited: Scalarˉconstants.Payload = Scalarˉconstants.Pool(Uniqueˉblocks, Uniqueˉoperations, Uniqueˉtemporaries, Empty, 200u32, 500u32);
+    if !Limited.Valid || Limited.Changed || Bytesˉlength(Limited.Operations) != Bytesˉlength(Uniqueˉoperations) ||
+        !Sourceˉset.Compilerˉsourceˉspansˉequal(Limited.Operations, 0u32, Bytesˉlength(Limited.Operations), Uniqueˉoperations, 0u32, Bytesˉlength(Uniqueˉoperations)) ||
+        !Sourceˉset.Compilerˉsourceˉspansˉequal(Limited.Blocks, 0u32, Bytesˉlength(Limited.Blocks), Uniqueˉblocks, 0u32, Bytesˉlength(Uniqueˉblocks)) ||
+        !Sourceˉset.Compilerˉsourceˉspansˉequal(Limited.Temporaries, 0u32, Bytesˉlength(Limited.Temporaries), Uniqueˉtemporaries, 0u32, Bytesˉlength(Uniqueˉtemporaries)) ||
+        !Sourceˉset.Compilerˉsourceˉspansˉequal(Limited.Operands, 0u32, Bytesˉlength(Limited.Operands), Empty, 0u32, 0u32) { return 158; }
+    return 42;
+}
+
+fn Conditionˉsource(Index: u32) -> text {
+    if Index == 0u32 {
+        return "export fn Main(Flag: bool) -> i32 { while Flag && (false || true) { if Flag && (true || false) { return 42; } return 0; } return 0; }";
+    }
+    if Index == 1u32 {
+        return "export fn Main(Flag: bool) -> i32 { let Choice: bool = Flag && (true || false); if Choice { return 42; } return 0; }";
+    }
+    let Stop: text = "fn Stop() -> never { while true { } } ";
+    if Index == 2u32 {
+        return Textˉconcat(Stop, "export fn Main() -> i32 { if Stop() || 1 { return 42; } }");
+    }
+    if Index == 3u32 {
+        return Textˉconcat(Stop, "export fn Main(Flag: bool) -> i32 { if (Flag && Stop()) || true { return 42; } return 0; }");
+    }
+    if Index == 4u32 {
+        return Textˉconcat(Stop, "export fn Main(Flag: bool) -> i32 { if (Flag && Stop()) || 1 { return 42; } return 0; }");
+    }
+    if Index == 5u32 {
+        return "export fn Main() -> i32 { if true && 1 { return 42; } return 0; }";
+    }
+    return "export fn Main() -> never { while true { } }";
+}
+
+fn Conditionˉoffset(Source: bytes) -> u32 {
+    let Marker: bytes = Textˉtoˉutf8("if ");
+    var Offset: u32 = 0u32;
+    while Offset + 3u32 <= Bytesˉlength(Source) {
+        if Sourceˉset.Compilerˉsourceˉspansˉequal(Source, Offset, 3u32, Marker, 0u32, 3u32) {
+            return Offset + 3u32;
+        }
+        Offset = Offset + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Phiˉinputsˉretainˉblocks(Directory: bytes) -> bool {
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Base: u32 = Operationsˉoffset(Directory);
+    var Origins: bytes = Bytesˉslice(Directory, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    var Phis: u32 = 0u32;
+    while Index < Count {
+        let Entry: u32 = Base + Index * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Directory, Entry + 4u32) == 64u32 {
+            if Bytesˉreadˉu16ˉlittle(Directory, Entry + 6u32) != 2u32 { return false; }
+            let First: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operandˉoffset(Directory, Entry, 0u32));
+            let Second: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operandˉoffset(Directory, Entry, 1u32));
+            if First >= Bytesˉlength(Origins) / 4u32 || Second >= Bytesˉlength(Origins) / 4u32 { return false; }
+            if Bytesˉreadˉu32ˉlittle(Origins, First * 4u32) != Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32) ||
+                Bytesˉreadˉu32ˉlittle(Origins, Second * 4u32) != Bytesˉreadˉu32ˉlittle(Directory, Entry + 24u32) { return false; }
+            Phis = Phis + 1u32;
+        }
+        if Bytesˉreadˉu32ˉlittle(Directory, Entry + 8u32) != 0u32 {
+            if Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32) != Bytesˉlength(Origins) / 4u32 { return false; }
+            Origins = Appendˉu32(Origins, Bytesˉreadˉu32ˉlittle(Directory, Entry));
+        }
+        Index = Index + 1u32;
+    }
+    return Phis >= 2u32;
+}
+
+fn Directˉconditions() -> i32 {
+    var Index: u32 = 0u32;
+    while Index < 7u32 {
+        let Source: text = Root(Conditionˉsource(Index), 0u32);
+        let Product: Wir.Compilerˉsourceˉwirˉsummary = Analyze(Graph(Source, 0u32));
+        if Index == 4u32 || Index == 5u32 {
+            let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+            // Source-set offsets exclude the edition descriptor removed by Graph.
+            let Moduleˉsource: bytes = Bytesˉslice(Sourceˉbytes, 12u32, Bytesˉlength(Sourceˉbytes) - 12u32);
+            if Product.Status != Wir.Compilerˉsourceˉwirˉstatus.Invalidˉoperator || Product.Failureˉmodule != 0u32 ||
+                Product.Failureˉoffset != Conditionˉoffset(Moduleˉsource) { return 159; }
+        } else {
+            if Product.Status != Wir.Compilerˉsourceˉwirˉstatus.Valid { return 160; }
+            if Index == 0u32 && Findˉoperation(Product.Directory, 64u32) != Bytesˉlength(Product.Directory) { return 161; }
+            if Index == 1u32 && !Phiˉinputsˉretainˉblocks(Product.Directory) { return 162; }
+        }
+        Index = Index + 1u32;
+    }
+    return 42;
+}
+
+fn Splitˉprogram(Index: u32) -> text {
+    var Declaration: text = "let Split: Result.Result<Memory.Memoryˉbudget, Memory.Allocationˉfailure>";
+    if Index == 1u32 { Declaration = "let Split"; }
+    if Index == 2u32 { Declaration = "var Split"; }
+    if Index == 3u32 { Declaration = "let Split: Result.Result<Bytes.Bytesˉbuilder, Memory.Allocationˉfailure>"; }
+    if Index == 4u32 { Declaration = "let Split: Result.Result<Memory.Memoryˉbudget, Memory.Limitˉfailure>"; }
+    if Index == 5u32 { Declaration = "let Split: Result.Result<Memory.Memoryˉbudget, Allocationˉfailure>"; }
+    if Index == 7u32 { Declaration = "let Split: Forgedˉresult<Memory.Memoryˉbudget, Memory.Allocationˉfailure>"; }
+    var Body: text = "";
+    if Index == 5u32 {
+        Body = "record Allocationˉfailure { Reason: Memory.Allocationˉreason; Requestedˉbytes: u64; Availableˉbytes: u64; } ";
+    }
+    if Index == 7u32 {
+        Body = "variant Forgedˉresult<T, E> { Valid(Value: T); Failure(Error: E); } ";
+    }
+    Body = Textˉconcat(Body, "export fn Main(Budget: Memory.Memoryˉbudget) -> i32 { var Parent: Memory.Memoryˉbudget = Budget; ");
+    Body = Textˉconcat(Body, Declaration);
+    return Textˉconcat(Body, " = Memory.Split(borrow mut Parent, 32u64, 17u32); return match Split { case Result.Result.Valid { Value: Child } { 42 } case Result.Result.Failure { Error: Failure } { 0 } }; }");
+}
+
+fn Splitˉresultˉinference() -> i32 {
+    // The i32 return provides no Result context to either inferred initializer.
+    // Resolve the typed baseline once, then compare its canonical type arguments.
+    var Baselineˉfailure: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        var Variant: u32 = 0u32;
+        if Index == 6u32 { Variant = 1u32; }
+        let Input: bytes = Graph(Root(Splitˉprogram(Index), Variant), Variant);
+        let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+        let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary = Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+        if Symbolˉsummary.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 170; }
+        let Product: Wir.Compilerˉsourceˉwirˉcompilation = Wir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(Input, Scan, Symbolˉsummary);
+        if Index < 3u32 {
+            if Product.Status != Wir.Compilerˉsourceˉwirˉstatus.Valid || Symbolˉsummary.Functions != 1u32 { return 171; }
+            let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary = Wir.Compilerˉsourceˉwirˉcompilationˉbindings(Symbolˉsummary, Product);
+            let Entry: u32 = Findˉoperation(Product.Directory, 171u32);
+            if Entry == Bytesˉlength(Product.Directory) ||
+                Bytesˉreadˉu16ˉlittle(Product.Directory, Entry + 6u32) != 2u32 ||
+                Bytesˉreadˉu32ˉlittle(Product.Directory, Entry + 20u32) != 1u32 ||
+                Bytesˉreadˉu32ˉlittle(Product.Directory, Entry + 24u32) != 3u32 { return 173; }
+            let Shape: u32 = Bytesˉreadˉu32ˉlittle(Product.Directory, Entry + 8u32);
+            let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+                Consumer.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(Bindingˉsummary.Directory);
+            if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(Catalog, Shape, 8u32) ||
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(Catalog, Shape, 0u32) != 805306368u32 { return 174; }
+            let Failureˉshape: u32 = Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(Catalog, Shape, 1u32);
+            if Failureˉshape == 0u32 || Failureˉshape == 4294967295u32 { return 174; }
+            if Index == 0u32 { Baselineˉfailure = Failureˉshape; }
+            else if Failureˉshape != Baselineˉfailure { return 175; }
+            let Temporaryˉbase: u32 = Operationsˉoffset(Product.Directory) + Product.Operations * 28u32;
+            let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Product.Directory, Operandˉoffset(Product.Directory, Entry, 0u32));
+            let Priority: u32 = Bytesˉreadˉu32ˉlittle(Product.Directory, Operandˉoffset(Product.Directory, Entry, 1u32));
+            if Bytesˉreadˉu32ˉlittle(Product.Directory, Temporaryˉbase + Maximum * 4u32) != 8u32 ||
+                Bytesˉreadˉu32ˉlittle(Product.Directory, Temporaryˉbase + Priority * 4u32) != 3u32 { return 176; }
+            var Suffix: text = "-1";
+            if Index == 1u32 { Suffix = "-2"; }
+            if Index == 2u32 { Suffix = "-3"; }
+            if Publish(Input, Symbolˉsummary, Bindingˉsummary, Product, Suffix) != 42 { return 177; }
+        } else {
+            if Product.Status != Wir.Compilerˉsourceˉwirˉstatus.Genericˉresolution ||
+                Product.Failureˉmodule != 0u32 { return 178; }
+            let Module: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+            let Source: bytes = Module.Source;
+            // Failure_function is the declaration slot, including nominal rows.
+            let Failureˉfunction: Symbols.Compilerˉsourceˉsymbolˉmatch = Symbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+                Symbolˉsummary.Directory, Scan.Modules, Product.Failureˉfunction
+            );
+            let Mainˉname: bytes = Textˉtoˉutf8("Main");
+            if !Failureˉfunction.Found || Failureˉfunction.Module != 0u32 ||
+                !Sourceˉset.Compilerˉsourceˉspansˉequal(Source, Failureˉfunction.Nameˉoffset, Failureˉfunction.Nameˉlength,
+                    Mainˉname, 0u32, Bytesˉlength(Mainˉname)) { return 179; }
+            let Callˉname: bytes = Textˉtoˉutf8("Memory.Split");
+            if !Sourceˉset.Compilerˉsourceˉspansˉequal(Source, Product.Failureˉoffset, Bytesˉlength(Callˉname),
+                Callˉname, 0u32, Bytesˉlength(Callˉname)) { return 179; }
+        }
+        Index = Index + 1u32;
+    }
+    return 42;
+}
+
+fn Analyze(Input: bytes) -> Wir.Compilerˉsourceˉwirˉsummary {
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary = Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    return Wir.Compilerˉsourceˉwirˉcompilationˉsummary(
+        Wir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(Input, Scan, Symbolˉsummary));
+}
+
+fn Checkˉsourceˉcase(Input: bytes, Index: u32) -> bool {
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary = Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Product: Wir.Compilerˉsourceˉwirˉcompilation = Wir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(Input, Scan, Symbolˉsummary);
+    let Valid: bool = Product.Status == Wir.Compilerˉsourceˉwirˉstatus.Valid;
+    if Index == 35u32 { return Valid && Allocationˉeffectˉisˉexact(Input, false); }
+    let Lifetimeˉrejection: bool = Index == 10u32 || Index == 11u32 ||
+        Index == 14u32 || Index == 15u32 || Index == 30u32 || Index == 32u32 ||
+        Index == 33u32 || Index == 34u32 || Index == 37u32;
+    if Index >= 10u32 && !Lifetimeˉrejection { return !Valid; }
+    if !Valid { return false; }
+    if Index == 0u32 && (!Familyˉisˉcomplete(Product.Directory) ||
+        !Allocationˉeffectˉisˉexact(Input, true)) { return false; }
+    if Index == 6u32 && !Namedˉorderˉisˉpreserved(Product.Directory, true) { return false; }
+    if Index == 7u32 && !Namedˉorderˉisˉpreserved(Product.Directory, false) { return false; }
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary = Wir.Compilerˉsourceˉwirˉcompilationˉbindings(Symbolˉsummary, Product);
+    var Suffix: text = Textˉconcat("-source-", U32ˉformat(Index));
+    if Index == 0u32 { Suffix = ""; }
+    if Index == 8u32 { Suffix = "-borrow"; }
+    return Publish(Input, Symbolˉsummary, Bindingˉsummary, Product, Suffix) == 42;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return 64; }
+    var Index: u32 = 0u32;
+    var Failure: i32 = 1;
+    while Index < SOURCE_CASES {
+        let Variant: u32 = Sourceˉvariant(Index);
+        let Input: bytes = Graph(Root(Sourceˉcase(Index), Variant), Variant);
+        if !Checkˉsourceˉcase(Input, Index) { return Failure; }
+        Index = Index + 1u32;
+        Failure = Failure + 1;
+    }
+    let Admitted: i32 = Byteˉresult.Check();
+    if Admitted != 42 { return 200 + Admitted; }
+    let Headerˉchecked: i32 = Headerˉevidence();
+    if Headerˉchecked != 42 { return Headerˉchecked; }
+    let Poolˉchecked: i32 = Scalarˉpooling();
+    if Poolˉchecked != 42 { return Poolˉchecked; }
+    let Conditionsˉchecked: i32 = Directˉconditions();
+    if Conditionsˉchecked != 42 { return Conditionsˉchecked; }
+    let Splitˉchecked: i32 = Splitˉresultˉinference();
+    if Splitˉchecked != 42 { return Splitˉchecked; }
+    return 42;
+}

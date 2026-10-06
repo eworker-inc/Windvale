@@ -84,6 +84,24 @@ The statuses distinguish an invalid manifest, rejected source symbols, source
 WIR construction failure, invalid supplied WVLB, and invalid supplied WVIR.
 Failure publishes no substitute evidence.
 
+The preparation result also retains scalar failure information from the original
+symbol or typed-lowering pass: graph status and declaration kind where applicable,
+module, related module, function, source offset, line and column. Failure fields
+retain the producer's coordinates and sentinels. Successful results use
+`4294967295` for module/function indices and zero for source coordinates.
+These fields are internal diagnostics, not additional WVCA, WVLB or WVIR bytes.
+Typed-lowering failures additionally retain the original function, block,
+operation, temporary and operand counts. Symbol failures and successful results
+use zero for those failure counters. The driver includes them in an
+`Evidenceˉlimit` report so a size refusal can be diagnosed without rebuilding
+the rejected directory or repeating lowering. Native execution of this counter
+extension remains pending.
+The driver formats the retained information directly. It must not repeat symbol
+validation or typed lowering to obtain a failure location: doing so can replace
+the original refusal with allocation exhaustion. A rebuilt Windows analyzer
+confirms the original symbol, invalid-return and complete-graph evidence-limit
+refusals. Final cross-host verification remains pending.
+
 The validation result retains status, the reconstructed source-set scan, and
 the reconstructed symbol summary. Keeping the larger WVLB and WVIR summaries
 out of that result preserves the native backend's fixed 64-cell record bound.
@@ -437,15 +455,21 @@ count. The main-pipeline generic-nominal fixture additionally requires one
 parameter-load and return shapes in WVIR, and unchanged ordinary `Main`
 lowering. This proves retained analysis evidence, not WVB materialization.
 
-The current scalar WVB runner stops compiler-heavy fixtures at its documented
-unsupported-operation boundary, and the general native and WebAssembly
-lowerers reject this compiler closure at their current module/code admission
-boundaries. Therefore the current checkpoint claims successful source
-compilation of the fixture and availability of the independent validation path,
-not execution of that fixture through those unsupported backends. The complete
-compiler source set reconstructs successfully with the one-shot wrapper delegating to
-the prepared emitter. Runtime equality evidence becomes required when a
-qualified compiler-capable execution path admits the focused fixture.
+The focused source-analysis test separates production and independent validation
+into two authenticated Project4 executables under hosted native profile 8.
+This keeps each source closure within the compiler's existing admission bounds.
+The producer checks deterministic artifacts and failure diagnostics, then writes
+the source, manifest, bindings and WVIR. The validator reads those four files and
+checks acceptance and malformed artifacts. Both require exactly four arguments
+before file access; the existing front-door owner includes those guards as one
+additional test group. This artifact test does not request WVB emission.
+
+Prepared native execution checks the two phases through the existing hosted ABI;
+it does not establish support for new byte-builder execution in that ABI, extend
+the scalar WVB runner or WebAssembly backend, or qualify the complete compiler.
+The one-shot compiler wrapper continues to delegate emission to the prepared
+emitter. Cross-host and qualification claims require their declared execution
+evidence separately from source compilation or cache preparation.
 
 WVLB and WVIR layouts and their detailed independent-validation rules remain
 owned by [source bindings](Compiler-Source-Bindings.md) and

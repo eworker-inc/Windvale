@@ -10,6 +10,7 @@ import {
     writeFileSync,
 } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +20,7 @@ import {
 } from './Verification-Owner-Stream-Path.mjs';
 import {
     Confirmˉverificationˉsourceˉstate,
+    Measureˉverificationˉsourceˉstate,
     Getˉverificationˉchangedˉpaths,
     Getˉverificationˉresultˉpath,
     Listˉverificationˉresultˉcandidates,
@@ -221,6 +223,7 @@ async function Verifyˉresultˉcache(Work) {
         Concurrentˉfirst.sourceTree !== First.sourceTree) {
         Reject('The prepared verification state identity differs.');
     }
+    await Verifyˉselectedˉverifierˉidentity(Work, Repository, Cache, First);
     const Preparedˉstate = path.join(
         Cache, 'owner-result-v1', First.stateKey,
     );
@@ -233,6 +236,10 @@ async function Verifyˉresultˉcache(Work) {
         Repository, First.sourceSentinel
     ))) {
         Reject('The prepared verification source state was not confirmable.');
+    }
+    const Measured = await Measureˉverificationˉsourceˉstate(Repository);
+    if (Measured !== First.sourceSentinel) {
+        Reject('Read-only bundle source measurement differs from cached state.');
     }
     if (await Probeˉverificationˉresult(
         First.root, First.stateKey, Owner, Action
@@ -307,6 +314,12 @@ async function Verifyˉresultˉcache(Work) {
 
     writeFileSync(Source, 'changed\n', 'utf8');
     const Changed = await Prepareˉverificationˉresultˉcache(Repository, Cache);
+    const Changedˉmeasurement = await Measureˉverificationˉsourceˉstate(Repository);
+    if (Changedˉmeasurement === Measured ||
+        Changedˉmeasurement !== Changed.sourceSentinel ||
+        await Confirmˉverificationˉsourceˉstate(Repository, Measured)) {
+        Reject('A changed source tree remained covered by the bundle measurement.');
+    }
     if (Changed.stateKey === First.stateKey ||
         Changed.sourceSentinel === First.sourceSentinel ||
         await Probeˉverificationˉresult(
@@ -469,6 +482,64 @@ async function Verifyˉresultˉcache(Work) {
         .filter(Entry => Entry.isDirectory() && /^[0-9a-f]{64}$/.test(Entry.name));
     if (Retained.length > 16) {
         Reject('Verification result cache retention exceeded its state bound.');
+    }
+}
+
+async function Verifyˉselectedˉverifierˉidentity(Work, Repository, Cache, Unselected) {
+    const Previousˉroot = process.env.WINDVALE_NATIVE_CACHE_ROOT;
+    const Previousˉkey = process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT;
+    const Root = path.join(Work, 'Bootstrap-Verifier-Cache');
+    const Key = 'e'.repeat(64);
+    const Host = process.platform === 'win32' ? 'windows-x64' : 'linux-x64';
+    const Target = process.platform === 'win32' ? 'windows' : 'linux';
+    const Directory = path.join(Root, 'segmented-hosted-wvb-v1', Host, Key);
+    const Product = path.join(Directory, process.platform === 'win32' ? 'Product.exe' : 'Product.elf');
+    const Manifest = path.join(Directory, 'Checkpoint.txt');
+    const Input = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)),
+        '../../Artifacts/Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb'));
+    const Digest = Bytes => createHash('sha256').update(Bytes).digest('hex');
+    function Writeˉcheckpoint(Bytes) {
+        writeFileSync(Product, Bytes, { mode: 0o755 });
+        writeFileSync(Manifest, [
+            'windvale-native-segmented-hosted-wvb-checkpoint 1',
+            `key ${Key}`, `host ${Host}`, `target ${Target}`, 'profile 8',
+            `input-bytes ${Input.length}`, `input-sha256 ${Digest(Input)}`,
+            `product-bytes ${Bytes.length}`, `product-sha256 ${Digest(Bytes)}`,
+            'product-mode executable', '',
+        ].join(process.platform === 'win32' ? '\r\n' : '\n'), 'ascii');
+    }
+    try {
+        process.env.WINDVALE_NATIVE_CACHE_ROOT = Root;
+        process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = Key;
+        await Requireˉrejection(
+            () => Prepareˉverificationˉresultˉcache(Repository, Cache),
+            'The prepared bootstrap verifier family',
+        );
+        if (existsSync(Root)) Reject('A result-cache checkpoint miss constructed its family.');
+        mkdirSync(Directory, { recursive: true });
+        Writeˉcheckpoint(Buffer.from('first bounded identity fixture\n', 'ascii'));
+        const First = await Prepareˉverificationˉresultˉcache(Repository, Cache);
+        Writeˉcheckpoint(Buffer.from('second bounded identity fixture\n', 'ascii'));
+        const Second = await Prepareˉverificationˉresultˉcache(Repository, Cache);
+        if (First.hostKey === Second.hostKey || First.stateKey === Second.stateKey ||
+            First.sourceTree !== Second.sourceTree ||
+            process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT !== Key) {
+            Reject('A changed selected verifier product retained cached evidence under the same key.');
+        }
+        writeFileSync(Product, 'corrupt bounded fixture\n', 'ascii');
+        await Requireˉrejection(
+            () => Prepareˉverificationˉresultˉcache(Repository, Cache),
+            'The segmented hosted checkpoint manifest differs',
+        );
+    } finally {
+        if (Previousˉroot === undefined) delete process.env.WINDVALE_NATIVE_CACHE_ROOT;
+        else process.env.WINDVALE_NATIVE_CACHE_ROOT = Previousˉroot;
+        if (Previousˉkey === undefined) delete process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT;
+        else process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT = Previousˉkey;
+    }
+    const Restored = await Prepareˉverificationˉresultˉcache(Repository, Cache);
+    if (Restored.hostKey !== Unselected.hostKey || Restored.stateKey !== Unselected.stateKey) {
+        Reject('Restoring the verifier selection did not restore the evidence identity.');
     }
 }
 

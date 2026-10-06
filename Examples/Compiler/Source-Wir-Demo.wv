@@ -6,6 +6,7 @@ authority application;
 
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
@@ -75,7 +76,7 @@ export fn Main() -> i32 {
     if Bytesˉlength(Valid.Directory) <= 48u32 { return 9; }
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Validˉinput);
     let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
-    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(Validˉinput);
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(Validˉinput);
     if !Sourceˉwirˉvalidation.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Symbols, Bindings, Valid.Directory
     ) { return 10; }
@@ -153,4 +154,27 @@ export fn Main() -> i32 {
     if Bindingˉfailure.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings { return 32; }
     if Bindingˉfailure.Bindingˉstatus != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Unknownˉname { return 33; }
     return 0;
+}
+
+fn Validateˉsourceˉbindings(Input: bytes) -> Sourceˉbindings.Compilerˉsourceˉbindingˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
+            Input, Symbols
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Phase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbols, true
+        );
+    let Published: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase
+        );
+    return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+        Input, Scan, Symbols, Phase, Published, Symbols.Functions
+    );
 }

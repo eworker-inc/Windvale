@@ -533,6 +533,127 @@ fn Authorityˉmodel() -> bytes {
                 Bytesˉconcat(Encodedˉsection(6u32, Zero), Encodedˉsection(7u32, Types)))));
 }
 
+fn Budgetˉresult(Input: bytes) -> u32 {
+    let Status: u32 = Typedˉresult(Input);
+    if Status == 0u32 && Bytesˉlength(Executable.Iˉcontrol(Input)) == 0u32 { return 3u32; }
+    return Status;
+}
+
+// These are verified WVB graphs, not native allocation/runtime assertions.
+fn Budgetˉhelperˉmodel() -> bytes {
+    let Model: bytes = Word(Byte(Authorityˉmodel(), 20u32, 1u8), 4u32, 2949121u32);
+    let Types: u32 = Section(Model, 7u32);
+    let Added: bytes = Resultˉtype("__WvY0007", Bytesˉfromˉu8(25u8), Cell(7u8, 0u32));
+    return Bytesˉconcat(Word(Word(Model, Types, 16u32), Types - 4u32,
+        Bytesˉreadˉu32ˉlittle(Model, Types - 4u32) + Bytesˉlength(Added)), Added);
+}
+
+fn Checkˉbudgetˉhelpers() -> bool {
+    let Model: bytes = Budgetˉhelperˉmodel();
+    if Budgetˉresult(Model) != 0u32 { return false; }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Model, Section(Model, 4u32));
+    let Owned: bytes = Bytesˉfromˉu8(25u8);
+    let Immutable: bytes = Bytesˉfromˉu8(36u8);
+    let Mutable: bytes = Bytesˉconcat(Bytesˉfromˉu8(41u8), Owned);
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Empty: bytes = Bytesˉslice(U32, 0u32, 0u32);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let Drop: bytes = Bytesˉfromˉu8(80u8);
+    let End: bytes = Bytesˉconcat(Cell(9u8, 42u32), Return);
+    let Saveˉmutable: bytes = Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 1u32));
+    let Invokeˉmutable: bytes = Bytesˉconcat(Cell(4u8, 1u32), Cell(64u8, Target));
+    let Reader: bytes = Namedˉtrial(Model, "SMutableBudget", Mutable, 1u32,
+        U32, Empty, 0u32, End, 1u32);
+    let Forward: bytes = Join(Saveˉmutable, Invokeˉmutable,
+        Join(Drop, Saveˉmutable, Bytesˉconcat(Invokeˉmutable, Return)));
+    // A call stales its old compiler view, but the incoming loan parameter and
+    // an owned parent can each form a fresh view for the next direct helper.
+    let Forwarded: bytes = Trial(Reader, Mutable, 1u32, U32, Mutable, 1u32, Forward, 1u32);
+    if Budgetˉresult(Forwarded) != 0u32 ||
+        Budgetˉresult(Trial(Reader, Owned, 1u32, U32, Mutable, 1u32, Forward, 1u32)) != 0u32 {
+        return false;
+    }
+    let Immutableˉreader: bytes = Namedˉtrial(Model, "SImmutableBudget", Immutable, 1u32,
+        U32, Empty, 0u32, Join(Cell(4u8, 0u32), Drop, End), 1u32);
+    if Budgetˉresult(Trial(Immutableˉreader, Immutable, 1u32, U32, Empty, 0u32,
+            Join(Cell(4u8, 0u32), Cell(64u8, Target), Return), 1u32)) != 0u32 ||
+        Budgetˉresult(Trial(Immutableˉreader, Mutable, 1u32, U32, Immutable, 1u32,
+            Join(Saveˉmutable, Invokeˉmutable, Return), 1u32)) != 0u32 { return false; }
+
+    let Split: bytes = Bytesˉconcat(Cell(206u8, 0u32), Bytesˉfromˉu32ˉlittle(15u32));
+    let Splitˉandˉdrop: bytes = Join(Wide(32u32), Cell(9u8, 0u32), Bytesˉconcat(Split, Drop));
+    let Splitˉtwice: bytes = Join(Splitˉandˉdrop, Splitˉandˉdrop, End);
+    if Budgetˉresult(Trial(Model, Mutable, 1u32, U32, Empty, 0u32, Splitˉtwice, 2u32)) != 0u32 ||
+        Budgetˉresult(Trial(Model, Owned, 1u32, U32, Empty, 0u32, Splitˉtwice, 2u32)) != 0u32 ||
+        Budgetˉresult(Trial(Model, Immutable, 1u32, U32, Empty, 0u32,
+            Bytesˉconcat(Splitˉandˉdrop, End), 2u32)) != 2u32 { return false; }
+
+    let Takeˉandˉreturn: bytes = Bytesˉconcat(Cell(205u8, 0u32), Return);
+    let Supplier: bytes = Namedˉtrial(Model, "SOwningBudget", Owned, 1u32,
+        Owned, Empty, 0u32, Takeˉandˉreturn, 1u32);
+    if Budgetˉresult(Trial(Supplier, Owned, 1u32, Owned, Owned, 1u32,
+            Join(Cell(205u8, 0u32), Cell(64u8, Target),
+                Join(Cell(5u8, 1u32), Cell(205u8, 1u32), Return)), 1u32)) != 0u32 ||
+        Budgetˉresult(Trial(Model, Owned, 1u32, Owned, Empty, 0u32,
+            Bytesˉconcat(Cell(4u8, 0u32), Return), 1u32)) != 2u32 ||
+        Budgetˉresult(Trial(Model, Mutable, 1u32, Owned, Empty, 0u32, Takeˉandˉreturn, 1u32)) != 2u32 ||
+        Budgetˉresult(Trial(Model, Immutable, 1u32, Owned, Empty, 0u32, Takeˉandˉreturn, 1u32)) != 2u32 {
+        return false;
+    }
+    let Loadˉandˉreturn: bytes = Bytesˉconcat(Cell(4u8, 0u32), Return);
+    if Budgetˉresult(Trial(Model, Mutable, 1u32, Owned, Empty, 0u32, Loadˉandˉreturn, 1u32)) != 2u32 ||
+        Budgetˉresult(Trial(Model, Immutable, 1u32, Owned, Empty, 0u32, Loadˉandˉreturn, 1u32)) != 2u32 {
+        return false;
+    }
+    if Budgetˉresult(Trial(Model, Mutable, 1u32, Owned, Owned, 1u32,
+            Join(Saveˉmutable, Cell(205u8, 1u32), Return), 1u32)) != 2u32 { return false; }
+
+    let Pairˉreader: bytes = Namedˉtrial(Model, "SPairBudget", Bytesˉconcat(Mutable, Mutable),
+        2u32, U32, Empty, 0u32, End, 1u32);
+    let Mixedˉreader: bytes = Namedˉtrial(Model, "SPairBudget", Bytesˉconcat(Mutable, Immutable),
+        2u32, U32, Empty, 0u32, End, 1u32);
+    let Pairˉcall: bytes = Join(Cell(4u8, 1u32), Cell(4u8, 2u32),
+        Bytesˉconcat(Cell(64u8, Target), Return));
+    let Sameˉroot: bytes = Join(Saveˉmutable, Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 2u32)), Pairˉcall);
+    if Budgetˉresult(Trial(Pairˉreader, Owned, 1u32, U32, Bytesˉconcat(Mutable, Mutable),
+            2u32, Sameˉroot, 2u32)) != 2u32 ||
+        Budgetˉresult(Trial(Mixedˉreader, Owned, 1u32, U32, Bytesˉconcat(Mutable, Immutable),
+            2u32, Sameˉroot, 2u32)) != 2u32 { return false; }
+    let Differentˉroots: bytes = Join(Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 2u32)),
+        Bytesˉconcat(Cell(4u8, 1u32), Cell(5u8, 3u32)),
+        Join(Cell(4u8, 2u32), Cell(4u8, 3u32), Bytesˉconcat(Cell(64u8, Target), Return)));
+    if Budgetˉresult(Trial(Mixedˉreader, Bytesˉconcat(Owned, Owned), 2u32, U32,
+        Bytesˉconcat(Mutable, Immutable), 2u32, Differentˉroots, 2u32)) != 0u32 { return false; }
+
+    let Staleˉcall: bytes = Join(Saveˉmutable,
+        Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 2u32)),
+        Join(Invokeˉmutable, Drop, Join(Cell(4u8, 2u32), Drop, End)));
+    if Budgetˉresult(Trial(Reader, Owned, 1u32, U32, Bytesˉconcat(Mutable, Immutable),
+        2u32, Staleˉcall, 1u32)) != 2u32 { return false; }
+    let Staleˉsplit: bytes = Join(Saveˉmutable, Splitˉandˉdrop, Bytesˉconcat(Invokeˉmutable, Return));
+    if Budgetˉresult(Trial(Reader, Mutable, 1u32, U32, Mutable,
+        1u32, Staleˉsplit, 2u32)) != 2u32 { return false; }
+    let Movedˉowner: bytes = Join(Saveˉmutable, Bytesˉconcat(Cell(205u8, 0u32), Cell(5u8, 2u32)),
+        Bytesˉconcat(Invokeˉmutable, Return));
+    if Budgetˉresult(Trial(Reader, Owned, 1u32, U32, Bytesˉconcat(Mutable, Owned),
+        2u32, Movedˉowner, 1u32)) != 2u32 { return false; }
+
+    // Complete45 admission above precedes malformed wire/version mutations.
+    if Budgetˉresult(Byte(Forwarded, 6u32, 44u8)) != 1u32 ||
+        Budgetˉresult(Trial(Model, Bytesˉfromˉu8(89u8), 1u32, U32, Empty, 0u32, End, 1u32)) != 1u32 ||
+        Budgetˉresult(Trial(Model, Bytesˉconcat(Bytesˉfromˉu8(41u8), Bytesˉfromˉu8(24u8)),
+            1u32, U32, Empty, 0u32, End, 1u32)) != 1u32 { return false; }
+    let Functions: u32 = Section(Model, 4u32);
+    let Code: u32 = Section(Model, 5u32);
+    let Truncatedˉentry: bytes = Join(Name("Trial"), Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉfromˉu8(41u8));
+    let Truncatedˉprefix: bytes = Word(Word(Model, Functions, Target + 1u32),
+        Functions - 4u32, Code - 8u32 - Functions + Bytesˉlength(Truncatedˉentry));
+    let Truncated: bytes = Join(Bytesˉslice(Truncatedˉprefix, 0u32, Code - 8u32),
+        Truncatedˉentry, Bytesˉslice(Model, Code - 8u32, Bytesˉlength(Model) - Code + 8u32));
+    if Budgetˉresult(Truncated) != 1u32 { return false; }
+    return true;
+}
 fn Checkˉauthority() -> i32 {
     let Model: bytes = Authorityˉmodel();
     let U32: bytes = Bytesˉfromˉu8(5u8);
@@ -639,6 +760,84 @@ fn Checkˉauthority() -> i32 {
     return 0;
 }
 
+// Exercise the private whole-module signature index across its 64-row chunk
+// boundary, then compare each final callee against the retained public checker.
+fn Checkˉindexedˉcalls(Input: bytes) -> bool {
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Empty: bytes = Bytesˉslice(U32, 0u32, 0u32);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let Originalˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Section(Input, 4u32));
+    var Count: u32 = 63u32;
+    while Count <= 65u32 {
+        if Originalˉcount >= Count - 2u32 { return false; }
+        var Model: bytes = Input;
+        var Index: u32 = Originalˉcount;
+        var Label: text = "ZIndexed";
+        while Index < Count - 2u32 {
+            Model = Namedˉtrial(Model, Label, U32, 1u32, U32, Empty, 0u32,
+                Bytesˉconcat(Cell(4u8, 0u32), Return), 1u32);
+            Label = Textˉconcat(Label, "x");
+            Index = Index + 1u32;
+        }
+        let Target: u32 = Count - 1u32;
+        let Calleeˉlabel: text = Textˉconcat(Label, "x");
+        let Calleeˉbody: bytes = Bytesˉconcat(Cell(4u8, 0u32), Return);
+        let Body: bytes = Join(Cell(9u8, 42u32), Cell(64u8, Target), Return);
+        let Valid: bytes = Namedˉtrial(
+            Namedˉtrial(Model, Label, Empty, 0u32, U32, Empty, 0u32, Body, 1u32),
+            Calleeˉlabel, U32, 1u32, U32, Empty, 0u32, Calleeˉbody, 1u32);
+        if Bytesˉreadˉu32ˉlittle(Valid, Section(Valid, 4u32)) != Count ||
+            Typedˉresult(Valid) != 0u32 { return false; }
+        let Functions: u32 = Section(Valid, 4u32);
+        let Types: u32 = Section(Valid, 7u32);
+        let Direct: Executable.Hˉoperationˉstate = Executable.Hˉcall(
+            Bytesˉconcat(Valid, Cell(64u8, Target)), 37u32,
+            Bytesˉlength(Valid), 0u32, Functions, Types, Cell(5u8, 0u32), 1u32);
+        if !Direct.Valid || Direct.Depth != 0u32 || Bytesˉlength(Direct.Stack) != 0u32 ||
+            !Direct.Hasˉpush || Direct.Pushˉkind != 5u32 || Direct.Pushˉnominal != 0u32 {
+            return false;
+        }
+        let Badˉarity: bytes = Namedˉtrial(
+            Namedˉtrial(Model, Label, Empty, 0u32, U32, Empty, 0u32,
+                Bytesˉconcat(Cell(64u8, Target), Return), 1u32),
+            Calleeˉlabel, U32, 1u32, U32, Empty, 0u32, Calleeˉbody, 1u32);
+        let Badˉtype: bytes = Namedˉtrial(
+            Namedˉtrial(Model, Label, Empty, 0u32, U32, Empty, 0u32,
+                Join(Cell(1u8, 42u32), Cell(64u8, Target), Return), 1u32),
+            Calleeˉlabel, U32, 1u32, U32, Empty, 0u32, Calleeˉbody, 1u32);
+        let Badˉtarget: bytes = Namedˉtrial(
+            Namedˉtrial(Model, Label, Empty, 0u32, U32, Empty, 0u32,
+                Join(Cell(9u8, 42u32), Cell(64u8, Count), Return), 1u32),
+            Calleeˉlabel, U32, 1u32, U32, Empty, 0u32, Calleeˉbody, 1u32);
+        if Typedˉresult(Badˉarity) != 2u32 || Typedˉresult(Badˉtype) != 2u32 ||
+            Typedˉresult(Badˉtarget) != 1u32 { return false; }
+        let Invalidˉtarget: Executable.Hˉoperationˉstate = Executable.Hˉcall(
+            Bytesˉconcat(Valid, Cell(64u8, Count)), 37u32,
+            Bytesˉlength(Valid), 0u32, Functions, Types, Cell(5u8, 0u32), 1u32);
+        let Invalidˉnominal: Executable.Hˉoperationˉstate = Executable.Hˉcall(
+            Bytesˉconcat(Valid, Cell(64u8, Target)), 37u32,
+            Bytesˉlength(Valid), 0u32, Functions, Types, Cell(5u8, 1u32), 1u32);
+        if Invalidˉtarget.Valid || Invalidˉnominal.Valid {
+            return false;
+        }
+        // An empty index cannot mask a nonempty function-directory tail.
+        if Bytesˉlength(Executable.Hˉexecutable(Word(Valid, Functions, 0u32))) != 0u32 ||
+            Bytesˉlength(Executable.Hˉexecutable(Word(Valid, Functions, 4097u32))) != 0u32 ||
+            Bytesˉlength(Executable.Hˉexecutable(Word(Valid, Functions, Count + 1u32))) != 0u32 {
+            return false;
+        }
+        let Truncated: bytes = Bytesˉslice(Valid, 0u32, Functions + 5u32);
+        let Invalidˉtruncated: Executable.Hˉoperationˉstate = Executable.Hˉcall(
+            Bytesˉconcat(Truncated, Cell(64u8, 0u32)), 37u32,
+            Bytesˉlength(Truncated), 0u32, Functions, 0u32, Cell(5u8, 0u32), 1u32);
+        if Invalidˉtruncated.Valid {
+            return false;
+        }
+        Count = Count + 1u32;
+    }
+    return true;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
     if Typedˉresult(Input) != 0u32 { return 151; }
@@ -661,12 +860,15 @@ export fn Check(Candidate: bytes) -> i32 {
     if Typedˉresult(Arithmetic) != 0u32 { return 163; }
     if Typedˉresult(Byte(Arithmetic, Code + 1161u32, 16u8)) != 2u32 { return 164; }
     // The complete entry point must compose the same verified passes.
-    if Semantic.Compilerˉwvbˉverify(Input) != 0u32 { return 165; }
+    if Semantic.Compilerˉwvbˉverify(Input) != 0u32 || !Checkˉindexedˉcalls(Input) { return 165; }
     let Compositionˉresult: i32 = Checkˉcomposition(Input);
     if Compositionˉresult != 0 { return Compositionˉresult; }
     let Operandsˉresult: i32 = Checkˉoperands(Input);
     if Operandsˉresult != 0 { return Operandsˉresult; }
     let Ownedˉresult: i32 = Checkˉownedˉpayload(Input);
     if Ownedˉresult != 0 { return Ownedˉresult; }
-    return Checkˉauthority();
+    let Authorityˉresult: i32 = Checkˉauthority();
+    if Authorityˉresult != 0 { return Authorityˉresult; }
+    if !Checkˉbudgetˉhelpers() { return 246; }
+    return 0;
 }

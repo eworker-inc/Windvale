@@ -39,7 +39,7 @@ fn Scalarˉstep(Current: Frames.State, Instruction: bytes, Kind: u8,
     let Module: bytes = Bytesˉconcat(Type, Instruction);
     return Values.Prepareˉborrowˉstep(Current, Module, 1u32, Bytesˉlength(Type),
         U32ˉfromˉu8(Bytesˉreadˉu8(Instruction, 0u32)), Bytesˉfromˉu32ˉlittle(0u32),
-        Shapes, 0u32, Locals, Metadata, Payload, Stack, Allocations,
+        Shapes, 0u32, Locals, Bytesˉlength(Locals), Metadata, Payload, Stack, Allocations,
         Bytesˉlength(Allocations) / 12u32, Flags, Consumed);
 }
 
@@ -66,30 +66,31 @@ fn Vectorˉstep(Current: Frames.State, Minor: u32, Instruction: bytes,
     let Types: bytes = Vectorˉmodule(Minor);
     return Values.Prepareˉborrowˉstep(Current, Bytesˉconcat(Types, Instruction),
         1u32, Bytesˉlength(Types), U32ˉfromˉu8(Bytesˉreadˉu8(Instruction, 0u32)),
-        Cell(8u32, 50u32), Shapes, 0u32, Locals, Metadata, Payload,
+        Cell(8u32, 50u32), Shapes, 0u32, Locals, Bytesˉlength(Locals), Metadata, Payload,
         Stack, Allocations, Bytesˉlength(Allocations) / 12u32, Flags, Consumed);
 }
 
 fn Checkˉindexedˉscanner() -> i32 {
     let Indexed: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(0u32, 1u32));
-    if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 1u32) != 524289u32 { return 54; }
-    if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 40u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 42u32, 1u32) != 1u32 ||
-        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 43u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 2u32) != 0u32 { return 55; }
+    if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 1u32, 0u32) != 524289u32 { return 54; }
+    if Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 40u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 42u32, 1u32, 0u32) != 1u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 43u32, 1u32, 0u32) != 1u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 44u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Indexed, 0u32, 9u32, 41u32, 2u32, 0u32) != 0u32 { return 55; }
     var Length: u32 = 0u32;
     while Length < 9u32 {
         if Scanner.Scanˉfunction(Bytesˉslice(Indexed, 0u32, Length),
-            0u32, Length, 41u32, 1u32) != 0u32 { return 56; }
+            0u32, Length, 41u32, 1u32, 0u32) != 0u32 { return 56; }
         Length = Length + 1u32;
     }
     let Slotˉoverflow: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(4096u32, 1u32));
     let Typeˉoverflow: bytes = Bytesˉconcat(Bytesˉfromˉu8(227u8), Cell(0u32, 4096u32));
-    if Scanner.Scanˉfunction(Slotˉoverflow, 0u32, 9u32, 41u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Typeˉoverflow, 0u32, 9u32, 41u32, 1u32) != 0u32 { return 57; }
+    if Scanner.Scanˉfunction(Slotˉoverflow, 0u32, 9u32, 41u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Typeˉoverflow, 0u32, 9u32, 41u32, 1u32, 0u32) != 0u32 { return 57; }
     let Parameterˉread: bytes = Bytesˉconcat(Bytesˉfromˉu8(226u8), Cell(0u32, 1u32));
-    if Scanner.Scanˉfunction(Parameterˉread, 0u32, 9u32, 41u32, 1u32) != 1u32 ||
-        Scanner.Scanˉfunction(Bytesˉconcat(Indexed, Parameterˉread), 0u32, 18u32, 41u32, 1u32) != 524290u32 {
+    if Scanner.Scanˉfunction(Parameterˉread, 0u32, 9u32, 41u32, 1u32, 0u32) != 1u32 ||
+        Scanner.Scanˉfunction(Bytesˉconcat(Indexed, Parameterˉread), 0u32, 18u32, 41u32, 1u32, 0u32) != 524290u32 {
         return 58;
     }
     return 0;
@@ -544,28 +545,28 @@ export fn Check() -> i32 {
     if Frames.Valueˉkind(93u32) != 93u32 || Frames.Valueˉkind(71u32) != 7u32 ||
         Frames.Valueˉkind(70u32) != 6u32 || Frames.Valueˉkind(7u32) != 7u32 ||
         Frames.Payloadˉkind(37u32) || Frames.Payloadˉkind(23u32) { return 20; }
-    if Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 39u32, 1u32) != 524289u32 { return 21; }
+    if Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 39u32, 1u32, 0u32) != 524289u32 { return 21; }
     Index = 0u32;
     while Index < 13u32 {
-        if Scanner.Scanˉfunction(Bytesˉslice(Instruction, 0u32, Index), 0u32, Index, 39u32, 1u32) != 0u32 { return 22; }
+        if Scanner.Scanˉfunction(Bytesˉslice(Instruction, 0u32, Index), 0u32, Index, 39u32, 1u32, 0u32) != 0u32 { return 22; }
         Index = Index + 1u32;
     }
-    if Scanner.Scanˉfunction(Code(4096u32, 1u32, 1u32), 0u32, 13u32, 39u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Code(0u32, 4096u32, 1u32), 0u32, 13u32, 39u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Code(0u32, 1u32, 0u32), 0u32, 13u32, 39u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Code(0u32, 1u32, 4u32), 0u32, 13u32, 39u32, 1u32) != 0u32 { return 23; }
-    if Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 38u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 39u32, 2u32) != 0u32 ||
-        Scanner.Scanˉfunction(Instruction, 4294967295u32, 13u32, 39u32, 1u32) != 0u32 ||
-        Scanner.Scanˉfunction(Instruction, 0u32, 14u32, 39u32, 1u32) != 0u32 { return 24; }
+    if Scanner.Scanˉfunction(Code(4096u32, 1u32, 1u32), 0u32, 13u32, 39u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Code(0u32, 4096u32, 1u32), 0u32, 13u32, 39u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Code(0u32, 1u32, 0u32), 0u32, 13u32, 39u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Code(0u32, 1u32, 4u32), 0u32, 13u32, 39u32, 1u32, 0u32) != 0u32 { return 23; }
+    if Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 38u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 39u32, 2u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Instruction, 4294967295u32, 13u32, 39u32, 1u32, 0u32) != 0u32 ||
+        Scanner.Scanˉfunction(Instruction, 0u32, 14u32, 39u32, 1u32, 0u32) != 0u32 { return 24; }
     var Many: bytes = Instruction;
     Index = 0u32;
     while Index < 12u32 { Many = Bytesˉconcat(Many, Many); Index = Index + 1u32; }
-    if Scanner.Scanˉfunction(Many, 0u32, Bytesˉlength(Many), 39u32, 1u32) != 2147487744u32 ||
-        Scanner.Scanˉfunction(Bytesˉconcat(Many, Instruction), 0u32, Bytesˉlength(Many) + 13u32, 39u32, 1u32) != 0u32 { return 25; }
+    if Scanner.Scanˉfunction(Many, 0u32, Bytesˉlength(Many), 39u32, 1u32, 0u32) != 2147487744u32 ||
+        Scanner.Scanˉfunction(Bytesˉconcat(Many, Instruction), 0u32, Bytesˉlength(Many) + 13u32, 39u32, 1u32, 0u32) != 0u32 { return 25; }
     let Return: bytes = Bytesˉfromˉu8(81u8);
-    if Scanner.Scanˉfunction(Return, 0u32, 1u32, 38u32, 1u32) != 1u32 ||
-        Scanner.Scanˉfunction(Return, 0u32, 1u32, 40u32, 1u32) != 1u32 ||
-        Scanner.Scanˉfunction(Bytesˉconcat(Bytesˉfromˉu8(214u8), Value), 0u32, 9u32, 39u32, 1u32) != 0u32 { return 26; }
+    if Scanner.Scanˉfunction(Return, 0u32, 1u32, 38u32, 1u32, 0u32) != 1u32 ||
+        Scanner.Scanˉfunction(Return, 0u32, 1u32, 40u32, 1u32, 0u32) != 1u32 ||
+        Scanner.Scanˉfunction(Bytesˉconcat(Bytesˉfromˉu8(214u8), Value), 0u32, 9u32, 39u32, 1u32, 0u32) != 0u32 { return 26; }
     return Checkˉscalar();
 }

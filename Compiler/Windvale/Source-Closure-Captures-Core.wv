@@ -4,7 +4,6 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
-
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
@@ -54,7 +53,7 @@ const CLOSURE_CAPTURE_ENTRY_BYTES: u32 = 24u32;
 const CLOSURE_CAPTURE_LIMIT: u32 = 64u32;
 const CLOSURE_CAPTURE_EVIDENCE_LIMIT: u32 = 1536u32;
 
-fn Compilerˉsourceˉclosureˉcaptureˉempty(Input: bytes) -> bytes {
+export fn Compilerˉsourceˉclosureˉcaptureˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
@@ -82,7 +81,7 @@ fn Compilerˉsourceˉclosureˉcaptureˉsummaryˉvalue(
     );
 }
 
-fn Compilerˉsourceˉclosureˉcaptureˉfailure(
+export fn Compilerˉsourceˉclosureˉcaptureˉfailure(
     Input: bytes,
     Status: Compilerˉsourceˉclosureˉcaptureˉstatus,
     Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus,
@@ -154,43 +153,6 @@ fn Compilerˉsourceˉclosureˉcaptureˉentry(
     );
     return Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
         Result, Name.Length
-    );
-}
-
-fn Compilerˉsourceˉclosureˉcaptureˉparentˉpayload(
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary
-) -> bytes {
-    let Offset: u32 =
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
-            Bindings.Directory
-        );
-    return Bytesˉslice(
-        Bindings.Directory, Offset,
-        Bytesˉreadˉu32ˉlittle(Bindings.Directory, 8u32) * 36u32
-    );
-}
-
-fn Compilerˉsourceˉclosureˉcaptureˉparentˉfirst(
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
-    Function: u32
-) -> u32 {
-    return Bytesˉreadˉu32ˉlittle(
-        Bindings.Directory,
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
-            Bindings.Directory, Function
-        )
-    );
-}
-
-fn Compilerˉsourceˉclosureˉcaptureˉparentˉentries(
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
-    Function: u32
-) -> u32 {
-    return Bytesˉreadˉu32ˉlittle(
-        Bindings.Directory,
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
-            Bindings.Directory, Function
-        ) + 4u32
     );
 }
 
@@ -709,101 +671,6 @@ export fn Compilerˉsourceˉclosureˉcapturesˉvalidateˉrange(
     return Compilerˉsourceˉclosureˉcapturesˉvalidateˉrangeˉwithˉeffects(
         Input, Scan, Symbols,
         Parentˉpayload, Parentˉfirst, Parentˉentries,
-        Module, Function, Source, Expression,
-        Effectˉstatus, 0u32, 0u32, 0u32, Expression.Offset
-    );
-}
-
-export fn Compilerˉsourceˉclosureˉcapturesˉvalidateˉwithˉeffects(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
-    Module: u32,
-    Function: u32,
-    Source: bytes,
-    Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
-    Effectˉstatus: Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus,
-    Effectˉcount: u32,
-    Languageˉeffects: u32,
-    Capabilityˉeffects: u32,
-    Effectˉfailureˉoffset: u32
-) -> Compilerˉsourceˉclosureˉcaptureˉsummary {
-    if Expression.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid ||
-        Expression.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Closure ||
-        Expression.Items > CLOSURE_CAPTURE_LIMIT ||
-        Expression.Numericˉvalue > CLOSURE_CAPTURE_LIMIT ||
-        Expression.Secondˉoffset > Bytesˉlength(Source) ||
-        Expression.Secondˉlength >
-            Bytesˉlength(Source) - Expression.Secondˉoffset {
-        return Compilerˉsourceˉclosureˉcaptureˉfailure(
-            Input,
-            Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression,
-            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
-            Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Invalid,
-            0u32, 0u32, Compilerˉsourceˉclosureˉcaptureˉempty(Input),
-            Expression.Offset, Expression.Line, Expression.Column
-        );
-    }
-    var Directoryˉvalid: bool = false;
-    if Symbols.Status ==
-            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
-        Bindings.Status ==
-            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
-        Directoryˉvalid =
-            Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
-                Input, Scan, Symbols, Bindings.Directory
-            );
-    }
-    if !Directoryˉvalid || Function >=
-            Sourceˉbindings.Compilerˉsourceˉbindingsˉrangesˉcount(
-                Bindings.Directory
-            ) {
-        var Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus =
-            Bindings.Status;
-        if Symbols.Status !=
-                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
-            Bindingˉstatus =
-                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Sourceˉsymbols;
-        }
-        return Compilerˉsourceˉclosureˉcaptureˉfailure(
-            Input,
-            Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence,
-            Bindingˉstatus,
-            Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Valid,
-            0u32, 0u32, Compilerˉsourceˉclosureˉcaptureˉempty(Input),
-            Expression.Offset, Expression.Line, Expression.Column
-        );
-    }
-    return Compilerˉsourceˉclosureˉcapturesˉvalidateˉrangeˉwithˉeffects(
-        Input, Scan, Symbols,
-        Compilerˉsourceˉclosureˉcaptureˉparentˉpayload(Bindings),
-        Compilerˉsourceˉclosureˉcaptureˉparentˉfirst(Bindings, Function),
-        Compilerˉsourceˉclosureˉcaptureˉparentˉentries(Bindings, Function),
-        Module, Function, Source, Expression,
-        Effectˉstatus, Effectˉcount,
-        Languageˉeffects, Capabilityˉeffects, Effectˉfailureˉoffset
-    );
-}
-
-export fn Compilerˉsourceˉclosureˉcapturesˉvalidate(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
-    Module: u32,
-    Function: u32,
-    Source: bytes,
-    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
-) -> Compilerˉsourceˉclosureˉcaptureˉsummary {
-    var Effectˉstatus: Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus =
-        Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Valid;
-    if Expression.Numericˉhigh != 0u32 {
-        Effectˉstatus =
-            Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Invalid;
-    }
-    return Compilerˉsourceˉclosureˉcapturesˉvalidateˉwithˉeffects(
-        Input, Scan, Symbols, Bindings,
         Module, Function, Source, Expression,
         Effectˉstatus, 0u32, 0u32, 0u32, Expression.Offset
     );

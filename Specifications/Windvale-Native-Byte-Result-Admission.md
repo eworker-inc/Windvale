@@ -100,3 +100,44 @@ the retained constructor can admit its own byte response without recursion.
 Ordinary application results use Windvale. Any result representation, source
 class, range bound, artifact, or response rule change requires a new accepted
 version and Windows/Linux qualification.
+
+## Candidate ABI-25 admission
+
+[Decision 0980](../Documents/Decisions/0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md)
+selects a separate WVRQ/WVRR version-two envelope for generation-checked shared
+values. The current source parser implements that candidate alongside the
+retained version-one path. The recorded artifacts above retain version-one
+behavior; source changes do not update their identities or qualification.
+
+WVRQ 2 is exactly `48 + 32 * BackingCount` bytes with at most 66 rows. The
+header carries the unchanged sixteen-byte result descriptor, a nonzero domain
+epoch and reserved zero bytes. Each row binds a full generation-checked handle
+to an immutable pointer, logical length and admitted backing maximum. The
+caller constructs those rows from complete live-domain validation and
+inspection. The parser checks all rows before resolving the result's packed
+identity and range. It does not prove operating-system mappings or pointer
+authority.
+
+A charged empty result retains its nonzero backing identity and requires its
+live row. Its admitted maximum may be zero even when physical storage has
+committed slack. The unbacked empty is the all-zero descriptor. Empty owning
+ranges normalize their start to zero. Checked pointer addition rejects wrapping
+backings and result addresses.
+
+WVRR 2 has the existing 32-byte response header. Failure has no payload; success
+has exactly 32 payload bytes: unchanged descriptor, resolved pointer and epoch.
+The host rechecks descriptor and epoch equality, copies at most 4 MiB while
+the domain remains live, then closes that same domain. The forty-case candidate
+fixture covers these boundaries and a retained version-one empty response.
+It is not yet execution or cross-host qualification evidence.
+
+The candidate shared-compiler host calls this reader through the ordinary hosted
+scalar entry in
+[`Shared-Compiler-Byte-Result-Admission-Adapter.wv`](../Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv).
+Its private `request` read and `response` write providers operate only on bounded
+memory inside the older outer context. They permit one read followed by one
+write, validate the exact resource names and extents, and copy the response
+before the reader returns. The wrapper restores the previous provider table and
+disables these bindings before admitting the response. This adapter changes
+neither WVRQ/WVRR nor the historical descriptor-returning bridge; its packaging
+does not establish qualification of the ABI-25 compiler.

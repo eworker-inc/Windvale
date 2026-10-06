@@ -61,8 +61,8 @@ const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
 const COLD_DOUBLE_BUILD_ENVIRONMENT =
     'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
 const EXPECTED_COORDINATOR = Object.freeze({
-    bytes: 65218,
-    sha256: '5c9da9a1f5a558a769bd8dba9ca394827f3fe22472ba5857d1b5675f5c3daf4e',
+    bytes: 67260,
+    sha256: '53353a60545e1882aef9647d608f30b6422c87cb22ff6554119171d7379a8b49',
 });
 
 const PINNED_COMPILER = Object.freeze({
@@ -1037,6 +1037,143 @@ async function Writeˉsplitˉcompilerˉtestˉpreload(Work) {
     return Candidate;
 }
 
+async function Caseˉsourceˉemissionˉdeadline(Work) {
+    const Source = await readFile(SPLIT_COMPILER, 'utf8');
+    const Functionˉtext = Name => {
+        const Start = Source.indexOf(`function ${Name}(`);
+        const End = Source.indexOf('\n}\n', Start);
+        Require(Start >= 0 && End > Start, `Missing deadline function ${Name}.`);
+        return Source.slice(Start, End + 2);
+    };
+    const Readˉdeadline = new Function('Reject', 'SOURCE_EMISSION_MAXIMUM_MILLISECONDS',
+        `return ${Functionˉtext('Readˉsourceˉemissionˉdeadline')};`)(Reject, 600_000);
+    const Timeout = (Deadline, Testˉtimeout = null) => new Function(
+        'PRODUCER_TIMEOUT_MILLISECONDS', 'SOURCE_EMISSION_TIMEOUT_MILLISECONDS',
+        'Sourceˉemissionˉdeadline', `return ${Functionˉtext('Producerˉtimeout')};`
+    )(Testˉtimeout ?? 300_000, Testˉtimeout ?? 600_000, Deadline);
+    let Guards = 0;
+    const Option = '--source-emission-deadline-ms';
+    const Plain = ['--workspace', 'Workspace.wvws', '--project', 'Project.wvproj',
+        '--manifest-reader', 'Reader', 'Output.wvb'];
+    const Arguments = [...Plain];
+    Require(Readˉdeadline(Arguments, true, 1_000) === null &&
+        JSON.stringify(Arguments) === JSON.stringify(Plain), 'Default deadline changed arguments.');
+    Guards += 1;
+    for (const Deadline of [1_001, 601_000]) {
+        const Value = [...Plain.slice(0, -1), Option, String(Deadline), Plain.at(-1)];
+        Require(Readˉdeadline(Value, true, 1_000) === Deadline &&
+            JSON.stringify(Value) === JSON.stringify(Plain), 'Exact deadline failed or changed source arguments.');
+        Guards += 1;
+    }
+    for (const [Values, Project] of [
+        [[Option, '2000'], false], [[Option, '2000', Option, '3000'], true],
+        [[Option], true], ...['0', '02000', '-1', '+2000', '1.5', '2000x',
+            '9007199254740992', '1000', '999', '601001'].map(Value => [[Option, Value], true]),
+    ]) {
+        let Refused = false;
+        try { Readˉdeadline(Values, Project, 1_000); } catch { Refused = true; }
+        Require(Refused, 'Invalid source emission deadline was accepted.');
+        Guards += 1;
+    }
+    for (const [Deadline, Test, Step, Started, Expected] of [
+        [null, null, 'source-emission', 1_000, 300_000],
+        [601_000, null, 'source-analysis', 1_000, 300_000],
+        [601_000, null, 'source-emission', 1_000, 600_000],
+        [601_000, null, 'source-emission', 1_250, 599_750],
+        [601_000, null, 'source-emission', 601_000, 0],
+        [601_000, null, 'source-emission', 601_001, 0],
+        [601_000, 50, 'source-emission', 1_250, 50],
+        [601_000, 50, 'source-emission', 600_975, 25],
+        [601_000, 50, 'source-analysis', 1_250, 50],
+    ]) {
+        Require(Timeout(Deadline, Test)(Step, Started) === Expected,
+            'A source emission deadline renewed or altered another phase ceiling.');
+        Guards += 1;
+    }
+    let Cases = 0;
+    for (const Mode of ['missing', 'malformed', 'duplicate', 'expired', 'too-far', 'non-project',
+        'default-timeout', 'remaining-success', 'expired-before-emitter', 'other-phase-timeout',
+        'output-limit', 'termination-failure']) {
+        const Place = join(Work, `Ed-${Cases + 1}`);
+        await mkdir(Place);
+        const Inputs = await Writeˉsentinelˉinputs(Place);
+        const Output = join(Place, 'Output.wvb');
+        const Pipeline = await Writeˉsentinelˉpipeline(Place, null, Output);
+        const Workspace = join(Place, 'Workspace.wvws');
+        const Project = join(Place, 'Project.wvproj');
+        await writeFile(Workspace, 'windvale-workspace 1\n', { flag: 'wx' });
+        await writeFile(Project, 'windvale-project 4\n', { flag: 'wx' });
+        const Inventory = { inventoryVersion: 1, projectVersion: 4, sources: [basename(Inputs.source)],
+            sourceInputLock: basename(Inputs.lock), sourceInputLockSha256: Inputs.lockDigest,
+            sourceProfile: basename(Inputs.profile), targetDescriptor: basename(Inputs.target) };
+        const Reader = await Writeˉproductˉsentinel(Place, 'Reader',
+            (Mode === 'expired-before-emitter' ? 'await new Promise(r=>setTimeout(r,2500));' : '') +
+            `process.stdout.write(${JSON.stringify(JSON.stringify(Inventory) + '\n')});\n`);
+        if (['default-timeout', 'remaining-success', 'output-limit', 'termination-failure'].includes(Mode)) {
+            const Body = Mode === 'output-limit'
+                ? "process.stdout.write(Buffer.alloc(65537,88));setInterval(()=>{},1000);"
+                : Mode === 'termination-failure' ? 'setInterval(()=>{},1000);'
+                : "await new Promise(r=>setTimeout(r,1500));await writeFile(a.at(-1),Buffer.from('P'),{flag:'wx'});process.stdout.write('emission ok\\n');";
+            Pipeline.products.wvemit = await Writeˉproductˉsentinel(Place, 'Deadline-emitter',
+                "import{writeFile}from'node:fs/promises';const a=process.argv.slice(2);" +
+                `await writeFile(${JSON.stringify(Pipeline.markers.emitter)},Buffer.alloc(0),{flag:'a'});` + Body + '\n');
+        }
+        if (Mode === 'other-phase-timeout') {
+            Pipeline.products.wvadmit = await Writeˉproductˉsentinel(Place, 'Deadline-admitter', 'setInterval(()=>{},1000);\n');
+        }
+        const Values = {
+            missing: [Option], malformed: [Option, 'bad'],
+            duplicate: [Option, String(Date.now() + 10_000), Option, String(Date.now() + 10_000)],
+            expired: [Option, String(Date.now() - 1)], 'too-far': [Option, String(Date.now() + 650_000)],
+        };
+        const Selected = Mode === 'default-timeout' ? [] : Values[Mode] ??
+            [Option, String(Date.now() + (Mode === 'expired-before-emitter' ? 2_000 : 10_000))];
+        const Invocation = Mode === 'non-project'
+            ? Authenticatedˉarguments(Pipeline.products, Inputs, Inputs.source, Output)
+            : [SPLIT_COMPILER, Pipeline.products.wvadmit, Pipeline.products.wvauth,
+                Pipeline.products.wvanalyze, Pipeline.products.wvemit, '--workspace', Workspace,
+                '--project', Project, '--manifest-reader', Reader, Output];
+        Invocation.splice(Invocation.length - 1, 0, ...Selected);
+        const Retained = Mode === 'termination-failure';
+        const Hooks = Retained ? { preload: await Writeˉsplitˉcompilerˉtestˉpreload(Place), hooks: {
+            candidateFailure: null, cleanupFailureAfterRemoval: false, postLinkCandidateRemoval: false,
+            postPublicationCleanup: null, temporaryIdentityFailure: false, terminationSettleFailure: true,
+        } } : null;
+        const Result = await Runˉsentinelˉcoordinator(Place, Pipeline.products, Inputs, Output,
+            `source-emission-deadline-${Mode}`, 500, 15_000, true, Invocation,
+            { WINDVALE_NATIVE_CACHE_ROOT: join(Place, 'Cache'),
+                WINDVALE_PREPARED_PRODUCTS_ONLY: undefined,
+                ...(['remaining-success', 'expired-before-emitter', 'output-limit'].includes(Mode)
+                    ? { WINDVALE_SPLIT_COMPILER_TEST_TIMEOUT_MILLISECONDS: undefined } : {}) },
+            Hooks, MAXIMUM_OUTPUT_BYTES, Retained);
+        const Diagnostic = Result.error.toString('utf8');
+        Require(!Result.timedOut && !Result.exceeded, 'Outer deadline masked the phase contract.');
+        if (Mode === 'remaining-success') {
+            Require(Result.code === 0 && (await readFile(Output)).equals(Buffer.from('P')),
+                'Explicit remaining window did not preserve one successful publication.');
+        } else {
+            Require(Result.code !== 0 && !await lstat(Output).then(() => true, () => false),
+                `Source emission ${Mode} published an output.`);
+            if (Mode === 'output-limit') Require(Diagnostic.includes('status=Outputˉlimit step=source-emission'),
+                'Explicit emission lost its output bound.');
+            else if (Retained) Require(Diagnostic.includes('status=Terminationˉfailure step=source-emission'),
+                'Explicit emission masked unconfirmed cleanup.');
+            else if (['default-timeout', 'expired-before-emitter', 'other-phase-timeout'].includes(Mode)) {
+                Require(Diagnostic.includes(`status=Timeout step=${Mode === 'other-phase-timeout' ? 'source-admission' : 'source-emission'}`),
+                    'Source emission did not retain the typed phase timeout.');
+            } else {
+                Require(Diagnostic.includes('source emission deadline'), 'Invalid option missed its early refusal.');
+                for (const Marker of Object.values(Pipeline.markers)) Require(!await lstat(Marker).then(() => true, () => false),
+                    'Invalid option launched a producer.');
+            }
+            if (Mode === 'expired-before-emitter') Require(!await lstat(Pipeline.markers.emitter).then(() => true, () => false),
+                'Expired emission deadline launched the emitter.');
+        }
+        Cases += 1;
+    }
+    process.stdout.write(`PASS source-emission deadline guards=${Guards} process-cases=${Cases} compiler-executions=0\n`);
+}
+
 async function Caseˉpreflightˉrejections(Work) {
     const Definitions = [
         {
@@ -1184,6 +1321,7 @@ async function Caseˉpreflightˉrejections(Work) {
                 `${Definition.name} changed authenticated input ${Path}.`);
         }
     }
+    await Caseˉsourceˉemissionˉdeadline(Work);
 }
 
 async function Caseˉpreflightˉmaxima(Work) {

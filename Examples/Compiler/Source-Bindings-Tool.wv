@@ -10,6 +10,9 @@ requires capability process.argument version 1;
 requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉset as Sourceˉset;
 
 
 fn Compilerˉsourceˉbindingsˉtoolˉheader(Modules: u32) -> bytes {
@@ -101,11 +104,34 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = Compilerˉsourceˉbindingsˉtoolˉbuild(Modules);
-    let Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(Input);
+    let Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Validateˉsourceˉbindings(Input);
     if Summary.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉbindingsˉtoolˉfailure(Summary));
         return 1;
     }
     console.write_line(Compilerˉsourceˉbindingsˉtoolˉsuccess(Summary));
     return 0;
+}
+
+fn Validateˉsourceˉbindings(Input: bytes) -> Sourceˉbindings.Compilerˉsourceˉbindingˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
+            Input, Symbols
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Phase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbols, true
+        );
+    let Published: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase
+        );
+    return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+        Input, Scan, Symbols, Phase, Published, Symbols.Functions
+    );
 }

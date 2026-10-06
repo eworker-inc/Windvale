@@ -6,6 +6,7 @@ authority application;
 
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbolsˉnativeˉbridge as Bridge;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
 
 data Stagingˉmanifest: bytes = [
     87, 86, 79, 80, 1, 0, 0, 0,
@@ -60,48 +61,123 @@ data Invalidˉsymbolˉchunk: bytes = [
     4, 0, 0, 0, 77, 97, 105, 110,
 ];
 
+fn Capacityˉsymbols(Functions: u32) -> bytes {
+    let Empty: bytes = Textˉtoˉutf8("");
+    if Functions != 2048u32 && Functions != 2049u32 { return Empty; }
+    var Result: bytes = Empty;
+    var Chunk: bytes = Empty;
+    var Index: u32 = 1u32;
+    while Index < Functions {
+        // Four ASCII digits keep this console fixture independent of host formatting.
+        let Thousands: u32 = 48u32 + Index / 1000u32;
+        let Hundreds: u32 = 48u32 + Index / 100u32 % 10u32;
+        let Tens: u32 = 48u32 + Index / 10u32 % 10u32;
+        let Ones: u32 = 48u32 + Index % 10u32;
+        let Digits: u32 = Thousands + Hundreds * 256u32 + Tens * 65536u32 + Ones * 16777216u32;
+        let Nameˉbytes: bytes = Bytesˉconcat(Textˉtoˉutf8("$function_"), Bytesˉfromˉu32ˉlittle(Digits));
+        var Entry: bytes = Bytesˉfromˉu32ˉlittle(257u32);
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Index));
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(14u32));
+        Chunk = Bytesˉconcat(Chunk, Bytesˉconcat(Entry, Nameˉbytes));
+        if Index % 64u32 == 0u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+            Chunk = Empty;
+        }
+        Index = Index + 1u32;
+    }
+    Result = Bytesˉconcat(Result, Chunk);
+    var Mainˉentry: bytes = Bytesˉfromˉu32ˉlittle(258u32);
+    Mainˉentry = Bytesˉconcat(Mainˉentry, Bytesˉfromˉu32ˉlittle(0u32));
+    Mainˉentry = Bytesˉconcat(Mainˉentry, Bytesˉfromˉu32ˉlittle(0u32));
+    Mainˉentry = Bytesˉconcat(Mainˉentry, Bytesˉfromˉu32ˉlittle(1u32));
+    Mainˉentry = Bytesˉconcat(Mainˉentry, Bytesˉfromˉu32ˉlittle(4u32));
+    return Bytesˉconcat(Result, Bytesˉconcat(Mainˉentry, Textˉtoˉutf8("Main")));
+}
+
+fn Capacityˉprefix(Functions: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Prefix, 0u32, 12u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉslice(Prefix, 24u32, 8u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functions));
+    return Bytesˉconcat(Result, Bytesˉslice(Prefix, 40u32, 9u32));
+}
+
+fn Capacityˉmanifest(Symbols: bytes, Functions: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Stagingˉmanifest, 0u32, 8u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(60u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(49u32 + Functions + Bytesˉlength(Symbols)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(3u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(4194304u32));
+    Result = Bytesˉconcat(Result, Bytesˉslice(Stagingˉmanifest, 24u32, 12u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(49u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(49u32 + Functions));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Symbols)));
+}
+
 export fn Main() -> i32 {
+    let Capacityˉchunk: bytes = Capacityˉsymbols(2048u32);
+    let Capacityˉheader: bytes = Capacityˉprefix(2048u32);
+    let Capacityˉdirectory: bytes = Capacityˉmanifest(Capacityˉchunk, 2048u32);
+    let Emptyˉheader: bytes = Bytesˉslice(Readˉonlyˉheader, 0u32, 0u32);
+    // Contiguous names reach the ordinal bound after the ordering proof.
+    let Invalidˉcapacity: bytes = Capacityˉsymbols(2049u32);
+    let Invalidˉcapacityˉheader: bytes = Capacityˉprefix(2049u32);
+    let Invalidˉcapacityˉdirectory: bytes = Capacityˉmanifest(Invalidˉcapacity, 2049u32);
+    let Capacityˉresult: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Capacityˉdirectory, Capacityˉheader, Emptyˉheader, Capacityˉchunk);
+    let Invalidˉcapacityˉresult: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Invalidˉcapacityˉdirectory, Invalidˉcapacityˉheader, Emptyˉheader, Invalidˉcapacity);
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉvalidate(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Symbolˉchunk
-    ) != 0u32 { return 1; }
+    ) != 0u32 || Capacityˉresult.Status != Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid { return 1; }
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉdataˉsymbols(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Symbolˉchunk
-    ) != 1u32 { return 2; }
+    ) != 1u32 || Capacityˉresult.Dataˉsymbols != 0u32 { return 2; }
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉfunctions(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Symbolˉchunk
-    ) != 2u32 { return 3; }
+    ) != 2u32 || Capacityˉresult.Functions != 2048u32 { return 3; }
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉrelocationˉposition(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Symbolˉchunk
-    ) != 179u32 { return 4; }
+    ) != 179u32 || Capacityˉresult.Relocationˉposition != 2097u32 + Bytesˉlength(Capacityˉchunk) { return 4; }
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉrelocationˉbytes(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Symbolˉchunk
-    ) != 20u32 { return 5; }
+    ) != 20u32 || Capacityˉresult.Relocationˉbytes != 0u32 { return 5; }
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉvalidate(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Invalidˉsymbolˉchunk
-    ) != 6u32 { return 6; }
+    ) != 6u32 || Invalidˉcapacityˉresult.Status != Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range { return 6; }
     if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉfunctions(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Invalidˉsymbolˉchunk
-    ) != 0u32 { return 7; }
+    ) != 0u32 || Invalidˉcapacityˉresult.Functions != 0u32 { return 7; }
     return 42;
 }

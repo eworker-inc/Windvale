@@ -1,0 +1,274 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉsharedˉaggregates;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Types;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Shared;
+
+// The existing native inline layout is the only layout used here. Every row
+// addresses a cell in that backing; variant guards select the active payload.
+export record Plan {
+    Valid: bool;
+    Width: u32;
+    Program: bytes;
+}
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+fn Word(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+fn Relative(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    return 4294967295u32 - (Origin - Target) + 1u32;
+}
+fn Row(Output: bytes, Kind: u32, Offset: u32, Type: u32,
+    Identity: u32, Guards: bytes) -> bytes {
+    return Bytesˉconcat(Word(Word(Word(Word(Word(Output, Kind), Offset),
+        Type), Identity), Bytesˉlength(Guards) / 8u32), Guards);
+}
+fn Node(Output: bytes, Type: u8, Identity: u32, Offset: u32,
+    Depth: u32, Guards: bytes) -> bytes {
+    return Row(Output, U32ˉfromˉu8(Type), Offset, Identity, Depth, Guards);
+}
+fn Invalid(Input: bytes) -> Plan { return Plan(false, 0u32, Empty(Input)); }
+fn Buildˉuncached(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes,
+    Type: u8, Identity: u32) -> Plan {
+    // The root cell holds a stack backing pointer. Scalar cells use the
+    // shared-value operation owner directly and cannot enter this plan.
+    if !Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) { return Invalid(Input); }
+    var Width: u32 = 1u32;
+    if Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        Width = Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table,
+            Types.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Table, Type));
+    }
+    if Width == 0u32 || Width > 64u32 { return Invalid(Input); }
+    var Pending: bytes = Node(Empty(Input), Type, Identity, 0u32, 0u32, Empty(Input));
+    var Program: bytes = Empty(Input);
+    var Cursor: u32 = 0u32;
+    var Steps: u32 = 0u32;
+    var Queued: u32 = 1u32;
+    while Cursor < Bytesˉlength(Pending) {
+        if Steps >= 8192u32 || Queued > 4096u32 ||
+            Bytesˉlength(Pending) > 2097152u32 { return Invalid(Input); }
+        Steps = Steps + 1u32;
+        let Current: u8 = Bytesˉreadˉu8(Pending, Cursor);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Pending, Cursor + 4u32);
+        let Currentˉidentity: u32 = Bytesˉreadˉu32ˉlittle(Pending, Cursor + 8u32);
+        let Depth: u32 = Bytesˉreadˉu32ˉlittle(Pending, Cursor + 12u32);
+        let Guardˉcount: u32 = Bytesˉreadˉu32ˉlittle(Pending, Cursor + 16u32);
+        if Depth >= 64u32 || Guardˉcount >= 64u32 || Offset >= Width { return Invalid(Input); }
+        let Guards: bytes = Bytesˉslice(Pending, Cursor + 20u32, Guardˉcount * 8u32);
+        Cursor = Cursor + 20u32 + Guardˉcount * 8u32;
+        if Current == 7u8 || Current == 11u8 { return Invalid(Input); }
+        if Current == 3u8 || Current == 6u8 || Current == 8u8 ||
+            (Current == 10u8 && Currentˉidentity == 25u32) {
+            if Current == 8u8 && Currentˉidentity != 39u32 { return Invalid(Input); }
+            Program = Row(Program, 0u32, Offset, U32ˉfromˉu8(Current), Currentˉidentity, Guards);
+        } else if Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Current) {
+            let Index: u32 = Types.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Table, Current);
+            let Childˉwidth: u32 = Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table, Index);
+            if Childˉwidth == 0u32 || Childˉwidth > Width - Offset { return Invalid(Input); }
+            let Kind: u8 = Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index);
+            let Count: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(Table, Index);
+            if Count == 0u32 || Count > 64u32 { return Invalid(Input); }
+            if Kind == 1u8 {
+                var Field: u32 = 0u32;
+                var Fieldˉcursor: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉoffset(Table, Index);
+                var Nestedˉbacking: u32 = Count;
+                while Field < Count {
+                    let Shape: Types.Compilerˉnativeˉx64ˉshape =
+                        Types.Compilerˉnativeˉx64ˉrecordˉfieldˉread(Input, Table, Fieldˉcursor);
+                    if !Shape.Valid { return Invalid(Input); }
+                    Fieldˉcursor = Shape.Next;
+                    var Backing: u32 = Field;
+                    if Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) {
+                        let Nestedˉwidth: u32 = Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table,
+                            Types.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Table, Shape.Type));
+                        if Nestedˉbacking > Childˉwidth || Nestedˉwidth == 0u32 ||
+                            Nestedˉwidth > Childˉwidth - Nestedˉbacking { return Invalid(Input); }
+                        Backing = Nestedˉbacking;
+                        Nestedˉbacking = Nestedˉbacking + Nestedˉwidth;
+                    }
+                    Pending = Node(Pending, Shape.Type, Shape.Identity, Offset + Backing, Depth + 1u32, Guards);
+                    Queued = Queued + 1u32;
+                    Field = Field + 1u32;
+                }
+            } else if Kind == 3u8 {
+                Program = Row(Program, 1u32, Offset, Count, 0u32, Guards);
+                var Case: u32 = 0u32;
+                while Case < Count {
+                    let Selected: bytes = Word(Word(Guards, Offset), Case);
+                    var Variantˉfield: u32 = 0u32;
+                    var Present: bool = true;
+                    while Variantˉfield < 64u32 && Present {
+                        let Variantˉshape: Types.Compilerˉnativeˉx64ˉshape =
+                            Types.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Table, Index, Case, Variantˉfield);
+                        Present = Variantˉshape.Valid;
+                        if Present {
+                            let Variantˉbacking: u32 = Types.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉbackingˉoffset(
+                                Input, Table, Index, Case, Variantˉfield);
+                            Pending = Node(Pending, Variantˉshape.Type, Variantˉshape.Identity, Offset + Variantˉbacking, Depth + 1u32, Selected);
+                            Queued = Queued + 1u32;
+                            Variantˉfield = Variantˉfield + 1u32;
+                        }
+                    }
+                    Case = Case + 1u32;
+                }
+            } else { return Invalid(Input); }
+        }
+    }
+    return Plan(true, Width, Program);
+}
+export fn Build(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes,
+    Type: u8, Identity: u32) -> Plan {
+    if !Types.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) { return Invalid(Input); }
+    let Cache: bytes = Table.Sharedˉplans;
+    if Bytesˉlength(Cache) == 0u32 { return Buildˉuncached(Input, Table, Type, Identity); }
+    if Table.Count > 256u32 ||
+        Bytesˉlength(Cache) < Table.Count * 12u32 || Bytesˉlength(Cache) > 4194304u32 {
+        return Invalid(Input);
+    }
+    let Index: u32 = Types.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Table, Type);
+    if Index >= Table.Count { return Invalid(Input); }
+    let Width: u32 = Bytesˉreadˉu32ˉlittle(Cache, Index * 12u32);
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Cache, Index * 12u32 + 4u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Cache, Index * 12u32 + 8u32);
+    if Width == 0u32 {
+        if Offset != 0u32 || Length != 0u32 { return Invalid(Input); }
+        return Buildˉuncached(Input, Table, Type, Identity);
+    }
+    if Width > 64u32 || Width != Types.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Table, Index) ||
+        Offset < Table.Count * 12u32 || Offset > Bytesˉlength(Cache) ||
+        Length > Bytesˉlength(Cache) - Offset { return Invalid(Input); }
+    return Plan(true, Width, Bytesˉslice(Cache, Offset, Length));
+}
+export fn Prepare(Input: bytes, Table: Types.Compilerˉnativeˉx64ˉtypes) -> Types.Compilerˉnativeˉx64ˉtypes {
+    // Derived only from this admitted table and carried with it. A missing entry
+    // uses the same bounded planner; unused unsupported shapes stay admissible.
+    if !Table.Valid || Table.Count > 256u32 { return Table; }
+    var Directory: bytes = Empty(Input);
+    var Programs: bytes = Empty(Input);
+    var Index: u32 = 0u32;
+    while Index < Table.Count {
+        var Shape: Plan = Invalid(Input);
+        let Kind: u8 = Types.Compilerˉnativeˉx64ˉtypeˉkind(Table, Index);
+        if Kind == 1u8 && Index < 116u32 {
+            Shape = Buildˉuncached(Input, Table, Types.Compilerˉnativeˉx64ˉrecordˉtype(Index), 0u32);
+        } else if Kind == 3u8 {
+            Shape = Buildˉuncached(Input, Table, Types.Compilerˉnativeˉx64ˉvariantˉtype(Table, Index), 0u32);
+        }
+        let Used: u32 = Table.Count * 12u32 + Bytesˉlength(Programs);
+        if Shape.Valid && Bytesˉlength(Shape.Program) <= 4194304u32 - Used {
+            Directory = Word(Word(Word(Directory, Shape.Width), Used), Bytesˉlength(Shape.Program));
+            Programs = Bytesˉconcat(Programs, Shape.Program);
+        } else {
+            Directory = Word(Word(Word(Directory, 0u32), 0u32), 0u32);
+        }
+        Index = Index + 1u32;
+    }
+    return Types.Compilerˉnativeˉx64ˉtypes(Table.Valid, Table.Count, Table.Kinds,
+        Table.Itemˉoffsets, Table.Itemˉcounts, Table.Recordˉwidths, Bytesˉconcat(Directory, Programs));
+}
+fn Loadˉroot(Output: bytes, Slot: u32, Indirect: bool) -> bytes {
+    var Prefix: u32 = 35656u32;
+    if !Indirect { Prefix = 36168u32; }
+    return Word(Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(Prefix),
+        Bytesˉfromˉu16ˉlittle(9348u32))), Slot * 16u32);
+}
+fn Guard(Output: bytes, Slot: u32, Indirect: bool, Offset: u32,
+    Expected: u32, End: u32) -> bytes {
+    var Result: bytes = Loadˉroot(Output, Slot, Indirect);
+    Result = Word(Word(Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(47233u32)), Offset * 16u32), Expected);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(34063u32));
+    return Word(Result, Relative(End, Bytesˉlength(Result) + 4u32));
+}
+export fn Bytes(Shape: Plan) -> u32 {
+    if !Shape.Valid { return 0u32; }
+    var Result: u32 = 17u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Shape.Program) {
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor);
+        let Guards: u32 = Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor + 16u32);
+        Result = Result + Guards * 24u32;
+        if Kind == 1u32 { Result = Result + 26u32; }
+        else { Result = Result + Shared.Operationˉbytes() + 6u32; }
+        Cursor = Cursor + 20u32 + Guards * 8u32;
+    }
+    return Result;
+}
+export fn Emit(Initial: bytes, Shape: Plan, Slot: u32, Retain: bool,
+    Request: u32, Helperˉtarget: u32, Codeˉbase: u32, Invalidˉtarget: u32) -> bytes {
+    if !Shape.Valid { return Initial; }
+    let Prefix: u32 = Bytesˉlength(Initial);
+    let End: u32 = Bytes(Shape);
+    var Output: bytes = Loadˉroot(Empty(Initial), Slot, true);
+    Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(34120u32), Bytesˉfromˉu8(192u8)));
+    Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(33807u32)), Relative(End, Bytesˉlength(Output) + 6u32));
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Shape.Program) {
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor + 4u32);
+        let Type: u32 = Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor + 8u32);
+        let Guards: u32 = Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor + 16u32);
+        var Itemˉbytes: u32 = Shared.Operationˉbytes() + 6u32;
+        if Kind == 1u32 { Itemˉbytes = 26u32; }
+        let Next: u32 = Bytesˉlength(Output) + Guards * 24u32 + Itemˉbytes;
+        var Check: u32 = 0u32;
+        while Check < Guards {
+            Output = Guard(Output, Slot, true,
+                Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor + 20u32 + Check * 8u32),
+                Bytesˉreadˉu32ˉlittle(Shape.Program, Cursor + 24u32 + Check * 8u32), Next);
+            Check = Check + 1u32;
+        }
+        if Kind == 1u32 {
+            Output = Loadˉroot(Output, Slot, true);
+            Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(34955u32)), Offset * 16u32);
+            Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(63873u32)), Type);
+            Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(33551u32)),
+                Relative(Invalidˉtarget, Prefix + Bytesˉlength(Output) + 6u32));
+        } else {
+            var Action: u32 = 1u32;
+            if Type == 8u32 { Action = 7u32; }
+            if Type == 10u32 { Action = 8u32; }
+            if Retain {
+                Action = 0u32;
+                if Type == 8u32 { Action = 244u32; }
+                if Type == 10u32 { Action = 245u32; }
+            }
+            Output = Shared.Emitˉcell(Output, Action, Slot, Offset * 16u32, true,
+                Request, Helperˉtarget, Codeˉbase + Prefix, Relative(Invalidˉtarget, Prefix));
+        }
+        Cursor = Cursor + 20u32 + Guards * 8u32;
+    }
+    return Bytesˉconcat(Initial, Output);
+}
+export fn Clearˉbytes(Width: u32) -> u32 { return 37u32 + Width * 14u32; }
+export fn Clear(Initial: bytes, Slot: u32, Width: u32) -> bytes {
+    // At most 64 cells: do not recopy the whole function for every cleared word.
+    var Output: bytes = Loadˉroot(Empty(Initial), Slot, true);
+    Output = Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(34120u32), Bytesˉfromˉu8(192u8)));
+    Output = Word(Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(33807u32)),
+        Relative(Clearˉbytes(Width), Bytesˉlength(Output) + 6u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(51505u32));
+    var Cell: u32 = 0u32;
+    while Cell < Width * 2u32 {
+        Output = Word(Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35144u32),
+            Bytesˉfromˉu8(136u8))), Cell * 8u32);
+        Cell = Cell + 1u32;
+    }
+    return Bytesˉconcat(Initial, Shared.Emitˉclear(Output, Slot));
+}
+
+export fn Clearˉrangeˉbytes(Width: u32) -> u32 { return 10u32 + Width * 14u32; }
+export fn Clearˉrange(Initial: bytes, Slot: u32, Offset: u32, Width: u32) -> bytes {
+    var Output: bytes = Loadˉroot(Empty(Initial), Slot, true);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(51505u32));
+    var Wordˉindex: u32 = 0u32;
+    while Wordˉindex < Width * 2u32 {
+        Output = Word(Bytesˉconcat(Output, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(35144u32),
+            Bytesˉfromˉu8(136u8))), Offset * 16u32 + Wordˉindex * 8u32);
+        Wordˉindex = Wordˉindex + 1u32;
+    }
+    return Bytesˉconcat(Initial, Output);
+}

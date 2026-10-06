@@ -7,6 +7,7 @@ requires capability process.argument version 1;
 requires capability process.argument_count version 1;
 
 import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
 import Compilerˉsourceˉbodyˉparser as Bodies;
 import Compilerˉsourceˉclosureˉcaptureˉeffects as Captureˉeffects;
@@ -73,7 +74,7 @@ fn Analyzeˉprepared(
     let Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
-        Bindings.Compilerˉvalidateˉsourceˉbindings(Input);
+        Validateˉsourceˉbindings(Input);
     if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
         return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression,
@@ -471,7 +472,7 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
     let Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
-        Bindings.Compilerˉvalidateˉsourceˉbindings(Input);
+        Validateˉsourceˉbindings(Input);
     let Baseˉfunctions: u32 = Bytesˉreadˉu32ˉlittle(
         Symbolsˉsummary.Directory, 8u32
     );
@@ -539,11 +540,15 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
         Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
             Admission
         );
+    let Publishedˉproduct: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉfinishˉphaseˉproduct(
+            Input, Scan, Symbolsˉsummary, Combinedˉphase, Baseˉfunctions, Emptyˉfunctions, Emptyˉtypes,
+            Closureˉcatalog
+        );
     let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉfinishˉphase(
-            Input, Scan, Symbolsˉsummary, Combinedˉphase,
-            Baseˉfunctions, Emptyˉfunctions, Emptyˉtypes,
-            Closureˉcatalog, true
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+            Input, Scan, Symbolsˉsummary, Combinedˉphase, Publishedˉproduct,
+            Baseˉfunctions + Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉinstances(Closureˉcatalog)
         );
     if Summary.Status !=
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid { return 30; }
@@ -570,25 +575,25 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
     }
     if Published.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid ||
         Published.Functions != Baseˉfunctions + 1u32 ||
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(
             Published.Directory
         ) != 48u32 ||
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉranges(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉranges(
             Published.Directory
         ) != Baseˉfunctions + 1u32 ||
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉrangeˉcaptures(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉrangeˉcaptures(
             Published.Directory, Baseˉfunctions
         ) != 1u32 ||
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉrangeˉparameters(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉrangeˉparameters(
             Published.Directory, Baseˉfunctions
         ) != 1u32 ||
-        !Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+        !Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
             Input, Scan, Symbolsˉsummary, Published.Directory
         ) {
         return 41;
     }
     let Captureˉrange: u32 =
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
             Published.Directory, Baseˉfunctions
         );
     let Corruptˉcapture: Byteˉconstruction.Foundationˉbytesˉresult =
@@ -598,7 +603,7 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
             Bytesˉfromˉu32ˉlittle(2u32)
         );
     if !Corruptˉcapture.Valid ||
-        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+        Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
             Input, Scan, Symbolsˉsummary, Corruptˉcapture.Value
         ) {
         return 43;
@@ -621,4 +626,40 @@ export fn Main() -> i32 {
     if Selected == 107u32 { return Asyncˉcopyˉprobe(); }
     if Selected == 108u32 { return Foreignˉcaptureˉprobe(); }
     return 64;
+}
+
+fn Bindingsˉfromˉsymbols(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Symbols.Compilerˉsourceˉsymbolˉsummary
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Phase: Bindings.Compilerˉsourceˉbindingˉphase =
+        Bindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbols, true
+        );
+    let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase
+        );
+    return Wirˉconsumer.Compilerˉsourceˉbindingsˉvalidateˉproduct(
+        Input,
+        Scan,
+        Symbols,
+        Phase,
+        Published,
+        Symbols.Functions
+    );
+}
+
+fn Validateˉsourceˉbindings(Input: bytes) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Symbols: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Bindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
+            Input, Symbols
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    return Bindingsˉfromˉsymbols(Input, Scan, Symbols);
 }

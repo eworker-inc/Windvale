@@ -63,10 +63,7 @@ fn Buildˉsourceˉset(Firstˉargument: u32, Modules: u32) -> bytes {
     return Bytesˉconcat(Bytesˉconcat(Header(Modules), Directory), Payload);
 }
 
-fn Failure(
-    Sourceˉset: bytes,
-    Prepared: Analysis.Compilerˉsourceˉanalysis
-) -> text {
+fn Failure(Prepared: Analysis.Compilerˉsourceˉanalysis) -> text {
     var Report: text = "source analysis status=";
     Report = Textˉconcat(Report, Enumˉname(Prepared.Status));
     Report = Textˉconcat(Report, " symbol-status=");
@@ -77,53 +74,51 @@ fn Failure(
     Report = Textˉconcat(Report, Enumˉname(Prepared.Wirˉstatus));
     if Prepared.Status ==
             Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
-        let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
-            Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset);
         Report = Textˉconcat(Report, " graph-status=");
-        Report = Textˉconcat(Report, Enumˉname(Symbols.Graphˉstatus));
+        Report = Textˉconcat(Report, Enumˉname(Prepared.Failureˉgraphˉstatus));
         Report = Textˉconcat(Report, " failure-module=");
-        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉmodule));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉmodule));
         Report = Textˉconcat(Report, " related-module=");
         Report = Textˉconcat(
-            Report, U32ˉformat(Symbols.Failureˉrelatedˉmodule)
+            Report, U32ˉformat(Prepared.Failureˉrelatedˉmodule)
         );
         Report = Textˉconcat(Report, " declaration-kind=");
-        Report = Textˉconcat(Report, Enumˉname(Symbols.Failureˉkind));
+        Report = Textˉconcat(Report, Enumˉname(Prepared.Failureˉkind));
         Report = Textˉconcat(Report, " offset=");
-        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉoffset));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉoffset));
         Report = Textˉconcat(Report, " line=");
-        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉline));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉline));
         Report = Textˉconcat(Report, " column=");
-        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉcolumn));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉcolumn));
     }
     if Prepared.Status ==
             Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉwir {
-        let Wirˉsymbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
-            Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset);
-        let Scan: Sourceˉsets.Compilerˉsourceˉsetˉscan =
-            Sourceˉsets.Compilerˉscanˉsourceˉset(Sourceˉset);
-        let Compilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-            Sourceˉwir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(
-                Sourceˉset, Scan, Wirˉsymbols
-            );
-        let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-            Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(
-                Compilation
-            );
         Report = Textˉconcat(Report, " failure-module=");
-        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉmodule));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉmodule));
         Report = Textˉconcat(Report, " related-module=");
         Report = Textˉconcat(
-            Report, U32ˉformat(Wir.Failureˉrelatedˉmodule)
+            Report, U32ˉformat(Prepared.Failureˉrelatedˉmodule)
         );
         Report = Textˉconcat(Report, " function=");
-        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉfunction));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉfunction));
         Report = Textˉconcat(Report, " offset=");
-        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉoffset));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉoffset));
         Report = Textˉconcat(Report, " line=");
-        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉline));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉline));
         Report = Textˉconcat(Report, " column=");
-        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉcolumn));
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉcolumn));
+    }
+    if Prepared.Wirˉstatus == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Evidenceˉlimit {
+        Report = Textˉconcat(Report, " wir-functions=");
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉwirˉfunctions));
+        Report = Textˉconcat(Report, " wir-blocks=");
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉwirˉblocks));
+        Report = Textˉconcat(Report, " wir-operations=");
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉwirˉoperations));
+        Report = Textˉconcat(Report, " wir-temporaries=");
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉwirˉtemporaries));
+        Report = Textˉconcat(Report, " wir-operands=");
+        Report = Textˉconcat(Report, U32ˉformat(Prepared.Failureˉwirˉoperands));
     }
     return Report;
 }
@@ -271,7 +266,7 @@ fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
         Analysis.Compilerˉprepareˉsourceˉanalysis(Sourceˉset);
     if Prepared.Status !=
         Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
-        diagnostic.write_line(Failure(Sourceˉset, Prepared));
+        diagnostic.write_line(Failure(Prepared));
         return 1;
     }
     file.write_bytes(process.argument(Outputˉindex), Sourceˉset);
@@ -298,7 +293,7 @@ fn Analyzeˉfromˉsymbolˉcheckpoint(
         );
     if Prepared.Status !=
         Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
-        diagnostic.write_line(Failure(Sourceˉset, Prepared));
+        diagnostic.write_line(Failure(Prepared));
         return 1;
     }
     file.write_bytes(process.argument(Outputˉindex), Prepared.Manifest);
@@ -324,7 +319,7 @@ fn Publishˉsymbolˉcheckpoint(
             Analysis.Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
                 Sourceˉset, Symbols
             );
-        diagnostic.write_line(Failure(Sourceˉset, Failed));
+        diagnostic.write_line(Failure(Failed));
         return 1;
     }
     let Checkpoint: bytes =
@@ -360,6 +355,36 @@ export fn Main() -> i32 {
             "source analysis status=Invalidˉinvocation reason=authenticated-admission-route-removed"
         );
         return 64;
+    }
+    if Arguments > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--internal-symbol-source-set"
+        ) {
+        if Arguments != 4u32 {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 64;
+        }
+        let Symbolˉsourceˉset: bytes =
+            file.read_bytes(process.argument(1u32));
+        let Symbolˉsourceˉbytes: u32 = Bytesˉlength(Symbolˉsourceˉset);
+        if Symbolˉsourceˉbytes == 0u32 ||
+            Symbolˉsourceˉbytes > 4194304u32 {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 1;
+        }
+        let Symbolˉsourceˉscan: Sourceˉsets.Compilerˉsourceˉsetˉscan =
+            Sourceˉsets.Compilerˉscanˉsourceˉset(Symbolˉsourceˉset);
+        if Symbolˉsourceˉscan.Status !=
+                Sourceˉsets.Compilerˉsourceˉsetˉstatus.Valid {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 1;
+        }
+        if Containsˉforeign(Symbolˉsourceˉset) {
+            diagnostic.write_line(
+                "source analysis status=Foreignˉrequiresˉauthenticatedˉbinding"
+            );
+            return 1;
+        }
+        return Publishˉsymbolˉcheckpoint(Symbolˉsourceˉset, 2u32, 3u32);
     }
     if Arguments > 0u32 && Argumentˉequals(
             process.argument(0u32), "--internal-symbol-checkpoint"

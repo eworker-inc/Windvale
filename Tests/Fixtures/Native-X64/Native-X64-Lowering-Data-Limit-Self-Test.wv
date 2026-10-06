@@ -12,6 +12,9 @@ import Compilerˉnativeˉx64ˉloweringˉvariantˉanalysis as Variantˉanalysis;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉstorage as Variantˉstorage;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉemitter;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉlocalˉliveness as Liveness;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉaggregates as Sharedˉaggregates;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
 
 fn Exactˉdataˉsection() -> bytes {
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(1u32);
@@ -91,12 +94,12 @@ fn Checkˉborrowedˉshape(
         Typeˉreader.Compilerˉnativeˉx64ˉreturnˉshapeˉread(Input, 0u32, Length, Types);
     if Stored.Valid || Returned.Valid { return false; }
     var Minor: u32 = 0u32;
-    while Minor <= 42u32 {
+    while Minor <= 46u32 {
         let Versioned: Typeˉreader.Compilerˉnativeˉx64ˉshape =
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input, 0u32, Length, Types, Minor
             );
-        if Versioned.Valid != (Minor == 39u32 || Minor == 41u32 || Minor == 42u32) { return false; }
+        if Versioned.Valid != (Minor == 39u32 || (Minor >= 41u32 && Minor <= 45u32)) { return false; }
         Minor = Minor + 1u32;
     }
     var Prefix: u32 = 0u32;
@@ -182,14 +185,73 @@ fn Borrowˉshapes(Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes) -> bool {
             Outˉofˉrange, 0u32, 6u32, Types, 39u32
         );
     if Rejected.Valid { return false; }
+    var Vectorˉkind: u32 = 23u32;
+    while Vectorˉkind <= 27u32 {
+        if Vectorˉkind == 23u32 || Vectorˉkind >= 26u32 {
+            let Vectorˉinput: bytes = Bytesˉconcat(
+                Bytesˉslice(Bytesˉfromˉu32ˉlittle(Vectorˉkind), 0u32, 1u32),
+                Bytesˉfromˉu32ˉlittle(256u32));
+            let Vectorˉshape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+                Typeˉreader.Compilerˉnativeˉx64ˉshapeˉread(
+                    Vectorˉinput, 0u32, 5u32, Types);
+            if Vectorˉshape.Valid { return false; }
+        }
+        Vectorˉkind = Vectorˉkind + 1u32;
+    }
     var Minor: u32 = 0u32;
-    while Minor <= 42u32 {
+    while Minor <= 46u32 {
+        let Builder: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉfromˉu8(39u8), 0u32, 1u32, Types, Minor);
+        let Builderˉborrow: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉconcat(Bytesˉfromˉu8(41u8), Bytesˉfromˉu8(39u8)),
+                0u32, 2u32, Types, Minor);
+        let Builderˉview: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Bytesˉfromˉu8(39u8));
+        let Builderˉread: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Builderˉview, 0u32, 2u32, Types, Minor);
+        let Budgetˉborrow: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉconcat(Bytesˉfromˉu8(41u8), Bytesˉfromˉu8(25u8)),
+                0u32, 2u32, Types, Minor);
+        if Builder.Valid != (Minor == 44u32 || Minor == 45u32) ||
+            Builderˉborrow.Valid != Builder.Valid ||
+            Builderˉread.Valid != Builder.Valid ||
+            Budgetˉborrow.Valid != (Minor == 45u32) { return false; }
+        if Builderˉread.Valid && (Builderˉread.Borrowˉkind != 37u8 ||
+            Builderˉread.Type != 8u8 || Builderˉread.Identity != 39u32 ||
+            Builderˉread.Next != 2u32) { return false; }
+        var Viewˉlimit: u32 = 0u32;
+        while Viewˉlimit <= 3u32 {
+            let Boundedˉview: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+                Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                    Builderˉview, 0u32, Viewˉlimit, Types, Minor);
+            if Boundedˉview.Valid != (Builder.Valid && Viewˉlimit == 2u32) { return false; }
+            Viewˉlimit = Viewˉlimit + 1u32;
+        }
+        let Nestedˉview: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Builderˉview);
+        let Nestedˉread: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Nestedˉview, 0u32, 3u32, Types, Minor);
+        let Borrowedˉreturn: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉreturnˉshapeˉread(
+                Builderˉview, 0u32, 2u32, Types);
+        if Nestedˉread.Valid || Borrowedˉreturn.Valid { return false; }
+        if Builderˉborrow.Valid && (Builderˉborrow.Borrowˉkind != 41u8 ||
+            Builderˉborrow.Identity != 39u32 || Builderˉborrow.Next != 2u32) {
+            return false;
+        }
+        if Budgetˉborrow.Valid && (Budgetˉborrow.Borrowˉkind != 41u8 ||
+            Budgetˉborrow.Identity != 25u32 || Budgetˉborrow.Next != 2u32) {
+            return false;
+        }
         let Unit: Typeˉreader.Compilerˉnativeˉx64ˉshape =
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Bytesˉfromˉu8(20u8), 0u32, 1u32, Types, Minor
             );
         if Unit.Valid != (Minor == 24u32 || Minor == 25u32 ||
-                Minor == 27u32 || Minor == 41u32 || Minor == 42u32) { return false; }
+                Minor == 27u32 || (Minor >= 41u32 && Minor <= 45u32)) { return false; }
         if Unit.Valid && (Unit.Type != 5u8 || Unit.Identity != 20u32 ||
                 Unit.Next != 1u32 || Unit.Borrowˉkind != 0u8) { return false; }
         let Budget: Typeˉreader.Compilerˉnativeˉx64ˉshape =
@@ -201,9 +263,11 @@ fn Borrowˉshapes(Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes) -> bool {
                 Bytesˉconcat(Bytesˉfromˉu8(28u8), Bytesˉfromˉu32ˉlittle(0u32)),
                 0u32, 5u32, Types, Minor
             );
-        if Budget.Valid != (Minor >= 34u32 && Minor <= 39u32) ||
+        if Budget.Valid != ((Minor >= 34u32 && Minor <= 39u32) || Minor == 44u32 || Minor == 45u32) ||
             Record.Valid != (Minor >= 35u32 && Minor <= 39u32) { return false; }
-        if Budget.Valid && (Budget.Borrowˉkind != 36u8 || Budget.Identity != 36u32) {
+        if Budget.Valid && (Budget.Borrowˉkind != 36u8 ||
+                (Minor < 44u32 && Budget.Identity != 36u32) ||
+                (Minor >= 44u32 && Budget.Identity != 25u32)) {
             return false;
         }
         if Record.Valid && (Record.Borrowˉkind != 28u8 || Record.Identity != 0u32) {
@@ -248,12 +312,12 @@ fn Checkˉfoundationˉview(Section: bytes, Expected: u8) -> bool {
     let Input: bytes = Bytesˉconcat(Section,
         Bytesˉconcat(Bytesˉfromˉu8(29u8), Bytesˉfromˉu32ˉlittle(0u32)));
     var Minor: u32 = 0u32;
-    while Minor <= 42u32 {
+    while Minor <= 46u32 {
         let Shape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
             Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input, Length, Length + 5u32, Types, Minor
             );
-        if Shape.Valid != (Expected == 1u8 && Minor == 39u32) { return false; }
+        if Shape.Valid != (Expected == 1u8 && (Minor == 39u32 || Minor == 44u32 || Minor == 45u32)) { return false; }
         if Shape.Valid && (Shape.Borrowˉkind != 29u8 || Shape.Identity != 0u32 ||
             Shape.Type != 64u8 || Shape.Next != Length + 5u32) { return false; }
         Minor = Minor + 1u32;
@@ -469,6 +533,663 @@ fn Exactˉtypeˉsection() -> bytes {
     return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(256u32), Entries);
 }
 
+fn Variantˉtypeˉsection(Count: u32) -> bytes {
+    var Entries: bytes = Repeatˉentry(Recordˉtypeˉentry(), 128u32, 116u32);
+    Entries = Bytesˉconcat(Entries, Repeatˉentry(Enumˉtypeˉentry(), 64u32, 64u32));
+    let Option: bytes = Foundationˉentry(
+        "__WvY0000", "Present", "Value", "Absent", "Error", false);
+    Entries = Bytesˉconcat(Entries, Repeatˉentry(
+        Bytesˉslice(Option, 4u32, Bytesˉlength(Option) - 4u32), 128u32, Count));
+    if Count == 64u32 {
+        Entries = Bytesˉconcat(Entries, Repeatˉentry(Callableˉtypeˉentry(), 16u32, 12u32));
+        return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(256u32), Entries);
+    }
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(180u32 + Count), Entries);
+}
+
+fn Variantˉordinals() -> bool {
+    let Section: bytes = Variantˉtypeˉsection(64u32);
+    let Length: u32 = Bytesˉlength(Section);
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Section, 0u32, Length);
+    if !Types.Valid || Types.Count != 256u32 { return false; }
+    let Prepared: Typeˉreader.Compilerˉnativeˉx64ˉtypes = Sharedˉaggregates.Prepare(Section, Types);
+    if !Prepared.Valid || Bytesˉlength(Prepared.Sharedˉplans) < 3072u32 { return false; }
+    var Ordinal: u32 = 0u32;
+    while Ordinal < 64u32 {
+        let Index: u32 = 180u32 + Ordinal;
+        let Encoded: u8 = Typeˉreader.Compilerˉnativeˉx64ˉvariantˉtype(Types, Index);
+        let Oracle: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Section, Types, Encoded, Index);
+        let Cached: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Section, Prepared, Encoded, Index);
+        if !Oracle.Valid || !Cached.Valid || Oracle.Width != Cached.Width ||
+            !Sameˉbytes(Oracle.Program, Cached.Program) { return false; }
+        if U32ˉfromˉu8(Encoded) != 64u32 + Ordinal ||
+            Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Encoded) != Index ||
+            Typeˉreader.Compilerˉnativeˉx64ˉrecordˉwidth(Section, Types, Index) != 2u32 {
+            return false;
+        }
+        let Payload: bytes = Bytesˉconcat(Bytesˉfromˉu8(11u8), Bytesˉfromˉu32ˉlittle(Index));
+        if !Checkˉborrowedˉshape(Payload, Types) { return false; }
+        let Input: bytes = Bytesˉconcat(Section,
+            Bytesˉconcat(Bytesˉfromˉu8(29u8), Bytesˉfromˉu32ˉlittle(Index)));
+        let View: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Input, Length, Length + 5u32, Types, 39u32);
+        let Borrowed: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfoundationˉborrowˉpayload(
+                Section, Types, Index, Index, 1u32);
+        if !View.Valid || View.Type != Encoded || View.Identity != Index ||
+            View.Borrowˉkind != 29u8 || !Borrowed.Valid ||
+            Borrowed.Type != 1u8 || Borrowed.Borrowˉkind != 37u8 {
+            return false;
+        }
+        Ordinal = Ordinal + 1u32;
+    }
+    if Typeˉreader.Compilerˉnativeˉx64ˉvariantˉtype(Types, 0u32) != 0u8 ||
+        Typeˉreader.Compilerˉnativeˉx64ˉvariantˉtype(Types, 116u32) != 0u8 ||
+        Typeˉreader.Compilerˉnativeˉx64ˉvariantˉtype(Types, 244u32) != 0u8 ||
+        Typeˉreader.Compilerˉnativeˉx64ˉvariantˉtype(Types, 256u32) != 0u8 {
+        return false;
+    }
+    let Oversized: bytes = Variantˉtypeˉsection(65u32);
+    let Rejected: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+            Oversized, 0u32, Bytesˉlength(Oversized));
+    let Truncated: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+            Bytesˉslice(Section, 0u32, Length - 1u32), 0u32, Length - 1u32);
+    let Extended: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+            Bytesˉconcat(Section, Bytesˉfromˉu8(0u8)), 0u32, Length + 1u32);
+    return !Rejected.Valid && !Truncated.Valid && !Extended.Valid;
+}
+
+fn Appendˉresultˉsection(Requestedˉkind: u8, Maximumˉkind: u8) -> bytes {
+    var Failure: bytes = Bytesˉconcat(Bytesˉfromˉu8(3u8), Encodedˉname("__WvY0000"));
+    Failure = Bytesˉconcat(Failure, Bytesˉfromˉu32ˉlittle(2u32));
+    Failure = Bytesˉconcat(Failure, Encodedˉname("Maximumˉexceeded"));
+    Failure = Bytesˉconcat(Failure, Bytesˉfromˉu8(2u8));
+    Failure = Bytesˉconcat(Failure, Bytesˉfromˉu32ˉlittle(2u32));
+    Failure = Bytesˉconcat(Failure, Encodedˉname("Requested"));
+    Failure = Bytesˉconcat(Failure, Bytesˉfromˉu8(Requestedˉkind));
+    Failure = Bytesˉconcat(Failure, Encodedˉname("Maximum"));
+    Failure = Bytesˉconcat(Failure, Bytesˉfromˉu8(Maximumˉkind));
+    Failure = Bytesˉconcat(Failure, Encodedˉname("Arithmeticˉoverflow"));
+    Failure = Bytesˉconcat(Failure, Bytesˉfromˉu8(0u8));
+    var Result: bytes = Bytesˉconcat(Bytesˉfromˉu8(3u8), Encodedˉname("__WvY0001"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Encodedˉname("Valid"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Encodedˉname("Value"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(20u8));
+    Result = Bytesˉconcat(Result, Encodedˉname("Failure"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Encodedˉname("Error"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(11u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    var Header: bytes = Bytesˉconcat(Textˉtoˉutf8("WVB1"), Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(45u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(7u32));
+    return Bytesˉconcat(Header, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32),
+        Bytesˉconcat(Failure, Result)));
+}
+
+fn Appendˉresultˉshapes() -> bool {
+    var Selection: u32 = 0u32;
+    while Selection < 5u32 {
+        var Requested: u8 = 10u8;
+        var Maximum: u8 = 10u8;
+        if Selection == 1u32 { Requested = 5u8; }
+        if Selection == 2u32 { Maximum = 5u8; }
+        // Budget handles use the same native value group, but own a resource.
+        if Selection == 3u32 { Requested = 25u8; }
+        if Selection == 4u32 { Maximum = 25u8; }
+        let Input: bytes = Appendˉresultˉsection(Requested, Maximum);
+        let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+            Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+                Input, 12u32, Bytesˉlength(Input) - 12u32);
+        if !Types.Valid || Types.Count != 2u32 { return false; }
+        if Typeˉreader.Compilerˉnativeˉx64ˉbytesˉappendˉresultˉisˉexact(
+            Input, Types, 1u32, 0u32) != (Selection == 0u32) { return false; }
+        Selection = Selection + 1u32;
+    }
+    return true;
+}
+
+fn Allocationˉresultˉentry(Name: text, Owner: u8) -> bytes {
+    var Result: bytes = Bytesˉconcat(Bytesˉfromˉu8(3u8), Encodedˉname(Name));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Encodedˉname("Valid"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Encodedˉname("Value"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Owner));
+    Result = Bytesˉconcat(Result, Encodedˉname("Failure"));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Encodedˉname("Error"));
+    return Bytesˉconcat(Result, Bytesˉconcat(Bytesˉfromˉu8(7u8), Bytesˉfromˉu32ˉlittle(0u32)));
+}
+
+fn Allocationˉresultˉshapes() -> bool {
+    var Selection: u32 = 0u32;
+    while Selection < 5u32 {
+        var Requested: u8 = 10u8;
+        var Available: u8 = 10u8;
+        if Selection == 1u32 { Requested = 5u8; }
+        if Selection == 2u32 { Available = 5u8; }
+        if Selection == 3u32 { Requested = 25u8; }
+        if Selection == 4u32 { Available = 25u8; }
+        var Failure: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Encodedˉname("Allocationˉfailure"));
+        Failure = Bytesˉconcat(Failure, Bytesˉfromˉu32ˉlittle(3u32));
+        Failure = Bytesˉconcat(Failure, Encodedˉname("Reason"));
+        Failure = Bytesˉconcat(Failure, Bytesˉconcat(Bytesˉfromˉu8(8u8), Bytesˉfromˉu32ˉlittle(1u32)));
+        Failure = Bytesˉconcat(Failure, Encodedˉname("Requestedˉbytes"));
+        Failure = Bytesˉconcat(Failure, Bytesˉfromˉu8(Requested));
+        Failure = Bytesˉconcat(Failure, Encodedˉname("Availableˉbytes"));
+        Failure = Bytesˉconcat(Failure, Bytesˉfromˉu8(Available));
+        var Reason: bytes = Bytesˉconcat(Bytesˉfromˉu8(7u8), Encodedˉname("Allocationˉreason"));
+        Reason = Bytesˉconcat(Reason, Bytesˉfromˉu8(6u8));
+        Reason = Bytesˉconcat(Reason, Bytesˉfromˉu32ˉlittle(4u32));
+        Reason = Bytesˉconcat(Reason, Bytesˉconcat(Encodedˉname("Budgetˉexhausted"), Bytesˉfromˉu8(1u8)));
+        Reason = Bytesˉconcat(Reason, Bytesˉconcat(Encodedˉname("Targetˉunaddressable"), Bytesˉfromˉu8(2u8)));
+        Reason = Bytesˉconcat(Reason, Bytesˉconcat(Encodedˉname("Providerˉunavailable"), Bytesˉfromˉu8(3u8)));
+        Reason = Bytesˉconcat(Reason, Bytesˉconcat(Encodedˉname("Fragmented"), Bytesˉfromˉu8(4u8)));
+        var Input: bytes = Bytesˉslice(Appendˉresultˉsection(10u8, 10u8), 0u32, 12u32);
+        Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(5u32));
+        Input = Bytesˉconcat(Input, Bytesˉconcat(Failure, Reason));
+        Input = Bytesˉconcat(Input, Allocationˉresultˉentry("__WvY0000", 25u8));
+        Input = Bytesˉconcat(Input, Allocationˉresultˉentry("__WvY0001", 39u8));
+        Input = Bytesˉconcat(Input, Allocationˉresultˉentry("__WvY0002", 20u8));
+        let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+            Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Input, 12u32, Bytesˉlength(Input) - 12u32);
+        let Expected: bool = Selection == 0u32;
+        if !Types.Valid ||
+            Typeˉreader.Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(Input, Types, 2u32) != Expected ||
+            Typeˉreader.Compilerˉnativeˉx64ˉbytesˉbuilderˉresultˉisˉexact(Input, Types, 3u32) != Expected ||
+            Typeˉreader.Compilerˉnativeˉx64ˉunitˉallocationˉresultˉisˉexact(Input, Types, 4u32) != Expected {
+            return false;
+        }
+        Selection = Selection + 1u32;
+    }
+    return true;
+}
+
+fn Variantˉcreationˉsection(Fields: u32, Nested: bool, Recordˉfields: u32) -> bytes {
+    var Record: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Encodedˉname("Pair"));
+    Record = Bytesˉconcat(Record, Bytesˉfromˉu32ˉlittle(Recordˉfields));
+    var Recordˉfield: u32 = 0u32;
+    while Recordˉfield < Recordˉfields {
+        var Kind: u8 = 10u8;
+        if Recordˉfield == 0u32 { Kind = 6u8; }
+        Record = Bytesˉconcat(Record, Bytesˉconcat(
+            Encodedˉname(Textˉconcat("Item", U32ˉformat(Recordˉfield))), Bytesˉfromˉu8(Kind)));
+        Recordˉfield = Recordˉfield + 1u32;
+    }
+    var Variant: bytes = Bytesˉconcat(Bytesˉfromˉu8(3u8), Encodedˉname("Packet"));
+    Variant = Bytesˉconcat(Variant, Bytesˉfromˉu32ˉlittle(2u32));
+    Variant = Bytesˉconcat(Variant, Encodedˉname("Filled"));
+    Variant = Bytesˉconcat(Variant, Bytesˉfromˉu8(2u8));
+    Variant = Bytesˉconcat(Variant, Bytesˉfromˉu32ˉlittle(Fields));
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        Variant = Bytesˉconcat(Variant, Encodedˉname(Textˉconcat("Item", U32ˉformat(Field))));
+        if Nested && Field == 0u32 {
+            Variant = Bytesˉconcat(Variant, Bytesˉconcat(Bytesˉfromˉu8(7u8), Bytesˉfromˉu32ˉlittle(0u32)));
+        } else { Variant = Bytesˉconcat(Variant, Bytesˉfromˉu8(10u8)); }
+        Field = Field + 1u32;
+    }
+    Variant = Bytesˉconcat(Variant, Bytesˉconcat(Encodedˉname("Empty"), Bytesˉfromˉu8(0u8)));
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉconcat(Record, Variant));
+}
+
+fn Variantˉcreation() -> i32 {
+    var Selection: u32 = 0u32;
+    var Failureˉbase: i32 = 80;
+    while Selection < 5u32 {
+        var Fields: u32 = 2u32;
+        var Recordˉfields: u32 = 2u32;
+        if Selection == 2u32 { Fields = 62u32; }
+        if Selection == 3u32 { Fields = 63u32; }
+        if Selection == 4u32 { Recordˉfields = 64u32; }
+        let Nested: bool = Selection == 1u32 || Selection == 4u32;
+        let Section: bytes = Variantˉcreationˉsection(Fields, Nested, Recordˉfields);
+        let Length: u32 = Bytesˉlength(Section);
+        let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+            Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Section, 0u32, Length);
+        if Selection >= 3u32 {
+            if Types.Valid { return Failureˉbase + 1; }
+        } else {
+            if !Types.Valid || Typeˉreader.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(
+                Section, Types, 1u32, 0u32) != Fields ||
+                Typeˉreader.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(Section, Types, 1u32, 1u32) != 0u32 ||
+                Typeˉreader.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(Section, Types, 1u32, 2u32) != 4294967295u32 {
+                return Failureˉbase + 2;
+            }
+            let Empty: bytes = Bytesˉslice(Section, 0u32, 0u32);
+            let Input: bytes = Bytesˉconcat(Section, Bytesˉconcat(Bytesˉfromˉu8(151u8),
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(0u32))));
+            var Stack: bytes = Bytesˉfromˉu8(4u8);
+            var Slots: bytes = Bytesˉfromˉu32ˉlittle(2u32);
+            var Records: bytes = Bytesˉfromˉu32ˉlittle(4294967295u32);
+            var Field: u32 = 0u32;
+            while Field < Fields {
+                var Type: u8 = 10u8;
+                var Record: u32 = 4294967295u32;
+                if Nested && Field == 0u32 { Type = 192u8; Record = 0u32; }
+                Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(Type));
+                Slots = Bytesˉconcat(Slots, Bytesˉfromˉu32ˉlittle(3u32 + Field));
+                Records = Bytesˉconcat(Records, Bytesˉfromˉu32ˉlittle(Record));
+                Field = Field + 1u32;
+            }
+            let Planned: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+                Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(Input, Length, 151u8, Types,
+                    Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+                        true, Stack, Fields + 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32));
+            let Stored: Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉstate =
+                Variantˉstorage.Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(Input, 0u32, Length, 151u8, Types,
+                    Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉinput(
+                        Records, Fields + 1u32, Empty, Bytesˉfromˉu8(192u8), 1u32, 1u32, 1u32));
+            let Emitted: Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate =
+                Variantˉemitter.Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(Input, Length, 151u8,
+                    Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉlayout(
+                        64u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 80u32, 90u32, 100u32),
+                    Types, Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage(true, Empty,
+                        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(10u32)),
+                        Empty, 0u32, 64u32, 2u32),
+                    Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate(
+                        Empty, Stack, Slots, Fields + 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32));
+            var Expectedˉbytes: u32 = 44u32 + Fields * 32u32;
+            var Used: u32 = 0u32;
+            if Nested { Expectedˉbytes = Expectedˉbytes + 36u32; Used = 4u32; }
+            if !Planned.Valid || Planned.Depth != 2u32 || Planned.Recordˉvalues != 2u32 {
+                return Failureˉbase + 3;
+            }
+            if Planned.Bodyˉbytes != Expectedˉbytes || Bytesˉreadˉu8(Planned.Stack, 0u32) != 4u8 ||
+                Bytesˉreadˉu8(Planned.Stack, 1u32) != 64u8 { return Failureˉbase + 4; }
+            if !Stored.Valid || Stored.Depth != 2u32 || Stored.Scratchˉvalues != 2u32 {
+                return Failureˉbase + 5;
+            }
+            if Bytesˉlength(Stored.Usedˉrecords) != Used ||
+                Bytesˉreadˉu32ˉlittle(Stored.Stackˉrecords, 4u32) != 1u32 { return Failureˉbase + 6; }
+            if Emitted.Stackˉdepth != 2u32 || Emitted.Nextˉrecord != 2u32 { return Failureˉbase + 7; }
+            if Bytesˉlength(Emitted.Result) + 10u32 != Expectedˉbytes { return Failureˉbase + 8; }
+            if Bytesˉreadˉu8(Emitted.Stackˉtypes, 1u32) != 64u8 ||
+                Bytesˉreadˉu32ˉlittle(Emitted.Stackˉslots, 4u32) != 81u32 { return Failureˉbase + 9; }
+            // A u32 cannot stand in for the last u64, even at the same slot size.
+            let Wrong: bytes = Bytesˉconcat(Bytesˉslice(Stack, 0u32, Fields), Bytesˉfromˉu8(5u8));
+            let Rejected: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+                Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(Input, Length, 151u8, Types,
+                    Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+                        true, Wrong, Fields + 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32));
+            let Underflow: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+                Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(Input, Length, 151u8, Types,
+                    Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+                        true, Empty, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32));
+            if Rejected.Valid || Underflow.Valid { return Failureˉbase + 10; }
+        }
+        Selection = Selection + 1u32;
+        Failureˉbase = Failureˉbase + 10;
+    }
+    return 0;
+}
+
+fn Repeatedˉbyte(Value: u8, Count: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Bytesˉfromˉu8(Value), 0u32, 0u32);
+    var Chunk: bytes = Bytesˉfromˉu8(Value);
+    var Remaining: u32 = Count;
+    while Remaining != 0u32 {
+        if Remaining % 2u32 != 0u32 { Result = Bytesˉconcat(Result, Chunk); }
+        Remaining = Remaining / 2u32;
+        if Remaining != 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+fn Localˉinstruction(Opcode: u8, Operand: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Operand));
+}
+fn Emptyˉroots() -> bytes {
+    return Bytesˉconcat(Textˉtoˉutf8("WvLR"), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(0u32))));
+}
+fn Loopˉliveness() -> bool {
+    var Code: bytes = Localˉinstruction(48u8, 5u32);
+    Code = Bytesˉconcat(Code, Localˉinstruction(4u8, 0u32));
+    Code = Bytesˉconcat(Code, Localˉinstruction(5u8, 1u32));
+    Code = Bytesˉconcat(Code, Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(0u8)));
+    Code = Bytesˉconcat(Code, Localˉinstruction(49u8, 27u32));
+    Code = Bytesˉconcat(Code, Localˉinstruction(48u8, 5u32));
+    Code = Bytesˉconcat(Code, Localˉinstruction(4u8, 1u32));
+    Code = Bytesˉconcat(Code, Bytesˉfromˉu8(81u8));
+    let Five: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8), Repeatedˉbyte(0u8, 4u32));
+    var Instructions: bytes = Bytesˉconcat(Five, Bytesˉconcat(Five, Five));
+    Instructions = Bytesˉconcat(Instructions, Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(0u8)));
+    Instructions = Bytesˉconcat(Instructions, Bytesˉconcat(Five, Bytesˉconcat(Five, Five)));
+    Instructions = Bytesˉconcat(Instructions, Bytesˉfromˉu8(1u8));
+    let Blocks: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(5u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(22u32), Bytesˉfromˉu32ˉlittle(27u32))));
+    let Edges: bytes = Bytesˉconcat(Localˉinstruction(1u8, 5u32), Bytesˉconcat(Localˉinstruction(2u8, 27u32),
+        Bytesˉconcat(Localˉinstruction(1u8, 5u32), Localˉinstruction(3u8, 0u32))));
+    let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 1u32,
+        Repeatedˉbyte(6u8, 2u32), Repeatedˉbyte(255u8, 8u32), Instructions, Blocks, Edges, Emptyˉroots());
+    if !Plan.Valid || Bytesˉlength(Plan.Rows) != 8u32 * 6u32 || Plan.Work > 65536u32 { return false; }
+    if !Liveness.Liveˉbefore(Plan, 0u32, 0u32) || Liveness.Liveˉbefore(Plan, 0u32, 1u32) ||
+        !Liveness.Liveˉafter(Plan, 1u32, 0u32) || !Liveness.Liveˉafter(Plan, 2u32, 1u32) ||
+        Liveness.Liveˉbefore(Plan, 6u32, 0u32) || !Liveness.Liveˉbefore(Plan, 6u32, 1u32) ||
+        Liveness.Liveˉafter(Plan, 6u32, 1u32) ||
+        Liveness.Edgeˉendingˉmask(Plan, 4u32, 5u32, 0u32) != 2u32 ||
+        Liveness.Edgeˉendingˉmask(Plan, 4u32, 6u32, 0u32) != 1u32 ||
+        Liveness.Edgeˉendingˉmask(Plan, 5u32, 1u32, 0u32) != 0u32 { return false; }
+    let Invalidˉedges: bytes = Bytesˉconcat(Localˉinstruction(1u8, 6u32), Bytesˉslice(Edges, 5u32, 15u32));
+    let Rejected: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 1u32,
+        Repeatedˉbyte(6u8, 2u32), Repeatedˉbyte(255u8, 8u32), Instructions, Blocks, Invalidˉedges, Emptyˉroots());
+    return !Rejected.Valid;
+}
+fn Recordˉbranchˉliveness() -> bool {
+    // The first copy survives until either branch reads the same local.
+    // Include every internal record/variant tag, including records 64..115.
+    let Five: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8), Repeatedˉbyte(0u8, 4u32));
+    let Read: bytes = Localˉinstruction(4u8, 0u32);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let Code: bytes = Bytesˉconcat(Read, Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(1u8)),
+        Bytesˉconcat(Localˉinstruction(49u8, 18u32), Bytesˉconcat(Read, Bytesˉconcat(Return, Bytesˉconcat(Read, Return))))));
+    let Instructions: bytes = Bytesˉconcat(Five, Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(0u8)),
+        Bytesˉconcat(Five, Bytesˉconcat(Five, Bytesˉconcat(Bytesˉfromˉu8(1u8), Bytesˉconcat(Five, Bytesˉfromˉu8(1u8)))))));
+    let Blocks: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(12u32), Bytesˉfromˉu32ˉlittle(18u32)));
+    let Edges: bytes = Bytesˉconcat(Localˉinstruction(2u8, 18u32),
+        Bytesˉconcat(Localˉinstruction(3u8, 0u32), Localˉinstruction(3u8, 0u32)));
+    var Tag: u32 = 0u32;
+    while Tag < 256u32 {
+        let Type: u8 = Bytesˉreadˉu8(Bytesˉfromˉu32ˉlittle(Tag), 0u32);
+        if Typeˉreader.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+            let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 1u32,
+                Bytesˉfromˉu8(Type), Repeatedˉbyte(255u8, 4u32), Instructions, Blocks, Edges, Emptyˉroots());
+            if !Plan.Valid || Bytesˉlength(Plan.Rows) != 42u32 || Plan.Work > 16384u32 ||
+                !Liveness.Liveˉafter(Plan, 0u32, 0u32) || !Liveness.Liveˉafter(Plan, 2u32, 0u32) ||
+                !Liveness.Liveˉbefore(Plan, 3u32, 0u32) || Liveness.Liveˉafter(Plan, 3u32, 0u32) ||
+                !Liveness.Liveˉbefore(Plan, 5u32, 0u32) || Liveness.Liveˉafter(Plan, 5u32, 0u32) ||
+                Liveness.Endingˉmask(Plan, 0u32, 0u32, 4294967295u32) != 0u32 ||
+                Liveness.Endingˉmask(Plan, 3u32, 0u32, 4294967295u32) != 1u32 ||
+                Liveness.Endingˉmask(Plan, 5u32, 0u32, 4294967295u32) != 1u32 ||
+                Liveness.Edgeˉendingˉmask(Plan, 2u32, 3u32, 0u32) != 0u32 ||
+                Liveness.Edgeˉendingˉmask(Plan, 2u32, 5u32, 0u32) != 0u32 { return false; }
+        }
+        Tag = Tag + 1u32;
+    }
+    return true;
+}
+fn Longˉliveness() -> bool {
+    let Five: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8), Repeatedˉbyte(0u8, 4u32));
+    var Code: bytes = Repeatedˉbyte(0u8, 0u32);
+    var Instructions: bytes = Code;
+    var Blocks: bytes = Code;
+    var Edges: bytes = Code;
+    var Block: u32 = 0u32;
+    while Block < 320u32 {
+        Blocks = Bytesˉconcat(Blocks, Bytesˉfromˉu32ˉlittle(Block * 5u32));
+        Instructions = Bytesˉconcat(Instructions, Five);
+        if Block + 1u32 < 320u32 {
+            Code = Bytesˉconcat(Code, Localˉinstruction(48u8, (Block + 1u32) * 5u32));
+            Edges = Bytesˉconcat(Edges, Localˉinstruction(1u8, (Block + 1u32) * 5u32));
+        } else {
+            Code = Bytesˉconcat(Code, Localˉinstruction(4u8, 1023u32));
+            Edges = Bytesˉconcat(Edges, Localˉinstruction(3u8, 0u32));
+        }
+        Block = Block + 1u32;
+    }
+    Code = Bytesˉconcat(Code, Bytesˉfromˉu8(81u8));
+    Instructions = Bytesˉconcat(Instructions, Bytesˉfromˉu8(1u8));
+    let Types: bytes = Bytesˉconcat(Repeatedˉbyte(5u8, 1023u32), Bytesˉfromˉu8(6u8));
+    let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 0u32,
+        Types, Repeatedˉbyte(255u8, 4096u32), Instructions, Blocks, Edges, Emptyˉroots());
+    if !Plan.Valid || Plan.Work > 8388608u32 || Plan.Rowˉbytes != 260u32 ||
+        Bytesˉlength(Plan.Rows) != 83460u32 { return false; }
+    var Row: u32 = 0u32;
+    while Row < 320u32 {
+        if Liveness.Rowˉoffset(Plan, Row) != Row * 5u32 ||
+            !Liveness.Liveˉbefore(Plan, Row, 1023u32) ||
+            Liveness.Liveˉafter(Plan, Row, 1023u32) != (Row < 319u32) { return false; }
+        Row = Row + 1u32;
+    }
+    return !Liveness.Liveˉbefore(Plan, 320u32, 1023u32) &&
+        !Liveness.Liveˉafter(Plan, 320u32, 1023u32);
+}
+fn Borrowˉliveness() -> bool {
+    let Code: bytes = Bytesˉconcat(Localˉinstruction(4u8, 1u32),
+        Bytesˉconcat(Bytesˉfromˉu8(11u8), Bytesˉfromˉu8(81u8)));
+    let Instructions: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8),
+        Bytesˉconcat(Repeatedˉbyte(0u8, 4u32), Repeatedˉbyte(1u8, 2u32)));
+    var Roots: bytes = Bytesˉconcat(Bytesˉslice(Emptyˉroots(), 0u32, 12u32), Bytesˉfromˉu32ˉlittle(1u32));
+    Roots = Bytesˉconcat(Roots, Repeatedˉbyte(0u8, 8u32));
+    Roots = Bytesˉconcat(Roots, Bytesˉfromˉu32ˉlittle(7u32));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉfromˉu32ˉlittle(2u32)));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(8u32), Bytesˉfromˉu32ˉlittle(24u32)));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32), Bytesˉfromˉu32ˉlittle(0u32)));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(0u32))));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(5u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉfromˉu32ˉlittle(0u32))));
+    let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, 7u32, 2u32,
+        Bytesˉconcat(Bytesˉfromˉu8(6u8), Bytesˉfromˉu8(7u8)), Repeatedˉbyte(255u8, 8u32),
+        Instructions, Bytesˉfromˉu32ˉlittle(0u32), Localˉinstruction(3u8, 0u32), Roots);
+    return Plan.Valid && Plan.Work < 65536u32 && Liveness.Liveˉbefore(Plan, 0u32, 0u32) &&
+        Liveness.Liveˉbefore(Plan, 0u32, 1u32) && Liveness.Liveˉafter(Plan, 0u32, 0u32) &&
+        Liveness.Liveˉbefore(Plan, 1u32, 0u32) && !Liveness.Liveˉafter(Plan, 1u32, 0u32) &&
+        !Liveness.Liveˉbefore(Plan, 2u32, 0u32);
+}
+
+fn Oversizedˉliveness() -> bool {
+    let Code: bytes = Bytesˉconcat(Repeatedˉbyte(0u8, 16999u32), Bytesˉfromˉu8(81u8));
+    let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, 17000u32, 0u32,
+        Repeatedˉbyte(5u8, 1024u32), Repeatedˉbyte(255u8, 4096u32),
+        Repeatedˉbyte(1u8, 17000u32), Bytesˉfromˉu32ˉlittle(0u32),
+        Localˉinstruction(3u8, 0u32), Emptyˉroots());
+    return !Plan.Valid && Bytesˉlength(Plan.Rows) == 0u32 && Plan.Work < 4194304u32;
+}
+
+fn Sameˉbytes(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+fn Sharedˉbyteˉequality() -> bool {
+    var Length: u32 = 0u32;
+    while Length <= 65u32 {
+        let Input: bytes = Repeatedˉbyte(165u8, Length);
+        if !Sharedˉbytes.Bytesˉareˉequal(Input, Input) ||
+            Sharedˉbytes.Bytesˉareˉequal(Input, Bytesˉconcat(Input, Bytesˉfromˉu8(165u8))) {
+            return false;
+        }
+        var Position: u32 = 0u32;
+        while Position < Length {
+            let Different: bytes = Bytesˉconcat(Bytesˉslice(Input, 0u32, Position),
+                Bytesˉconcat(Bytesˉfromˉu8(90u8), Bytesˉslice(Input, Position + 1u32, Length - Position - 1u32)));
+            if Sharedˉbytes.Bytesˉareˉequal(Input, Different) != Sameˉbytes(Input, Different) { return false; }
+            Position = Position + 1u32;
+        }
+        Length = Length + 1u32;
+    }
+    return true;
+}
+fn Cachedˉsharedˉplan(Input: bytes, Table: Typeˉreader.Compilerˉnativeˉx64ˉtypes,
+    Type: u8, Oracle: Sharedˉaggregates.Plan) -> bool {
+    let Prepared: Typeˉreader.Compilerˉnativeˉx64ˉtypes = Sharedˉaggregates.Prepare(Input, Table);
+    if !Prepared.Valid || Bytesˉlength(Table.Sharedˉplans) != 0u32 ||
+        Bytesˉlength(Prepared.Sharedˉplans) < Table.Count * 12u32 { return false; }
+    let Actual: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Prepared, Type, 0u32);
+    if Actual.Valid != Oracle.Valid || Actual.Width != Oracle.Width ||
+        !Sameˉbytes(Actual.Program, Oracle.Program) { return false; }
+    var Mutation: u32 = 0u32;
+    while Mutation < 5u32 {
+        var Cache: bytes = Bytesˉslice(Prepared.Sharedˉplans, 0u32, Table.Count * 12u32 - 1u32);
+        if Mutation != 0u32 {
+            let Index: u32 = Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Table, Type);
+            var Position: u32 = Index * 12u32;
+            var Value: u32 = 65u32;
+            if Mutation == 2u32 { Position = Position + 4u32; Value = 0u32; }
+            if Mutation == 3u32 { Position = Position + 4u32; Value = 4294967295u32; }
+            if Mutation == 4u32 { Position = Position + 8u32; Value = 4294967295u32; }
+            Cache = Bytesˉconcat(Bytesˉslice(Prepared.Sharedˉplans, 0u32, Position),
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Bytesˉslice(Prepared.Sharedˉplans,
+                Position + 4u32, Bytesˉlength(Prepared.Sharedˉplans) - Position - 4u32)));
+        }
+        let Damaged: Typeˉreader.Compilerˉnativeˉx64ˉtypes = Typeˉreader.Compilerˉnativeˉx64ˉtypes(
+            Table.Valid, Table.Count, Table.Kinds, Table.Itemˉoffsets, Table.Itemˉcounts, Table.Recordˉwidths, Cache);
+        let Rejected: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Damaged, Type, 0u32);
+        if Rejected.Valid { return false; }
+        Mutation = Mutation + 1u32;
+    }
+    let Missing: Typeˉreader.Compilerˉnativeˉx64ˉtypes = Typeˉreader.Compilerˉnativeˉx64ˉtypes(
+        Table.Valid, Table.Count, Table.Kinds, Table.Itemˉoffsets, Table.Itemˉcounts,
+        Table.Recordˉwidths, Repeatedˉbyte(0u8, Table.Count * 12u32));
+    let Fallback: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Missing, Type, 0u32);
+    return Fallback.Valid == Oracle.Valid && Fallback.Width == Oracle.Width &&
+        Sameˉbytes(Fallback.Program, Oracle.Program);
+}
+fn Recordˉfieldˉcursor() -> bool {
+    var Input: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉconcat(Bytesˉfromˉu8(1u8), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉconcat(Textˉtoˉutf8("R"), Bytesˉfromˉu32ˉlittle(64u32)))));
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Name: bytes = Textˉtoˉutf8(Textˉconcat("Field", U32ˉformat(Index)));
+        Input = Bytesˉconcat(Input, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Name)),
+            Bytesˉconcat(Name, Bytesˉfromˉu8(6u8))));
+        Index = Index + 1u32;
+    }
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Input, 0u32, Bytesˉlength(Input));
+    if !Types.Valid { return false; }
+    let Plan: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Types,
+        Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(0u32), 0u32);
+    if !Plan.Valid || Plan.Width != 64u32 || Bytesˉlength(Plan.Program) != 1280u32 ||
+        !Cachedˉsharedˉplan(Input, Types, Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(0u32), Plan) { return false; }
+    var Cursor: u32 = Typeˉreader.Compilerˉnativeˉx64ˉtypeˉitemˉoffset(Types, 0u32);
+    Index = 0u32;
+    while Index < 64u32 {
+        let Read: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉrecordˉfieldˉread(Input, Types, Cursor);
+        let Oracle: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Types, 0u32, Index);
+        if !Read.Valid || !Oracle.Valid || Read.Type != 6u8 || Read.Borrowˉkind != 0u8 ||
+            Read.Identity != 4294967295u32 || Read.Next != Oracle.Next { return false; }
+        if Bytesˉreadˉu32ˉlittle(Plan.Program, Index * 20u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Plan.Program, Index * 20u32 + 4u32) != Index ||
+            Bytesˉreadˉu32ˉlittle(Plan.Program, Index * 20u32 + 8u32) != 6u32 { return false; }
+        let Truncated: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉrecordˉfieldˉread(Bytesˉslice(Input, 0u32, Read.Next - 1u32), Types, Cursor);
+        if Truncated.Valid { return false; }
+        Cursor = Read.Next;
+        Index = Index + 1u32;
+    }
+    if Cursor != Bytesˉlength(Input) { return false; }
+    let Emptyˉname: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉrecordˉfieldˉread(Bytesˉfromˉu32ˉlittle(0u32), Types, 0u32);
+    let Oversizedˉname: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉrecordˉfieldˉread(Bytesˉfromˉu32ˉlittle(4294967295u32), Types, 0u32);
+    let Invalidˉname: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉrecordˉfieldˉread(Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+            Bytesˉconcat(Bytesˉfromˉu8(255u8), Bytesˉfromˉu8(6u8))), Types, 0u32);
+    return !Emptyˉname.Valid && !Oversizedˉname.Valid && !Invalidˉname.Valid;
+}
+
+fn Nestedˉsharedˉfields() -> bool {
+    let Name: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Textˉtoˉutf8("F"));
+    let Header: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Name);
+    let Leaf: bytes = Bytesˉconcat(Name, Bytesˉfromˉu8(6u8));
+    let Child: bytes = Bytesˉconcat(Header, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉconcat(Leaf, Leaf)));
+    let Nested: bytes = Bytesˉconcat(Name, Bytesˉconcat(Bytesˉfromˉu8(7u8), Bytesˉfromˉu32ˉlittle(0u32)));
+    let Parent: bytes = Bytesˉconcat(Header, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(3u32),
+        Bytesˉconcat(Leaf, Bytesˉconcat(Nested, Nested))));
+    let Input: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉconcat(Child, Parent));
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Input, 0u32, Bytesˉlength(Input));
+    if !Types.Valid { return false; }
+    let Plan: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Types,
+        Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(1u32), 0u32);
+    if !Plan.Valid || Plan.Width != 7u32 || Bytesˉlength(Plan.Program) != 100u32 ||
+        !Cachedˉsharedˉplan(Input, Types, Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(1u32), Plan) { return false; }
+    var Index: u32 = 0u32;
+    while Index < 5u32 {
+        var Expected: u32 = Index + 2u32;
+        if Index == 0u32 { Expected = 0u32; }
+        if Bytesˉreadˉu32ˉlittle(Plan.Program, Index * 20u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Plan.Program, Index * 20u32 + 4u32) != Expected ||
+            Bytesˉreadˉu32ˉlittle(Plan.Program, Index * 20u32 + 8u32) != 6u32 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Endingˉmasks() -> bool {
+    let Empty: bytes = Textˉtoˉutf8("");
+    var Case: u32 = 0u32;
+    while Case < 12u32 {
+        var Locals: u32 = Case;
+        if Case == 2u32 { Locals = 7u32; }
+        if Case == 3u32 { Locals = 8u32; }
+        if Case == 4u32 { Locals = 9u32; }
+        if Case == 5u32 { Locals = 31u32; }
+        if Case == 6u32 { Locals = 32u32; }
+        if Case == 7u32 { Locals = 33u32; }
+        if Case == 8u32 { Locals = 63u32; }
+        if Case == 9u32 { Locals = 64u32; }
+        if Case == 10u32 { Locals = 65u32; }
+        if Case == 11u32 { Locals = 2047u32; }
+        let Packed: u32 = (Locals + 7u32) / 8u32;
+        var Before: bytes = Empty;
+        var After: bytes = Empty;
+        var Byte: u32 = 0u32;
+        while Byte < Packed {
+            Before = Bytesˉconcat(Before, Bytesˉfromˉu8(170u8));
+            After = Bytesˉconcat(After, Bytesˉfromˉu8(51u8));
+            Byte = Byte + 1u32;
+        }
+        let Rows: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉconcat(Before, After));
+        let Plan: Liveness.Plan = Liveness.Plan(true, Empty, Empty, Rows, Empty, Locals, 4u32 + Packed * 2u32, 0u32);
+        let Edgeˉrows: bytes = Bytesˉconcat(Rows,
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉconcat(Before, After)));
+        let Edgeˉplan: Liveness.Plan = Liveness.Plan(true, Empty, Empty, Edgeˉrows, Empty,
+            Locals, 4u32 + Packed * 2u32, 0u32);
+        var Storeˉcase: u32 = 0u32;
+        while Storeˉcase < 4u32 {
+            var Stored: u32 = 4294967295u32;
+            if Storeˉcase == 1u32 { Stored = 0u32; }
+            if Storeˉcase == 2u32 && Locals != 0u32 { Stored = Locals - 1u32; }
+            if Storeˉcase == 3u32 { Stored = Locals; }
+            var First: u32 = 0u32;
+            while First < Locals {
+                let Mask: u32 = Liveness.Endingˉmask(Plan, 0u32, First, Stored);
+                let Edgeˉmask: u32 = Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 1u32, First);
+                var Local: u32 = First;
+                while Local < Locals && Local - First < 32u32 {
+                    let Expected: bool = (Liveness.Liveˉbefore(Plan, 0u32, Local) || Stored == Local) &&
+                        !Liveness.Liveˉafter(Plan, 0u32, Local);
+                    if ((Mask & (1u32 << (Local - First))) != 0u32) != Expected { return false; }
+                    let Edgeˉexpected: bool = Liveness.Liveˉafter(Edgeˉplan, 0u32, Local) &&
+                        !Liveness.Liveˉbefore(Edgeˉplan, 1u32, Local);
+                    if ((Edgeˉmask & (1u32 << (Local - First))) != 0u32) != Edgeˉexpected { return false; }
+                    Local = Local + 1u32;
+                }
+                First = First + 32u32;
+            }
+            if Liveness.Endingˉmask(Plan, 1u32, 0u32, Stored) != 0u32 ||
+                Liveness.Endingˉmask(Plan, 0u32, 1u32, Stored) != 0u32 ||
+                Liveness.Endingˉmask(Plan, 0u32, 2048u32, Stored) != 0u32 { return false; }
+            Storeˉcase = Storeˉcase + 1u32;
+        }
+        if Liveness.Edgeˉendingˉmask(Edgeˉplan, 2u32, 1u32, 0u32) != 0u32 ||
+            Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 2u32, 0u32) != 0u32 ||
+            Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 1u32, 1u32) != 0u32 ||
+            Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 1u32, 2048u32) != 0u32 { return false; }
+        Case = Case + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
     if Dataˉreader.Compilerˉnativeˉx64ˉdataˉlimit() != 512u32 {
         return 1;
@@ -495,7 +1216,8 @@ export fn Main() -> i32 {
         Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
             Exactˉtypes, 0u32, Bytesˉlength(Exactˉtypes)
         );
-    if !Exactˉtypeˉresult.Valid || Exactˉtypeˉresult.Count != 256u32 {
+    if !Exactˉtypeˉresult.Valid || Exactˉtypeˉresult.Count != 256u32 ||
+        !Recordˉfieldˉcursor() || !Nestedˉsharedˉfields() || !Sharedˉbyteˉequality() {
         return 5;
     }
     let Oversizedˉtypes: bytes = Bytesˉfromˉu32ˉlittle(257u32);
@@ -507,5 +1229,14 @@ export fn Main() -> i32 {
     if !Borrowˉshapes(Exactˉtypeˉresult) { return 7; }
     if !Foundationˉviews() { return 8; }
     if !Borrowˉemission() { return 9; }
+    if !Variantˉordinals() { return 10; }
+    if !Appendˉresultˉshapes() { return 11; }
+    if !Allocationˉresultˉshapes() { return 12; }
+    let Created: i32 = Variantˉcreation();
+    if Created != 0 { return Created; }
+    if !Loopˉliveness() || !Recordˉbranchˉliveness() { return 14; }
+    if !Longˉliveness() || !Endingˉmasks() { return 15; }
+    if !Borrowˉliveness() { return 16; }
+    if !Oversizedˉliveness() { return 17; }
     return 42;
 }

@@ -129,7 +129,7 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
             Catalog, Reference
         );
     if Kind == 4u32 || Kind == 8u32 || Kind == 10u32 ||
-        Kind == 11u32 || Kind == 12u32 { return Shape; }
+        Kind == 11u32 || Kind == 12u32 || Kind == 13u32 { return Shape; }
     return 0u32;
 }
 
@@ -141,6 +141,7 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉkindˉrank(
     if Kind == 10u32 { return 2u32; }
     if Kind == 11u32 { return 3u32; }
     if Kind == 12u32 { return 4u32; }
+    if Kind == 13u32 { return 5u32; }
     return 4294967295u32;
 }
 
@@ -240,7 +241,9 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
               Layout.Kind ==
                     Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector ||
               Layout.Kind ==
-                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence) &&
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence ||
+              Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Borrowedˉslice) &&
                 (Layout.Fields != 0u32 ||
                  Bytesˉlength(Layout.Itemˉevidence) != 0u32 ||
                  Bytesˉlength(Layout.Fieldˉevidence) != 0u32)) {
@@ -373,7 +376,9 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
             Layout.Kind !=
                 Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector &&
             Layout.Kind !=
-                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence {
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence &&
+            Layout.Kind !=
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Borrowedˉslice {
             return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
                 Input,
                 Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,

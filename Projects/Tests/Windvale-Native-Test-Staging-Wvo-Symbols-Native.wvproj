@@ -3,6 +3,8 @@ root "Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Native-Adapter.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Shared-Templates.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Sha256.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols-Native-Bridge.wv"
 emit wvb
 source-input-lock "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock"

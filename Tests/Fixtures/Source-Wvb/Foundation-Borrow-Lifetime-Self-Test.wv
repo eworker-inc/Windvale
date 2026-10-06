@@ -31,6 +31,33 @@ data Shapes: bytes = [5, 0, 0, 0, 0, 5, 0, 0, 0, 0, 69, 0, 0, 0, 0, 69, 0, 0, 0,
 data Borrowedˉparameter: bytes = [69, 0, 0, 0, 0, 69, 0, 0, 0, 0];
 data Consumingˉoperations: bytes = [205, 207, 214, 217, 219, 220, 222];
 
+// Complete WVB 1.45: Forward(borrow mut budget, borrow bytes) returns its
+// bytes parameter; Main forwards both arguments and stores the returned bytes.
+// Exercise production event ordering when that result reuses the budget slot.
+data Budgetˉcallˉreturn: bytes = [
+    87, 86, 66, 49, 1, 0, 45, 0, 7, 0, 0, 0, 1, 0, 0, 0, 72, 0, 0, 0, 1, 20, 0, 0,
+    0, 66, 117, 100, 103, 101, 116, 203, 137, 99, 97, 108, 108, 203, 137, 114, 101, 116, 117, 114, 110, 1, 1, 2,
+    3, 0, 0, 0, 5, 0, 0, 0, 108, 105, 110, 117, 120, 7, 0, 0, 0, 119, 105, 110, 100, 111, 119, 115,
+    8, 0, 0, 0, 119, 105, 110, 100, 118, 97, 108, 101, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0,
+    4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+    80, 0, 0, 0, 2, 0, 0, 0, 7, 0, 0, 0, 70, 111, 114, 119, 97, 114, 100, 2, 0, 0, 0, 41,
+    25, 37, 6, 6, 1, 0, 0, 0, 37, 6, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 4, 0,
+    0, 0, 77, 97, 105, 110, 2, 0, 0, 0, 41, 25, 37, 6, 6, 3, 0, 0, 0, 41, 25, 37, 6, 6,
+    16, 0, 0, 0, 46, 0, 0, 0, 2, 0, 0, 0, 5, 0, 0, 0, 62, 0, 0, 0, 4, 1, 0, 0,
+    0, 5, 2, 0, 0, 0, 4, 2, 0, 0, 0, 81, 4, 0, 0, 0, 0, 5, 2, 0, 0, 0, 4, 1,
+    0, 0, 0, 5, 3, 0, 0, 0, 4, 2, 0, 0, 0, 4, 3, 0, 0, 0, 64, 0, 0, 0, 0, 5,
+    4, 0, 0, 0, 4, 4, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0, 0, 1, 0, 0, 0, 4, 0,
+    0, 0, 77, 97, 105, 110, 1, 1, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+];
+
+// The observer consumes admitted WVB; fragments retain its real version header.
+data Fragmentˉheader: bytes = [87, 86, 66, 49, 1, 0, 41, 0];
+fn Observeˉfragment(Trace: Owners.Loanˉtrace, Code: bytes, Before: bytes,
+    Remaining: u32, Hasˉpush: bool, Pushˉkind: u32) -> Owners.Loanˉtrace {
+    return Owners.Loanˉobserve(Trace, Bytesˉconcat(Fragmentˉheader, Code),
+        8u32, 0u32, 0u32, Before, Remaining, Hasˉpush, Pushˉkind);
+}
+
 // Synthetic events isolate dataflow. The probe cases below exercise production
 // event generation from complete typed bytecode, including live stack aliases.
 fn Flow(Code: bytes, Shape: bytes, Parameters: u32, Events: bytes, Limit: u32) -> Owners.Flowˉresult {
@@ -98,26 +125,26 @@ fn Checkˉindexedˉloans() -> i32 {
     let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Vectorˉshapes, 1u32, 2u32, 16777216u32);
     let Index: bytes = Bytesˉconcat(Bytesˉfromˉu8(10u8), Bytesˉfromˉu32ˉlittle(0u32));
     let Code: bytes = Bytesˉconcat(Instruction(227u8, 0u32), Bytesˉfromˉu32ˉlittle(0u32));
-    let Direct: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Code,
-        0u32, 0u32, 0u32, Index, 0u32, true, 74u32);
+    let Direct: Owners.Loanˉtrace = Observeˉfragment(Initial, Code,
+        Index, 0u32, true, 74u32);
     if !Direct.Valid || Bytesˉlength(Direct.Chunk) != 16u32 ||
         Bytesˉreadˉu32ˉlittle(Direct.Chunk, 4u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Direct.Chunk, 8u32) != 2u32 ||
         Bytesˉreadˉu32ˉlittle(Direct.Chunk, 12u32) != 0u32 { return 236; }
-    let Projected: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Word(Code, 1u32, 1u32),
-        0u32, 0u32, 0u32, Index, 0u32, true, 74u32);
+    let Projected: Owners.Loanˉtrace = Observeˉfragment(Initial, Word(Code, 1u32, 1u32),
+        Index, 0u32, true, 74u32);
     if !Projected.Valid || Bytesˉlength(Projected.Chunk) != 16u32 ||
         Bytesˉreadˉu32ˉlittle(Projected.Chunk, 4u32) != 2u32 ||
         Bytesˉreadˉu32ˉlittle(Projected.Chunk, 8u32) != 2u32 ||
         Bytesˉreadˉu32ˉlittle(Projected.Chunk, 12u32) != 0u32 { return 237; }
-    let Missing: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Word(Code, 1u32, 3u32),
-        0u32, 0u32, 0u32, Index, 0u32, true, 74u32);
+    let Missing: Owners.Loanˉtrace = Observeˉfragment(Initial, Word(Code, 1u32, 3u32),
+        Index, 0u32, true, 74u32);
     if Missing.Valid { return 238; }
     let Empty: bytes = Bytesˉslice(Index, 0u32, 0u32);
     var Opcode: u32 = 208u32;
     while Opcode <= 209u32 {
-        let Written: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial,
-            Instruction(Bytesˉreadˉu8(Bytesˉfromˉu32ˉlittle(Opcode), 0u32), 0u32), 0u32, 0u32, 0u32,
+        let Written: Owners.Loanˉtrace = Observeˉfragment(Initial,
+            Instruction(Bytesˉreadˉu8(Bytesˉfromˉu32ˉlittle(Opcode), 0u32), 0u32),
             Empty, 0u32, false, 0u32);
         if !Written.Valid || Bytesˉlength(Written.Chunk) != 16u32 ||
             Bytesˉreadˉu32ˉlittle(Written.Chunk, 4u32) != 4u32 ||
@@ -126,6 +153,102 @@ fn Checkˉindexedˉloans() -> i32 {
     }
     if Rule(Straight, Event(0u32, 6u32, 1u32, 0u32)) != 10u32 ||
         Rule(Straight, Event(0u32, 6u32, 0u32, 1u32)) != 10u32 { return 240; }
+    return 0;
+}
+
+fn Hasˉdependency(Rows: bytes, Offset: u32, Slot: u32, Root: u32) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Rows) {
+        if Bytesˉreadˉu32ˉlittle(Rows, Cursor) == Offset &&
+            Bytesˉreadˉu32ˉlittle(Rows, Cursor + 4u32) == Slot &&
+            Bytesˉreadˉu32ˉlittle(Rows, Cursor + 8u32) == Root { return true; }
+        Cursor = Cursor + 12u32;
+    }
+    return false;
+}
+
+fn Checkˉsharedˉcallˉroots() -> i32 {
+    let Empty: bytes = Bytesˉslice(Shapes, 0u32, 0u32);
+    let Byteˉshape: bytes = Bytesˉconcat(Bytesˉfromˉu8(6u8), Bytesˉfromˉu32ˉlittle(0u32));
+    let Sliceˉshape: bytes = Bytesˉconcat(Bytesˉfromˉu8(40u8), Bytesˉfromˉu32ˉlittle(4u32));
+    let Localˉshapes: bytes = Bytesˉconcat(Byteˉshape, Sliceˉshape);
+    let Code: bytes = Join(Instruction(4u8, 0u32), Instruction(64u8, 0u32),
+        Join(Instruction(5u8, 1u32), Instruction(4u8, 1u32),
+            Bytesˉconcat(Bytesˉfromˉu8(241u8), Bytesˉfromˉu8(81u8))));
+    var Minor: u32 = 44u32;
+    while Minor <= 45u32 {
+        let Input: bytes = Bytesˉconcat(Word(Fragmentˉheader, 4u32, 1u32 + Minor * 65536u32), Code);
+        let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Localˉshapes, 1u32, 2u32, 16777216u32);
+        let Loaded: Owners.Loanˉtrace = Owners.Loanˉobserve(Initial, Input, 8u32,
+            0u32, 0u32, Empty, 0u32, true, 6u32);
+        let Rooted: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Loaded, 5u32, 1u32);
+        if !Rooted.Valid || Bytesˉlength(Rooted.Chunk) != 32u32 ||
+            Bytesˉreadˉu32ˉlittle(Rooted.Chunk, 20u32) != 8u32 ||
+            Bytesˉreadˉu32ˉlittle(Rooted.Chunk, 24u32) != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Rooted.Chunk, 28u32) != 0u32 { return 241; }
+        let Forwarded: Owners.Loanˉtrace = Owners.Loanˉevent(Rooted, 5u32, 2u32, 1u32, 1u32);
+        let Stored: Owners.Loanˉtrace = Owners.Loanˉobserve(Forwarded, Input, 8u32,
+            10u32, 64u32, Sliceˉshape, 0u32, false, 0u32);
+        let Reloaded: Owners.Loanˉtrace = Owners.Loanˉobserve(Stored, Input, 8u32,
+            15u32, 5u32, Empty, 0u32, true, 40u32);
+        let Read: Owners.Loanˉtrace = Owners.Loanˉobserve(Reloaded, Input, 8u32,
+            20u32, 4u32, Sliceˉshape, 0u32, true, 10u32);
+        let Control: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Input, 8u32, Bytesˉlength(Code));
+        let Evidence: Owners.Loanˉevidence = Owners.Loanˉcheckˉroots(Input, 8u32,
+            Bytesˉlength(Code), 1u32, Control, Read);
+        if !Evidence.Valid || !Hasˉdependency(Evidence.Dependencies, 10u32, 1u32, 0u32) ||
+            !Hasˉdependency(Evidence.Dependencies, 20u32, 2u32, 0u32) { return 242; }
+        let Written: Owners.Loanˉtrace = Owners.Loanˉevent(Reloaded, 15u32, 4u32, 0u32, 0u32);
+        let Stale: Owners.Loanˉevidence = Owners.Loanˉcheckˉroots(Input, 8u32,
+            Bytesˉlength(Code), 1u32, Control, Owners.Loanˉevent(Written, 20u32, 3u32, 1u32, 0u32));
+        if Stale.Valid || Stale.Rule != 8u32 { return 243; }
+        // A byte-producing call reuses the operand position without a named
+        // owner. It must erase the previous load's provenance before lending.
+        let Replaced: Owners.Loanˉtrace = Owners.Loanˉobserve(Loaded, Input, 8u32,
+            5u32, 4u32, Byteˉshape, 0u32, true, 6u32);
+        let Anonymous: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Replaced, 10u32, 1u32);
+        if !Replaced.Valid || Anonymous.Valid { return 244; }
+        let Ordinary: Owners.Loanˉevidence = Owners.Loanˉcheckˉroots(Input, 8u32,
+            Bytesˉlength(Code), 1u32, Control, Replaced);
+        if !Ordinary.Valid || Bytesˉlength(Ordinary.Dependencies) != 0u32 { return 245; }
+        let Missing: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Initial, 5u32, 1u32);
+        let Local: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Loaded, 5u32, 0u32);
+        let Outside: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Loaded, 5u32, 3u32);
+        if Missing.Valid || Local.Valid || Outside.Valid { return 246; }
+        let Limited: Owners.Loanˉtrace = Owners.Loanˉtrace(true, Loaded.Map,
+            Loaded.Parameters, Loaded.Locals, Loaded.Maximum, Loaded.Events,
+            Loaded.Chunk, Loaded.Work, Loaded.Work);
+        let Refused: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Limited, 5u32, 1u32);
+        if Refused.Valid || Refused.Work > Refused.Limit { return 247; }
+        // The first argument's origin survives later argument evaluation and
+        // the transition from the completed event chunk to the active chunk.
+        var Chunked: Owners.Loanˉtrace = Loaded;
+        var Count: u32 = 0u32;
+        while Count < 64u32 {
+            Chunked = Owners.Loanˉevent(Chunked, 0u32, 9u32, 2u32, 0u32);
+            Count = Count + 1u32;
+        }
+        let Across: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Chunked, 5u32, 1u32);
+        if !Across.Valid || Bytesˉlength(Across.Events) != 1024u32 ||
+            Bytesˉlength(Across.Chunk) != 32u32 ||
+            Bytesˉreadˉu32ˉlittle(Across.Chunk, 20u32) != 8u32 ||
+            Bytesˉreadˉu32ˉlittle(Across.Chunk, 24u32) != 1u32 { return 248; }
+        let Truncated: Owners.Loanˉtrace = Owners.Loanˉtrace(true, Loaded.Map,
+            Loaded.Parameters, Loaded.Locals, Loaded.Maximum, Loaded.Events,
+            Bytesˉslice(Loaded.Chunk, 0u32, 15u32), Loaded.Work, Loaded.Limit);
+        let Malformed: Owners.Loanˉtrace = Owners.Loanˉbyteˉcallˉroot(Truncated, 5u32, 1u32);
+        if Malformed.Valid { return 249; }
+        let Older: bytes = Word(Input, 4u32, 1u32 + 41u32 * 65536u32);
+        let Wrongˉminor: Owners.Flowˉresult = Owners.Loanˉcheck(Older, 8u32,
+            Bytesˉlength(Code), 1u32, Control, Replaced);
+        if Wrongˉminor.Valid || Wrongˉminor.Rule != 10u32 { return 250; }
+        Minor = Minor + 1u32;
+    }
+    let Budgetˉinput: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Budgetˉcallˉreturn);
+    if Typedˉresult(Budgetˉinput) != 0u32 ||
+        Typedˉresult(Word(Budgetˉinput, Section(Budgetˉinput, 5u32) + 37u32, 3u32)) != 2u32 {
+        return 251;
+    }
     return 0;
 }
 
@@ -161,7 +284,7 @@ export fn Check(Candidate: bytes) -> i32 {
         Rule(Straight, Event(0u32, 2u32, 99u32, 0u32)) != 10u32 { return 217; }
     if Rule(Diamond, Event(1u32, 3u32, 0u32, 0u32)) != 10u32 ||
         Rule(Straight, Bytesˉconcat(Read, Start)) != 10u32 { return 218; }
-    if Rule(Straight, Event(0u32, 7u32, 0u32, 0u32)) != 10u32 ||
+    if Rule(Straight, Event(0u32, 13u32, 0u32, 0u32)) != 10u32 ||
         Rule(Straight, Bytesˉslice(Start, 0u32, 15u32)) != 10u32 { return 219; }
     let Limited: Owners.Flowˉresult = Flow(Straight, Shapes, 2u32, Join(Start, Read, Write), 64u32);
     let Oversized: Owners.Flowˉresult = Flow(Straight, Shapes, 2u32, Start, 16777217u32);
@@ -194,20 +317,22 @@ export fn Check(Candidate: bytes) -> i32 {
     while Operation < Bytesˉlength(Consumingˉoperations) {
         let Code: bytes = Instruction(Bytesˉreadˉu8(Consumingˉoperations, Operation), 0u32);
         let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Shapes, 2u32, 2u32, 16777216u32);
-        let Observed: Owners.Loanˉtrace = Owners.Loanˉobserve(
-            Initial, Code, 0u32, 0u32, 0u32, Empty, 0u32, false, 0u32);
+        let Observed: Owners.Loanˉtrace = Observeˉfragment(
+            Initial, Code, Empty, 0u32, false, 0u32);
         if !Observed.Valid || Bytesˉlength(Observed.Events) != 0u32 ||
             Bytesˉlength(Observed.Chunk) != 16u32 ||
             Bytesˉreadˉu32ˉlittle(Observed.Chunk, 0u32) != 0u32 ||
             Bytesˉreadˉu32ˉlittle(Observed.Chunk, 4u32) != 5u32 ||
             Bytesˉreadˉu32ˉlittle(Observed.Chunk, 8u32) != 0u32 ||
             Bytesˉreadˉu32ˉlittle(Observed.Chunk, 12u32) != 0u32 { return 229; }
-        let Wrong: Owners.Loanˉtrace = Owners.Loanˉobserve(
-            Initial, Word(Code, 1u32, 2u32), 0u32, 0u32, 0u32, Empty, 0u32, false, 0u32);
-        let Missing: Owners.Loanˉtrace = Owners.Loanˉobserve(
-            Initial, Word(Code, 1u32, 4u32), 0u32, 0u32, 0u32, Empty, 0u32, false, 0u32);
+        let Wrong: Owners.Loanˉtrace = Observeˉfragment(
+            Initial, Word(Code, 1u32, 2u32), Empty, 0u32, false, 0u32);
+        let Missing: Owners.Loanˉtrace = Observeˉfragment(
+            Initial, Word(Code, 1u32, 4u32), Empty, 0u32, false, 0u32);
         if Wrong.Valid || Missing.Valid { return 230; }
         Operation = Operation + 1u32;
     }
-    return Checkˉindexedˉloans();
+    let Indexed: i32 = Checkˉindexedˉloans();
+    if Indexed != 0 { return Indexed; }
+    return Checkˉsharedˉcallˉroots();
 }

@@ -426,11 +426,23 @@ async function Measureˉhostˉidentity() {
                 ),
                 nodeVersion: process.version,
                 tools: Tools,
-                environment: Measureˉenvironment(),
             };
         })();
     }
-    return Hostˉidentityˉpromise;
+    // Re-admit the selected product on every state measurement. An unchanged
+    // selection key cannot make evidence reusable after its executable changes.
+    let Bootstrapˉverifier = null;
+    if (process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT !== undefined) {
+        const { Readˉbootstrapˉverifier } = await import(
+            './Build-Cached-Segmented-Hosted-Wvb.mjs'
+        );
+        Bootstrapˉverifier = (await Readˉbootstrapˉverifier()).identity;
+    }
+    return {
+        ...await Hostˉidentityˉpromise,
+        environment: Measureˉenvironment(),
+        bootstrapCompleteVerifier: Bootstrapˉverifier,
+    };
 }
 
 async function Removeˉordinaryˉdirectory(Path, Family) {
@@ -806,20 +818,24 @@ export async function Getˉverificationˉchangedˉpaths(
     return { format: CHANGED_PATH_FORMAT, paths: Paths };
 }
 
-export async function Confirmˉverificationˉsourceˉstate(
-    Repositoryˉinput,
-    Sourceˉsentinel,
-) {
-    Requireˉdigest(Sourceˉsentinel, 'Source sentinel');
+export async function Measureˉverificationˉsourceˉstate(Repositoryˉinput) {
     const Repository = await realpath(resolve(Repositoryˉinput));
     const Top = await realpath(await Runˉgit(
         Repository,
         ['rev-parse', '--show-toplevel'],
     ));
     if (Top !== Repository) {
-        throw new Error('Verification confirmation repository root is not the Git root.');
+        throw new Error('Verification measurement repository root is not the Git root.');
     }
-    return (await Measureˉsourceˉsentinel(Repository)) === Sourceˉsentinel;
+    return Measureˉsourceˉsentinel(Repository);
+}
+
+export async function Confirmˉverificationˉsourceˉstate(
+    Repositoryˉinput,
+    Sourceˉsentinel,
+) {
+    Requireˉdigest(Sourceˉsentinel, 'Source sentinel');
+    return (await Measureˉverificationˉsourceˉstate(Repositoryˉinput)) === Sourceˉsentinel;
 }
 
 export async function Publishˉverificationˉresult(
@@ -903,6 +919,7 @@ function Failˉusage() {
         'candidates <cache-root> <current-state-key> <repository-key> ' +
         '<host-key> <owner> <action> | ' +
         'changes <repository-root> <from-tree> <to-tree> | ' +
+        'measure <repository-root> | ' +
         'confirm <repository-root> <source-sentinel> | ' +
         'publish <repository-root> <cache-root> <state-key> ' +
         '<source-tree> <source-sentinel> <owner> <action>\n'
@@ -912,7 +929,9 @@ function Failˉusage() {
 
 async function Main() {
     const Operation = process.argv[2];
-    if (Operation === 'prepare' &&
+    if (Operation === 'measure' && process.argv.length === 4) {
+        process.stdout.write(await Measureˉverificationˉsourceˉstate(process.argv[3]) + '\n');
+    } else if (Operation === 'prepare' &&
         (process.argv.length === 4 || process.argv.length === 5)) {
         process.stdout.write(JSON.stringify(
             await Prepareˉverificationˉresultˉcache(

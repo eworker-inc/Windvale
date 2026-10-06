@@ -48,6 +48,9 @@ const HEARTBEAT_MILLISECONDS = 30_000;
 const TERMINATION_GRACE_MILLISECONDS = 500;
 const POST_TERMINATION_CLOSE_GRACE_MILLISECONDS = 1_000;
 const VERIFICATION_TEMPORARY_PREFIX = 'windvale-segmented-hosted-verification-';
+const BOOTSTRAP_VERIFIER_INPUT = 'Artifacts/Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb';
+const BOOTSTRAP_VERIFIER_BYTES = 493_060;
+const BOOTSTRAP_VERIFIER_SHA256 = 'a7ed497149a215526f220b0b55c2742a8f203ba1f0c57b47622c2c0d48ef90fe';
 const LOADED_PRODUCER_RELATIVES = [
     'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs',
     'Tools/Native/Native-Hosted-Application-Cache-Core.mjs',
@@ -64,6 +67,47 @@ function Reject(message, exitCode = 1) {
     const error = new Error(message);
     error.exitCode = exitCode;
     throw error;
+}
+
+export function Parseˉbootstrapˉverifierˉkey(Value) {
+    if (Value === undefined) return null;
+    if (typeof Value !== 'string' || !/^[0-9a-f]{64}$/u.test(Value)) {
+        Reject('WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT must be a 64-character lowercase hexadecimal key.', 64);
+    }
+    return Value;
+}
+
+// Selection admits one explicitly prepared host profile of the frozen verifier.
+// It never constructs a verifier, accepts another semantic input, or skips it.
+export async function Readˉbootstrapˉverifier() {
+    const Key = Parseˉbootstrapˉverifierˉkey(process.env.WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT);
+    if (Key === null) return null;
+    const Input = await Requireˉinputˉsnapshot(path.join(HOSTED_REPOSITORY_ROOT, BOOTSTRAP_VERIFIER_INPUT));
+    if (Input.bytes !== BOOTSTRAP_VERIFIER_BYTES || Input.sha256 !== BOOTSTRAP_VERIFIER_SHA256) {
+        Reject('The bootstrap complete-verifier semantic input differs.');
+    }
+    const Family = await Requireˉcanonicalˉdirectory(
+        path.join(Configuredˉcacheˉroot(), CACHE_NAMESPACE, HOST_FAMILY),
+        'prepared bootstrap verifier family',
+    );
+    const Directory = path.join(Family, Key);
+    const Checkpoint = await Validateˉsegmentedˉhostedˉcheckpoint(Directory, Key, '8', Input);
+    return {
+        productPath: Checkpoint.productPath,
+        identity: {
+            key: Key, host: HOST_FAMILY, profile: '8',
+            inputBytes: Input.bytes, inputSha256: Input.sha256,
+            productBytes: Checkpoint.product.bytes, productSha256: Checkpoint.product.sha256,
+        },
+    };
+}
+
+async function Requireˉbootstrapˉverifierˉunchanged(Verifier) {
+    const Current = await Readˉbootstrapˉverifier();
+    if (JSON.stringify(Current?.identity ?? null) !== JSON.stringify(Verifier?.identity ?? null) ||
+        Current?.productPath !== Verifier?.productPath) {
+        Reject('The selected bootstrap complete verifier changed during production.');
+    }
 }
 
 export function Parseˉsegmentedˉhostedˉarguments(Arguments) {
@@ -620,7 +664,7 @@ function Normalizeˉlines(bytes) {
     return bytes.toString('utf8').replaceAll('\r\n', '\n');
 }
 
-async function Completeˉverifyˉinput(snapshot, Deadline) {
+async function Completeˉverifyˉinput(snapshot, Deadline, Verifier) {
     const Commandˉdeadline = Segmentedˉhostedˉcommandˉdeadline(
         Deadline, VERIFICATION_DEADLINE_MILLISECONDS,
     );
@@ -632,8 +676,9 @@ async function Completeˉverifyˉinput(snapshot, Deadline) {
     try {
         const verificationInput = path.join(temporaryDirectory, 'Input.wvb');
         await writeFile(verificationInput, snapshot.payload, { flag: 'wx' });
+        await Requireˉbootstrapˉverifierˉunchanged(Verifier);
         const result = await Runˉboundedˉsegmentedˉhostedˉproducer(
-            Nativeˉwrapper('Verify-Wvb'),
+            Verifier?.productPath ?? Nativeˉwrapper('Verify-Wvb'),
             [verificationInput],
             'complete-verification',
             Commandˉdeadline,
@@ -651,6 +696,7 @@ async function Completeˉverifyˉinput(snapshot, Deadline) {
         if (!verified.equals(snapshot.payload)) {
             Reject('The complete-verification input copy changed.');
         }
+        await Requireˉbootstrapˉverifierˉunchanged(Verifier);
     } finally {
         await Removeˉverificationˉtemporary(
             temporaryRoot,
@@ -929,7 +975,7 @@ export async function Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged(
     }
 }
 
-async function Getˉcacheˉkey(profile, input, hostedContext) {
+async function Getˉcacheˉkey(profile, input, hostedContext, Verifier) {
     const hash = createHash('sha256');
     Addˉhostedˉkeyˉfield(
         hash,
@@ -945,6 +991,8 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
         Addˉhostedˉkeyˉfield(hash, label, Buffer.from(value, 'ascii'));
     }
     Addˉhostedˉkeyˉfield(hash, 'input-wvb', input.payload);
+    Addˉhostedˉkeyˉfield(hash, 'bootstrap-complete-verifier',
+        Buffer.from(JSON.stringify(Verifier?.identity ?? null), 'utf8'));
     const currentExtension = WINDOWS ? 'cmd' : 'sh';
     const currentArtifactExtension = WINDOWS ? 'exe' : 'elf';
     const producerPaths = [
@@ -983,9 +1031,11 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
     return { key: hash.digest('hex'), imageKey: imageHash.digest('hex') };
 }
 
-async function Getˉcurrentˉcacheˉkey(profile, input, includeImage = false) {
+async function Getˉcurrentˉcacheˉkey(profile, input, includeImage = false,
+    Verifier = undefined) {
+    if (Verifier === undefined) Verifier = await Readˉbootstrapˉverifier();
     if (profile === 'image') {
-        const keys = await Getˉcacheˉkey(profile, input, { producerFields: [] });
+        const keys = await Getˉcacheˉkey(profile, input, { producerFields: [] }, Verifier);
         return keys.imageKey;
     }
     const packager = Nativeˉwrapper('Package-Hosted-Wvb');
@@ -994,7 +1044,7 @@ async function Getˉcurrentˉcacheˉkey(profile, input, includeImage = false) {
         packager,
     );
     try {
-        const keys = await Getˉcacheˉkey(profile, input, hostedContext);
+        const keys = await Getˉcacheˉkey(profile, input, hostedContext, Verifier);
         return includeImage ? keys : keys.key;
     } finally {
         hostedContext.producerFields.length = 0;
@@ -1009,12 +1059,12 @@ async function Requireˉproducersˉunchanged(profile, input, expectedKey) {
     }
 }
 
-async function Getˉcheckpointˉfamily(namespace = CACHE_NAMESPACE) {
+function Configuredˉcacheˉroot() {
     if (WINDOWS && process.env.WINDVALE_NATIVE_CACHE_ROOT === undefined &&
         process.env.LOCALAPPDATA === undefined) {
         Reject('The native segmented hosted cache root is unavailable.');
     }
-    const configuredRoot = process.env.WINDVALE_NATIVE_CACHE_ROOT ?? (
+    return path.resolve(process.env.WINDVALE_NATIVE_CACHE_ROOT ?? (
         WINDOWS
             ? path.join(process.env.LOCALAPPDATA, 'Windvale', 'Native-Tool-Cache')
             : path.join(
@@ -1022,9 +1072,12 @@ async function Getˉcheckpointˉfamily(namespace = CACHE_NAMESPACE) {
                 'windvale',
                 'native-tool-cache',
             )
-    );
+    ));
+}
+
+async function Getˉcheckpointˉfamily(namespace = CACHE_NAMESPACE) {
     const root = await Ensureˉcanonicalˉdirectory(
-        path.resolve(configuredRoot),
+        Configuredˉcacheˉroot(),
         'segmented hosted cache root',
     );
     const productRoot = await Ensureˉcanonicalˉdirectory(
@@ -1071,16 +1124,17 @@ async function Main() {
     const Request = Parseˉsegmentedˉhostedˉarguments(process.argv.slice(2));
     const { Deadline } = Request;
     const profile = Request.Profile;
+    const Verifier = await Readˉbootstrapˉverifier();
     const input = await Requireˉinputˉsnapshot(Request.Input);
     const outputPath = await Requireˉoutputˉpath(Request.Output);
-    const { key, imageKey } = await Getˉcurrentˉcacheˉkey(profile, input, true);
+    const { key, imageKey } = await Getˉcurrentˉcacheˉkey(profile, input, true, Verifier);
     await Requireˉinputˉunchanged(input);
     Segmentedˉhostedˉcommandˉdeadline(Deadline);
     const checkpointFamily = await Getˉcheckpointˉfamily();
     const checkpointDirectory = path.join(checkpointFamily, key);
     const { checkpoint, status } = await Acquireˉsegmentedˉhostedˉcheckpoint(
         checkpointDirectory, key, profile, input, async () => {
-            await Completeˉverifyˉinput(input, Deadline);
+            await Completeˉverifyˉinput(input, Deadline, Verifier);
             return Createˉsegmentedˉhostedˉcheckpoint(
                 checkpointFamily,
                 checkpointDirectory,

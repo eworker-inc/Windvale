@@ -65,11 +65,25 @@ record Compilerˉsourceˉbindingˉsummary {
     Failureˉcolumn: u32;
 }
 
-Compilerˉvalidateˉsourceˉbindings(Input: bytes)
+Compilerˉsourceˉbindingsˉphase(Input, Scan, Symbols)
+    -> Compilerˉsourceˉbindingˉphase
+Compilerˉsourceˉbindingsˉlocalˉphase(Input, Scan, Symbols)
+    -> Compilerˉsourceˉbindingˉphase
+Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(Input, Scan, Symbols, Phase)
     -> Compilerˉsourceˉbindingˉsummary
 ```
 
-Later portable phases may reuse validated preparation through `Compilerˉsourceˉbindingsˉfromˉsymbols` for the complete binding pass or `Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols` for parameter/local evidence only. The latter still parses every function body to discover lexical locals but skips reference/call counting. Typed lowering invokes the complete pass as an error oracle when it rejects a program, preserving established binding failures before typed-WVIR failures.
+Portable phases reuse the validated source-set scan and source-symbol summary.
+The complete phase binds body references; the local phase still parses every
+function body to discover lexical locals but skips reference/call counting.
+Typed lowering invokes complete binding as an error oracle when it rejects a
+program, preserving established binding failures before typed-WVIR failures.
+The publishers construct canonical WVLB products. Serialized-product readers
+and validators belong to `Compilerˉsourceˉwirˉconsumer`, outside the analyzer's
+producer closure. Its `Compilerˉsourceˉbindingsˉvalidateˉproduct` checks a
+published summary before a standalone binding consumer accepts it. This
+implementation split preserves the WVLB bytes, limits and diagnostics;
+qualification of the current reconstruction remains pending.
 
 Success returns aggregate body counts, a valid WVLB directory, both failure module indices equal to `Modules`, failure function equal to the WVSD entry count, failure offset equal to the complete WVSS length, and zero failure line/column. Failure returns an empty published directory. A source-symbol rejection preserves the upstream symbol status and failure evidence.
 
@@ -275,7 +289,7 @@ instance exists in its exact reduced callable catalog and that every use has
 the matching structural signature. Emission rejects the combined products if
 that proof is absent or inconsistent.
 
-`Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase` is the
+`Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphaseˉproduct` is the
 publication path for the combined envelope. It is owned by the focused
 `Compilerˉsourceˉbindingsˉgenericˉtypes` module. An empty WVGT catalog delegates
 to the unchanged function-only binding module, preserving its prior format,
@@ -289,7 +303,7 @@ source set contains either a generic nominal declaration or the exact
 function return—such as `Sequence<i32>` returned by `Vectorˉfreeze`—has a real
 WVGT entry rather than an out-of-catalog private shape.
 
-`Compilerˉsourceˉbindingsˉclosuresˉfinishˉphase` owns WVLB 1.4 publication.
+`Compilerˉsourceˉbindingsˉclosuresˉfinishˉphaseˉproduct` owns WVLB 1.4 publication.
 It requires valid WVGC, WVGT, and non-empty WVCL inputs and preserves the older
 publishers unchanged when no source closure target exists.
 
@@ -331,7 +345,17 @@ concrete shape; `_` creates no entry. Pattern syntax does not repeat type
 arguments because the selector's private WVGT identity already selects the one
 concrete instance.
 
-Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WVLB 1.1 and 1.2. `Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid` delegates those versions unchanged and additionally checks WVLB 1.3. `Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid` independently checks WVLB 1.4. Together they check the complete selected-version header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, catalog agreement, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
+After producer publication and before downstream acceptance, the independent
+consumer's `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WVLB 1.1 and
+1.2. `Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid` delegates
+those versions unchanged and additionally checks WVLB 1.3.
+`Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid` independently checks
+WVLB 1.4. Together they check the complete selected-version header, exact
+length, canonical ranges, declaration ownership, slot/kind consistency,
+concrete shape bounds or the local-only inference marker, identifier spans,
+scope bounds, order, catalog agreement, and trailing data. Identifier
+validation operates directly over absolute WVSS spans; it does not materialize
+a source copy or rescan from the start of the module for each binding.
 
 ## Deterministic processing and performance
 

@@ -71,6 +71,21 @@ payloads. Arbitrary payload composition and installed-tool promotion remain
 separate. The minor-40 projected-Vector extension below has focused
 [Windows/Debian execution evidence](../Documents/Evidence/2026-09-22-Borrowed-Vector-Payloads.json).
 
+## Candidate direct budget helpers
+
+The coherent byte-construction path uses candidate WVB 1.44 under
+[Decision 0979](../Documents/Decisions/0979-Connect-Reserved-Byte-Construction-To-WVB-1.44.md).
+Candidate WVB 1.45 completes direct budget helper authority under
+[Decision 0982](../Documents/Decisions/0982-Complete-Direct-Budget-Helper-Authority-In-WVB-1.45.md).
+An exclusive canonical budget formal or evaluated call view encodes as exactly
+shape 41 followed by 25; immutable views remain shape 36. An owned budget
+return remains shape 25 and emits a consuming Take. The emitter derives
+temporary call modes once per function and refuses inconsistent modes.
+Reachable exclusive budget formals or owned budget returns select minor 45.
+Budget-bearing indirect/callable signatures remain refused. This extends the
+existing source and WVIR identities; reconstruction, independent complete
+admission and both-host execution remain required before qualification.
+
 ## Direct compilation result
 
 ```text
@@ -511,7 +526,53 @@ allocator materializes a nonidentity temporary-to-slot mapping. This avoids two
 incremental four-byte construction chains per temporary while preserving local
 indices, shapes, emitted instructions, and canonical WVB bytes.
 
-The backend makes two deterministic passes over each function. The first computes every block byte offset, exact function code length, and maximum operand-stack depth. The second emits code using those offsets, so branches never require mutable backpatching.
+Recursive ownership queries use one immutable constructor index built from the
+validated module's ordered function and operation ranges. Each 12-byte row
+records the constructed shape, the enclosing function's temporary base, and the
+original operation index. Construction scans the operations once and advances
+through each function range at most once; retained index bytes are bounded by
+12 times the constructor count, with a 384-byte active construction chunk.
+Queries inspect constructor rows rather than repeatedly scanning every module
+operation and rediscovering its function. Constructor and child-type order,
+generic-field evidence, cycle refusal, the 64-level recursion bound, and the
+8,192-node ownership-analysis budget remain unchanged. This private index does
+not change WVIR or WVB bytes and does not provide general storage reclamation;
+execution and performance evidence from the rebuilt compiler remain required.
+
+For an immutable helper argument produced by an ordinary expression, the
+Foundation borrow plan assigns a distinct ordinary owner local before storing
+the borrowed temporary. Emission stores the expression, loads that named owner,
+and immediately stores the loan; already rooted local loads, borrowed projections
+and intrinsic slice results retain their original provenance. Only values proven
+Copy or shared by the existing read-class analysis enter this materialization
+path; a unique payload cannot gain a second owner. The added locals count toward
+the existing 4,096-slot function limit, and each materialization contributes ten
+bytes to the same analysis/emission block-offset plan. The bounded owner directory
+has at most 4,096 entries, two 16-KiB directories and a 4-KiB construction bitmap;
+construction chunks are 256 bytes. These private locals use ordinary lifetime
+cleanup and do not change the source contract or bytecode format. Full native
+execution and cross-host qualification of this correction remain pending.
+
+The backend visits reachable blocks from the function entry with a bounded,
+iterative depth-first traversal, considering the first successor before the
+second, then emits the reverse of their completion order. Every retained block
+has an incoming edge from an earlier emitted block, except the entry itself.
+Acyclic joins follow all their incoming branches; their differing ownership
+states therefore merge at a forward join rather than being checked as a loop.
+Fully validated unreachable blocks are omitted. Original WVIR block identities
+remain the branch-target namespace; traversal order changes physical layout
+without changing execution paths.
+
+The backend then makes two deterministic passes over that order. The first
+computes block byte offsets, exact function code length, and maximum
+operand-stack depth. The second emits code using those offsets, so branches
+never require mutable backpatching. The layout analysis accepts at most 4,096
+blocks per function, uses bounded discovery and offset tables, and performs at
+most 16,777,216 comparisons when constructing the original-identity offset
+directory. A function exceeding this implementation bound fails with
+`Bytecodeˉlimit` before publication. This layout correction retains the
+canonical WVB format and source semantics; current-compiler execution and
+cross-host verification remain required for its changed emitted bytes.
 
 `Valueˉphi = 64` is typed control evidence rather than a new WVB opcode. It has zero operation bytes. Each unconditional predecessor jump to a phi join emits the selected exact-shape temporary load and phi-result local store immediately before the ordinary jump. This serves value-producing `if`, exhaustive value-producing `match`, and the retained Boolean short-circuit lowering. Only the selected predecessor has a bytecode execution path, and WVIR validation forbids a conditional or third predecessor from targeting such a join. No WVB opcode or minor-version change is required.
 

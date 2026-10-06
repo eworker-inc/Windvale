@@ -6,6 +6,7 @@ authority library;
 
 
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉrecords as Records;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions as Variantˉinstructions;
 
 export record Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
@@ -54,7 +55,7 @@ fn Analyzeˉcreate(
         Input,
         Instructionˉoffset + 5u32
     );
-    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 ||
+    if Typeˉindex >= Types.Count ||
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 ||
         Caseˉindex >= Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
             Types,
@@ -63,25 +64,24 @@ fn Analyzeˉcreate(
         return Invalid(Input);
     }
     let Variantˉtype: u8 =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex);
-    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
-            Input,
-            Types,
-            Typeˉindex,
-            Caseˉindex
-        );
-    if !Payload.Valid { return Invalid(Input); }
-    var Stack: bytes = State.Stack;
-    var Depth: u32 = State.Depth;
-    if Payload.Type != 0u8 {
-        if Depth == 0u32 ||
-            Bytesˉreadˉu8(Stack, Depth - 1u32) != Payload.Type {
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex);
+    let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(
+        Input, Types, Typeˉindex, Caseˉindex);
+    if Fields > 64u32 || Fields > State.Depth || Variantˉtype == 0u8 {
+        return Invalid(Input);
+    }
+    let Depth: u32 = State.Depth - Fields;
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+            Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+                Input, Types, Typeˉindex, Caseˉindex, Field);
+        if !Payload.Valid || Bytesˉreadˉu8(State.Stack, Depth + Field) != Payload.Type {
             return Invalid(Input);
         }
-        Depth = Depth - 1u32;
-        Stack = Bytesˉslice(Stack, 0u32, Depth);
+        Field = Field + 1u32;
     }
+    let Stack: bytes = Bytesˉslice(State.Stack, 0u32, Depth);
     return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
         true,
         Bytesˉconcat(Stack, Bytesˉfromˉu8(Variantˉtype)),
@@ -119,7 +119,7 @@ fn Analyzeˉinspect(
         Input,
         Instructionˉoffset + 5u32
     );
-    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 ||
+    if Typeˉindex >= Types.Count ||
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 ||
         Caseˉindex >= Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
             Types,
@@ -128,7 +128,7 @@ fn Analyzeˉinspect(
         return Invalid(Input);
     }
     let Variantˉtype: u8 =
-        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex);
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex);
     if State.Depth == 0u32 ||
         Bytesˉreadˉu8(State.Stack, State.Depth - 1u32) != Variantˉtype {
         return Invalid(Input);
@@ -174,10 +174,10 @@ fn Analyzeˉinspect(
     if Payload.Type == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
     if Payload.Type == 3u8 { Textˉvalues = Textˉvalues + 1u32; }
     if Payload.Type == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
-    if Payload.Type == 5u8 || Payload.Type == 9u8 || Payload.Type == 10u8 {
+    if Payload.Type == 5u8 || Payload.Type == 8u8 || Payload.Type == 9u8 || Payload.Type == 10u8 {
         U32ˉvalues = U32ˉvalues + 1u32;
     }
-    if Payload.Type == 6u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
+    if Payload.Type == 6u8 || Payload.Type == 7u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Payload.Type) {
         Enumˉvalues = Enumˉvalues + 1u32;
     }
@@ -197,9 +197,7 @@ fn Analyzeˉinspect(
         Enumˉvalues,
         Recordˉvalues,
         State.Bodyˉbytes +
-            Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(
-                Payload.Type
-            )
+            Extractionˉbytes(Input, Types, Payload.Type)
     );
 }
 
@@ -217,12 +215,12 @@ fn Analyzeˉfield(
     );
     let Caseˉindex: u32 = Selection / 64u32;
     let Fieldˉindex: u32 = Selection % 64u32;
-    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 ||
+    if Typeˉindex >= Types.Count ||
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
             Types, Typeˉindex
         ) != 3u8 || State.Depth == 0u32 || Bytesˉreadˉu8(
             State.Stack, State.Depth - 1u32
-        ) != Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex) {
+        ) != Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex) {
         return Invalid(Input);
     }
     let Field: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
@@ -247,10 +245,10 @@ fn Analyzeˉfield(
     if Field.Type == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
     if Field.Type == 3u8 { Textˉvalues = Textˉvalues + 1u32; }
     if Field.Type == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
-    if Field.Type == 5u8 || Field.Type == 9u8 || Field.Type == 10u8 {
+    if Field.Type == 5u8 || Field.Type == 8u8 || Field.Type == 9u8 || Field.Type == 10u8 {
         U32ˉvalues = U32ˉvalues + 1u32;
     }
-    if Field.Type == 6u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
+    if Field.Type == 6u8 || Field.Type == 7u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Field.Type) {
         Enumˉvalues = Enumˉvalues + 1u32;
     }
@@ -270,9 +268,7 @@ fn Analyzeˉfield(
         Enumˉvalues,
         Recordˉvalues,
         State.Bodyˉbytes +
-            Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(
-                Field.Type
-            )
+            Extractionˉbytes(Input, Types, Field.Type)
     );
 }
 
@@ -290,14 +286,14 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
         }
         let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 5u32);
         let Projection: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 9u32);
-        if Viewˉtype >= 64u32 || Projection < 1u32 || Projection > 3u32 ||
+        if Viewˉtype >= Types.Count || Projection < 1u32 || Projection > 3u32 ||
             Nominalˉtypes.Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
                 Input, Types, Viewˉtype
             ) != 1u8 { return Invalid(Input); }
         return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
             true,
             Bytesˉconcat(State.Stack,
-                Bytesˉfromˉu8(Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype))),
+                Bytesˉfromˉu8(Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types, Viewˉtype))),
             State.Depth + 1u32,
             State.I32ˉvalues, State.Boolˉvalues, State.Textˉvalues, State.U8ˉvalues,
             State.U32ˉvalues, State.Bytesˉvalues, State.Enumˉvalues,
@@ -377,4 +373,13 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉvalue(
         );
     if !Result.Valid { return Bytesˉslice(Input, 0u32, 0u32); }
     return Encodeˉstate(Result);
+}
+
+fn Extractionˉbytes(Input: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Type: u8) -> u32 {
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) && Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        return Records.Compilerˉnativeˉx64ˉrecordˉfieldˉcopyˉbytes(
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type)));
+    }
+    return Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(Type);
 }

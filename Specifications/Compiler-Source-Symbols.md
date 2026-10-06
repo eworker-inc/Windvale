@@ -159,7 +159,7 @@ order for the generic resolver; the resolved value must still fit the existing
 positive 1-through-4,095 collection bound. It does not create a runtime generic
 type.
 
-Canonical `Foundationˉcollections.Vector<T>` and `Sequence<T>` function
+Canonical `Foundationˉcollections.Vector<T>`, `Sequence<T>`, and `Slice<T>` function
 signature uses are deferred through the early symbol pass with an unresolved
 shape after exact imported-module and syntax admission. The bounded generic-type
 catalog then owns their kind, element, private shape, and dependency evidence;

@@ -31,6 +31,11 @@ export record Wvoˉstringˉscan {
     Length: u32;
 }
 
+record Wvoˉnameˉsearch {
+    Found: bool;
+    Cursor: u32;
+}
+
 export record Wvoˉsectionˉview {
     Status: Wvoˉstatus;
     Kind: u32;
@@ -345,26 +350,47 @@ fn Earlierˉsymbolˉnameˉexists(
     Nameˉoffset: u32,
     Nameˉlength: u32
 ) -> bool {
+    var Cursor: u32 = Symbolˉstart;
     var Index: u32 = 0u32;
     while Index < Currentˉindex {
-        let Earlier: Wvoˉsymbolˉview = Findˉsymbol(
-            Input,
-            Symbolˉstart,
-            Currentˉindex,
-            Index
-        );
+        // This fallback is used only for the first out-of-order symbol.
+        // Every earlier record has already passed complete validation.
+        let Earlierˉoffset: u32 = Cursor + 20u32;
+        let Earlierˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 16u32);
         if Byteˉordering.Foundationˉbyteˉspansˉcompare(
             Input,
-            Earlier.Nameˉoffset,
-            Earlier.Nameˉlength,
+            Earlierˉoffset,
+            Earlierˉlength,
             Nameˉoffset,
             Nameˉlength
         ) == 0 {
             return true;
         }
+        Cursor = Earlierˉoffset + Earlierˉlength;
         Index = Index + 1u32;
     }
     return false;
+}
+
+fn Findˉearlierˉsortedˉname(
+    Input: bytes,
+    Start: u32,
+    End: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Wvoˉnameˉsearch {
+    var Cursor: u32 = Start;
+    while Cursor < End {
+        // The range is an already validated, strictly sorted binding group.
+        let Earlierˉoffset: u32 = Cursor + 20u32;
+        let Earlierˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 16u32);
+        let Order: i32 = Byteˉordering.Foundationˉbyteˉspansˉcompare(
+            Input, Earlierˉoffset, Earlierˉlength, Nameˉoffset, Nameˉlength
+        );
+        if Order >= 0 { return Wvoˉnameˉsearch(Order == 0, Cursor); }
+        Cursor = Earlierˉoffset + Earlierˉlength;
+    }
+    return Wvoˉnameˉsearch(false, Cursor);
 }
 
 export fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
@@ -468,6 +494,10 @@ export fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
     var Previousˉbinding: u32 = 0u32;
     var Previousˉsymbolˉname: u32 = 0u32;
     var Previousˉsymbolˉnameˉlength: u32 = 0u32;
+    var Localˉsymbolsˉend: u32 = Symbolˉstart;
+    var Exportˉsymbolsˉend: u32 = Symbolˉstart;
+    var Localˉnameˉcursor: u32 = Symbolˉstart;
+    var Exportˉnameˉcursor: u32 = Symbolˉstart;
     while Symbolˉindex < Symbolˉcount {
         if !Rangeˉisˉinside(Total, Cursor, 16u32) {
             return Wvoˉinspection(Wvoˉstatus.Outˉofˉbounds, Sectionˉcount, Symbolˉindex, 0u32, Cursor);
@@ -487,17 +517,9 @@ export fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         if Symbolˉname.Status != Wvoˉstatus.Valid {
             return Wvoˉinspection(Symbolˉname.Status, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Cursor);
         }
-        if Earlierˉsymbolˉnameˉexists(
-            Input,
-            Symbolˉstart,
-            Symbolˉindex,
-            Symbolˉname.Valueˉoffset,
-            Symbolˉname.Length
-        ) {
-            return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset);
-        }
+        var Orderˉfailure: bool = Symbolˉbinding < Previousˉbinding;
+        var Orderˉoffset: u32 = Cursor;
         if Symbolˉindex > 0u32 {
-            if Symbolˉbinding < Previousˉbinding { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
             if Symbolˉbinding == Previousˉbinding {
                 if Byteˉordering.Foundationˉbyteˉspansˉcompare(
                     Input,
@@ -506,9 +528,35 @@ export fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
                     Symbolˉname.Valueˉoffset,
                     Symbolˉname.Length
                 ) >= 0 {
-                    return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset);
+                    Orderˉfailure = true;
+                    Orderˉoffset = Symbolˉname.Valueˉoffset;
                 }
             }
+        }
+        if Orderˉfailure {
+            // A duplicate takes priority over ordering, including a name behind
+            // an advanced group cursor. This one fallback always terminates.
+            if Earlierˉsymbolˉnameˉexists(Input, Symbolˉstart, Symbolˉindex,
+                Symbolˉname.Valueˉoffset, Symbolˉname.Length) {
+                return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset);
+            }
+            return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Orderˉoffset);
+        }
+        if Symbolˉbinding > Previousˉbinding {
+            Localˉnameˉcursor = Symbolˉstart;
+            Exportˉnameˉcursor = Localˉsymbolsˉend;
+        }
+        if Symbolˉbinding > 1u32 {
+            let Localˉsearch: Wvoˉnameˉsearch = Findˉearlierˉsortedˉname(Input,
+                Localˉnameˉcursor, Localˉsymbolsˉend, Symbolˉname.Valueˉoffset, Symbolˉname.Length);
+            if Localˉsearch.Found { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset); }
+            Localˉnameˉcursor = Localˉsearch.Cursor;
+        }
+        if Symbolˉbinding > 2u32 {
+            let Exportˉsearch: Wvoˉnameˉsearch = Findˉearlierˉsortedˉname(Input,
+                Exportˉnameˉcursor, Exportˉsymbolsˉend, Symbolˉname.Valueˉoffset, Symbolˉname.Length);
+            if Exportˉsearch.Found { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset); }
+            Exportˉnameˉcursor = Exportˉsearch.Cursor;
         }
         if Symbolˉbinding == 3u32 {
             if Symbolˉsection != 4294967295u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 4u32); }
@@ -529,6 +577,8 @@ export fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         Previousˉsymbolˉname = Symbolˉname.Valueˉoffset;
         Previousˉsymbolˉnameˉlength = Symbolˉname.Length;
         Cursor = Symbolˉname.Cursor;
+        if Symbolˉbinding == 1u32 { Localˉsymbolsˉend = Cursor; }
+        if Symbolˉbinding < 3u32 { Exportˉsymbolsˉend = Cursor; }
         Symbolˉindex = Symbolˉindex + 1u32;
     }
 

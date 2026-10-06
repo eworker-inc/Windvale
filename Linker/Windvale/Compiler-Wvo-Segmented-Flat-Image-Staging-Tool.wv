@@ -12,6 +12,7 @@ requires capability process.argument_count version 1;
 
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
 import Linkerˉcompilerˉflatˉimageˉstagingˉmanifest as Imageˉmanifest;
 import Linkerˉcompilerˉflatˉimageˉstagingˉresources as Resources;
 import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage as Flat;
@@ -113,10 +114,109 @@ fn Chunkˉatˉposition(
     return 4294967295u32;
 }
 
+fn Textˉequal(Left: text, Right: text) -> bool {
+    let A: bytes = Textˉtoˉutf8(Left);
+    let B: bytes = Textˉtoˉutf8(Right);
+    if Bytesˉlength(A) != Bytesˉlength(B) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(A) {
+        if Bytesˉreadˉu8(A, Index) != Bytesˉreadˉu8(B, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Extraˉresourceˉvalid(
+    Name: text, Sourceˉprefix: text, Sourceˉmanifest: text,
+    Outputˉprefix: text, Outputˉmanifest: text, Chunks: u32
+) -> bool {
+    let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Name));
+    if Length == 0u32 || Length > 4095u32 ||
+        Textˉequal(Name, Sourceˉmanifest) || Textˉequal(Name, Outputˉmanifest) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        if Textˉequal(Name, Resources.Linkerˉcompilerˉflatˉimageˉsourceˉchunkˉresource(
+            Sourceˉprefix, Index)) ||
+            Textˉequal(Name, Resources.Linkerˉcompilerˉflatˉimageˉoutputˉchunkˉresource(
+                Outputˉprefix, Index)) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Sharedˉconfiguration(
+    Summary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary,
+    Envelopeˉsummary: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary,
+    Providers: bytes
+) -> bytes {
+    var Output: bytes = Textˉtoˉutf8("WVSC");
+    Output = Appendˉu32(Output, 1u32);
+    Output = Appendˉu32(Output, 64u32);
+    Output = Appendˉu32(Output, Envelopeˉsummary.Textˉbytes + Envelopeˉsummary.Readˉonlyˉbytes);
+    Output = Appendˉu32(Output, Summary.Mainˉoffset);
+    Output = Appendˉu32(Output, Summary.Mainˉbytes);
+    Output = Appendˉu32(Output, Envelopeˉsummary.Textˉbytes);
+    Output = Appendˉu32(Output, Summary.Blobˉbytes);
+    Output = Appendˉu32(Output, Envelopeˉsummary.Textˉbytes + Summary.Directoryˉoffset);
+    Output = Appendˉu32(Output, Summary.Directoryˉbytes);
+    Output = Appendˉu32(Output, Summary.Closeˉoffset);
+    Output = Appendˉu32(Output, 17u32);
+    if Bytesˉlength(Providers) == 40u32 {
+        Output = Appendˉu32(Output, Bytesˉreadˉu32ˉlittle(Providers, 12u32));
+        Output = Appendˉu32(Output, Bytesˉreadˉu32ˉlittle(Providers, 16u32));
+        Output = Appendˉu32(Output, Bytesˉreadˉu32ˉlittle(Providers, 20u32));
+    } else {
+        Output = Appendˉu32(Output, 0u32);
+        Output = Appendˉu32(Output, 0u32);
+        Output = Appendˉu32(Output, 0u32);
+    }
+    return Appendˉu32(Output, 0u32);
+}
+
+fn Sharedˉsourceˉvalidate(
+    Sourceˉprefix: text, Stagingˉmanifest: bytes, Prefix: bytes,
+    Readˉonlyˉheader: bytes, Symbolˉchunk: bytes, Relocationˉchunk: bytes,
+    Summary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary,
+    Envelopeˉsummary: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary,
+    Chunks: u32
+) -> bool {
+    if !Summary.Sharedˉprofile { return false; }
+    let R: Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
+            Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk);
+    if R.Status != Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    var Readˉonlyˉchunks: u32 = 0u32;
+    let Textˉend: u32 = 49u32 + Envelopeˉsummary.Textˉbytes;
+    while Index < Chunks {
+        let Position: u32 = Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, 28u32 + Index * 12u32);
+        if Position >= 49u32 && Position < Textˉend {
+            if Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
+                Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk,
+                Relocationˉchunk, Index, Sourceˉchunk(Sourceˉprefix, Index)) !=
+                Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+                return false;
+            }
+        }
+        if Position >= Textˉend + 27u32 && Position < Envelopeˉsummary.Symbolˉposition {
+            if Position != Textˉend + 27u32 ||
+                !Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsharedˉdataˉvalidate(
+                    Summary, Symbolˉchunk, Sourceˉchunk(Sourceˉprefix, Index)) { return false; }
+            Readˉonlyˉchunks = Readˉonlyˉchunks + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if Envelopeˉsummary.Readˉonlyˉbytes == 0u32 { return Readˉonlyˉchunks == 0u32; }
+    return Readˉonlyˉchunks == 1u32;
+}
+
 export fn Main() -> i32 {
-    if process.argument_count() != 4u32 {
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 4u32 && Arguments != 6u32 {
         diagnostic.write_line(
-            "Usage: wvlink-stage <wvo-chunk-prefix> <wvo-manifest.wvop> <image-chunk-prefix> <image-manifest.wvli>"
+            "Usage: wvlink-stage <wvo-prefix> <manifest.wvop> <image-prefix> <image.wvli> [inspect|providers.wvsp configuration.wvsc]"
         );
         return 2;
     }
@@ -124,6 +224,14 @@ export fn Main() -> i32 {
     let Sourceˉmanifestˉresource: text = process.argument(1u32);
     let Outputˉprefix: text = process.argument(2u32);
     let Outputˉmanifestˉresource: text = process.argument(3u32);
+    var Inspect: bool = false;
+    var Providerˉresource: text = "";
+    var Configurationˉresource: text = "";
+    if Arguments == 6u32 {
+        Providerˉresource = process.argument(4u32);
+        Configurationˉresource = process.argument(5u32);
+        Inspect = Textˉequal(Providerˉresource, "inspect");
+    }
     let Preflight: Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus =
         Resources.Linkerˉcompilerˉflatˉimageˉresourceˉpreflight(
             Sourceˉprefix,
@@ -150,6 +258,16 @@ export fn Main() -> i32 {
     if Resourceˉplan.Status !=
         Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Valid {
         return Resourceˉfailure(Resourceˉplan.Status);
+    }
+    if Arguments == 6u32 &&
+        (!Extraˉresourceˉvalid(Configurationˉresource, Sourceˉprefix,
+            Sourceˉmanifestˉresource, Outputˉprefix, Outputˉmanifestˉresource,
+            Resourceˉplan.Sourceˉchunks) ||
+            (!Inspect && (!Extraˉresourceˉvalid(Providerˉresource, Sourceˉprefix,
+                Sourceˉmanifestˉresource, Outputˉprefix, Outputˉmanifestˉresource,
+                Resourceˉplan.Sourceˉchunks) ||
+                Textˉequal(Providerˉresource, Configurationˉresource)))) {
+        return Resourceˉfailure(Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Collision);
     }
 
     var Snapshot: u32 = 0u32;
@@ -249,25 +367,42 @@ export fn Main() -> i32 {
         );
     }
 
+    var Providers: bytes = Empty(Prefix);
+    if Arguments == 6u32 {
+        if !Sharedˉsourceˉvalidate(Sourceˉprefix, Stagingˉmanifest, Prefix,
+            Readˉonlyˉheader, Symbolˉchunk, Relocationˉchunk, Symbolˉsummary,
+            Envelopeˉsummary, Resourceˉplan.Sourceˉchunks) {
+            return Linkˉfailure(Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent);
+        }
+        if Inspect {
+            file.write_bytes(Configurationˉresource,
+                Sharedˉconfiguration(Symbolˉsummary, Envelopeˉsummary, Providers));
+            console.write_line("segmented shared compiler staging status=Admitted configuration-bytes=64");
+            return 0;
+        }
+        Providers = file.read_bytes(Providerˉresource);
+    }
     let Plan: Flat.Linkerˉcompilerˉwvoˉsegmentedˉplan =
-        Flat.Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉsharedˉplanˉbuild(
             Stagingˉmanifest,
             Prefix,
             Readˉonlyˉheader,
             Symbolˉchunk,
-            Relocationˉchunk
+            Relocationˉchunk,
+            Providers
         );
     if Plan.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
         return Linkˉfailure(Plan.Status);
     }
     var Cursor:
         Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor =
-        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉsharedˉverificationˉbegin(
             Stagingˉmanifest,
             Prefix,
             Readˉonlyˉheader,
             Symbolˉchunk,
-            Relocationˉchunk
+            Relocationˉchunk,
+            Providers
         );
     if Cursor.Status !=
         Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active {
@@ -280,14 +415,15 @@ export fn Main() -> i32 {
     while Sourceˉindex < Plan.Manifestˉchunks {
         let Source: bytes = Sourceˉchunk(Sourceˉprefix, Sourceˉindex);
         let Linked: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
-            Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉsharedˉchunkˉlink(
                 Stagingˉmanifest,
                 Prefix,
                 Readˉonlyˉheader,
                 Symbolˉchunk,
                 Relocationˉchunk,
                 Sourceˉindex,
-                Source
+                Source,
+                Providers
             );
         if Linked.Status !=
             Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
@@ -303,7 +439,7 @@ export fn Main() -> i32 {
         }
         let Next:
             Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor =
-            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉsharedˉverificationˉnext(
                 Stagingˉmanifest,
                 Prefix,
                 Readˉonlyˉheader,
@@ -312,7 +448,8 @@ export fn Main() -> i32 {
                 Cursor,
                 Source,
                 Candidateˉposition,
-                Linked.Value
+                Linked.Value,
+                Providers
             );
         if Next.Status !=
             Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active {
@@ -335,13 +472,14 @@ export fn Main() -> i32 {
         Sourceˉindex = Sourceˉindex + 1u32;
     }
 
-    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉsharedˉverificationˉfinish(
         Stagingˉmanifest,
         Prefix,
         Readˉonlyˉheader,
         Symbolˉchunk,
         Relocationˉchunk,
-        Cursor
+        Cursor,
+        Providers
     );
     if Cursor.Status !=
             Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Complete ||
@@ -363,6 +501,10 @@ export fn Main() -> i32 {
         );
     }
     file.write_bytes(Outputˉmanifestˉresource, Manifestˉbytes);
+    if Arguments == 6u32 {
+        file.write_bytes(Configurationˉresource,
+            Sharedˉconfiguration(Symbolˉsummary, Envelopeˉsummary, Providers));
+    }
     var Report: text =
         "segmented compiler image staging status=Complete image-bytes=";
     Report = Textˉconcat(Report, U32ˉformat(Plan.Imageˉbytes));

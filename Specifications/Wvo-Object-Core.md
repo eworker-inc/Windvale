@@ -4,7 +4,7 @@
 
 `Object-Model/Windvale/Wvo-Object-Core.wv` owns the Windvale-written WVO 1.0 read-only command and report shell. `Object-Model/Windvale/Wvo-Object-Verification.wv` owns its shared portable reader and complete bounded validator. The shell constructs the canonical representative object for an internal deterministic self-test and emits the same successful verification and inspection reports as the independent C# Stage 0 oracle.
 
-`Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉconstruction`, `Foundationˉbyteˉordering`, and the compression plus streaming SHA-256 modules. The current candidate WVB is 74,713 bytes with SHA-256 `fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf`. It is a source candidate pending independent execution of this descendant on both hosts; this identity is not a cross-host qualification claim.
+`Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉconstruction`, `Foundationˉbyteˉordering`, and the compression plus streaming SHA-256 modules. The retained bootstrap candidate WVB is 74,713 bytes with SHA-256 `fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf`. That identity describes the retained product, not later source changes or their qualification.
 
 Decision 0519 makes that manifest the normal broad-script build contract and
 requires independent native verification plus exact inspection. Decision
@@ -25,6 +25,25 @@ missing resource failures do not yet reproduce the reference-runtime reports;
 those calls and the independent Stage 0 object-report oracles remain explicit.
 
 This module is an object verifier and inspector, not an assembler, linker, or object-file writer. Moving the source from `Examples/Foundation` into `Object-Model/Windvale` makes its ownership explicit without changing WVO 1.0.
+
+## Current source symbol validation
+
+The source reader retains the WVO 1.0 limits of 4,096 symbols and 255 bytes per
+name. It validates each name once, then checks uniqueness with forward cursors
+through the already validated, sorted local and export groups. Cursors reset
+when the current binding group changes. An out-of-order symbol takes one
+complete prefix scan before rejection so duplicate names still report
+`Invalidˉsymbol` before `Noncanonicalˉorder`, with the same failure offset.
+Symbol-name validation and duplicate detection therefore use work linear in
+the encoded name bytes and constant cursor state. This does not change the
+complexity of unrelated section or relocation lookups.
+
+The native lowering owner prepares this reader through the existing current
+compiler and hosted-application caches. Its capacity checks exercise 4,096
+symbols with both short and maximum-length names, interleaved binding groups,
+cursor resets, duplicate priority and the 4,097-symbol refusal. The immutable
+bootstrap inspector remains a separately identified construction input;
+current-source checking does not promote or overwrite it.
 
 ## Pure boundaries
 

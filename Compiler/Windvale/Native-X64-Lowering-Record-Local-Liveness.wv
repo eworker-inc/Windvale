@@ -473,3 +473,110 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
         Compact.Fields
     );
 }
+
+// The shared profile uses the independently proved owner roots in its ordinary
+// local live rows. The existing offset allocator still owns coloring.
+export fn Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
+    Input: bytes, Codeˉoffset: u32,
+    Directory: Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Rows: bytes, Locals: u32, Rowˉbytes: u32
+) -> Allocation.Compilerˉnativeˉx64ˉrecordˉallocation {
+    let Count: u32 = Directory.Count;
+    let Invalid: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(Empty(Input), 4294967295u32);
+    if Locals >= 2048u32 || Count > 1024u32 ||
+        Bytesˉlength(Directory.Indices) != Locals * 4u32 ||
+        Bytesˉlength(Directory.Types) != Count ||
+        Rowˉbytes != 4u32 + 2u32 * ((Locals + 7u32) / 8u32) ||
+        Rowˉbytes == 0u32 || Bytesˉlength(Rows) % Rowˉbytes != 0u32 ||
+        Bytesˉlength(Rows) / Rowˉbytes > 32768u32 {
+        return Invalid;
+    }
+    var Recordˉtoˉlocal: bytes = Empty(Input);
+    var Local: u32 = 0u32;
+    while Local < Locals {
+        let Record: u32 = Bytesˉreadˉu32ˉlittle(Directory.Indices, Local * 4u32);
+        if Record != 4294967295u32 {
+            if Record != Bytesˉlength(Recordˉtoˉlocal) / 4u32 { return Invalid; }
+            Recordˉtoˉlocal = Bytesˉconcat(Recordˉtoˉlocal, Bytesˉfromˉu32ˉlittle(Local));
+        }
+        Local = Local + 1u32;
+    }
+    if Bytesˉlength(Recordˉtoˉlocal) != Count * 4u32 { return Invalid; }
+    var Present: bytes = Zeros(Input, Count);
+    var Interference: bytes = Zeros(Input,
+        Allocation.Compilerˉnativeˉx64ˉrecordˉinterferenceˉbytes(Count));
+    var Events: bytes = Empty(Input);
+    var Row: u32 = 0u32;
+    var Previous: u32 = 0u32;
+    while Row < Bytesˉlength(Rows) / Rowˉbytes {
+        let Cursor: u32 = Bytesˉreadˉu32ˉlittle(Rows, Row * Rowˉbytes);
+        if (Row > 0u32 && Cursor <= Previous) || Codeˉoffset > Bytesˉlength(Input) ||
+            Cursor >= Bytesˉlength(Input) - Codeˉoffset { return Invalid; }
+        Previous = Cursor;
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        var Store: u32 = 4294967295u32;
+        if Opcode == 5u8 {
+            if Bytesˉlength(Input) - Codeˉoffset - Cursor < 5u32 { return Invalid; }
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
+            if Target >= Locals { return Invalid; }
+            Store = Bytesˉreadˉu32ˉlittle(Directory.Indices, Target * 4u32);
+            if Store != 4294967295u32 && Bytesˉreadˉu8(Present, Store) == 0u8 {
+                Present = Setˉbyte(Present, Store, 1u8);
+            }
+        }
+        var Side: u32 = 0u32;
+        while Side < 2u32 {
+            var Packed: bytes = Empty(Input);
+            var First: u32 = 0u32;
+            while First < Count {
+                var Bits: u32 = 0u32;
+                var Bit: u32 = 0u32;
+                while Bit < 8u32 && First + Bit < Count {
+                    let Actual: u32 = Bytesˉreadˉu32ˉlittle(Recordˉtoˉlocal, (First + Bit) * 4u32);
+                    let Live: u8 = Bytesˉreadˉu8(Rows, Row * Rowˉbytes + 4u32 +
+                        Side * ((Locals + 7u32) / 8u32) + Actual / 8u32);
+                    if (U32ˉfromˉu8(Live) & (1u32 << (Actual % 8u32))) != 0u32 {
+                        Bits = Bits | (1u32 << Bit);
+                        if Bytesˉreadˉu8(Present, First + Bit) == 0u8 {
+                            Present = Setˉbyte(Present, First + Bit, 1u8);
+                        }
+                    }
+                    Bit = Bit + 1u32;
+                }
+                Packed = Bytesˉconcat(Packed, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Bits), 0u32, 1u32));
+                First = First + 8u32;
+            }
+            var Value: u32 = 4294967295u32;
+            if Side == 1u32 { Value = Store; }
+            Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Packed));
+            // A definition may not overwrite a root whose final borrowed use
+            // is this store: ordinary last-use cleanup runs after the copy.
+            if Side == 0u32 && Store != 4294967295u32 {
+                Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Store), Packed));
+            }
+            if Bytesˉlength(Events) >= 65536u32 {
+                Interference = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(Interference, Events, Count);
+                Events = Empty(Input);
+            }
+            Side = Side + 1u32;
+        }
+        Row = Row + 1u32;
+    }
+    Interference = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(Interference, Events, Count);
+    let Compact: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Allocation.Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(Input, Types, Present,
+            Directory.Types, Interference, Count);
+    if Compact.Fields == 4294967295u32 || Bytesˉlength(Compact.Offsets) != Count * 4u32 { return Invalid; }
+    var Offsets: bytes = Empty(Input);
+    Local = 0u32;
+    while Local < Locals {
+        let Selectedˉrecord: u32 = Bytesˉreadˉu32ˉlittle(Directory.Indices, Local * 4u32);
+        var Offset: u32 = 4294967295u32;
+        if Selectedˉrecord != 4294967295u32 { Offset = Bytesˉreadˉu32ˉlittle(Compact.Offsets, Selectedˉrecord * 4u32); }
+        Offsets = Bytesˉconcat(Offsets, Bytesˉfromˉu32ˉlittle(Offset));
+        Local = Local + 1u32;
+    }
+    return Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(Offsets, Compact.Fields);
+}

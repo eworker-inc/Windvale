@@ -6,6 +6,7 @@ authority library;
 
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉclosureˉcaptures as Captures;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
@@ -112,7 +113,7 @@ export fn Compilerˉsourceˉclosureˉcaptureˉeffectsˉvalidate(
     if Expression.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid ||
         Expression.Kind !=
             Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Closure {
-        return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidate(
+        return Wirˉconsumer.Compilerˉsourceˉclosureˉcapturesˉvalidate(
             Input, Scan, Symbols, Bindings,
             Module, Function, Source, Expression
         );
@@ -121,7 +122,7 @@ export fn Compilerˉsourceˉclosureˉcaptureˉeffectsˉvalidate(
         Compilerˉsourceˉclosureˉcaptureˉeffectsˉresolve(
             Input, Scan, Symbols, Source, Expression
         );
-    return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidateˉwithˉeffects(
+    return Wirˉconsumer.Compilerˉsourceˉclosureˉcapturesˉvalidateˉwithˉeffects(
         Input, Scan, Symbols, Bindings,
         Module, Function, Source, Expression,
         Compilerˉsourceˉclosureˉcaptureˉeffectsˉstatus(Effects),

@@ -11,6 +11,7 @@ import Compilerˉnativeˉx64ˉloweringˉcapabilities as Nativeˉcapabilities;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉallocation as Allocation;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉlocalˉliveness as Localˉliveness;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉstorage as Variantˉstorage;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉlocalˉliveness as Sharedˉliveness;
 
 export record Compilerˉnativeˉx64ˉrecordˉstorage {
     Valid: bool;
@@ -162,6 +163,10 @@ fn Popˉrecords(Records: bytes, Depth: u32) -> bytes {
 }
 
 fn Instructionˉsize(Opcode: u8) -> u32 {
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    if Numeric >= 229u32 && Numeric <= 235u32 { return 13u32; }
+    if Opcode == 239u8 { return 5u32; }
+    if Numeric >= 236u32 && Numeric <= 241u32 { return 1u32; }
     if Opcode == 195u8 { return 1u32; }
     if Opcode == 1u8 { return 5u32; }
     if Opcode == 2u8 { return 2u32; }
@@ -178,7 +183,6 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 8u8 { return 2u32; }
     if Opcode == 9u8 { return 5u32; }
     if Opcode == 10u8 { return 5u32; }
-    let Numeric: u32 = U32ˉfromˉu8(Opcode);
     if Numeric >= 11u32 {
         if Numeric <= 22u32 { return 1u32; }
     }
@@ -231,7 +235,7 @@ fn Recordˉwidth(
     return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
         Input,
         Types,
-        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type)
     );
 }
 
@@ -652,7 +656,8 @@ fn Buildˉstorage(
     Recordˉvalues: u32,
     Scratchˉvalues: u32,
     Scratchˉblockˉoffsets: bytes,
-    Instructions: u32
+    Instructions: u32,
+    Shared: Sharedˉliveness.Plan
 ) -> bytes {
     let Livenessˉcells: u32 = Blocks * Recordˉlocals.Count;
     let Uses: bytes = Cellˉeventˉmap(
@@ -667,8 +672,14 @@ fn Buildˉstorage(
         2u8,
         Livenessˉcells
     );
-    let Persistent:
-        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+    var Persistent: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(Empty(Input), 4294967295u32);
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+        if !Shared.Valid { return Invalid(Input); }
+        Persistent = Localˉliveness.Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
+            Input, Codeˉoffset, Recordˉlocals, Types, Shared.Rows, Shared.Locals, Shared.Rowˉbytes);
+    } else {
+        Persistent =
         Localˉliveness.Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
             Input,
             Codeˉoffset,
@@ -683,6 +694,8 @@ fn Buildˉstorage(
             Uses,
             Definitions
         );
+    }
+    if Persistent.Fields == 4294967295u32 { return Invalid(Input); }
 
     let Scratch:
         Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
@@ -731,12 +744,29 @@ fn Buildˉstorage(
 }
 
 fn Scalarˉresourceˉoperation(Opcode: u8) -> bool {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    if Opcodeˉnumber >= 236u32 && Opcodeˉnumber <= 241u32 { return true; }
     return Opcode == 195u8 || Opcode == 202u8 || Opcode == 221u8 ||
         Opcode == 226u8 || Opcode == 227u8 || Opcode == 228u8;
 }
 
 fn Scalarˉresourceˉread(Opcode: u8, Stack: bytes, Depth: u32)
     -> Scalarˉresourceˉstate {
+    let Opcodeˉnumber: u32 = U32ˉfromˉu8(Opcode);
+    if Opcodeˉnumber >= 236u32 && Opcodeˉnumber <= 241u32 {
+        var Operands: u32 = 1u32;
+        if Opcode == 238u8 || Opcode == 240u8 { Operands = 2u32; }
+        if Opcode == 239u8 { Operands = 3u32; }
+        if Depth < Operands { return Scalarˉresourceˉstate(false, Stack, Depth); }
+        var Operand: u32 = 0u32;
+        while Operand < Operands {
+            if Bytesˉreadˉu32ˉlittle(Stack, (Depth - Operands + Operand) * 4u32) !=
+                4294967295u32 { return Scalarˉresourceˉstate(false, Stack, Depth); }
+            Operand = Operand + 1u32;
+        }
+        return Scalarˉresourceˉstate(true,
+            Pushˉscalar(Popˉrecords(Stack, Depth - Operands)), Depth - Operands + 1u32);
+    }
     if Opcode == 202u8 || Opcode == 227u8 {
         if Depth == 0u32 { return Scalarˉresourceˉstate(false, Stack, Depth); }
     }
@@ -759,7 +789,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Capabilityˉkinds: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Blocks: u32,
-    Leaders: bytes
+    Leaders: bytes,
+    Shared: Sharedˉliveness.Plan
 ) -> bytes {
     let Locals: u32 = Bytesˉlength(Localˉtypes);
     if Locals >= 2048u32 || Blocks == 0u32 || Blocks > 1024u32 {
@@ -1108,7 +1139,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Usedˉrecord
             );
             let Sourceˉtypeˉindex: u32 =
-                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types,
                     Sourceˉtype
                 );
             let Fieldˉindex: u32 = Bytesˉreadˉu32ˉlittle(
@@ -1170,9 +1201,11 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Depth = Resource.Depth;
             Handled = true;
         }
-        if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 || Opcode == 220u8 {
+        if Opcode == 206u8 || Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 || Opcode == 220u8 ||
+            (Numericˉopcode >= 229u32 && Numericˉopcode <= 235u32) {
             var Operands: u32 = 2u32;
             if Opcode == 207u8 || Opcode == 208u8 || Opcode == 209u8 { Operands = 1u32; }
+            if Numericˉopcode >= 230u32 && Numericˉopcode <= 235u32 { Operands = 1u32; }
             if Depth < Operands || Blockˉrecordˉvalues >= 256u32 {
                 return Invalid(Input);
             }
@@ -1209,7 +1242,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Recordˉtypes,
                 Types,
                 Resultˉrecord,
-                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types,
                     Scratchˉstorageˉtypeˉindex
                 )
             );
@@ -1258,7 +1291,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Recordˉtypes,
                 Types,
                 Resultˉrecord,
-                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Types,
                     Regionˉresultˉtype
                 )
             );
@@ -1680,11 +1713,13 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         Recordˉvalues,
         Scratchˉvalues,
         Scratchˉblockˉoffsets,
-        Instructions
+        Instructions,
+        Shared
     );
 }
 
 fn Resourceˉresultˉtype(Input: bytes, Offset: u32, Opcode: u8) -> u32 {
+    if Opcode == 229u8 { return Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32); }
     if Opcode == 209u8 { return Bytesˉreadˉu32ˉlittle(Input, Offset + 9u32); }
     return Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
 }

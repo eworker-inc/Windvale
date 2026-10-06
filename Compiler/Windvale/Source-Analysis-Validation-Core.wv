@@ -7,8 +7,6 @@ authority library;
 
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
-import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
-import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -161,12 +159,12 @@ export fn Compilerˉvalidateˉsourceˉanalysis(
         Bytesˉreadˉu16ˉlittle(Bindingˉdirectory, 4u32) == 1u32 &&
         Bytesˉreadˉu16ˉlittle(Bindingˉdirectory, 6u32) == 4u32 {
         Bindingˉdirectoryˉvalid =
-            Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+            Wirˉconsumer.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
                 Input, Scan, Symbols, Bindingˉdirectory
             );
     } else {
         Bindingˉdirectoryˉvalid =
-            Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
+            Wirˉconsumer.Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
                 Input, Scan, Symbols, Bindingˉdirectory
             );
     }

@@ -5,13 +5,24 @@ import { Buildˉstorageˉfixture } from './Native-Storage-Fixture.mjs';
 const SHARED = 6400, REQUEST = 8512, SAVED = 9000, INPUT = 13440;
 const ACCOUNTING = 17504;
 
-function Fixture(Name, Arena, Body) {
+function Fixture(Name, Arena, Body, Version = 1) {
+    const REQUEST = Version === 2 ? 8608 : 8512;
+    const Sharedˉbytes = Version === 2 ? 2176 : 2112;
     return Buildˉstorageˉfixture(`shared-${Name}`, Arena, Base => {
         const { Emit, Set, Load, Snapshot } = Base;
         function Check(Region, Offset, Value) { Base.Check(Region, Offset, Value | 0); }
+        if (Version === 2) {
+            // Move the existing empty adapter into a disjoint v2 extent. The
+            // physical/accounting owners and their identities remain the same.
+            Emit('xor ecx ecx', 'label Adapter_move', 'load_memory_u64 rax r12 rcx 1 0',
+                'store_memory_u64 rsp rcx 1 14528 rax', 'add_i32 ecx 8',
+                'compare_i32 ecx 1088', 'branch below Adapter_move',
+                'move r12 rsp', 'add_i32 r12 14528', 'move r13 rsp', 'add_i32 r13 13728');
+            Set('r12', 4, 2); Set('r12', 8, 1216);
+        }
         // Buildˉstorageˉfixture has already initialized the same canonical domain.
-        Set('rsp', SHARED + 4, 1); Set('rsp', SHARED + 8, 2112);
-        Set('rsp', SHARED + 12, 64); Set('rsp', SHARED + 24, 71);
+        Set('rsp', SHARED + 4, Version); Set('rsp', SHARED + 8, Sharedˉbytes);
+        Set('rsp', SHARED + 12, Version === 2 ? 66 : 64); Set('rsp', SHARED + 24, 71);
         Emit(`store_memory_u64 rsp none 1 ${SHARED + 16} r12`);
         let Serial = 0;
         function Word(Offset, Value) { Set('rsp', REQUEST + Offset, Value); }
@@ -31,12 +42,12 @@ function Fixture(Name, Arena, Body) {
         function Sharedˉsnapshot(Compare) {
             const Label = `Shared_snapshot_${++Serial}`;
             Emit('xor ecx ecx', `label ${Label}`);
-            if (Compare) Emit(`compare_i32 ecx ${2112 + 64}`, `branch equal ${Label}_next`);
+            if (Compare) Emit(`compare_i32 ecx ${REQUEST - SHARED + 64}`, `branch equal ${Label}_next`);
             Emit(`load_memory_u32 eax rsp rcx 1 ${SHARED}`);
             if (Compare) Emit(`load_memory_u32 edx rsp rcx 1 ${SAVED}`, 'compare eax edx', 'branch not_equal Failed');
             else Emit(`store_memory_u32 rsp rcx 1 ${SAVED} eax`);
             if (Compare) Emit(`label ${Label}_next`);
-            Emit('add_i32 ecx 4', 'compare_i32 ecx 2240', `branch below ${Label}`);
+            Emit('add_i32 ecx 4', `compare_i32 ecx ${REQUEST - SHARED + 128}`, `branch below ${Label}`);
         }
         function Call(Status = 0, Atomic = Status !== 0, Setup = [], Pointerˉfailure = false) {
             if (Atomic) { Snapshot(false); Sharedˉsnapshot(false); }
@@ -75,9 +86,14 @@ function Fixture(Name, Arena, Body) {
                 `store_memory_u64 rsp none 1 ${REQUEST + 32} rax`); Call(Status, false);
             if (Status === 0) { Save(24, 0); Save(72, 1); }
         }
+        function Mapped(Maximum, Source = INPUT, Slot = 0, Status = 0, Atomic = false) {
+            Request(14, { Value: Maximum, Source }); Emit('load_memory_u64 rax rsp none 1 13320',
+                `store_memory_u64 rsp none 1 ${REQUEST + 32} rax`); Call(Status, Atomic);
+            if (Status === 0) { Save(24, Slot); Save(72, Slot + 1); }
+        }
         Request(0); Call();
         Body({ ...Base, Check, Word, Wide, Request, Call, Save, Reserve, Append, Freeze, Release,
-            Sharedˉappend, Sharedˉsnapshot, Split, Childˉreserve });
+            Sharedˉappend, Sharedˉsnapshot, Split, Childˉreserve, Mapped, Lower: Base, Requestˉoffset: REQUEST });
     }, true).Source.replace('symbol local function Snapshot_compare',
         'symbol local function Shared_request_reset in .text\nsymbol local function Snapshot_compare')
         .replace('symbol import function Windvale_owned_storage',
@@ -85,14 +101,29 @@ function Fixture(Name, Arena, Body) {
         .replace('\nend section\n', '\ndefine Shared_request_reset\nmove r8 rsp\n' +
             `add_i32 r8 ${REQUEST + 8}\nxor eax eax\nxor ecx ecx\nlabel Clear\n` +
             'store_memory_u64 r8 rcx 1 0 rax\nadd_i32 ecx 8\ncompare_i32 ecx 128\nbranch below Clear\n' +
-            'move_u32 eax 1\nstore_memory_u32 r8 none 1 0 eax\n' +
+            `move_u32 eax ${Version}\nstore_memory_u32 r8 none 1 0 eax\n` +
             'move_u32 eax 128\nstore_memory_u32 r8 none 1 4 eax\n' +
-            'move_u32 eax 71\nstore_memory_u32 r8 none 1 16 eax\nreturn\nend define\nend section\n');
+            'move_u32 eax 71\nstore_memory_u32 r8 none 1 16 eax\nreturn\nend define\nend section\n')
+        .replaceAll('compare_i32 ecx 1088\nbranch below Snapshot_',
+            `compare_i32 ecx ${Version === 2 ? 1216 : 1088}\nbranch below Snapshot_`)
+        .replaceAll('compare_i32 ecx 96\nbranch below Snapshot_',
+            `compare_i32 ecx ${Version === 2 ? 112 : 96}\nbranch below Snapshot_`)
+        .replaceAll('rsp rcx 1 23096', `rsp rcx 1 ${Version === 2 ? 23224 : 23096}`)
+        .replaceAll('rsp rcx 1 25208', `rsp rcx 1 ${Version === 2 ? 25336 : 25208}`)
+        .replaceAll('rsp rcx 1 29304', `rsp rcx 1 ${Version === 2 ? 29432 : 29304}`)
+        .replaceAll('rsp rcx 1 31920', `rsp rcx 1 ${Version === 2 ? 32048 : 31920}`)
+        .replace('move_u32 eax 1\nstore_memory_u32 r13 none 1 0 eax\nmove_u32 eax 96\nstore_memory_u32 r13 none 1 4 eax',
+            Version === 2 ? 'load_memory_u32 eax r12 none 1 4\nstore_memory_u32 r13 none 1 0 eax\n' +
+                'move_u32 ecx 96\ncompare_i32 eax 2\nbranch not_equal Request_size\n' +
+                'xor edx edx\nstore_memory_u64 r13 none 1 96 rdx\nstore_memory_u64 r13 none 1 104 rdx\nmove_u32 ecx 112\n' +
+                'label Request_size\nstore_memory_u32 r13 none 1 4 ecx' :
+                'move_u32 eax 1\nstore_memory_u32 r13 none 1 0 eax\nmove_u32 eax 96\nstore_memory_u32 r13 none 1 4 eax');
 }
 
 export function Buildˉsharedˉstorageˉcases() {
     const Cases = [];
     const Case = (Name, Arena, Body) => Cases.push({ Name: `shared-${Name}`, Source: Fixture(Name, Arena, Body) });
+    const Mappedˉcase = (Name, Arena, Body) => Cases.push({ Name: `shared-mapped-${Name}`, Source: Fixture(`mapped-${Name}`, Arena, Body, 2) });
     Case('freeze-share-append-and-credit', 112, ({ Reserve, Append, Freeze, Release, Request, Call, Check, Load, Sharedˉappend, Emit }) => {
         Reserve(64); Append(2, 97); Append(3, 0x44332211); Append(4, 0xffeeddccbbaa9988n);
         Append(5, 18446744073709551615n); Check('rsp', REQUEST + 80, 33); Check('rsp', 88, 80);
@@ -283,5 +314,123 @@ export function Buildˉsharedˉstorageˉcases() {
                 'store_memory_u32 rsp none 1 13328 eax', 'branch not_equal Shared_repeat');
             Check('rsp', 56, 48); Check('rsp', 96, Iterations); Request(11); Call();
         });
+    Mappedˉcase('aliases-copy-and-exact-credit', 48, ({ Split, Mapped, Request, Call, Check, Set, Emit, Save,
+        Sharedˉappend, Release, Freeze, Requestˉoffset: R }) => {
+        Set('rsp', INPUT, 0x44332211); Set('rsp', INPUT + 4, 0x88776655); Set('rsp', INPUT + 8, 0xccbbaa99);
+        Split(12); Mapped(12); Check('rsp', R + 24, 65); Check('rsp', R + 28, 1);
+        Check('rsp', R + 68, 12); Check('rsp', R + 80, 12); Check('rsp', R + 88, 12);
+        Check('r12', 1112, 12); Check('rsp', ACCOUNTING + 48, 12); Check('rsp', 88, 0);
+        Request(8, { Handle: 0 }); Call(); Check('rsp', R + 96, 2);
+        Request(10, { Handle: 0, Value: 4, Length: 4 }); Call();
+        Emit(`load_memory_u64 rdi rsp none 1 ${R + 72}`); Check('rdi', 0, 0x88776655);
+        Split(48); Request(1, { Value: 17 }); Emit('load_memory_u64 rax rsp none 1 13320',
+            `store_memory_u64 rsp none 1 ${R + 32} rax`); Call(); Save(24, 2);
+        Sharedˉappend(2, 0, 4, 4); Freeze(2); Release(0);
+        Check('rsp', ACCOUNTING + 48, 60); Check('r12', 1092, 1);
+        Release(0); Check('rsp', ACCOUNTING + 48, 48); Check('r12', 1092, 0); Check('r12', 1088, 1);
+        Request(10, { Handle: 2, Length: 4 }); Call();
+        Emit(`load_memory_u64 rdi rsp none 1 ${R + 72}`); Check('rdi', 0, 0x88776655);
+        Check('rsp', INPUT, 0x44332211); Check('rsp', INPUT + 8, 0xccbbaa99);
+        Release(2); Check('rsp', ACCOUNTING + 48, 0); Check('rsp', 88, 0);
+        Split(8); Mapped(8, INPUT, 4); Check('rsp', R + 24, 65); Check('rsp', R + 28, 2);
+        Request(10, { Handle: 0, Length: 1 }); Call(4); Release(4);
+        Request(11); Call(); Check('r12', 1088, 2); Check('rsp', INPUT, 0x44332211);
+    });
+    Mappedˉcase('empty-anchor-and-terminal-teardown', 32, ({ Split, Mapped, Request, Call, Check, Set, Emit,
+        Save, Childˉreserve, Freeze, Requestˉoffset: R }) => {
+        Split(0); Mapped(0, null); Check('rsp', R + 24, 65); Check('rsp', R + 28, 1);
+        Check('rsp', R + 68, 0); Check('rsp', R + 72, 0); Check('rsp', R + 80, 0); Check('rsp', R + 88, 0);
+        Check('r12', 1092, 1); Check('rsp', ACCOUNTING + 64, 1); Check('rsp', ACCOUNTING + 48, 0);
+        Request(8, { Handle: 0 }); Call(); Request(10, { Handle: 0 }); Call();
+        Set('rsp', INPUT, 0x44332211); Split(4); Mapped(4, INPUT, 2); Check('rsp', R + 24, 66);
+        Split(32); Childˉreserve(0); Freeze(); Save(24, 4);
+        Request(11); Call(); Check('rsp', 88, 0); Check('rsp', ACCOUNTING + 48, 0);
+        Check('r12', 1088, 1); Check('r12', 1152, 1); Check('r12', 1092, 0); Check('r12', 1156, 0);
+        Check('rsp', INPUT, 0x44332211); Check('rsp', SHARED + 32, 1);
+        Emit('move_u32 ecx 64', 'label V2_shared_zero', `load_memory_u64 rax rsp rcx 1 ${SHARED}`,
+            'test rax rax', 'branch not_equal Failed', 'add_i32 ecx 8',
+            'compare_i32 ecx 2176', 'branch below V2_shared_zero');
+        Request(9, { Handle: 4 }); Call(9);
+    });
+    Mappedˉcase('refusal-consumes-only-valid-budget', 32, ({ Split, Mapped, Request, Call, Check, Set, Word,
+        Wide, Emit, Requestˉoffset: R, Snapshot, Sharedˉsnapshot }) => {
+        Set('rsp', INPUT, 0x44332211); Set('rsp', INPUT + 16, 0x88776655); Set('rsp', INPUT + 32, 0xccbbaa99);
+        Split(3); Mapped(4, INPUT, 0, 2); Check('rsp', ACCOUNTING + 48, 0);
+        Check('rsp', R + 104, 4); Check('rsp', R + 112, 3); Check('r12', 1092, 0);
+        Split(4); Mapped(4, INPUT); Split(4); Mapped(4, INPUT + 16, 2);
+        Split(4); Request(14, { Value: 4, Source: INPUT + 32 });
+        Emit('load_memory_u64 rax rsp none 1 13320', `store_memory_u64 rsp none 1 ${R + 32} rax`);
+        Snapshot(false); Sharedˉsnapshot(false); Call(6, false);
+        Check('rsp', R + 104, 4); Check('rsp', R + 112, 4); Check('rsp', ACCOUNTING + 48, 8);
+        Set('rsp', 29424 + 36, 2); Set('rsp', 29424 + 48, 8);
+        for (let Offset = 4; Offset < 40; Offset += 4) Set('rsp', 29424 + 136 + Offset, 0);
+        Set('rsp', SAVED + R - SHARED + 104, 4); Set('rsp', SAVED + R - SHARED + 112, 4);
+        Snapshot(true); Sharedˉsnapshot(true);
+        // The failed child is released; both existing mapped leases and shared
+        // backings survive. Root and child accounting are checked explicitly.
+        Check('r12', 1092, 1); Check('r12', 1156, 1); Check('rsp', ACCOUNTING + 36, 2);
+        Request(10, { Handle: 0, Length: 4 }); Call(); Emit(`load_memory_u64 rdi rsp none 1 ${R + 72}`);
+        Check('rdi', 0, 0x44332211); Request(10, { Handle: 2, Length: 4 }); Call();
+        Emit(`load_memory_u64 rdi rsp none 1 ${R + 72}`); Check('rdi', 0, 0x88776655);
+        Split(4); Request(14, { Value: 4, Source: INPUT + 32 }); Wide(32, 0n); Call(4);
+        Request(14, { Value: 4, Source: INPUT + 32 });
+        Emit('load_memory_u64 rax rsp none 1 13320', `store_memory_u64 rsp none 1 ${R + 32} rax`);
+        Word(48, 1); Call(1); Check('rsp', ACCOUNTING + 48, 12);
+        Request(11); Call(); Check('rsp', ACCOUNTING + 48, 0);
+    });
+    Mappedˉcase('geometry-corruption-and-mutation-rejection', 32, ({ Split, Mapped, Request, Call, Check, Set,
+        Word, Wide, Emit, Append, Release, Lower, Requestˉoffset: R }) => {
+        Set('rsp', INPUT, 0x44332211); Split(4);
+        const Sources = [SHARED, R, 14528, 32, ACCOUNTING, 2240];
+        Sources.forEach((Source, Index) => Set('rsp', 13888 + Index * 4, Source));
+        Set('rsp', 13920, 0); Emit('label Mapped_bad_span'); Request(14, { Value: 4 });
+        Emit('load_memory_u64 rax rsp none 1 13320', `store_memory_u64 rsp none 1 ${R + 32} rax`,
+            'load_memory_u32 ecx rsp none 1 13920', 'shift_left ecx 2', 'load_memory_u32 ecx rsp rcx 1 13888',
+            'move rax rsp', 'add rax rcx', `store_memory_u64 rsp none 1 ${R + 56} rax`);
+        Call(1, true, [], true);
+        Emit('load_memory_u32 eax rsp none 1 13920', 'add_i32 eax 1', 'store_memory_u32 rsp none 1 13920 eax',
+            'compare_i32 eax 6', 'branch below Mapped_bad_span');
+        Request(14, { Value: 1 }); Emit('load_memory_u64 rax rsp none 1 13320',
+            `store_memory_u64 rsp none 1 ${R + 32} rax`); Call(1, true, [], true);
+        Request(14, { Value: 2 }); Wide(56, 18446744073709551615n); Call(1, true, [], true);
+        Request(14, { Value: 4194305, Source: INPUT }); Call(1, true, [], true);
+        Request(14, { Value: 1 }); Emit('move rax rsp', 'subtract_i32 rax 128',
+            `store_memory_u64 rsp none 1 ${R + 56} rax`); Call(1, true, [], true);
+        Request(14, { Source: INPUT }); Emit('load_memory_u64 rax rsp none 1 13320',
+            `store_memory_u64 rsp none 1 ${R + 32} rax`); Call(1);
+        Mapped(4); Append(2, 1, 0, 4); Request(7, { Handle: 0 }); Call(4);
+        for (const [Offset, Sign] of [[14528, 'add'], [128, 'subtract']]) {
+            Emit('move rax rsp', `${Sign}_i32 rax ${Offset}`, 'store_memory_u64 r12 none 1 1096 rax');
+            Request(12); Call(1, true, [], true);
+            Emit('move rax rsp', `add_i32 rax ${INPUT}`, 'store_memory_u64 r12 none 1 1096 rax');
+        }
+        Split(4); Request(14, { Value: 4, Source: INPUT }); Emit('load_memory_u64 rax rsp none 1 13320',
+            `store_memory_u64 rsp none 1 ${R + 32} rax`); Call(1, true, [], true);
+        const Corruptions = [[1092, 2, 1], [1088, 0, 1], [1108, 3, 4], [1112, 3, 4],
+            [1124, 1, 2], [1144, 16, 1], [1148, 1, 0], [1160, 1, 0]];
+        Corruptions.forEach((Row, Index) => Row.forEach((Value, Field) => Set('rsp', 14016 + Index * 12 + Field * 4, Value)));
+        Set('rsp', 14128, 0); Emit('label Mapped_corrupt_entry', 'load_memory_u32 ecx rsp none 1 14128',
+            'move edx ecx', 'shift_left ecx 3', 'shift_left edx 2', 'add ecx edx',
+            'load_memory_u32 eax rsp rcx 1 14020', 'load_memory_u32 ecx rsp rcx 1 14016',
+            'store_memory_u32 r12 rcx 1 0 eax');
+        Request(12); Call(5);
+        Emit('load_memory_u32 ecx rsp none 1 14128', 'move edx ecx', 'shift_left ecx 3',
+            'shift_left edx 2', 'add ecx edx', 'load_memory_u32 eax rsp rcx 1 14024',
+            'load_memory_u32 ecx rsp rcx 1 14016', 'store_memory_u32 r12 rcx 1 0 eax',
+            'load_memory_u32 eax rsp none 1 14128', 'add_i32 eax 1', 'store_memory_u32 rsp none 1 14128 eax',
+            'compare_i32 eax 8', 'branch below Mapped_corrupt_entry');
+        // Independent lower mapped inspection and exact lease mismatch refusal.
+        function Lowerˉrequest(Operation) {
+            Lower.Request(Operation, { Handle: 0 });
+            for (const [Field, Source] of [[64, 1120], [72, 1128], [80, 1136]]) Emit(
+                `load_memory_u64 rax r12 none 1 ${Source}`, `store_memory_u64 r13 none 1 ${Field} rax`);
+            Set('r13', 88, 1);
+        }
+        Lowerˉrequest(4); Lower.Call(); Check('r13', 44, 4);
+        Lowerˉrequest(4); Set('r13', 80, 3); Lower.Call(4);
+        Lowerˉrequest(2); Lower.Call(1); Check('rsp', INPUT, 0x44332211);
+        Release(0); Request(9, { Handle: 0 }); Call(4); Request(11); Call();
+        Check('rsp', INPUT, 0x44332211);
+    });
     return Cases;
 }

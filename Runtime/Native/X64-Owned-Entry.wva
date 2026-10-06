@@ -3,6 +3,9 @@ windvale-assembly 1
 # ABI 24 entry and operation helpers. The lowerer resolves the body import to
 # generated Main immediately after this prefix. Context 10 supplies one domain.
 symbol local function Memory_call in .text
+symbol local function Shared_call in .text
+symbol local function Shared_entry in .text
+symbol local function Shared_query_initialize in .text
 symbol local function Vector_view in .text
 symbol export function Windvale_owned_access in .text
 symbol export function Windvale_owned_entry in .text
@@ -10,7 +13,14 @@ symbol export function Windvale_owned_grow in .text
 symbol export function Windvale_owned_release in .text
 symbol export function Windvale_owned_split in .text
 symbol export function Windvale_owned_vector in .text
+symbol export function Windvale_shared_bytes_entry in .text
+symbol export function Windvale_shared_result_close in .text
+symbol export function Windvale_shared_scalar_entry in .text
+symbol import function Windvale_budgeted_storage
 symbol import function Windvale_owned_body
+symbol import function Windvale_shared_bytes_body
+symbol import function Windvale_shared_scalar_body
+symbol import function Windvale_shared_storage
 section code .text align 16
 define Windvale_owned_entry
 push r12
@@ -562,6 +572,636 @@ move r9 rsp
 add_i32 r9 40
 load_memory_u64 rax r15 none 1 120
 # Tail call retains the caller's aligned shadow space and return address.
+jump_register rax
+end define
+# ABI 25 descriptor bridge: RCX=result/input cells, RDX=context 11.
+# A single admission path covers scalar/bytes entry and consumed-budget close.
+# Caller maps every declared extent; admission checks complete geometry before
+# saved-register writes. Source frames and leaf scratch retain separate bounds.
+define Windvale_shared_bytes_entry
+move_u32 r9d 1
+load_address rax Shared_entry
+jump_register rax
+end define
+
+define Windvale_shared_scalar_entry
+xor r9d r9d
+load_address rax Shared_entry
+jump_register rax
+end define
+
+define Windvale_shared_result_close
+move_u32 r9d 2
+xor ecx ecx
+load_address rax Shared_entry
+jump_register rax
+end define
+
+define Shared_entry
+move rax rdx
+move_u32 r8d 192
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 7
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_context
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_context
+load_memory_u32 eax rdx none 1 0
+compare_i32 eax 11
+branch not_equal Invalid_pointer
+load_memory_u32 eax rdx none 1 4
+compare_i32 eax 192
+branch not_equal Invalid_pointer
+compare_i32 r9d 1
+branch not_equal Bridge_safe
+move rax rcx
+move_u32 r8d 32
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 7
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_bridge
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_bridge
+label Bridge_safe
+load_memory_u64 rax rdx none 1 128
+move_u32 r8d 2176
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_shared
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_shared
+load_memory_u64 rax rdx none 1 112
+move_u32 r8d 1216
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_adapter
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_adapter
+load_memory_u64 rax rdx none 1 112
+load_memory_u64 rax rax none 1 16
+move_u32 r8d 2112
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_physical
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_physical
+load_memory_u64 rax rdx none 1 112
+load_memory_u64 rax rax none 1 24
+move_u32 r8d 2616
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 7
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_accounting
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_accounting
+load_memory_u64 rax rdx none 1 112
+load_memory_u64 rax rax none 1 16
+load_memory_u32 r8d rax none 1 40
+test_i32 r8d 15
+branch not_equal Invalid_pointer
+compare_i32 r8d 16
+branch below Invalid_pointer
+load_memory_u64 rax rax none 1 32
+compare_i32 r8 16777216
+branch above Invalid_pointer
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 15
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_arena
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_arena
+load_memory_u64 rax rdx none 1 144
+load_memory_u64 r8 rdx none 1 152
+test_i32 r8 15
+branch not_equal Invalid_pointer
+compare_i32 r8 8192
+branch above Invalid_pointer
+test r8 r8
+branch not_equal Nonempty_directory
+test rax rax
+branch not_equal Invalid_pointer
+jump_label Safe_directory
+label Nonempty_directory
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 3
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_directory
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_directory
+load_memory_u64 rax rdx none 1 112
+load_memory_u32 r8d rax none 1 1104
+load_memory_u64 rax rax none 1 1096
+compare_i32 r8 4194304
+branch above Invalid_pointer
+test r8 r8
+branch not_equal Nonempty_module
+test rax rax
+branch not_equal Invalid_pointer
+jump_label Safe_module
+label Nonempty_module
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 0
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_module
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_module
+load_memory_u64 rax rdx none 1 112
+load_memory_u32 r8d rax none 1 1168
+load_memory_u64 rax rax none 1 1160
+compare_i32 r8 4194304
+branch above Invalid_pointer
+test r8 r8
+branch not_equal Nonempty_input
+test rax rax
+branch not_equal Invalid_pointer
+jump_label Safe_input
+label Nonempty_input
+test rax rax
+branch equal Invalid_pointer
+test_i32 rax 0
+branch not_equal Invalid_pointer
+add r8 rax
+branch below Invalid_pointer
+move r10 rsp
+subtract_i32 r10 8192
+branch below Invalid_pointer
+compare r8 r10
+branch below_equal Safe_input
+move r10 rsp
+add_i32 r10 8
+branch below Invalid_pointer
+compare rax r10
+branch below Invalid_pointer
+label Safe_input
+push r12
+push r13
+push r14
+push rbx
+push rsi
+push rdi
+subtract_i32 rsp 360
+move r12 rdx
+move r13 rcx
+move r14d r9d
+load_memory_u64 rbx r12 none 1 112
+load_memory_u64 rsi r12 none 1 128
+load_memory_u64 rax r12 none 1 8
+test rax rax
+branch equal Invalid
+load_memory_u64 rax r12 none 1 16
+test rax rax
+branch equal Invalid
+compare_i32 rax 64
+branch above Invalid
+move_u32 ecx 24
+label Capability_free
+load_memory_u64 rax r12 rcx 1 0
+test rax rax
+branch not_equal Invalid
+add_i32 ecx 8
+compare_i32 ecx 112
+branch below Capability_free
+load_memory_u64 rax r12 none 1 120
+load_address rdx Windvale_budgeted_storage
+compare rax rdx
+branch not_equal Invalid
+load_memory_u64 rax r12 none 1 136
+load_address rdx Windvale_shared_storage
+compare rax rdx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 4
+compare_i32 eax 2
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 1216
+branch not_equal Invalid
+load_memory_u32 eax rsi none 1 4
+compare_i32 eax 2
+branch not_equal Invalid
+load_memory_u32 eax rsi none 1 8
+compare_i32 eax 2176
+branch not_equal Invalid
+load_memory_u64 rax rsi none 1 16
+compare rax rbx
+branch not_equal Invalid
+load_memory_u64 rax r12 none 1 128
+move_u32 r8d 2176
+store_memory_u64 rsp none 1 192 rax
+store_memory_u64 rsp none 1 200 r8
+load_memory_u64 rax r12 none 1 112
+move_u32 r8d 1216
+store_memory_u64 rsp none 1 208 rax
+store_memory_u64 rsp none 1 216 r8
+load_memory_u64 rax r12 none 1 112
+load_memory_u64 rax rax none 1 16
+move_u32 r8d 2112
+store_memory_u64 rsp none 1 224 rax
+store_memory_u64 rsp none 1 232 r8
+load_memory_u64 rax r12 none 1 112
+load_memory_u64 rax rax none 1 24
+move_u32 r8d 2616
+store_memory_u64 rsp none 1 240 rax
+store_memory_u64 rsp none 1 248 r8
+load_memory_u64 rax r12 none 1 112
+load_memory_u64 rax rax none 1 16
+load_memory_u32 r8d rax none 1 40
+test_i32 r8d 15
+branch not_equal Invalid
+compare_i32 r8d 16
+branch below Invalid
+load_memory_u64 rax rax none 1 32
+store_memory_u64 rsp none 1 256 rax
+store_memory_u64 rsp none 1 264 r8
+load_memory_u64 rax r12 none 1 144
+load_memory_u64 r8 r12 none 1 152
+test_i32 r8 15
+branch not_equal Invalid
+store_memory_u64 rsp none 1 272 rax
+store_memory_u64 rsp none 1 280 r8
+load_memory_u64 rax r12 none 1 112
+load_memory_u32 r8d rax none 1 1104
+load_memory_u64 rax rax none 1 1096
+store_memory_u64 rsp none 1 288 rax
+store_memory_u64 rsp none 1 296 r8
+load_memory_u64 rax r12 none 1 112
+load_memory_u32 r8d rax none 1 1168
+load_memory_u64 rax rax none 1 1160
+store_memory_u64 rsp none 1 304 rax
+store_memory_u64 rsp none 1 312 r8
+store_memory_u64 rsp none 1 320 r12
+move_u32 eax 192
+store_memory_u64 rsp none 1 328 rax
+move_u32 edi 336
+compare_i32 r14d 1
+branch not_equal Extent_begin
+store_memory_u64 rsp none 1 336 r13
+move_u32 eax 32
+store_memory_u64 rsp none 1 344 rax
+move_u32 edi 352
+label Extent_begin
+move_u32 ecx 192
+label Extent_next
+load_memory_u64 rax rsp rcx 1 0
+load_memory_u64 rdx rsp rcx 1 8
+add rdx rax
+branch below Invalid
+store_memory_u64 rsp rcx 1 8 rdx
+move_u32 r8d 192
+label Extent_pair
+compare r8d ecx
+branch above_equal Extent_advance
+load_memory_u64 r9 rsp r8 1 0
+compare r9 rdx
+branch above_equal Extent_pair_next
+load_memory_u64 r9 rsp r8 1 8
+compare rax r9
+branch below Invalid
+label Extent_pair_next
+add_i32 r8d 16
+jump_label Extent_pair
+label Extent_advance
+add_i32 ecx 16
+compare ecx edi
+branch below Extent_next
+move_u32 ecx 12
+call Shared_query_initialize
+call Shared_call
+test eax eax
+branch not_equal Invalid
+# The module/input anchors are complete mapped immutable owners, not ranges.
+move_u32 edi 160
+label Anchor_next
+load_memory_u64 rdx r12 rdi 1 0
+move eax edx
+move ecx edi
+subtract_i32 ecx 160
+shift_right ecx 3
+add_i32 ecx 65
+compare eax ecx
+branch not_equal Invalid
+subtract_i32 ecx 1
+shift_left ecx 5
+add_i32 ecx 64
+load_memory_u64 rax rsi rcx 1 0
+compare rax rdx
+branch not_equal Invalid
+load_memory_u32 eax rsi rcx 1 12
+compare_i32 eax 2
+branch not_equal Invalid
+load_memory_u32 eax rsi rcx 1 16
+load_memory_u32 edx rsi rcx 1 20
+compare eax edx
+branch not_equal Invalid
+move ecx edi
+subtract_i32 ecx 160
+shift_left ecx 3
+add_i32 ecx 1104
+load_memory_u32 edx rbx rcx 1 0
+compare eax edx
+branch not_equal Invalid
+add_i32 edi 8
+compare_i32 edi 176
+branch below Anchor_next
+# Revalidate every immutable directory row against the whole module anchor.
+load_memory_u64 rdi r12 none 1 144
+load_memory_u64 r9 r12 none 1 152
+load_memory_u32 r8d rsi none 1 2132
+xor ecx ecx
+label Directory_next
+compare rcx r9
+branch above_equal Budgets
+load_memory_u32 edx rdi rcx 1 12
+compare_i32 edx 3
+branch equal Directory_kind
+compare_i32 edx 5
+branch equal Directory_kind
+compare_i32 edx 4
+branch not_equal Invalid
+load_memory_u32 eax rdi rcx 1 0
+test_i32 eax 3
+branch not_equal Invalid
+load_memory_u32 eax rdi rcx 1 4
+test_i32 eax 3
+branch not_equal Invalid
+label Directory_kind
+load_memory_u32 eax rdi rcx 1 4
+load_memory_u32 edx rdi rcx 1 8
+compare eax edx
+branch above Invalid
+load_memory_u32 eax rdi rcx 1 0
+add rax rdx
+compare rax r8
+branch above Invalid
+add_i32 ecx 16
+jump_label Directory_next
+label Budgets
+load_memory_u64 rax r12 none 1 176
+test rax rax
+branch equal Invalid
+load_memory_u64 rdx r12 none 1 184
+compare_i32 r14d 2
+branch equal Consumed_budget
+test rdx rdx
+branch equal Invalid
+compare rax rdx
+branch equal Invalid
+jump_label Observe_budgets
+label Consumed_budget
+test rdx rdx
+branch not_equal Invalid
+label Observe_budgets
+move_u32 edi 176
+label Observe_budget
+# These are actual nonroot children of the retained canonical root.
+load_memory_u64 rax r12 rdi 1 0
+compare_i32 eax 1
+branch below_equal Invalid
+compare_i32 eax 65
+branch above Invalid
+subtract_i32 eax 1
+move edx eax
+shift_left eax 5
+shift_left edx 3
+add eax edx
+load_memory_u64 r8 rbx none 1 24
+load_memory_u32 eax r8 rax 1 20
+compare_i32 eax 1
+branch not_equal Invalid
+move_u32 ecx 8
+call Shared_query_initialize
+move_u32 eax 112
+store_memory_u32 rsp none 1 36 eax
+load_memory_u64 rax r12 rdi 1 0
+store_memory_u64 rsp none 1 96 rax
+load_memory_u64 r8 r12 none 1 112
+move r9 rsp
+add_i32 r9 32
+load_memory_u64 rax r12 none 1 120
+call_register rax
+test eax eax
+branch not_equal Invalid
+compare_i32 r14d 2
+branch equal Close_domain
+add_i32 edi 8
+compare_i32 edi 192
+branch below Observe_budget
+test r14d r14d
+branch equal Invoke_scalar
+# The borrowed input cell is exactly the whole input anchor, including empty.
+load_memory_u64 rdx r12 none 1 168
+load_memory_u64 rax r13 none 1 16
+compare rax rdx
+branch not_equal Invalid
+load_memory_u32 eax r13 none 1 24
+load_memory_u32 edx rsi none 1 2160
+compare eax edx
+branch not_equal Invalid
+load_memory_u32 eax r13 none 1 28
+load_memory_u32 edx rsi none 1 2164
+compare eax edx
+branch not_equal Invalid
+load_memory_u64 rax r13 none 1 0
+load_memory_u64 rdx r13 none 1 8
+or rax rdx
+test rax rax
+branch not_equal Invalid
+load_memory_u64 r9 r12 none 1 184
+xor eax eax
+store_memory_u64 r12 none 1 184 rax
+move rcx r13
+move rdx r12
+move r8 r13
+add_i32 r8 16
+call Windvale_shared_bytes_body
+store_memory_u64 rsp none 1 160 rax
+test rax rax
+branch equal Result
+jump_label Close_domain
+label Invoke_scalar
+load_memory_u64 r8 r12 none 1 184
+xor eax eax
+store_memory_u64 r12 none 1 184 rax
+move rdx r12
+call Windvale_shared_scalar_body
+store_memory_u64 rsp none 1 160 rax
+label Close_domain
+move_u32 ecx 11
+call Shared_query_initialize
+call Shared_call
+compare_i32 r14d 2
+branch equal Close_result
+test eax eax
+branch equal Result
+load_memory_u64 rax rsp none 1 160
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Result
+label Invalid
+compare_i32 r14d 2
+branch equal Invalid_close
+move_u32 eax 9
+shift_left rax 32
+store_memory_u64 rsp none 1 160 rax
+jump_label Result
+label Close_result
+test eax eax
+branch not_equal Invalid_close
+xor eax eax
+store_memory_u64 rsp none 1 160 rax
+jump_label Result
+label Invalid_close
+move_u32 eax 1
+store_memory_u64 rsp none 1 160 rax
+label Result
+load_memory_u64 rax rsp none 1 160
+add_i32 rsp 360
+pop rdi
+pop rsi
+pop rbx
+pop r14
+pop r13
+pop r12
+return
+label Invalid_pointer
+compare_i32 r9d 2
+branch equal Invalid_pointer_close
+move_u32 eax 9
+shift_left rax 32
+return
+label Invalid_pointer_close
+move_u32 eax 1
+return
+end define
+
+# Request at caller RSP+32. The helper return address accounts for +8.
+define Shared_query_initialize
+move r9d ecx
+xor eax eax
+move_u32 ecx 40
+label Clear
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 168
+branch below Clear
+move_u32 eax 2
+store_memory_u32 rsp none 1 40 eax
+move_u32 eax 128
+store_memory_u32 rsp none 1 44 eax
+store_memory_u32 rsp none 1 48 r9d
+load_memory_u64 r8 r12 none 1 128
+load_memory_u64 rax r8 none 1 24
+store_memory_u64 rsp none 1 56 rax
+return
+end define
+
+define Shared_call
+load_memory_u64 r8 r12 none 1 128
+move r9 rsp
+add_i32 r9 40
+load_memory_u64 rax r12 none 1 136
 jump_register rax
 end define
 end section

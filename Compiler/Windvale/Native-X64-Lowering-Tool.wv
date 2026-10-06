@@ -12,9 +12,11 @@ requires capability process.argument_count version 1;
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
+import Foundationˉmemory as Memory;
 
 
-export fn Main() -> i32 {
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 effects(memory.allocate) {
+    var Parent: Memory.Memoryˉbudget = Budget;
     if process.argument_count() != 2u32 {
         diagnostic.write_line("Usage: wvnative <input.wvb> <output.wvo>");
         return 2;
@@ -25,10 +27,10 @@ export fn Main() -> i32 {
     var Loweringˉinput: bytes = Input;
     if Bytesˉlength(Normalized) != 0u32 { Loweringˉinput = Normalized; }
     let Summary: Nativeˉx64.Compilerˉnativeˉx64ˉsummary =
-        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(Loweringˉinput);
+        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(borrow Loweringˉinput, borrow mut Parent);
     if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
         let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
-            Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Loweringˉinput);
+            Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Loweringˉinput, borrow mut Parent);
         var Failureˉreport: text = Textˉconcat(
             "native x64 status=", Enumˉname(Summary.Status)
         );

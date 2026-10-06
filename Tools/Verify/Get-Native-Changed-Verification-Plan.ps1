@@ -5,6 +5,7 @@ param(
     [string[]]$ChangedPath,
     [switch]$PassThru,
     [switch]$Quiet,
+    [switch]$PreparedProductsOnly,
     [hashtable]$InitializationCache
 )
 
@@ -1100,6 +1101,15 @@ function Add-Suite {
                 $script:CurrentChangedPath)) {
             $script:LibraryDevelopmentRequiresAllTargets = $true
         }
+        if ($SuiteName -ceq 'language-1-memory-budget-split-execution') {
+            $null = $MemoryBudgetSelectionPaths.Add($script:CurrentChangedPath)
+        }
+        if ($SuiteName -ceq 'compiler-split-development') {
+            $null = $CompilerSplitSelectionPaths.Add($script:CurrentChangedPath)
+        }
+        if ($SuiteName -ceq 'language-1-front-door') {
+            $null = $Language1FrontDoorSelectionPaths.Add($script:CurrentChangedPath)
+        }
         $null = $SelectedSuites.Add($SuiteName)
     }
 }
@@ -1372,8 +1382,12 @@ function Add-Native-Tool-Suite {
         Add-Suite 'libraries'
         return
     }
+    if ($Stem -in @('Bootstrap-Native-Compiler-Projection', 'Build-Shared-Compiler-Host', 'Native-Staging-Capacity-Bridge-Core')) {
+        Add-Suite 'native-x64-lowering-development'
+        return
+    }
     if ($Stem -in @('Test-Language-1.0-Unsafe-Write-Region-Wir', 'Native-Owned-Storage-Cases', 'Native-Owned-Domain-Cases',
-        'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Shared-Storage-Cases', 'Native-Storage-Fixture')) {
+        'Native-Owned-Vector-Cases', 'Native-Owned-Vector-Access-Cases', 'Native-Owned-Helper-Cases', 'Native-Budgeted-Storage-Cases', 'Native-Shared-Storage-Cases', 'Native-Shared-Value-Cases', 'Native-Storage-Fixture')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -1487,14 +1501,20 @@ function Add-Native-Tool-Suite {
         'Build-Cached-Split-Project-Wvb',
         'Authenticated-Analysis-Cache-Core',
         'Source-Edition-Predecessor-Core',
+        'Direct-Condition-Analyzer-Intermediate-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development'
     )) {
         Add-Suite 'compiler-split-development'
         return
     }
+    if ($Stem -eq 'Generate-Compiler-Artifact-Readers') {
+        # The split owner executes the actual generator check. The pinned
+        # runner development smoke does not consume these changed inputs.
+        Add-Suite 'compiler-split-development'
+        return
+    }
     if ($Stem -in @(
-        'Generate-Compiler-Artifact-Readers',
         'Split-Project-Source-Ordering-Core',
         'Write-Split-Compiler-Producer-Identity'
     )) {
@@ -1856,8 +1876,275 @@ $CurrentVerifierDevelopmentInputs = @(
     'Tools/Verify/Verify-GitHub-Native-Qualification.ps1',
     '.github/workflows/verify.yml'
 )
+$CausalCompilerProjects = @(
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj' },
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Relocations-Native.wvproj' },
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Symbols-Native.wvproj' },
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj' },
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj' },
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj' },
+    @{ Owner = 'native-x64-lowering-development'; Project = 'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj' },
+    @{ Owner = 'language-1-front-door'; Project = 'Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Construction.wvproj' },
+    @{ Owner = 'language-1-front-door'; Project = 'Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Validation.wvproj' },
+    @{ Owner = 'generic-nominal-type-binding'; Project = 'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj' },
+    @{ Owner = 'compiler-split-development'; Project = 'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj' },
+    @{ Owner = 'compiler-split-development'; Project = 'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj' },
+    @{ Owner = 'compiler-split-development'; Project = 'Projects/Tools/Windvale-Project-Manifest.wvproj' },
+    @{ Owner = 'compiler-split-development'; Project = 'Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj' },
+    @{ Owner = 'compiler-split-development'; Project = 'Projects/Tools/Windvale-Compiler-Source-Authenticator.wvproj' },
+    @{ Owner = 'compiler-split-development'; Project = 'Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj' }
+)
+$CausalCompilerExtraInputs = @{
+    'native-x64-lowering-development' = @(
+        'Runtime/Native/X64-Budgeted-Storage.wva',
+        'Runtime/Native/X64-Owned-Domain.wva',
+        'Runtime/Native/X64-Owned-Entry.wva',
+        'Runtime/Native/X64-Shared-Storage.wva',
+        'Runtime/Native/X64-Shared-Value-Operations.wva',
+        'Linker/Startup/X64-Shared-Compiler-Host.wva',
+        'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
+        'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
+        'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
+        'Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs',
+        'Tools/Native/Build-Shared-Compiler-Host.mjs',
+        'Tools/Native/Native-Shared-Value-Cases.mjs',
+        'Tools/Native/Native-Shared-Storage-Cases.mjs',
+        'Tools/Native/Native-Owned-Domain-Cases.mjs',
+        'Tools/Native/Native-Owned-Storage-Cases.mjs',
+        'Tools/Native/Native-Owned-Vector-Cases.mjs',
+        'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
+        'Specifications/Windvale-Native-Budgeted-Storage.md',
+        'Specifications/Windvale-Native-Owned-Domain.md',
+        'Specifications/Windvale-Native-Shared-Storage.md',
+        'Specifications/Windvale-Native-X64-Lowering.md'
+    )
+    'language-1-front-door' = @(
+        'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs',
+        # Publication cases use the prepared emitter generated from this source.
+        'Compiler/Windvale/Source-Wvb-Core.wv',
+        'Specifications/Compiler-Source-Bindings.md',
+        'Specifications/Compiler-Source-Effects.md',
+        'Specifications/Compiler-Source-Wir.md',
+        'Specifications/Windvale-Native-Byte-Result-Admission.md'
+    )
+    'generic-nominal-type-binding' = @(
+        'Tools/Native/Test-Generic-Nominal-Development-Bundle.mjs',
+        'Tools/Native/Test-Generic-Nominal-Type-Layout.mjs',
+        'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv'
+    )
+    'compiler-split-development' = @(
+        # The split owner verifies the emitter's generated projection even when
+        # the producer fixture no longer embeds the emitter implementation.
+        'Compiler/Windvale/Source-Wvb-Core.wv',
+        'Specifications/Compiler-Source-Analysis.md'
+    )
+}
+$CausalCompilerInputCacheKey = 'causal-current-project-input-owners-v1'
+$CausalCompilerInputOwners = if ($null -ne $InitializationCache -and
+    $InitializationCache.ContainsKey($CausalCompilerInputCacheKey)) {
+    $InitializationCache[$CausalCompilerInputCacheKey]
+} else { $null }
+function Add-CausalCompilerInput {
+    param([string]$Path, [string]$Owner)
+    if (!$CausalCompilerInputOwners.ContainsKey($Path)) {
+        $CausalCompilerInputOwners[$Path] = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    }
+    $null = $CausalCompilerInputOwners[$Path].Add($Owner)
+}
+if ($null -eq $CausalCompilerInputOwners) {
+$CausalCompilerInputOwners = @{}
+foreach ($Product in $CausalCompilerProjects) {
+    $ProjectLines = [IO.File]::ReadAllLines((Join-Path $RepositoryRoot $Product.Project))
+    if ($ProjectLines.Count -lt 7 -or $ProjectLines.Count -gt 72 -or
+        $ProjectLines[0] -cne 'windvale-project 4' -or
+        @($ProjectLines | Where-Object { $_ -cmatch '^root "' }).Count -ne 1 -or
+        @($ProjectLines | Where-Object { $_ -ceq 'emit wvb' }).Count -ne 1) {
+        throw "Invalid maintained compiler project inventory: $($Product.Project)"
+    }
+    Add-CausalCompilerInput $Product.Project $Product.Owner
+    foreach ($Line in $ProjectLines) {
+        if ($Line -cmatch '^(?:root|source) "([A-Za-z0-9][A-Za-z0-9./-]*\.wv)"$') {
+            $SourcePath = $Matches[1]
+            if ($SourcePath.Split('/') -ccontains '..' -or $SourcePath.Split('/') -ccontains '.') {
+                throw 'Noncanonical maintained compiler source path.'
+            }
+            Add-CausalCompilerInput $SourcePath $Product.Owner
+        } elseif ($Line -cmatch '^(?:root|source) ') {
+            throw 'Malformed maintained compiler source declaration.'
+        }
+    }
+}
+foreach ($Owner in $CausalCompilerExtraInputs.Keys) {
+    foreach ($InputPath in $CausalCompilerExtraInputs[$Owner]) { Add-CausalCompilerInput $InputPath $Owner }
+}
+if ($null -ne $InitializationCache) {
+    $InitializationCache[$CausalCompilerInputCacheKey] = $CausalCompilerInputOwners
+}
+}
+$CompilerAnalysisProductPaths = @{
+    'Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Validation.wvproj' = 'bytes-source'
+    'Tests/Fixtures/Language-1.0/Reserved-Byte-Validation-Self-Test.wv' = 'bytes-source'
+    'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj' = 'source-analysis'
+    'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv' = 'source-analysis'
+    'Projects/Tests/Language-1.0-Source-Analysis-Validation-Self-Test.wvproj' = 'source-analysis'
+    'Tests/Fixtures/Language-1.0/Source-Analysis-Validation-Self-Test.wv' = 'source-analysis'
+    'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir.wvproj' = 'generic-wir'
+    'Tests/Fixtures/Language-1.0/Generic-Wir-Self-Test.wv' = 'generic-wir'
+    'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir-Validation.wvproj' = 'generic-wir'
+    'Tests/Fixtures/Language-1.0/Generic-Wir-Validation-Self-Test.wv' = 'generic-wir'
+    'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Analysis-Publication.wvproj' = 'generic-analysis-publication'
+    'Tests/Fixtures/Language-1.0/Generic-Analysis-Publication-Self-Test.wv' = 'generic-analysis-publication'
+    'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Analysis-Validation.wvproj' = 'generic-analysis-publication'
+    'Tests/Fixtures/Language-1.0/Generic-Analysis-Validation-Self-Test.wv' = 'generic-analysis-publication'
+    'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Collection-Analysis-Publication.wvproj' = 'generic-collection-publication'
+    'Tests/Fixtures/Language-1.0/Generic-Collection-Analysis-Publication-Self-Test.wv' = 'generic-collection-publication'
+    'Tests/Fixtures/Language-1.0/Generic-Wir-Production-Core.wv' = @(
+        'generic-wir', 'generic-analysis-publication', 'generic-collection-publication')
+}
+# This substitution applies only to the coherent current compiler/runtime batch.
+# Explicit test, bootstrap and orchestration owners remain independently routed.
+$UseCausalCompilerDevelopment = @(
+    'Compiler/Windvale/Source-Wir-Core.wv', 'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+    'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
+    'Tests/Fixtures/Language-1.0/Reserved-Byte-Construction-Self-Test.wv'
+    | Where-Object { $Paths -cnotcontains $_ }).Count -eq 0
+# The budget-helper amendment requires the original compiler batch and every
+# source/verifier/loan regression boundary; partial or lookalike batches keep
+# their ordinary routes. Foundation ownership derives from its existing project.
+$UseCausalBudgetHelperDevelopment = $UseCausalCompilerDevelopment -and @(
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Artifact-Core.wv',
+    'Compiler/Windvale/Source-Wir-Validation-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
+    'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv'
+    | Where-Object { $Paths -cnotcontains $_ }).Count -eq 0
+$ConstructionReadinessInputs = @(
+    'Tools/Native/Build-Current-Split-Project-Wvb.mjs',
+    'Tools/Native/Current-Split-Compiler-Cache-Core.mjs',
+    'Tools/Native/Project-Construction-Readiness-Core.mjs',
+    'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+    'Specifications/Compiler-Split-Development-Cache.md'
+)
+# Only the complete declared readiness/deadline batch substitutes driver owners.
+# The new helper alone also has an explicit focused owner; partial driver batches
+# keep their ordinary contracts and receive its additional readiness checks.
+$ConstructionReadinessBatchComplete = @($ConstructionReadinessInputs |
+    Where-Object { $Paths -cnotcontains $_ }).Count -eq 0
+$FoundationBorrowOwnerProject = 'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj'
+$FoundationBorrowOwnerLines = [IO.File]::ReadAllLines((Join-Path $RepositoryRoot $FoundationBorrowOwnerProject))
+if ($FoundationBorrowOwnerLines.Count -lt 7 -or $FoundationBorrowOwnerLines.Count -gt 72 -or
+    $FoundationBorrowOwnerLines[0] -cne 'windvale-project 4' -or
+    @($FoundationBorrowOwnerLines | Where-Object { $_ -cmatch '^root "' }).Count -ne 1 -or
+    @($FoundationBorrowOwnerLines | Where-Object { $_ -ceq 'root "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv"' }).Count -ne 1 -or
+    @($FoundationBorrowOwnerLines | Where-Object { $_ -ceq 'emit wvb' }).Count -ne 1) {
+    throw 'Invalid complete Foundation owner-flow project inventory.'
+}
+$FoundationBorrowOwnerInputs = @($FoundationBorrowOwnerProject)
+$FoundationBorrowOwnerSources = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+foreach ($Line in $FoundationBorrowOwnerLines) {
+    if ($Line -cmatch '^(?:root|source) "([A-Za-z0-9][A-Za-z0-9./-]*\.wv)"$') {
+        $Input = $Matches[1]
+        if ($Input.Split('/') -ccontains '..' -or $Input.Split('/') -ccontains '.' -or
+            !$FoundationBorrowOwnerSources.Add($Input)) {
+            throw 'Noncanonical or repeated Foundation owner-flow source declaration.'
+        }
+        $FoundationBorrowOwnerInputs += $Input
+    } elseif ($Line -cmatch '^(?:root|source) ') {
+        throw 'Malformed Foundation owner-flow source declaration.'
+    }
+}
+$CausalCompilerFrontDoorPaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$MemoryBudgetSelectionPaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$CompilerSplitSelectionPaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$Language1FrontDoorSelectionPaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$RetiredNativeCompilerInputs = @(
+    'Compiler/Windvale/Source-Wvb-Memory-Adapter.wv',
+    'Projects/Compiler/Windvale-Compiler-Memory.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Relocations.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Symbols.wvproj'
+)
+$RetainedNativeStagingInputs = @(
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Relocations-Native.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv',
+    'Projects/Tests/Windvale-Native-Test-Staging-Wvo-Symbols-Native.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Symbols-Native-Adapter.wv'
+)
+
 foreach ($Path in $Paths) {
     $script:CurrentChangedPath = $Path
+    if ($Path -ceq 'Tools/Native/Project-Construction-Readiness-Core.mjs' -or
+        ($ConstructionReadinessBatchComplete -and $Path -cin $ConstructionReadinessInputs)) {
+        Add-Suite 'compiler-split-development'
+        continue
+    }
+    # Named absence and retained staging cases belong to the existing native owner.
+    if ($Path -cin $RetiredNativeCompilerInputs -or $Path -cin $RetainedNativeStagingInputs) {
+        Add-Suite 'native-x64-lowering-development'
+        continue
+    }
+    # This one retired generator product is checked for absence by the split owner.
+    if ($Path -ceq 'Compiler/Windvale/Source-Bindings-Generic-Types-Artifact-Core.wv') {
+        Add-Suite 'compiler-split-development'
+        continue
+    }
+    if ($UseCausalBudgetHelperDevelopment) {
+        # These exact count/dispatch inputs retain their routing-control owner.
+        if ($Path -cin @('Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+            'Tools/Verify/Verify-Changed.ps1', 'Tools/Verify/Verify-Verification-Plan.ps1',
+            'Tests/Native/Verification-Owners.txt')) {
+            $RunPlanVerification = $true
+            continue
+        }
+        if ($Path -ceq 'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs') {
+            $RunPlanVerification = $true
+            Add-Suite 'language-1-memory-budget-split-execution'
+            continue
+        }
+        if ($Path -ceq 'Specifications/Compiler-Source-Wvb.md') {
+            $null = $CausalCompilerFrontDoorPaths.Add($Path)
+            Add-Suite 'language-1-front-door'
+            continue
+        }
+        if ($Path -ceq 'Specifications/Seed-Bytecode.md') {
+            Add-Suite 'language-1-memory-budget-split-execution'
+            continue
+        }
+        if ($Path -cin $FoundationBorrowOwnerInputs) {
+            Add-Suite 'language-1-memory-budget-split-execution'
+            # Shared implementation inputs also keep their compiler/native owner.
+            if (!$CausalCompilerInputOwners.ContainsKey($Path)) { continue }
+        }
+    }
+    if ($UseCausalCompilerDevelopment -and $CausalCompilerInputOwners.ContainsKey($Path)) {
+        foreach ($CausalOwner in $CausalCompilerInputOwners[$Path]) {
+            if ($CausalOwner -ceq 'language-1-front-door') { $null = $CausalCompilerFrontDoorPaths.Add($Path) }
+            if ($CausalOwner -ceq 'generic-nominal-type-binding') {
+                Add-Suite @('generic-nominal-type-binding', 'generic-nominal-type-layout', 'generic-nominal-type-materialization')
+            } else { Add-Suite $CausalOwner }
+        }
+        continue
+    }
+    # The split owner checks these exact current Emitter projections with the generator.
+    # Coherent batches retain the manifest-derived ownership above.
+    if ($Path -cin @(
+        'Compiler/Windvale/Source-Symbols-Artifact-Core.wv',
+        'Compiler/Windvale/Source-Wvb-Artifact-Core.wv'
+    )) {
+        Add-Suite 'compiler-split-development'
+        continue
+    }
+    if ($CompilerAnalysisProductPaths.ContainsKey($Path)) {
+        Add-Suite 'language-1-front-door'
+        if ($UseCausalCompilerDevelopment) { $null = $CausalCompilerFrontDoorPaths.Add($Path) }
+        continue
+    }
     if ($Path -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs')) {
         Add-Suite 'language-1-production-admission-ingress'
         continue
@@ -1934,6 +2221,15 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
         [IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
     )
+    if ($Path -in @(
+        'Specifications/Windvale-Native-Byte-Result-Admission.md',
+        'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv'
+    )) {
+        # The shared host uses the independent reader on actual ABI25 shares;
+        # the maintained serializer now executes through the same prepared host.
+        Add-Suite 'native-x64-lowering-development'
+        continue
+    }
     if ($Path -eq
         'Documents/Decisions/0887-Use-A-Separately-Bounded-Admission-Validator.md') {
         Add-Suite @(
@@ -2027,6 +2323,7 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Source-Analysis-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Emission-Core.wvproj',
         'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
+        'Projects/Tests/Language-1.0-Source-Analysis-Validation-Self-Test.wvproj',
         'Specifications/Compiler-Source-Analysis.md',
         'Tests/Fixtures/Language-1.0/Closure-Borrow-Main-Pipeline.wv',
         'Tests/Fixtures/Language-1.0/Closure-Borrow-Mutable.wv',
@@ -2034,6 +2331,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Closure-Move-Main-Pipeline.wv',
         'Tests/Fixtures/Language-1.0/Closure-Move-Use-After-Move.wv',
         'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Source-Analysis-Validation-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Closure-Compiler-Pipeline.mjs'
     )) {
         Add-Suite 'language-1-front-door'
@@ -2085,6 +2383,8 @@ foreach ($Path in $Paths) {
             'language-1-callable-semantics',
             'language-1-memory-budget-split-execution'
         )
+    } elseif ($Path -eq 'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs') {
+        Add-Suite @('language-1-callable-semantics', 'compiler-split-development')
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Bindings-Closures-Core.wv',
         'Compiler/Windvale/Source-Closure-Capture-Effects-Core.wv',
@@ -2092,6 +2392,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Closure-Lowering-Core.wv',
         'Compiler/Windvale/Source-Callable-Types-Core.wv',
         'Compiler/Windvale/Source-Effects-Core.wv',
+        'Compiler/Windvale/Source-Effect-Inference-Core.wv',
         'Compiler/Windvale/Source-Function-Type-Lowering-Core.wv',
         'Projects/Compiler/Windvale-Source-Bindings-Closures-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Closure-Captures-Core.wvproj',
@@ -2120,7 +2421,6 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Function-Value-Front-End-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Callable-Semantics.cmd',
-        'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs',
         'Tools/Native/Test-Language-1.0-Callable-Semantics.sh'
     )) {
         Add-Suite 'language-1-callable-semantics'
@@ -2587,6 +2887,7 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Native-Owned-Domain.md',
         'Runtime/Native/X64-Budgeted-Storage.wva',
         'Runtime/Native/X64-Shared-Storage.wva',
+        'Runtime/Native/X64-Shared-Value-Operations.wva',
         'Specifications/Windvale-Native-Shared-Storage.md',
         'Runtime/Native/X64-Owned-Entry.wva',
         'Runtime/Native/X64-Owned-Frame-Cleanup.wva',
@@ -2746,6 +3047,7 @@ foreach ($Path in $Paths) {
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',
             'Get-Native-Changed-Verification-Plan.ps1',
+            'Get-Native-Development-Shards.ps1',
             'Plan-Qualification-Work.mjs',
             'Verify-Changed.ps1',
             'Verify-Change-Classification.ps1',
@@ -3510,7 +3812,10 @@ foreach ($Path in $Paths) {
         Add-Suite 'baseline-jit'
     } elseif ($Path.StartsWith(
         'Compiler/Windvale/WebAssembly-',
-        [StringComparison]::Ordinal)) {
+        [StringComparison]::Ordinal) -or $Path -cin @(
+        'Examples/Compiler/WebAssembly-Tool.wv',
+        'Projects/Examples/Windvale-WebAssembly.wvproj'
+    )) {
         Add-Compiler-Suites
         Add-WebAssemblyVerification
     } elseif ($Path -eq 'Runtime/Windvale/Filesystem-Host-Adapter-Core.wv') {
@@ -3563,6 +3868,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'native-sha256-lowering'
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
         'Compiler/Windvale/Native-X64-Lowering-Affine-Ownership.wv',
         'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
         'Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv',
@@ -3591,6 +3897,10 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Variant-Storage.wv',
         'Compiler/Windvale/Native-X64-Lowering-Runtime-Descriptors.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Shared-Bytes.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Shared-Aggregates.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Shared-Templates.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Shared-Local-Liveness.wv',
         'Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Types.wv',
         'Compiler/Windvale/Native-X64-Lowering-Unsafe-Scratch.wv',
@@ -3814,9 +4124,19 @@ foreach ($Path in $Paths) {
             Add-Suite 'language-1-callable-semantics'
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
-        Add-Compiler-Suites
+        Add-Gap "unmapped-current-compiler:$Path"
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-compiler-recovery-source'
+    } elseif ($Path -in @(
+        'Runtime/Windvale/Native-Byte-Result-Admission-Core.wv',
+        'Tests/Fixtures/Native-X64/Byte-Result-Admission-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Reserved-Byte-Validation-Self-Test.wv',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Validation.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Construction.wvproj'
+    )) {
+        # Current source covers both WVRQ generations. Pinned recovery binaries
+        # cannot reveal defects in the candidate parser.
+        Add-Suite 'language-1-front-door'
     } elseif ($Path -in @(
         'Runtime/Windvale/Native-X64-Utf8-Service.wv',
         'Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv',
@@ -3892,7 +4212,6 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-Entry-Bridge-Core.wvproj',
         'Runtime/Windvale/Native-Entry-Bridge-Bridge.wv',
         'Runtime/Windvale/Native-Entry-Bridge.wvproj',
-        'Runtime/Windvale/Native-Byte-Result-Admission-Core.wv',
         'Runtime/Windvale/Native-Byte-Result-Admission-Core.wvproj',
         'Runtime/Windvale/Native-Byte-Result-Admission-Bridge.wv',
         'Runtime/Windvale/Native-Byte-Result-Admission.wvproj',
@@ -4210,6 +4529,12 @@ foreach ($Path in $Paths) {
         'Linker/Reference/Consumers/X64-Wvb-Publication-Sha256.wvo'
     )) {
         Add-Suite 'console-publisher-reconstruction'
+    } elseif ($Path -in @(
+        'Linker/Startup/X64-Shared-Compiler-Host.wva',
+        'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
+        'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj'
+    )) {
+        Add-Suite 'native-x64-lowering-development'
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-linker-recovery-source'
     } elseif ($Path.StartsWith(
@@ -4449,6 +4774,7 @@ foreach ($Path in $Paths) {
         Add-Gap "native-test:$([IO.Path]::GetFileName($Path))"
     } elseif ($Path -in @(
         'Tests/Fixtures/Native-X64/Native-X64-Foundation-Borrow-Machine-Probe.wv',
+        'Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Runner.wv',
         'Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv'
     )) {
         Add-Suite 'native-x64-lowering-development'
@@ -4898,12 +5224,9 @@ foreach ($Path in $Paths) {
             Add-Suite 'seed-native-console-aot'
         }
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
-        Add-Suite 'seed'
+        Add-Gap "unmapped-project:$Path"
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {
-        Add-Suite 'seed'
-        if ($Path.StartsWith('Examples/Compiler/WebAssembly-', [StringComparison]::Ordinal)) {
-            Add-WebAssemblyVerification
-        }
+        Add-Gap "unmapped-example:$Path"
     } elseif ($Path.StartsWith('.github/', [StringComparison]::Ordinal)) {
         Add-GitHubQualificationVerification
     } else {
@@ -4925,6 +5248,29 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 } else {
     [long](($SelectedSuiteEntries |
         Measure-Object -Property MaximumSeconds -Sum).Sum)
+}
+$SelectedOwnerBudgets = @{}
+foreach ($Entry in $SelectedSuiteEntries) {
+    $SelectedOwnerBudgets[$Entry.Name] = [pscustomobject]@{
+        Name = $Entry.Name
+        ExpectedSeconds = [long]$Entry.ExpectedSeconds
+        MaximumSeconds = [long]$Entry.MaximumSeconds
+        Group = $Entry.Name
+    }
+}
+function Set-SelectedOwnerBudget {
+    param([string]$Name, [long]$ExpectedSeconds, [long]$MaximumSeconds, [switch]$Add)
+    if (!$SelectedOwnerBudgets.ContainsKey($Name) -or $ExpectedSeconds -lt 0 -or
+        $MaximumSeconds -lt $ExpectedSeconds) { throw 'Invalid selected owner budget.' }
+    $Current = $SelectedOwnerBudgets[$Name]
+    if ($Add) {
+        $ExpectedSeconds += $Current.ExpectedSeconds
+        $MaximumSeconds += $Current.MaximumSeconds
+    }
+    $script:SelectedExpectedSeconds += $ExpectedSeconds - $Current.ExpectedSeconds
+    $script:SelectedMaximumSeconds += $MaximumSeconds - $Current.MaximumSeconds
+    $Current.ExpectedSeconds = $ExpectedSeconds
+    $Current.MaximumSeconds = $MaximumSeconds
 }
 # Documentation routing has already excluded executable and frozen contracts.
 # Keep every other path: owner routing alone is not a complete dependency proof.
@@ -4956,6 +5302,71 @@ if ($FocusedDevelopmentPaths -ccontains 'Tools/Native/Library-Foundation-Value-C
     $SelectedLibraryDevelopmentTargets.Clear()
     $null = $SelectedLibraryDevelopmentTargets.Add('foundation-values')
 }
+$NativeSharedCompilerDevelopmentInputs = @(
+    'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs',
+    'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
+    'Tools/Native/Build-Shared-Compiler-Host.mjs',
+    'Tools/Native/Native-Shared-Value-Cases.mjs',
+    'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
+    'Linker/Startup/X64-Shared-Compiler-Host.wva',
+    'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
+    'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
+    'Runtime/Windvale/Native-Byte-Result-Admission-Core.wv',
+    'Specifications/Windvale-Native-Byte-Result-Admission.md',
+    'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj',
+    'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
+    'Tests/Native/Verification-Owners.txt',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Verify-Verification-Plan.ps1',
+    'Tools/Verify/Verify-GitHub-Native-Qualification.ps1',
+    '.github/workflows/verify.yml'
+)
+$UseNativeSharedCompilerDevelopment = $SelectedSuites.Contains('native-x64-lowering-development') -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cin @('Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+            'Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs',
+            'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
+            'Tools/Native/Build-Shared-Compiler-Host.mjs', 'Tools/Native/Native-Shared-Value-Cases.mjs',
+            'Linker/Startup/X64-Shared-Compiler-Host.wva',
+            'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
+            'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
+            'Specifications/Windvale-Native-Byte-Result-Admission.md',
+            'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
+            'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj')
+    }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $NativeSharedCompilerDevelopmentInputs }).Count -eq 0
+$NativeSharedCompilerBehaviorRequired = $SelectedSuites.Contains('native-x64-lowering-development') -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cin $NativeSharedCompilerDevelopmentInputs -or
+        $_.StartsWith('Compiler/Windvale/Native-X64-Lowering-', [StringComparison]::Ordinal) -or
+        $_ -ceq 'Runtime/Native/X64-Shared-Value-Operations.wva'
+    } | Where-Object {
+        $_ -cnotin @('Tests/Native/Verification-Owners.txt', 'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+            'Tools/Verify/Verify-Changed.ps1', 'Tools/Verify/Verify-Verification-Plan.ps1',
+            'Tools/Verify/Verify-GitHub-Native-Qualification.ps1', '.github/workflows/verify.yml')
+    }).Count -gt 0
+$NativeSharedCompilerBehaviorExpectedSeconds = [long]0
+$NativeSharedCompilerBehaviorMaximumSeconds = [long]0
+if ($NativeSharedCompilerBehaviorRequired) {
+    $CompilerOwner = @($SelectedSuiteEntries | Where-Object { $_.Name -eq 'native-x64-lowering-development' })[0]
+    # Includes source admission, repeated compiler-consumer image packaging and
+    # retained staging execution. The measured candidate path exceeds the old
+    # ten-minute declaration even with its compiler already prepared.
+    $NativeSharedCompilerBehaviorExpectedSeconds = [long]3600
+    $NativeSharedCompilerBehaviorMaximumSeconds = [long]5400
+    if (!$UseNativeSharedCompilerDevelopment) {
+        # The current-host regression adds runtime assembly and native behavior;
+        # the retained standalone owner's registered profile stays unchanged.
+        $NativeSharedCompilerBehaviorExpectedSeconds += 1200
+        $NativeSharedCompilerBehaviorMaximumSeconds += 1800
+    }
+    if ($NativeSharedCompilerBehaviorExpectedSeconds -gt $NativeSharedCompilerBehaviorMaximumSeconds) {
+        throw 'Native shared compiler behavior duration exceeds its selected maximum.'
+    }
+    Set-SelectedOwnerBudget -Name $CompilerOwner.Name -ExpectedSeconds $NativeSharedCompilerBehaviorExpectedSeconds -MaximumSeconds $NativeSharedCompilerBehaviorMaximumSeconds
+}
 $NativeSharedStorageDevelopmentInputs = @(
     'Runtime/Native/X64-Shared-Storage.wva',
     'Runtime/Native/X64-Budgeted-Storage.wva',
@@ -4983,24 +5394,21 @@ if ($UseNativeSharedStorageDevelopment) {
     $StorageOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'native-x64-lowering-development'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $StorageOwner.ExpectedSeconds + 540)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $StorageOwner.MaximumSeconds + 600)
+    Set-SelectedOwnerBudget -Name $StorageOwner.Name -ExpectedSeconds 540 -MaximumSeconds 600
 }
 $UseCurrentVerifierDevelopment = $SelectedSuites.Contains('language-1-production-admission-ingress') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs') }).Count -gt 0 -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $CurrentVerifierDevelopmentInputs }).Count -eq 0
 if ($UseCurrentVerifierDevelopment) {
     $VerifierOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'language-1-production-admission-ingress')[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $VerifierOwner.ExpectedSeconds + 300)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $VerifierOwner.MaximumSeconds + 600)
+    Set-SelectedOwnerBudget -Name $VerifierOwner.Name -ExpectedSeconds 300 -MaximumSeconds 600
 }
 $UseOwnedConsoleDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('console-packager-source-reconstruction') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cin $OwnedConsoleDevelopmentInputs }).Count -gt 0
 if ($UseOwnedConsoleDevelopment) {
     $ConsoleOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'console-packager-source-reconstruction')[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $ConsoleOwner.ExpectedSeconds + 300)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $ConsoleOwner.MaximumSeconds + 600)
+    Set-SelectedOwnerBudget -Name $ConsoleOwner.Name -ExpectedSeconds 300 -MaximumSeconds 600
 }
 $StreamingSha256Inputs = @(
     'Foundation/Sha256-Compression.wv',
@@ -5015,8 +5423,7 @@ if ($UseStreamingSha256Development) {
     $StreamingOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'native-sha256-lowering'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $StreamingOwner.ExpectedSeconds + 30)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $StreamingOwner.MaximumSeconds + 60)
+    Set-SelectedOwnerBudget -Name $StreamingOwner.Name -ExpectedSeconds 30 -MaximumSeconds 60
 }
 $FoundationBorrowPlanInputs = @(
     'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
@@ -5033,16 +5440,6 @@ $FoundationBorrowDirectoryInputs = @(
 $UseFoundationBorrowDirectoryDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
-$FoundationBorrowOwnerInputs = @(
-    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv',
-    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv',
-    'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
-    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
-    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
-    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
-    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv',
-    'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
-)
 $PublisherCurrentSourceInputs = @(
     'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
     'Tools/Verify/Verify-Verification-Plan.ps1',
@@ -5080,15 +5477,13 @@ if ($UsePublisherCurrentObjectDevelopment) {
     $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'hosted-verifier-publisher-files'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 180)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 480)
+    Set-SelectedOwnerBudget -Name $PublisherOwner.Name -ExpectedSeconds 180 -MaximumSeconds 480
 }
 if ($UsePublisherCurrentSourceDevelopment) {
     $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'hosted-verifier-publisher-files'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 300)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 600)
+    Set-SelectedOwnerBudget -Name $PublisherOwner.Name -ExpectedSeconds 300 -MaximumSeconds 600
 }
 $Project4LauncherInputs = @(
     'Projects/Tests/Language-1.0-Foundation-Generic-Result-Project4.wvproj',
@@ -5123,31 +5518,41 @@ if ($UseProject4LauncherDevelopment) {
     $Project4Owner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-production-admission-ingress'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $Project4Owner.ExpectedSeconds + 900)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $Project4Owner.MaximumSeconds + 1800)
+    Set-SelectedOwnerBudget -Name $Project4Owner.Name -ExpectedSeconds 900 -MaximumSeconds 1800
     if ($UseProject4PublisherCacheDevelopment -and $SelectedSuites.Contains('compiler-split-development')) {
         $CacheOwner = @($SelectedSuiteEntries | Where-Object {
             $_.Name -eq 'compiler-split-development'
         })[0]
-        $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $CacheOwner.ExpectedSeconds + 60)
-        $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $CacheOwner.MaximumSeconds + 180)
+        Set-SelectedOwnerBudget -Name $CacheOwner.Name -ExpectedSeconds 60 -MaximumSeconds 180
     }
 }
-$UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+$FoundationBorrowOwnerSelectionInputs = @($FoundationBorrowOwnerInputs)
+if ($UseCausalBudgetHelperDevelopment) {
+    $FoundationBorrowOwnerSelectionInputs += @(
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+        'Specifications/Seed-Bytecode.md')
+}
+$UseFoundationBorrowOwnerDevelopment = $MemoryBudgetSelectionPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
-    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
+    @($MemoryBudgetSelectionPaths | Where-Object { $_ -cnotin $FoundationBorrowOwnerSelectionInputs }).Count -eq 0
 $FoundationBorrowBundleInputs = @(
     'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv'
 )
 $FoundationBorrowComponentInputs = @($FoundationBorrowPlanInputs) +
-    @($FoundationBorrowDirectoryInputs) + @($FoundationBorrowOwnerInputs) + @($FoundationBorrowBundleInputs)
-$UseFoundationBorrowComponentsDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    @($FoundationBorrowDirectoryInputs) + @($FoundationBorrowOwnerSelectionInputs) + @($FoundationBorrowBundleInputs)
+# The component bundle covers this owner's complete contribution. Independent
+# compiler or cache changes in the admitted coherent batch keep their own owners.
+# Other mixed changes retain the ordinary conservative integration selection.
+$FoundationBorrowComponentSelectionPaths = if ($UseCausalBudgetHelperDevelopment) {
+    @($MemoryBudgetSelectionPaths)
+} else { @($FocusedDevelopmentPaths) }
+$UseFoundationBorrowComponentsDevelopment = $FoundationBorrowComponentSelectionPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     !$UseFoundationBorrowPlanDevelopment -and !$UseFoundationBorrowDirectoryDevelopment -and
     !$UseFoundationBorrowOwnerDevelopment -and
-    @($FocusedDevelopmentPaths | Where-Object { $_ -cin @($FoundationBorrowOwnerInputs + $FoundationBorrowBundleInputs) }).Count -gt 0 -and
-    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowComponentInputs }).Count -eq 0
+    @($FoundationBorrowComponentSelectionPaths | Where-Object { $_ -cin @($FoundationBorrowOwnerSelectionInputs + $FoundationBorrowBundleInputs) }).Count -gt 0 -and
+    @($FoundationBorrowComponentSelectionPaths | Where-Object { $_ -cnotin $FoundationBorrowComponentInputs }).Count -eq 0
 if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment -or
     $UseFoundationBorrowOwnerDevelopment -or $UseFoundationBorrowComponentsDevelopment) {
     $FoundationBorrowOwner = @($SelectedSuiteEntries | Where-Object {
@@ -5155,8 +5560,7 @@ if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelop
     })[0]
     $FoundationBorrowExpectedSeconds = if ($UseFoundationBorrowOwnerDevelopment -or
         $UseFoundationBorrowComponentsDevelopment) { 180 } else { 30 }
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $FoundationBorrowOwner.ExpectedSeconds + $FoundationBorrowExpectedSeconds)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $FoundationBorrowOwner.MaximumSeconds + 600)
+    Set-SelectedOwnerBudget -Name $FoundationBorrowOwner.Name -ExpectedSeconds $FoundationBorrowExpectedSeconds -MaximumSeconds 600
 }
 $VectorBorrowIntegrationInputs = @(
     'Tests/Fixtures/Language-1.0/Vector-Parameter-Length-Executable.wv',
@@ -5174,24 +5578,67 @@ $UseVectorBorrowIntegrationDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -a
 # Current-product acquisition can exceed the automatic 15-minute CI job budget.
 $VectorBorrowIntegrationDevelopmentExpectedSeconds = [long]900
 $VectorBorrowIntegrationDevelopmentMaximumSeconds = [long]3600
-$VectorBorrowIntegrationDevelopmentCaseCount = 553
+$VectorBorrowIntegrationDevelopmentCaseCount = 594
 if ($UseVectorBorrowIntegrationDevelopment) {
     $VectorBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $VectorBorrowOwner.ExpectedSeconds +
-        $VectorBorrowIntegrationDevelopmentExpectedSeconds)
-    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $VectorBorrowOwner.MaximumSeconds +
-        $VectorBorrowIntegrationDevelopmentMaximumSeconds)
+    Set-SelectedOwnerBudget -Name $VectorBorrowOwner.Name -ExpectedSeconds $VectorBorrowIntegrationDevelopmentExpectedSeconds -MaximumSeconds $VectorBorrowIntegrationDevelopmentMaximumSeconds
 }
-$Language1FrontDoorDevelopmentExpectedSeconds = [long]330
-$Language1FrontDoorDevelopmentCaseCount = 329
+$UsePreparedForeignBindingDevelopment = $PreparedProductsOnly -and
+    $SelectedSuites.Contains('language-1-authenticated-foreign-binding')
+if ($UsePreparedForeignBindingDevelopment) {
+    $ForeignOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'language-1-authenticated-foreign-binding')[0]
+    # The existing prepared-only CLI enforces this total; 600 is a conservative
+    # expected upper bound, not a cold construction or measured timing claim.
+    Set-SelectedOwnerBudget -Name $ForeignOwner.Name -ExpectedSeconds 600 -MaximumSeconds 600
+}
+$ConstructionReadinessRequired = $SelectedSuites.Contains('compiler-split-development') -and
+    ($ConstructionReadinessBatchComplete -or
+        $Paths -ccontains 'Tools/Native/Project-Construction-Readiness-Core.mjs')
+$UseConstructionReadinessDevelopment = $ConstructionReadinessRequired -and
+    ($ConstructionReadinessBatchComplete -or
+        @($CompilerSplitSelectionPaths | Where-Object {
+            $_ -cne 'Tools/Native/Project-Construction-Readiness-Core.mjs' }).Count -eq 0) -and
+    @($CompilerSplitSelectionPaths | Where-Object {
+        $_ -cnotin $ConstructionReadinessInputs -and
+        (!$UseCausalCompilerDevelopment -or !$CausalCompilerInputOwners.ContainsKey($_) -or
+            !$CausalCompilerInputOwners[$_].Contains('compiler-split-development')) }).Count -eq 0
+$UseConstructionReadinessWithExisting = $ConstructionReadinessRequired -and !$UseConstructionReadinessDevelopment
+$AnalysisDiagnosticsRequired = $UseCausalCompilerDevelopment -and
+    $SelectedSuites.Contains('compiler-split-development')
+$UseAnalysisDiagnosticsDevelopment = $AnalysisDiagnosticsRequired -and
+    $SelectedSuites.Contains('compiler-split-development') -and
+    @($CompilerSplitSelectionPaths | Where-Object {
+        !($UseConstructionReadinessDevelopment -and $_ -cin $ConstructionReadinessInputs) -and
+        (!$CausalCompilerInputOwners.ContainsKey($_) -or
+            !$CausalCompilerInputOwners[$_].Contains('compiler-split-development')) }).Count -eq 0
+$UseAnalysisDiagnosticsWithExisting = $AnalysisDiagnosticsRequired -and !$UseAnalysisDiagnosticsDevelopment
+if ($AnalysisDiagnosticsRequired) {
+    $DiagnosticsOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'compiler-split-development')[0]
+    if ($UseAnalysisDiagnosticsDevelopment) {
+        Set-SelectedOwnerBudget -Name $DiagnosticsOwner.Name -ExpectedSeconds 30 -MaximumSeconds 120
+    } else {
+        Set-SelectedOwnerBudget -Name $DiagnosticsOwner.Name -ExpectedSeconds 30 -MaximumSeconds 120 -Add
+    }
+}
+if ($ConstructionReadinessRequired) {
+    $ReadinessOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'compiler-split-development')[0]
+    if ($UseConstructionReadinessDevelopment -and !$AnalysisDiagnosticsRequired) {
+        Set-SelectedOwnerBudget -Name $ReadinessOwner.Name -ExpectedSeconds 15 -MaximumSeconds 120
+    } else {
+        Set-SelectedOwnerBudget -Name $ReadinessOwner.Name -ExpectedSeconds 15 -MaximumSeconds 120 -Add
+    }
+}
+$Language1FrontDoorDevelopmentExpectedSeconds = [long]590
+$Language1FrontDoorDevelopmentCaseCount = 481
 $Language1FrontDoorDevelopmentTarget = 'all'
 $Language1FrontDoorDevelopmentMaximumSeconds = [long]600
+$UseLanguage1FrontDoorPreparation = $false
 $Language1FrontDoorDevelopmentEligible =
     $SelectedSuites.Contains('language-1-front-door')
 if ($Language1FrontDoorDevelopmentEligible) {
-    $FrontEndCacheKey = 'front-end-development-products-v1'
+    $FrontEndCacheKey = 'front-end-development-products-v4'
     if ($null -ne $InitializationCache -and $InitializationCache.ContainsKey($FrontEndCacheKey)) {
         $FrontEndPlan = $InitializationCache[$FrontEndCacheKey]
     } else {
@@ -5203,17 +5650,37 @@ if ($Language1FrontDoorDevelopmentEligible) {
     }
     if (
         $FrontEndPlan.Format -ne 'windvale-front-end-development-plan-1' -or
-        $FrontEndPlan.Cases -ne 329 -or $FrontEndPlan.Products.Count -ne 6) {
+        $FrontEndPlan.Cases -ne 481 -or $FrontEndPlan.Products.Count -ne 11) {
         throw 'The front-end development product inventory is invalid.'
     }
     $FrontEndNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $FrontEndExact = $FocusedDevelopmentPaths.Count -gt 0
-    foreach ($FrontEndPath in $FocusedDevelopmentPaths) {
+    $FrontEndSelectionPaths = if ($UseCausalCompilerDevelopment) {
+        @($Language1FrontDoorSelectionPaths)
+    } else { @($FocusedDevelopmentPaths) }
+    foreach ($FrontEndPath in $FrontEndSelectionPaths) {
         $AffectedProducts = @($FrontEndPlan.Products | Where-Object {
             $_.Inputs -ccontains $FrontEndPath
         })
         if ($AffectedProducts.Count -eq 0) { $FrontEndExact = $false; break }
         foreach ($Product in $AffectedProducts) { $null = $FrontEndNames.Add($Product.Name) }
+    }
+    $FrontEndProducts = @($FrontEndPlan.Products)
+    $UseCausalBytesSource = $UseCausalCompilerDevelopment -and
+        $Language1FrontDoorSelectionPaths.Count -gt 0 -and
+        @($Language1FrontDoorSelectionPaths | Where-Object {
+            !$CausalCompilerFrontDoorPaths.Contains($_) }).Count -eq 0
+    if ($UseCausalBytesSource) {
+        $FrontEndExact = $true
+        $FrontEndNames.Clear()
+        $null = $FrontEndNames.Add('bytes-source')
+        foreach ($SelectedPath in $Language1FrontDoorSelectionPaths) {
+            if ($CompilerAnalysisProductPaths.ContainsKey($SelectedPath)) {
+                foreach ($ProductName in @($CompilerAnalysisProductPaths[$SelectedPath])) {
+                    $null = $FrontEndNames.Add($ProductName)
+                }
+            }
+        }
     }
     if ($FrontEndExact) {
         $FrontEndProducts = @($FrontEndPlan.Products | Where-Object {
@@ -5225,17 +5692,16 @@ if ($Language1FrontDoorDevelopmentEligible) {
         $Language1FrontDoorDevelopmentExpectedSeconds = [long](
             ($FrontEndProducts.ExpectedSeconds | Measure-Object -Sum).Sum)
     }
+    $UseLanguage1FrontDoorPreparation = @($FrontEndProducts | Where-Object {
+        $_.RequiresCurrentCompiler
+    }).Count -ne 0
     $Language1FrontDoorSuiteEntry = @(
         $SelectedSuiteEntries | Where-Object Name -eq 'language-1-front-door')[0]
-    $SelectedExpectedSeconds = [long](
-        $SelectedExpectedSeconds -
-            $Language1FrontDoorSuiteEntry.ExpectedSeconds +
-            $Language1FrontDoorDevelopmentExpectedSeconds)
-    $SelectedMaximumSeconds = [long](
-        $SelectedMaximumSeconds -
-            $Language1FrontDoorSuiteEntry.MaximumSeconds +
-            $Language1FrontDoorDevelopmentMaximumSeconds)
+    Set-SelectedOwnerBudget -Name $Language1FrontDoorSuiteEntry.Name -ExpectedSeconds $Language1FrontDoorDevelopmentExpectedSeconds -MaximumSeconds $Language1FrontDoorDevelopmentMaximumSeconds
 }
+$UseCallablePreparation = $SelectedSuites.Contains('language-1-callable-semantics')
+$UsePreparedCallableDevelopment = $PreparedProductsOnly -and $UseCallablePreparation
+# Preparation changes the execution mode, not the unmeasured 3,600-second bound.
 $GenericNominalDevelopmentBundleOwners = @(
     'generic-nominal-type-binding',
     'generic-nominal-type-layout',
@@ -5249,24 +5715,17 @@ $GenericNominalDevelopmentBundleSelectedOwnerCount =
     $GenericNominalDevelopmentBundleSelectedEntries.Count
 $UseGenericNominalDevelopmentBundle =
     $GenericNominalDevelopmentBundleSelectedOwnerCount -ge 2
-$GenericNominalDevelopmentBundleCaseCount = 143
+$GenericNominalDevelopmentBundleCaseCount = 145
 $GenericNominalDevelopmentBundleExpectedSeconds = [long]330
 $GenericNominalDevelopmentBundleMaximumSeconds = [long]600
 if ($UseGenericNominalDevelopmentBundle) {
-    $ReplacedGenericNominalExpectedSeconds = [long](
-        ($GenericNominalDevelopmentBundleSelectedEntries |
-            Measure-Object -Property ExpectedSeconds -Sum).Sum)
-    $ReplacedGenericNominalMaximumSeconds = [long](
-        ($GenericNominalDevelopmentBundleSelectedEntries |
-            Measure-Object -Property MaximumSeconds -Sum).Sum)
-    $SelectedExpectedSeconds = [long](
-        $SelectedExpectedSeconds -
-            $ReplacedGenericNominalExpectedSeconds +
-            $GenericNominalDevelopmentBundleExpectedSeconds)
-    $SelectedMaximumSeconds = [long](
-        $SelectedMaximumSeconds -
-            $ReplacedGenericNominalMaximumSeconds +
-            $GenericNominalDevelopmentBundleMaximumSeconds)
+    foreach ($Entry in $GenericNominalDevelopmentBundleSelectedEntries) {
+        Set-SelectedOwnerBudget -Name $Entry.Name -ExpectedSeconds 0 -MaximumSeconds 0
+        $SelectedOwnerBudgets[$Entry.Name].Group = 'generic-nominal-development-bundle'
+    }
+    Set-SelectedOwnerBudget -Name $GenericNominalDevelopmentBundleSelectedEntries[0].Name `
+        -ExpectedSeconds $GenericNominalDevelopmentBundleExpectedSeconds `
+        -MaximumSeconds $GenericNominalDevelopmentBundleMaximumSeconds
 }
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
@@ -5494,12 +5953,7 @@ if ($DatabaseSuiteSelected -and $DatabaseStorageDevelopmentEligible) {
             (180 * $DatabaseStorageDevelopmentHostedExecutionCount))
     $DatabaseSuiteEntry = @(
         $SelectedSuiteEntries | Where-Object Name -eq 'database-storage')[0]
-    $SelectedExpectedSeconds = [long](
-        $SelectedExpectedSeconds - $DatabaseSuiteEntry.ExpectedSeconds +
-            $DatabaseStorageDevelopmentExpectedSeconds)
-    $SelectedMaximumSeconds = [long](
-        $SelectedMaximumSeconds - $DatabaseSuiteEntry.MaximumSeconds +
-            $DatabaseStorageDevelopmentMaximumSeconds)
+    Set-SelectedOwnerBudget -Name $DatabaseSuiteEntry.Name -ExpectedSeconds $DatabaseStorageDevelopmentExpectedSeconds -MaximumSeconds $DatabaseStorageDevelopmentMaximumSeconds
 }
 $OsX64CodeEmissionDevelopmentTarget = 'all'
 if (!$OsX64CodeEmissionDevelopmentRequiresAllTargets -and
@@ -5520,10 +5974,7 @@ if ($SelectedSuites.Contains('libraries') -and
     $LibraryOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'libraries'
     })[0]
-    $SelectedExpectedSeconds = [long](
-        $SelectedExpectedSeconds - $LibraryOwner.ExpectedSeconds + 180)
-    $SelectedMaximumSeconds = [long](
-        $SelectedMaximumSeconds - $LibraryOwner.MaximumSeconds + 240)
+    Set-SelectedOwnerBudget -Name $LibraryOwner.Name -ExpectedSeconds 180 -MaximumSeconds 240
 }
 $SourceContainmentDevelopmentMode = if (
     $SelectedSuites.Contains('source-containment') -and
@@ -5614,6 +6065,11 @@ if (!$Quiet) {
     Write-Host "Library development target: $LibraryDevelopmentTarget"
     Write-Host "Foundation library prepared development: $($UseFoundationLibraryDevelopment.ToString().ToLowerInvariant())"
     Write-Host "Native shared-storage development: $($UseNativeSharedStorageDevelopment.ToString().ToLowerInvariant())"
+    Write-Host "Native shared-compiler development: $($UseNativeSharedCompilerDevelopment.ToString().ToLowerInvariant())"
+    if ($NativeSharedCompilerBehaviorRequired) {
+        Write-Host "Native shared-compiler behavior expected seconds: $NativeSharedCompilerBehaviorExpectedSeconds"
+        Write-Host "Native shared-compiler behavior maximum seconds: $NativeSharedCompilerBehaviorMaximumSeconds"
+    }
     Write-Host "Database storage development checkpoint: $((
         $SelectedSuites.Contains('database-storage') -and
         $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
@@ -5644,6 +6100,7 @@ if ($PassThru) {
         Suites = $OrderedSuites
         ExpectedSeconds = $SelectedExpectedSeconds
         MaximumSeconds = $SelectedMaximumSeconds
+        OwnerBudgets = @($OrderedSuites | ForEach-Object { $SelectedOwnerBudgets[$_] })
         Gaps = $OrderedGaps
         RunPlanVerification = $RunPlanVerification
         RunWebAssemblyEngineVerification = $RunWebAssemblyEngineVerification
@@ -5654,6 +6111,8 @@ if ($PassThru) {
             $SourceContainmentCompilerDevelopmentEligible)
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
+        UsePreparedForeignBindingDevelopment = $UsePreparedForeignBindingDevelopment
+        PreparedProductsOnly = [bool]$PreparedProductsOnly
         UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
         UseFoundationBorrowComponentsDevelopment = $UseFoundationBorrowComponentsDevelopment
         UseVectorBorrowIntegrationDevelopment = $UseVectorBorrowIntegrationDevelopment
@@ -5665,12 +6124,41 @@ if ($PassThru) {
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
         UseCurrentVerifierDevelopment = $UseCurrentVerifierDevelopment
         UseNativeSharedStorageDevelopment = $UseNativeSharedStorageDevelopment
+        UseNativeSharedCompilerDevelopment = $UseNativeSharedCompilerDevelopment
+        NativeSharedCompilerBehaviorRequired = $NativeSharedCompilerBehaviorRequired
+        NativeSharedCompilerBehaviorExpectedSeconds = $NativeSharedCompilerBehaviorExpectedSeconds
+        NativeSharedCompilerBehaviorMaximumSeconds = $NativeSharedCompilerBehaviorMaximumSeconds
+        NativeSharedCompilerHostRecordRequired = $NativeSharedCompilerBehaviorRequired
+        NativeSharedCompilerBehaviorSelection = $(if ($NativeSharedCompilerBehaviorRequired) { '--shared-compiler-values' } else { $null })
+        NativeSharedCompilerPreparationGuidance = $(if ($NativeSharedCompilerBehaviorRequired) {
+            'Prepare the exact current compiler, native projection and shared host separately; supply --shared-compiler-host-record <Host-Bridge.json> <sha256>. Behavior never prepares products.'
+        } else { $null })
         UseFoundationLibraryDevelopment = $UseFoundationLibraryDevelopment
         UseOwnedConsoleDevelopment = $UseOwnedConsoleDevelopment
         UseProject4LauncherDevelopment = $UseProject4LauncherDevelopment
         UseProject4PublisherCacheDevelopment = $UseProject4PublisherCacheDevelopment
+        UseCausalCompilerDevelopment = $UseCausalCompilerDevelopment
+        UseCausalBudgetHelperDevelopment = $UseCausalBudgetHelperDevelopment
+        UseAnalysisDiagnosticsDevelopment = $UseAnalysisDiagnosticsDevelopment
+        UseAnalysisDiagnosticsWithExisting = $UseAnalysisDiagnosticsWithExisting
+        AnalysisDiagnosticsRequired = $AnalysisDiagnosticsRequired
+        ConstructionReadinessRequired = $ConstructionReadinessRequired
+        UseConstructionReadinessDevelopment = $UseConstructionReadinessDevelopment
+        UseConstructionReadinessWithExisting = $UseConstructionReadinessWithExisting
+        ConstructionReadinessSelection = $(if ($ConstructionReadinessRequired) { '--construction-readiness' } else { $null })
+        ConstructionReadinessCaseCount = 23
+        ConstructionReadinessProcessActionCount = 13
+        ConstructionReadinessPackageDeadlineAssertionCount = 12
+        ConstructionReadinessExpectedSeconds = [long]15
+        ConstructionReadinessMaximumSeconds = [long]120
+        AnalysisDiagnosticsDevelopmentCaseCount = 3
+        AnalysisDiagnosticsDevelopmentExpectedSeconds = [long]30
+        AnalysisDiagnosticsDevelopmentMaximumSeconds = [long]120
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
+        UseLanguage1FrontDoorPreparation = $UseLanguage1FrontDoorPreparation
+        UseCallablePreparation = $UseCallablePreparation
+        UsePreparedCallableDevelopment = $UsePreparedCallableDevelopment
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount
         Language1FrontDoorDevelopmentTarget = $Language1FrontDoorDevelopmentTarget
         Language1FrontDoorDevelopmentExpectedSeconds =

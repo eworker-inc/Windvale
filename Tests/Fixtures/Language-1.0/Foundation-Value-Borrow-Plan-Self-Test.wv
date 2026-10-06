@@ -30,6 +30,7 @@ fn Plan(
 }
 
 fn Isˉvalid(Value: Borrows.Borrowˉplan) -> bool { return Value.Valid; }
+fn Ownerˉisˉvalid(Value: Borrows.Ownerˉplan) -> bool { return Value.Valid; }
 
 export fn Main() -> i32 {
     let Empty: bytes = Borrows.Zeroes(0u32);
@@ -193,5 +194,60 @@ export fn Main() -> i32 {
     if !Borrowedˉelement.Valid ||
         Bytesˉreadˉu8(Borrowedˉelement.Temporaryˉstate, 1u32) != 2u8 ||
         Bytesˉreadˉu8(Borrowedˉelement.Frozenˉslots, 0u32) != 1u8 { return 27; }
+    var Expressions: bytes = Operation(18u32, 1u32, 0u32, 0u32, 1u32);
+    Expressions = Bytesˉconcat(Expressions, Operation(2u32, 2u32, 0u32, 0u32, 0u32));
+    Expressions = Bytesˉconcat(Expressions, Operation(62u32, 3u32, 0u32, 0u32, 0u32));
+    let Expressionˉwir: bytes = Bytesˉconcat(Expressions, Operandˉzero);
+    let Expressionˉstates: bytes = Bytesˉconcat(Zero, Bytesˉconcat(Two, Bytesˉconcat(Two, Two)));
+    let Expressionˉplan: Borrows.Borrowˉplan = Plan(
+        Expressions, Operandˉzero, 4u32, 0u32, Empty, Expressionˉstates);
+    let Expressionˉowners: Borrows.Ownerˉplan = Borrows.Buildˉowners(
+        Expressionˉwir, 0u32, Bytesˉlength(Expressions), 0u32, 3u32, 4u32,
+        Expressionˉplan, Borrows.Zeroes(4u32), Bytesˉconcat(Zero, Bytesˉconcat(One, Bytesˉconcat(One, One))));
+    if !Expressionˉowners.Valid || Expressionˉowners.Count != 3u32 ||
+        Borrows.Ownerˉslot(Expressionˉowners, 0u32) != 0u32 ||
+        Borrows.Ownerˉslot(Expressionˉowners, 1u32) != 1u32 ||
+        Borrows.Ownerˉslot(Expressionˉowners, 2u32) != 2u32 ||
+        Borrows.Ownerˉslot(Expressionˉowners, 3u32) != 3u32 ||
+        Borrows.Ownerˉslot(Expressionˉowners, 4u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Expressionˉowners.Temporaries, 0u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Expressionˉowners.Temporaries, 8u32) != 3u32 { return 28; }
+    let Namedˉwir: bytes = Operation(7u32, 0u32, 0u32, 0u32, 0u32);
+    let Namedˉowners: Borrows.Ownerˉplan = Borrows.Buildˉowners(
+        Namedˉwir, 0u32, Bytesˉlength(Namedˉwir), 0u32, 1u32, 1u32,
+        Plan(Namedˉwir, Empty, 1u32, 1u32, Empty, Two), Zero, One);
+    let Fieldˉwir: bytes = Bytesˉconcat(
+        Bytesˉconcat(Namedˉwir, Operation(18u32, 1u32, 0u32, 0u32, 1u32)), Operandˉzero);
+    let Fieldˉowners: Borrows.Ownerˉplan = Borrows.Buildˉowners(
+        Fieldˉwir, 0u32, 56u32, 0u32, 2u32, 2u32,
+        Borrows.Borrowˉplan(true, true, Bytesˉconcat(Two, Two), One, Zero),
+        Borrows.Zeroes(2u32), Bytesˉconcat(One, One));
+    if !Namedˉowners.Valid || Namedˉowners.Count != 0u32 ||
+        !Fieldˉowners.Valid || Fieldˉowners.Count != 0u32 { return 29; }
+    let Returnedˉwir: bytes = Operation(62u32, 0u32, 0u32, 0u32, 0u32);
+    let Returnedˉowners: Borrows.Ownerˉplan = Borrows.Buildˉowners(
+        Returnedˉwir, 0u32, 28u32, 0u32, 1u32, 1u32,
+        Borrows.Borrowˉplan(true, true, Two, Empty, Empty), One, Zero);
+    if !Returnedˉowners.Valid || Returnedˉowners.Count != 0u32 ||
+        Ownerˉisˉvalid(Borrows.Buildˉowners(Returnedˉwir, 0u32, 28u32, 0u32, 1u32, 1u32,
+            Borrows.Borrowˉplan(true, true, Two, Empty, Empty), Zero, Zero)) { return 30; }
+    let Lastˉwir: bytes = Operation(2u32, 4095u32, 0u32, 0u32, 0u32);
+    let Lastˉowners: Borrows.Ownerˉplan = Borrows.Buildˉowners(
+        Lastˉwir, 0u32, 28u32, 0u32, 1u32, 4096u32,
+        Borrows.Borrowˉplan(true, true, Borrows.Setˉstate(Borrows.Zeroes(4096u32), 4095u32, 2u8), Empty, Empty),
+        Borrows.Zeroes(4096u32), Borrows.Setˉstate(Borrows.Zeroes(4096u32), 4095u32, 1u8));
+    if !Lastˉowners.Valid || Lastˉowners.Count != 1u32 ||
+        Bytesˉlength(Lastˉowners.Mapping) != 16384u32 ||
+        Borrows.Ownerˉslot(Lastˉowners, 4094u32) != 0u32 ||
+        Borrows.Ownerˉslot(Lastˉowners, 4095u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Lastˉowners.Temporaries, 0u32) != 4095u32 { return 31; }
+    if Ownerˉisˉvalid(Borrows.Buildˉowners(Expressionˉwir, 0u32, Bytesˉlength(Expressions), 0u32, 3u32, 4097u32,
+            Expressionˉplan, Empty, Empty)) ||
+        Ownerˉisˉvalid(Borrows.Buildˉowners(Returnedˉwir, 0u32, 28u32, 0u32, 1u32, 1u32,
+            Borrows.Borrowˉplan(true, true, Two, Empty, Empty), Empty, One)) ||
+        Ownerˉisˉvalid(Borrows.Buildˉowners(Returnedˉwir, 0u32, 28u32, 0u32, 1u32, 1u32,
+            Borrows.Borrowˉplan(true, true, Two, Empty, Empty), Zero, Two)) ||
+        Ownerˉisˉvalid(Borrows.Buildˉowners(Returnedˉwir, 0u32, 28u32, 1u32, 1u32, 1u32,
+            Borrows.Borrowˉplan(true, true, Two, Empty, Empty), Zero, One)) { return 32; }
     return 42;
 }

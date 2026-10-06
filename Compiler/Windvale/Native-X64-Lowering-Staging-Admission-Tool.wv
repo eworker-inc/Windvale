@@ -12,6 +12,7 @@ import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉcontent as Content;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉresources as Resources;
+import Foundationˉmemory as Memory;
 
 
 fn Resourceˉfailure(
@@ -38,7 +39,8 @@ fn Contentˉfailure(
     return 1;
 }
 
-export fn Main() -> i32 {
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 effects(memory.allocate) {
+    var Parent: Memory.Memoryˉbudget = Budget;
     if process.argument_count() != 4u32 {
         diagnostic.write_line(
             "Usage: wvnative-admit <input.wvb> <chunk-prefix> <manifest.wvop> <destination.wvo>"
@@ -78,7 +80,7 @@ export fn Main() -> i32 {
     }
 
     let Loweringˉplan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
-        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Input, borrow mut Parent);
     let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
         Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
             Input,

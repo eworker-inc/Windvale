@@ -93,7 +93,10 @@ aggregate gate. Cancelled work may still lack a published checkpoint.
 `--prepared-products-only --maximum-seconds 600`. A miss fails this selected
 owner and the gate even with `-AllowIncompleteInfrastructure`; it does not begin
 construction or record a pass. Corrupt entries fail closed. The behavior job
-retains its 15-minute wall-clock bound and a separately keyed final cache save.
+uses the separately validated complete-plan deadline defined below and a
+separately keyed final cache save. The 95-minute preparation job does not extend
+the shared 75-minute construction deadline; exhaustion preserves completed
+caches and prevents behavior execution.
 Other owners retain their existing execution and incomplete-result policy. This
 first phase separation does not claim that every native owner has been migrated.
 
@@ -101,6 +104,22 @@ The owner's explicit phases accept 30–5,400 seconds for preparation and 30–6
 seconds for prepared execution. Child builders inherit deadlines shorter than
 their parent process bounds. Both independent packagers settle before the owner
 cleans its private directory; uncertain process cleanup preserves that directory.
+
+The existing callable owner also separates preparation and prepared behavior.
+The `--prepare-only --maximum-seconds N` phase admits at most 4,500 seconds within the
+coordinator's shared deadline and warms seven fixture WVB/profile 1 products and
+the current-verifier WVB/profile 2 product. Both owner phases require an explicit,
+already prepared current-six checkpoint. The coordinator declares one separate
+compiler preparation step when an earlier selected preparation has not supplied it,
+under the same callable deadline; the owner never constructs compiler tools.
+It executes none of the 64 semantic groups. The `--prepared-products-only` phase scopes
+both prepared-only flags, refuses source or image cache misses, and retains the
+same 64 groups plus exact immutable callable/closure oracle assertions. Complete
+project, producer, packaged-product and host-tool inputs are checked before and
+after execution. Its 3,600-second behavior maximum remains unchanged until warm
+execution has been measured; this separation does not make an over-cap plan
+admissible. Computed current-product hashes are diagnostic identities, while the
+registered terminal summary binds the stable semantic group inventory.
 
 ### Passing owner results
 
@@ -479,9 +498,37 @@ owner retains that owner's preservation contract.
 Push and pull-request development verification runs the affected plan on a clean
 Linux host. It adds a clean Windows host only when a changed path names a Windows
 or Win32 path token, a Windows command or batch file, a PowerShell script, or an
-`.exe`, `.dll`, or `.pdb` artifact. Both automatic development jobs have a
-15-minute wall-clock limit including checkout, cache restore, tool setup, owner
-execution, and cache publication. A classified test failure remains blocking.
+`.exe`, `.dll`, or `.pdb` artifact. Classification validates the complete native
+owner total from `NativePlan.MaximumSeconds`, including narrowed bundles and
+mixed owner substitutions. It publishes `native_maximum_seconds`,
+`native_admission_maximum_seconds`, `native_control_maximum_seconds`, and
+`development_timeout_minutes`. Admission adds 600 seconds only when the
+selected plan requires a prepared shared compiler host; that read-only phase
+runs before owner execution. The separate control allowance is 300 seconds
+for checkout, cache restore, tool setup, metadata checks and final publication.
+Both jobs use `max(15, ceil((owner + admission + control) / 60))` minutes.
+A 600-second ordinary plan retains 15 minutes; a 1,200-second mixed shared
+owner receives 35 minutes, and that owner plus two 600-second owners receives
+55 minutes. Classification rejects malformed, inconsistent or over-cap
+budgets before publishing outputs: decimal integer fields are canonical and
+bounded, the shared-host flag is Boolean, expected seconds cannot exceed the
+maximum, zero totals require an empty selection, and the computed job bound
+cannot exceed 180 minutes. Larger selections use
+`Get-Native-Development-Shards.ps1` over the planner's per-owner budgets. Stable
+first-fit grouping assigns every selected owner exactly once, keeps the generic
+nominal execution bundle together, and retains canonical order within each
+shard. Each job receives its own admission/control allowance; a group exceeding
+the cap, uncovered input, inconsistent total or more than sixteen shards refuses.
+Both host matrices execute the complete shard list with at most four concurrent
+jobs per host. Their aggregate gate requires every job. `Verify-Changed.ps1
+-UsePreparedProducts -NativeDevelopmentShard N` recomputes the same partition
+from the classified comparison before selecting its owners; preparation still
+builds the complete required set once per host. Report and cache publication
+names include the shard, and shard 1 owns common metadata checks. No larger plan
+is clamped to the cap. These
+allowances bound development execution; they do not establish observed
+timings, passing behavior, preparation capacity, or CI qualification.
+A classified test failure remains blocking.
 A framework error or owner timeout is retained as `verification-incomplete` and
 warns without asserting that the product code is wrong. It is not a pass,
 cannot populate the result cache, and cannot satisfy qualification.
@@ -519,8 +566,85 @@ owner contract.
 
 ## Verification
 
+An explicitly supplied current native lowerer may select
+`--maximum-seconds 30..5400`; omission retains the 600-second default. An optional
+absolute `--deadline-ms` can only shorten that selected duration. This bounded
+continuation is for a reported local run whose measured preparation and execution
+cost exceed the default; it neither changes automatic owner budgets nor permits
+an incomplete result to count as a pass.
+
+The current `--lowerer` also accepts `--compiler-boundaries` for the two
+function-capacity cases and ten typed Foreign rejections. It reuses their normal
+implementations and includes twelve current-source object-reader boundary
+checks. The retained/all shared preparation selection additionally warms the
+current object reader. A failed supplied-lowerer run preserves its private
+diagnostic workspace. These controls permit focused continuation without
+repeating unchanged storage or record cases; they do not declare an interrupted
+whole-owner run passing.
+
 `Verify-Verification-Plan.ps1` owns general classification plus native selection
 cases. It must cover deterministic ordering, exact suite ownership, combined
 boundaries, frozen managed-source gaps, known missing native coverage, unknown
 paths, planner self-verification, and empty input. The actual no-argument
 working-tree route must also select the planner for changes to its own files.
+
+The coherent current compiler/shared-byte batch narrows only declared current
+Project4 implementation dependencies. It uses the existing mixed native owner
+(10 source, 3 maintained consumer, 13 retained staging assertions and 270 native
+cases; 4,800/7,200 seconds), the
+bytes-source selection (358 cases; 180/600), coalesced generic nominal owners
+(145 cases; 330/600), and supplied-product analysis diagnostics (3 cases; 30/120).
+The four executed products total 5,340 expected / 8,520 maximum seconds. The six
+registered owners include the three generic owners represented by one bundle.
+Explicit tool/test/legacy owners remain additive. Unknown projects/implementation
+paths refuse as gaps, and a routed owner cannot stand in for an unexecuted product.
+A 33,600-second plan still refuses as one job. Independent causal owners may
+run in bounded shards; sharding does not justify unrelated selections or replace
+passing per-host evidence.
+
+The shared compiler selection alone declares 3,600 expected / 5,400 maximum
+seconds. These durations include source admission, native consumer construction,
+repeated image packaging and input-integrity checks on both supported hosts.
+Measured prepared-compiler runs exceeded the former 540/600-second declaration;
+that declaration could terminate during packaging before behavior executed.
+The mixed current-host selection adds 1,200/1,800 seconds for its native
+regressions under the same absolute deadline. The older standalone owner's
+registered profile is unchanged. Moving this construction into reusable prepared
+products remains feedback-time work; larger truthful deadlines do not complete
+that requirement.
+
+The existing Front Door development owner additionally supplies `compiler-analysis`
+as the four-product union: Source Analysis (15 semantic groups, producer and validator exit 0),
+Generic WIR (13 semantic groups, exit 42), Generic Analysis Publication (8, exit 42), and Generic
+Collection Publication (5, exit 42). Publication products separately execute the
+wrong-argument-count exit-64 guard and then receive four private output paths.
+All four are authenticated Project4 products packaged through the existing hosted
+profile 8; this protects their changed source tests through the established native
+ABI, without claiming new byte-builder execution through ABI 22. Source Analysis
+separates production and independent validation into two
+executables to keep each closure within the compiler profile. Generic WIR and
+Generic Analysis Publication use the same separation, retaining independent
+validation of every successful product and the original malformed-directory
+rejections. Generic Collection Publication's successful output is admitted by
+the prepared Emitter. Source Analysis's four files are
+validated directly; it does not request WVB emission. The generic publication
+outputs are bounded, cross-checked against their 104-byte manifests, admitted by
+the exact prepared Emitter's existing five-argument interface. Supported
+publications additionally pass the current WVB verifier. Generic Collection
+Publication retains Decision 0787's source/IR/emission scope: its WVB 1.11 Seed
+collection shapes remain outside the compiler-aligned native subset. The owner
+requires the established semantic-structure refusal for that exact product and
+reports the execution limitation; it does not treat that refusal as verified
+collection execution or restore Seed collection support to the forward runtime.
+Publication preflight checks canonical contiguous WVSS 1/2 directories for at
+most 64 modules, descriptor fields and manifest agreement before emission.
+Published WVB uses the current verifier's explicit `--current` interface.
+No JS source analyzer or new verifier owner supplies those semantics.
+
+The selection has 41 semantic groups plus 4 argument guards: 296 cases including
+the existing 251 frozen inputs. `bytes-source+compiler-analysis` retains bytes-source
+358 and totals 403 cases. All eleven products total 481. The four new products have
+20-second prepared-cache planning estimates each, which remain unmeasured; the
+600-second behavior ceiling and 5,400-second explicit preparation ceiling are
+unchanged. Cold compiler-product construction belongs to preparation. Explicit
+other owners and unknown gaps remain additive; the 33,600-second plan still refuses.

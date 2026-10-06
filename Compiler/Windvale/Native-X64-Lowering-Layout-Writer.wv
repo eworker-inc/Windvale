@@ -1,0 +1,51 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉlayoutˉwriter;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Foundationˉbytes as Bytes;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
+
+export fn Compilerˉnativeˉx64ˉlayoutˉappend(
+    Directory: borrow mut Bytes.Bytesˉbuilder,
+    Machineˉoffset: u32,
+    Machineˉlength: u32,
+    Parameters: u32,
+    Returnˉtype: u8,
+    Parameterˉtypes: borrow bytes
+) -> Results.Result<unit, Memory.Limitˉfailure> effects() {
+    if Parameters > Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() {
+        return Results.Result.Failure<unit, Memory.Limitˉfailure> {
+            Error: Memory.Limitˉfailure.Maximumˉexceeded {
+                Requested: U64ˉfromˉu32(Parameters), Maximum: 64u64
+            }
+        };
+    }
+    if Parameters > Bytesˉlength(Parameterˉtypes) {
+        return Results.Result.Failure<unit, Memory.Limitˉfailure> {
+            Error: Memory.Limitˉfailure.Maximumˉexceeded {
+                Requested: U64ˉfromˉu32(Parameters),
+                Maximum: U64ˉfromˉu32(Bytesˉlength(Parameterˉtypes))
+            }
+        };
+    }
+    try Bytes.Appendˉu32ˉlittle(borrow mut Directory, Machineˉoffset);
+    try Bytes.Appendˉu32ˉlittle(borrow mut Directory, Machineˉlength);
+    // One parameter byte, one return byte and two reserved zero bytes.
+    try Bytes.Appendˉu32ˉlittle(borrow mut Directory,
+        Parameters | (U32ˉfromˉu8(Returnˉtype) << 8u32));
+    var Parameter: u32 = 0u32;
+    while Parameter < Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() {
+        var Type: u8 = 0u8;
+        if Parameter < Parameters {
+            Type = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        }
+        try Bytes.Appendˉu8(borrow mut Directory, Type);
+        Parameter = Parameter + 1u32;
+    }
+    return Results.Result.Valid<unit, Memory.Limitˉfailure> { Value: () };
+}
+

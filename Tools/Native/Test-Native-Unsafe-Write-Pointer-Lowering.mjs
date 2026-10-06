@@ -4,9 +4,14 @@ import { Prepareˉbudgetˉoracle } from './Native-Budgeted-Storage-Cases.mjs';
 import { Prepareˉownedˉvector, Runˉownedˉvectorˉcases } from './Native-Owned-Vector-Cases.mjs';
 import { Prepareˉvectorˉaccess, Runˉvectorˉaccess } from './Native-Owned-Vector-Access-Cases.mjs';
 import { Prepareˉownedˉhelpers, Runˉownedˉhelpers } from './Native-Owned-Helper-Cases.mjs';
+import { Prepareˉsharedˉsourceˉproducts, Runˉsharedˉsourceˉcases, Runˉsharedˉplanˉconsumer,
+    Checkˉsharedˉretirements, Runˉsharedˉstagingˉcases } from './Native-Shared-Value-Cases.mjs';
+import { Readˉpreparedˉsharedˉcompilerˉhost } from './Build-Shared-Compiler-Host.mjs';
+import { Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
+    Readˉpreparedˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
+import { lstat, mkdtemp, open, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
@@ -22,10 +27,16 @@ let Growthˉproduct = null;
 let Appendˉproduct = null;
 let Helperˉproduct = null;
 let Scalarˉhelperˉproduct = null;
-while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append', '--owned-helpers', '--owned-scalar-helpers'].includes(process.argv.at(-3))) {
+let Sharedˉhostˉrecord = null;
+let Preparedˉsharedˉhost = null;
+let Currentˉobjectˉchecker = null;
+while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append', '--owned-helpers', '--owned-scalar-helpers', '--shared-compiler-host-record'].includes(process.argv.at(-3))) {
     if (!/^[0-9a-f]{64}$/u.test(process.argv.at(-1))) Usage();
     const Product = { Path: resolve(process.argv.at(-2)), Sha256: process.argv.at(-1) };
-    if (process.argv.at(-3) === '--budget-oracle') {
+    if (process.argv.at(-3) === '--shared-compiler-host-record') {
+        if (Sharedˉhostˉrecord !== null) Usage();
+        Sharedˉhostˉrecord = Product;
+    } else if (process.argv.at(-3) === '--budget-oracle') {
         if (Oracleˉproduct !== null) Usage();
         Oracleˉproduct = Product;
     } else if (process.argv.at(-3) === '--owned-vector') {
@@ -47,10 +58,76 @@ while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append',
     process.argv.splice(-3);
 }
 
+let Suppliedˉdeadline = null;
+const Deadlineˉposition = process.argv.indexOf('--deadline-ms', 4);
+if (Deadlineˉposition !== -1) {
+    const Value = process.argv[Deadlineˉposition + 1];
+    if (!/^[1-9][0-9]*$/u.test(Value) || !Number.isSafeInteger(Number(Value)) ||
+        Number(Value) <= Date.now() || Number(Value) > Date.now() + 7_200_000 ||
+        process.argv.indexOf('--deadline-ms', Deadlineˉposition + 1) !== -1) Usage();
+    Suppliedˉdeadline = Number(Value); process.argv.splice(Deadlineˉposition, 2);
+}
+const Fullˉloweringˉposition = process.argv.indexOf('--full-lowering', 4);
+const Fullˉsharedˉlowering = Fullˉloweringˉposition !== -1;
+if (Fullˉsharedˉlowering) {
+    if (process.argv[4] !== '--shared-compiler-values' ||
+        process.argv.indexOf('--full-lowering', Fullˉloweringˉposition + 1) !== -1) Usage();
+    process.argv.splice(Fullˉloweringˉposition, 1);
+}
 const Phase = process.argv[4];
+let Lowererˉmaximum = null;
+if (Phase === '--lowerer') {
+    const Maximumˉposition = process.argv.indexOf('--maximum-seconds', 4);
+    if (Maximumˉposition !== -1) {
+        const Value = process.argv[Maximumˉposition + 1];
+        if (!/^[1-9][0-9]*$/u.test(Value) || !Number.isSafeInteger(Number(Value)) ||
+            Number(Value) < 30 || Number(Value) > 5400 ||
+            process.argv.indexOf('--maximum-seconds', Maximumˉposition + 1) !== -1) Usage();
+        Lowererˉmaximum = Number(Value); process.argv.splice(Maximumˉposition, 2);
+    }
+}
+const Historicalˉlowerer = Phase === '--historical-lowerer';
+const Sourceˉvaluesˉonly = ['--shared-source-values', '--shared-compiler-values'].includes(Phase);
+const Planˉvaluesˉonly = ['--shared-plan-values', '--shared-compiler-values'].includes(Phase);
+const Sharedˉcompilerˉvalues = Sourceˉvaluesˉonly || Planˉvaluesˉonly;
+let Sharedˉcompilerˉhost = null;
 const Prepareˉonly = Phase === '--prepare-only';
 const Preparedˉonly = Phase === '--prepared-products-only';
+const Prepareˉsharedˉproducts = Phase === '--prepare-shared-source-products';
+let Sharedˉproductsˉkey = null, Sharedˉproductsˉselection = null;
 let Ownerˉdeadline = null;
+if (Prepareˉsharedˉproducts) {
+    const Seconds = Number(process.argv[10]);
+    if (process.argv.length !== 11 || process.argv[5] !== '--compiler-checkpoint' ||
+        !/^[0-9a-f]{64}$/u.test(process.argv[6]) || process.argv[7] !== '--selection' ||
+        !['source', 'plan', 'retained', 'all'].includes(process.argv[8]) || process.argv[9] !== '--maximum-seconds' ||
+        !/^[1-9][0-9]*$/u.test(process.argv[10]) || Seconds < 30 || Seconds > 900 ||
+        [Oracleˉproduct, Vectorˉproduct, Growthˉproduct, Appendˉproduct,
+            Helperˉproduct, Scalarˉhelperˉproduct].some(Product => Product !== null)) Usage();
+    if (process.env.WINDVALE_PREPARED_PRODUCTS_ONLY !== undefined)
+        Reject('Source product preparation cannot use a prepared-only environment.', 64);
+    Sharedˉproductsˉkey = process.argv[6]; Sharedˉproductsˉselection = process.argv[8];
+    Ownerˉdeadline = Math.min(Date.now() + Seconds * 1000, Suppliedˉdeadline ?? Number.MAX_SAFE_INTEGER);
+    process.argv.splice(4);
+}
+if (Sharedˉcompilerˉvalues) {
+    if (Sharedˉhostˉrecord === null) Reject('Candidate shared-source behavior requires ' +
+        '--shared-compiler-host-record <Host-Bridge.json> <sha256>. Prepare the exact current compiler, ' +
+        'native projection and shared host separately; behavior does not construct compiler products.', 64);
+    const Seconds = Number(process.argv[9]);
+    if (process.argv.length !== 10 || process.argv[5] !== '--shared-compiler-host' ||
+        !/^[0-9a-f]{64}$/u.test(process.argv[7]) ||
+        process.argv[8] !== '--maximum-seconds' || !/^[1-9][0-9]*$/u.test(process.argv[9]) ||
+        Seconds < 30 || Seconds > (Fullˉsharedˉlowering ? 7200 : 5400) ||
+        [Oracleˉproduct, Vectorˉproduct, Growthˉproduct, Appendˉproduct,
+            Helperˉproduct, Scalarˉhelperˉproduct].some(Product => Product !== null)) Usage();
+    Sharedˉcompilerˉhost = { Path: resolve(process.argv[6]), Sha256: process.argv[7] };
+    Ownerˉdeadline = Math.min(Date.now() + Seconds * 1000, Suppliedˉdeadline ?? Number.MAX_SAFE_INTEGER);
+    process.argv.splice(5);
+    if (Fullˉsharedˉlowering) process.argv.splice(4, 1, '--lowerer', Sharedˉcompilerˉhost.Path, Sharedˉcompilerˉhost.Sha256);
+}
+if (Suppliedˉdeadline !== null && !Sharedˉcompilerˉvalues && !Prepareˉsharedˉproducts &&
+    Lowererˉmaximum === null) Usage();
 if (Prepareˉonly || Preparedˉonly) {
     const Seconds = Number(process.argv[6]);
     if (process.argv.length !== 7 || process.argv[5] !== '--maximum-seconds' ||
@@ -69,17 +146,27 @@ if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.leng
 const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
 const Domainˉonly = process.argv[4] === '--owned-domain';
 const Sharedˉonly = process.argv[4] === '--shared-storage';
-const Ownedˉonly = process.argv[4] === '--owned-storage' || Domainˉonly || Sharedˉonly;
+const Valuesˉonly = process.argv[4] === '--shared-values';
+const Ownedˉonly = process.argv[4] === '--owned-storage' || Domainˉonly || Sharedˉonly || Valuesˉonly;
 if (Ownedˉonly) Ownerˉdeadline = Date.now() + 600_000;
 const Recordˉonly = process.argv.length === 8 && process.argv[7] === '--record-return-memory';
 const Helperˉonly = process.argv.length === 8 && process.argv[7] === '--owned-helper-memory';
-if (process.argv.length === 8 && !Recordˉonly && !Helperˉonly) Usage();
-if (process.argv.length === 5 && !Borrowˉonly && !Ownedˉonly) Usage();
-const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10 || Recordˉonly || Helperˉonly;
-if (Suppliedˉlowerer && Ownerˉdeadline === null) Ownerˉdeadline = Date.now() + 600_000;
+const Boundariesˉonly = process.argv.length === 8 && process.argv[7] === '--compiler-boundaries';
+if (process.argv.length === 8 && !Recordˉonly && !Helperˉonly && !Boundariesˉonly) Usage();
+if (Boundariesˉonly && Historicalˉlowerer) Usage();
+if (process.argv.length === 5 && !Borrowˉonly && !Ownedˉonly && !Sharedˉcompilerˉvalues) Usage();
+const Suppliedˉlowerer = process.argv.length === 7 || process.argv.length === 10 || Recordˉonly || Helperˉonly || Boundariesˉonly;
+if (Suppliedˉlowerer && Ownerˉdeadline === null) {
+    Ownerˉdeadline = Math.min(Date.now() + (Lowererˉmaximum ?? 600) * 1000,
+        Suppliedˉdeadline ?? Number.MAX_SAFE_INTEGER);
+}
 const Suppliedˉborrowˉprobe = process.argv.length === 10;
-if (Suppliedˉlowerer && (process.argv[4] !== '--lowerer' ||
+if (Suppliedˉlowerer && (!['--lowerer', '--historical-lowerer'].includes(process.argv[4]) ||
     !/^[0-9a-f]{64}$/u.test(process.argv[6]))) Usage();
+if (Suppliedˉlowerer && !Historicalˉlowerer && Sharedˉhostˉrecord === null) Reject(
+    'Candidate --lowerer requires --shared-compiler-host-record <Host-Bridge.json> <sha256>. ' +
+    'Prepare current compiler/projection/host products separately; use --historical-lowerer only for an explicit named predecessor comparison.', 64);
+if (Historicalˉlowerer && Sharedˉhostˉrecord !== null) Usage();
 if (Suppliedˉborrowˉprobe && (process.argv[7] !== '--borrow-probe' ||
     !/^[0-9a-f]{64}$/u.test(process.argv[9]))) Usage();
 const Target = process.argv[2];
@@ -124,9 +211,80 @@ const Work = await realpath(await mkdtemp(join(
     tmpdir(),
     'windvale-write-pointer-lowering-',
 )));
+if (Lowererˉmaximum !== null) process.stdout.write(
+    `native lowering selection=supplied-current-host maximum-seconds=${Lowererˉmaximum} deadline-ms=${Ownerˉdeadline}\n`);
 let Preserveˉwork = false;
 try {
-    if (Helperˉonly) {
+    const Retiredˉentries = await Checkˉsharedˉretirements(Repositoryˉroot);
+    process.stdout.write('native shared source retirement entries=' + Retiredˉentries + ' status=Passed\n');
+    if (Prepareˉsharedˉproducts) {
+        async function Requireˉcurrentˉselection() {
+            if (Date.now() >= Ownerˉdeadline) throw Object.assign(new Error('Shared source preparation deadline reached.'), { exitCode: 124 });
+            if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Sharedˉproductsˉkey)
+                throw Object.assign(new Error('The supplied compiler checkpoint does not describe the current source and producers.'), { exitCode: 64 });
+            if (Date.now() >= Ownerˉdeadline) throw Object.assign(new Error('Shared source preparation deadline reached.'), { exitCode: 124 });
+        }
+        await Requireˉcurrentˉselection();
+        const Compilerˉcheckpoint = await Readˉpreparedˉsplitˉcompiler(
+            await Getˉcurrentˉsplitˉcompilerˉfamily(), Sharedˉproductsˉkey);
+        await Compilerˉcheckpoint.Requireˉunchanged();
+        const Preparedˉhost = Sharedˉhostˉrecord === null ? null : await Readˉpreparedˉsharedˉcompilerˉhost(
+            Sharedˉhostˉrecord.Path, Sharedˉhostˉrecord.Sha256, Sharedˉproductsˉkey, Ownerˉdeadline);
+        const Products = await Prepareˉsharedˉsourceˉproducts({ Repository: Repositoryˉroot, Work, Target,
+            Deadline: Ownerˉdeadline, Compilerˉcheckpoint, Compilerˉkey: Sharedˉproductsˉkey,
+            Preparedˉsharedˉhost: Preparedˉhost, Selection: Sharedˉproductsˉselection,
+            Prepareˉruntimeˉobjects: () => Prepareˉownedˉstorageˉobjects({ Repository: Repositoryˉroot, Work, Target,
+                Deadline: Ownerˉdeadline, Valuesˉonly: true,
+                Requireˉsuccess: (Tool, Arguments, Label) => Requireˉsuccess(Tool, Arguments, Label,
+                    Math.min(300_000, Ownerˉdeadline - Date.now())) }),
+            Requireˉsuccess: (Tool, Arguments, Label) => Requireˉsuccess(Tool, Arguments, Label,
+                Math.min(300_000, Ownerˉdeadline - Date.now())) });
+        if (['retained', 'all'].includes(Sharedˉproductsˉselection)) await Prepareˉcurrentˉobjectˉchecker();
+        await Compilerˉcheckpoint.Requireˉunchanged(); await Requireˉcurrentˉselection();
+        process.stdout.write(`native shared source products status=Prepared selection=${Sharedˉproductsˉselection} ` +
+            `source-products=${Products.Sourceˉproducts} plan-products=${Products.Planˉproducts} products=${Products.Products} ` +
+            `retained-wvb-products=${Products.Retainedˉproducts} retained-images=${Products.Retainedˉimages} ` +
+            `current-object-checker=${Currentˉobjectˉchecker === null ? 0 : 1} ` +
+            `runtime-objects=${Products.Runtimeˉobjects} wrapper-objects=${Products.Wrapperˉobjects} ` +
+            `source-wrappers-prepared=${Products.Sourceˉwrappersˉprepared} lowerer-executions=${Products.Lowererˉexecutions} ` +
+            `behavior-cases=0 compiler-source=current compiler-checkpoint=${Sharedˉproductsˉkey} host=${Target}\n`);
+    }
+    if (Sharedˉcompilerˉvalues) {
+        await Confirmˉsharedˉcompilerˉhost();
+        const Key = Preparedˉsharedˉhost.Compilerˉkey;
+        const Compilerˉcheckpoint = Preparedˉsharedˉhost.Compilerˉcheckpoint;
+        const Context = { Repository: Repositoryˉroot, Work, Target, Requireˉsuccess,
+            Runˉprocess, Deadline: Ownerˉdeadline, Compilerˉcheckpoint, Sharedˉcompilerˉhost,
+            Preparedˉsharedˉhost, Segmentedˉconsumer: Preparedˉsharedˉhost.Segmentedˉconsumer,
+            Valuesˉonly: true, Compilerˉkey: Key };
+        let Cases = { Cases: 0, Executions: 0, Iterations: 0 };
+        if (Sourceˉvaluesˉonly) {
+            Context.Runtimeˉobjects = await Prepareˉownedˉstorageˉobjects(Context);
+            Cases = await Runˉsharedˉsourceˉcases(Context);
+        }
+        const Planˉcases = Planˉvaluesˉonly ? await Runˉsharedˉplanˉconsumer(Context) : { Cases: 0, Executions: 0 };
+        const Stagingˉcases = Sourceˉvaluesˉonly && Planˉvaluesˉonly ?
+            await Runˉsharedˉstagingˉcases(Context) : { Cases: 0, Executions: 0 };
+        await Confirmˉsharedˉcompilerˉhost();
+        if (Sourceˉvaluesˉonly && !Planˉvaluesˉonly) process.stdout.write(`native shared source values status=Passed cases=${Cases.Cases} ` +
+            `executions=${Cases.Executions} iterations=${Cases.Iterations} host=${Target} ` +
+            `compiler-source=current compiler-checkpoint=${Key} qualification=false\n`);
+        else process.stdout.write(`native shared compiler values status=Passed source-cases=${Cases.Cases} ` +
+            `consumer-cases=${Planˉcases.Cases} staging-cases=${Stagingˉcases.Cases} ` +
+            `executions=${Cases.Executions + Planˉcases.Executions + Stagingˉcases.Executions} host=${Target} ` +
+            `compiler-source=current compiler-checkpoint=${Key} qualification=false\n`);
+    }
+    if (!Prepareˉsharedˉproducts && (!Sharedˉcompilerˉvalues || Fullˉsharedˉlowering)) {
+    if (Boundariesˉonly) {
+        const Lowerer = await Readˉsuppliedˉlowerer();
+        const Capacity = await Runˉfunctionˉcapacity(Lowerer);
+        const Foreign = await Runˉforeignˉrejections(Lowerer, await Readˉfixture(
+            join(Fixtureˉdirectory, 'Foreign-Runtime-Success.wvb.b64'),
+            '339fa2a51236e55281ab0ccc0f3c0ec881d9d4074c1cf9fc8a1b943bba4ffa80'));
+        await Confirmˉsharedˉcompilerˉhost();
+        process.stdout.write(`native compiler boundaries status=Passed cases=${Capacity.Cases + Foreign} ` +
+            `valid=${Capacity.Valid} malformed=${Capacity.Malformed + Foreign} host=${Target} qualification=false\n`);
+    } else if (Helperˉonly) {
         const Lowerer = await Readˉsuppliedˉlowerer();
         const Context = { Repository: Repositoryˉroot, Work, Target, Requireˉsuccess,
             Runˉprocess, Helperˉproduct, Scalarˉhelperˉproduct };
@@ -136,7 +294,8 @@ try {
             `executions=${Cases.Executions} malformed=${Cases.Malformed} host=${Target} qualification=false\n`);
     } else {
     const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
-        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct, Domainˉonly, Sharedˉonly,
+        Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct, Domainˉonly, Sharedˉonly, Valuesˉonly,
+        Deadline: Ownerˉdeadline,
     }) : 0;
     if (!Ownedˉonly) {
     await Verifyˉsourceˉclosures();
@@ -188,7 +347,8 @@ try {
         await Prepareˉownedˉvector({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Vectorˉproduct });
         await Prepareˉvectorˉaccess({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Growthˉproduct, Appendˉproduct });
         await Prepareˉownedˉhelpers({ Repository: Repositoryˉroot, Work, Requireˉsuccess, Helperˉproduct, Scalarˉhelperˉproduct });
-        process.stdout.write('native x64 lowering preparation status=Ready products=8 behavior-cases=0\n');
+        await Prepareˉcurrentˉobjectˉchecker();
+        process.stdout.write('native x64 lowering preparation status=Ready products=9 behavior-cases=0\n');
     } else {
     const Recordˉcases = await Runˉrecordˉreturnˉmemory(Lowerer);
     if (!Recordˉonly) {
@@ -400,68 +560,18 @@ try {
                 Rejected.Output);
         }
     }
-    const Foreignˉlayout = Inspectˉforeignˉfixture(Foreignˉsuccess);
-    const Foreignˉcases = [
-        ['old-minor', Value => Value.writeUInt16LE(37, 6)],
-        ['unknown-opcode', Value => {
-            Value[Foreignˉlayout.Operation] = 225;
-        }],
-        ['unregistered-binding', Value => Value.writeUInt32LE(
-            0, Foreignˉlayout.Operation + 1,
-        )],
-        ['invalid-pointer-type', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Typeˉcount, Foreignˉlayout.Operation + 5,
-        )],
-        ['invalid-abi-type', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Typeˉcount, Foreignˉlayout.Operation + 9,
-        )],
-        ['abi-as-pointer', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Pointerˉtype, Foreignˉlayout.Operation + 9,
-        )],
-        ['pointer-as-abi', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Abiˉtype, Foreignˉlayout.Operation + 5,
-        )],
-        ['pointer-stack-kind', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Capacityˉlocal, Foreignˉlayout.Operation - 14,
-        )],
-        ['capacity-stack-kind', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Pointerˉlocal, Foreignˉlayout.Operation - 9,
-        )],
-        ['generation-stack-kind', Value => Value.writeUInt32LE(
-            Foreignˉlayout.Pointerˉlocal, Foreignˉlayout.Operation - 4,
-        )],
-    ];
-    for (let Index = 0; Index < Foreignˉcases.length; Index += 1) {
-        const [Name, Mutate] = Foreignˉcases[Index];
-        process.stdout.write(
-            `native unsafe write pointer lowering item=${Index + 1}/` +
-            `${Foreignˉcases.length} case=foreign-${Name} status=Started\n`,
-        );
-        const Candidate = Buffer.from(Foreignˉsuccess);
-        Mutate(Candidate);
-        const Candidateˉpath = join(Work, `Malformed-Foreign-${Name}.wvb`);
-        const Destination = join(Work, `Malformed-Foreign-${Name}.wvo`);
-        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
-        const Rejected = await Runˉprocess(
-            Lowerer, [Candidateˉpath, Destination],
-            COMMAND_TIMEOUT_MILLISECONDS, `foreign-${Name}`,
-        );
-        if (Rejected.Code !== 1 || Rejected.Exceeded || Rejected.Timedˉout ||
-            existsSync(Destination) ||
-            !/^native x64 status=(?:Invalidˉwvb|Unsupportedˉprofile|Unsupportedˉmodule|Unsupportedˉfunction|Unsupportedˉcode) /u
-                .test(Rejected.Output)) {
-            Reject(`The malformed Foreign case ${Name} differed.\n` +
-                Rejected.Output);
-        }
-    }
+    const Capacityˉcases = await Runˉfunctionˉcapacity(Lowerer);
+    await Runˉforeignˉrejections(Lowerer, Foreignˉsuccess);
     if (Foreignˉexecutions !== (Target === 'linux' ? 2 : 0)) {
         Reject('The host-specific Foreign execution count differed.');
     }
+    if (Fullˉsharedˉlowering) await Confirmˉsharedˉcompilerˉhost();
     process.stdout.write(
-        `native unsafe write pointer lowering status=Passed cases=${53 + Recordˉcases + Ownedˉcases + Vectorˉcases.Cases + Accessˉcases.Cases + Helperˉcases.Cases} ` +
-        `valid=${28 + Recordˉcases + Ownedˉcases + Vectorˉcases.Valid + Accessˉcases.Valid + Helperˉcases.Valid} malformed=${25 + Vectorˉcases.Malformed + Accessˉcases.Malformed + Helperˉcases.Malformed} native-execution=${13 + Recordˉcases + Ownedˉcases + Vectorˉcases.Executions + Accessˉcases.Executions + Helperˉcases.Executions} ` +
+        `native unsafe write pointer lowering status=Passed cases=${53 + Capacityˉcases.Cases + Recordˉcases + Ownedˉcases + Vectorˉcases.Cases + Accessˉcases.Cases + Helperˉcases.Cases} ` +
+        `valid=${28 + Capacityˉcases.Valid + Recordˉcases + Ownedˉcases + Vectorˉcases.Valid + Accessˉcases.Valid + Helperˉcases.Valid} malformed=${25 + Capacityˉcases.Malformed + Vectorˉcases.Malformed + Accessˉcases.Malformed + Helperˉcases.Malformed} native-execution=${13 + Recordˉcases + Ownedˉcases + Vectorˉcases.Executions + Accessˉcases.Executions + Helperˉcases.Executions} ` +
         `record-return-cases=${Recordˉcases} owned-storage-cases=${Ownedˉcases} owned-vector-cases=${Vectorˉcases.Cases} vector-access-cases=${Accessˉcases.Cases} owned-helper-cases=${Helperˉcases.Cases} foundation-borrow-cases=12 ` +
-        'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
+        'foreign-native-execution=linux-only foreign-links=2 compiler-source=' +
+        (Historicalˉlowerer ? 'supplied-historical ' : 'current-candidate ') +
         'package-cache=development\n',
     );
     }
@@ -469,9 +579,12 @@ try {
     }
     }
     }
+    }
 } catch (Error) {
-    Preserveˉwork = Error.cleanupUncertain === true;
+    Preserveˉwork = Error.cleanupUncertain === true ||
+        ((Sourceˉvaluesˉonly || Prepareˉsharedˉproducts || Suppliedˉlowerer) && Error.exitCode !== 64);
     process.stderr.write(`${Error.message}\n`);
+    if (Preserveˉwork) process.stderr.write(`native lowering diagnostic workspace=${Work}\n`);
     process.exitCode = Error.exitCode ?? 1;
 } finally {
     if (!Preserveˉwork) await Removeˉwork(Work);
@@ -479,6 +592,10 @@ try {
 
 async function Readˉsuppliedˉlowerer() {
     const Lowerer = resolve(process.argv[5]);
+    if (Sharedˉhostˉrecord !== null) {
+        Sharedˉcompilerˉhost = { Path: Lowerer, Sha256: process.argv[6] };
+        await Confirmˉsharedˉcompilerˉhost();
+    }
     const Metadata = await stat(Lowerer);
     if (!Metadata.isFile() || Metadata.size < 1 || Metadata.size > 67_108_864) {
         Reject('The supplied native lowerer is not a bounded ordinary file.');
@@ -492,6 +609,52 @@ async function Readˉsuppliedˉlowerer() {
     return Lowerer;
 }
 
+async function Confirmˉsharedˉcompilerˉhost() {
+    const Product = Sharedˉcompilerˉhost;
+    if (Sharedˉhostˉrecord === null) Reject('A candidate shared host requires its exact Host-Bridge.json identity.');
+    if (Preparedˉsharedˉhost === null) {
+        process.stdout.write('native shared host step=prepared-selection status=Started\n');
+        Preparedˉsharedˉhost = await Readˉpreparedˉsharedˉcompilerˉhost(
+            Sharedˉhostˉrecord.Path, Sharedˉhostˉrecord.Sha256, undefined, Ownerˉdeadline);
+        if (Preparedˉsharedˉhost.Path !== Product.Path || Preparedˉsharedˉhost.Sha256 !== Product.Sha256)
+            Reject('Supplied shared host differs from the exact prepared record.');
+        process.stdout.write(`native shared host step=prepared-selection status=Passed record-sha256=${Sharedˉhostˉrecord.Sha256}\n`);
+    } else await Preparedˉsharedˉhost.Requireˉunchanged();
+    const Metadata = await lstat(Product.Path);
+    const Canonical = await realpath(Product.Path);
+    if (!Metadata.isFile() || Metadata.isSymbolicLink() || Metadata.size < 1 ||
+        Metadata.size > 67_108_864 ||
+        (WINDOWS ? Canonical.toLowerCase() !== Product.Path.toLowerCase() : Canonical !== Product.Path)) {
+        Reject('The shared compiler host is not a bounded canonical ordinary file.');
+    }
+    const Handle = await open(Product.Path, 'r');
+    try {
+        const Opened = await Handle.stat();
+        if (!Opened.isFile() || Opened.size !== Metadata.size ||
+            Opened.dev !== Metadata.dev || Opened.ino !== Metadata.ino) {
+            Reject('The shared compiler host changed before reading.');
+        }
+        const Digest = createHash('sha256'), Chunk = Buffer.alloc(65_536);
+        let Total = 0;
+        while (Total <= Metadata.size) {
+            const { bytesRead: Count } = await Handle.read(Chunk, 0,
+                Math.min(Chunk.length, Metadata.size - Total + 1), Total);
+            if (Count === 0) break;
+            Total += Count;
+            if (Total > Metadata.size) Reject('The shared compiler host grew while reading.');
+            Digest.update(Chunk.subarray(0, Count));
+        }
+        const After = await Handle.stat();
+        if (Total !== Metadata.size || After.size !== Opened.size ||
+            After.mtimeMs !== Opened.mtimeMs || After.ctimeMs !== Opened.ctimeMs ||
+            Digest.digest('hex') !== Product.Sha256) {
+            Reject('The shared compiler host identity differs.');
+        }
+    } finally {
+        await Handle.close();
+    }
+}
+
 async function Verifyˉsourceˉclosures() {
     const Projects = [
         'Compiler/Windvale-Native-X64-Lowering',
@@ -501,6 +664,8 @@ async function Verifyˉsourceˉclosures() {
         'Tests/Windvale-Native-Test-Staging-Content-Native',
         'Tests/Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe',
         'Tests/Windvale-Native-Test-X64-Lowering-Data-Limit',
+        'Tests/Windvale-Native-Test-Staging-Wvo-Relocations-Native',
+        'Tests/Windvale-Native-Test-Staging-Wvo-Symbols-Native',
     ];
     for (const Projectˉname of Projects) {
         const Manifest = await readFile(join(Repositoryˉroot, 'Projects', Projectˉname + '.wvproj'), 'utf8');
@@ -520,7 +685,7 @@ async function Verifyˉsourceˉclosures() {
             if (!Modules.has(Imported)) Reject(`Missing lowerer source in ${Projectˉname}: ${Imported}`);
         }
     }
-    process.stdout.write('native x64 lowering source-closures=7 status=Passed\n');
+    process.stdout.write('native x64 lowering source-closures=9 status=Passed\n');
 }
 
 function Buildˉoptions() {
@@ -1108,6 +1273,212 @@ async function Lowerˉidentity(
     return Destination;
 }
 
+function Functionˉcapacityˉinput(Template, Count) {
+    if (![2048, 2049].includes(Count)) Reject('The capacity fixture count differs.');
+    const Word = Value => { const Result = Buffer.alloc(4); Result.writeUInt32LE(Value); return Result; };
+    const Name = Value => { const Result = Buffer.from(Value); return Buffer.concat([Word(Result.length), Result]); };
+    const Body = Buffer.concat([Buffer.from([1]), Word(42), Buffer.from([81])]);
+    const Main = Buffer.concat([Buffer.from([64]), Word(Count - 1), Buffer.from([81])]);
+    const Directory = [Word(Count)], Code = [];
+    for (let Index = 0; Index < Count; Index += 1) {
+        Directory.push(Name(Index === 0 ? 'Main' : 'Z' + String(Index).padStart(4, '0')),
+            Word(0), Buffer.from([1]), Word(0), Word(Index * 6), Word(6), Word(1));
+        Code.push(Index === 0 ? Main : Body);
+    }
+    const Sections = new Map([[4, Buffer.concat(Directory)], [5, Buffer.concat(Code)]]);
+    const Result = [Template.subarray(0, 12)];
+    for (let Cursor = 12; Cursor < Template.length;) {
+        const Kind = Template[Cursor], Length = Template.readUInt32LE(Cursor + 4);
+        const Payload = Sections.get(Kind) ?? Template.subarray(Cursor + 8, Cursor + 8 + Length);
+        const Header = Buffer.from(Template.subarray(Cursor, Cursor + 8)); Header.writeUInt32LE(Payload.length, 4);
+        Result.push(Header, Payload); Cursor += 8 + Length;
+    }
+    return Buffer.concat(Result);
+}
+
+async function Runˉfunctionˉcapacity(Lowerer) {
+    if (Historicalˉlowerer) return { Cases: 0, Valid: 0, Malformed: 0 };
+    const Template = await Readˉbinary(join(Candidateˉdirectory, 'Return-42.wvb'),
+        174, '7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31');
+    for (const Count of [2048, 2049]) {
+        process.stdout.write('native x64 lowering case=function-capacity-' + Count + ' status=Started\n');
+        const Input = Functionˉcapacityˉinput(Template, Count), Source = join(Work, 'Function-capacity-' + Count + '.wvb');
+        const Destination = join(Work, 'Function-capacity-' + Count + '.wvo');
+        await writeFile(Source, Input, { flag: 'wx' });
+        const Result = await Runˉprocess(Lowerer, [Source, Destination], COMMAND_TIMEOUT_MILLISECONDS,
+            'function-capacity-' + Count);
+        const Output = Result.Output.replaceAll('\r\n', '\n');
+        if (Count === 2049) {
+            const Expected = Sharedˉhostˉrecord === null ?
+                'native x64 status=Unsupportedˉfunction plan-status=Unsupportedˉfunction function=4294967295 detail=2049\n' :
+                'native x64 status=Unsupportedˉfunction abi=22 code-bytes=0 object-bytes=0\n';
+            if (Result.Code !== 1 || Result.Exceeded || Result.Timedˉout || existsSync(Destination) || Output !== Expected)
+                Reject('The exact 2049-function refusal differs.\n' + Result.Output);
+        } else {
+            const Report = /^native x64 status=Valid abi=22 code-bytes=([0-9]+) object-bytes=([0-9]+)\n$/u.exec(Output);
+            if (!Passed(Result) || Report === null || !existsSync(Destination))
+                Reject('The exact 2048-function acceptance differs.\n' + Result.Output);
+            const Size = Number(Report[2]), Metadata = await lstat(Destination);
+            if (!Number.isSafeInteger(Size) || Size < 49 || Size > FIXTURE_LIMIT - 32 ||
+                !Metadata.isFile() || Metadata.isSymbolicLink() || Metadata.nlink !== 1 || Metadata.size !== Size)
+                Reject('The 2048-function object is not a bounded ordinary file.');
+            const Handle = await open(Destination, 'r');
+            let Object;
+            try {
+                const Opened = await Handle.stat();
+                if (!Opened.isFile() || Opened.size !== Size || Opened.dev !== Metadata.dev || Opened.ino !== Metadata.ino)
+                    Reject('The 2048-function object changed before reading.');
+                const Bytes = Buffer.alloc(Size + 1);
+                let Total = 0;
+                while (Total <= Size) {
+                    const { bytesRead: Count } = await Handle.read(Bytes, Total, Size - Total + 1, Total);
+                    if (Count === 0) break;
+                    Total += Count;
+                    if (Total > Size) Reject('The 2048-function object grew while reading.');
+                }
+                const After = await Handle.stat();
+                if (Total !== Size || After.size !== Size || After.mtimeMs !== Opened.mtimeMs || After.ctimeMs !== Opened.ctimeMs)
+                    Reject('The 2048-function object changed while reading.');
+                Object = Bytes.subarray(0, Size);
+            } finally { await Handle.close(); }
+            if (Object.length !== Size ||
+                Object.toString('ascii', 0, 4) !== 'WVO1' || Object.readUInt16LE(4) !== 1 ||
+                Object.readUInt16LE(6) !== 0 || Object.readUInt32LE(12) !== 1 ||
+                Object.readUInt32LE(16) !== 2048 || Object.readUInt32LE(20) !== 0 ||
+                Object.readUInt32LE(32) !== Number(Report[1]) || Object.readUInt32LE(36) !== Number(Report[1]))
+                Reject('The 2048-function object/report geometry differs.');
+            const Checker = await Prepareˉcurrentˉobjectˉchecker();
+            await Requireˉsuccess(Checker, ['check', Destination], 'function-capacity-2048-object-check');
+            // The current WVO reader admits the object; assert this fixture's final local symbol.
+            const Symbols = 49 + Number(Report[1]), Last = Symbols + (2048 - 2) * 34;
+            if (Object.length !== Symbols + (2048 - 1) * 34 + 24 ||
+                Object.readUInt32LE(Last) !== 257 || Object.readUInt32LE(Last + 4) !== 0 ||
+                Object.readUInt32LE(Last + 12) === 0 || Object.readUInt32LE(Last + 16) !== 14 ||
+                Object.toString('ascii', Last + 20, Last + 34) !== '$function_2047')
+                Reject('The 2048-function final structured symbol differs.');
+            await Runˉlargeˉobjectˉchecks(Checker, Object, Symbols);
+        }
+    }
+    return { Cases: 2, Valid: 1, Malformed: 1 };
+}
+
+async function Prepareˉcurrentˉobjectˉchecker() {
+    if (Currentˉobjectˉchecker !== null) return Currentˉobjectˉchecker;
+    const Deadline = Ownerˉdeadline ?? Date.now() + CONSTRUCTION_TIMEOUT_MILLISECONDS;
+    const Key = Preparedˉsharedˉhost?.Compilerˉkey ?? await Getˉcurrentˉsplitˉcompilerˉkey();
+    const Compiler = Preparedˉsharedˉhost?.Compilerˉcheckpoint ?? await Readˉpreparedˉsplitˉcompiler(
+        await Getˉcurrentˉsplitˉcompilerˉfamily(), Key);
+    const Wvb = join(Work, 'Current-Wvo-Object.wvb'), Application = join(Work, 'Current-Wvo-Object.' + Nativeˉextension);
+    process.stdout.write('native object checker step=current-source-preparation status=Started\n');
+    await Requireˉsuccess(process.execPath, [Build, '--prepared-compiler-only', '--compiler-checkpoint', Key,
+        '--deadline-ms', String(Deadline), join(Repositoryˉroot, 'Projects/Object-Model/Windvale-Wvo-Object.wvproj'), Wvb],
+    'current-object-checker-build', Deadline - Date.now());
+    await Requireˉsuccess(process.execPath,
+        [join(Repositoryˉroot, 'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs'),
+            '--deadline-ms', String(Deadline), '7', Wvb, Application],
+        'current-object-checker-package', Deadline - Date.now());
+    await Compiler.Requireˉunchanged();
+    Currentˉobjectˉchecker = Application;
+    process.stdout.write('native object checker step=current-source-preparation status=Ready behavior-cases=0\n');
+    return Application;
+}
+
+async function Runˉlargeˉobjectˉchecks(Checker, Object, Symbols) {
+    const Last = Symbols + 2046 * 34, Export = Symbols + 2047 * 34;
+    const Cases = [
+        ['late-duplicate', () => {
+            const Value = Buffer.from(Object); Object.copy(Value, Last + 20, Symbols + 20, Symbols + 34); return Value;
+        }, 'Invalidˉsymbol', 1, 2046, Last + 20],
+        ['cross-binding-duplicate', () => {
+            const Header = Buffer.from(Object.subarray(Export, Export + 20)); Header.writeUInt32LE(14, 16);
+            return Buffer.concat([Object.subarray(0, Export), Header, Object.subarray(Symbols + 20, Symbols + 34)]);
+        }, 'Invalidˉsymbol', 1, 2047, Export + 20],
+        ['late-noncanonical', () => {
+            const Value = Buffer.from(Object); Value.write('$function_0000', Last + 20, 'ascii'); return Value;
+        }, 'Noncanonicalˉorder', 1, 2046, Last + 20],
+        ['oversized-count', () => {
+            const Value = Buffer.from(Object); Value.writeUInt32LE(4097, 16); return Value;
+        }, 'Limitˉexceeded', 0, 0, 16],
+    ];
+    for (const [Name, Build, Status, Sections, Count, Offset] of Cases) {
+        const Input = join(Work, 'Large-Object-' + Name + '.wvo'); await writeFile(Input, Build(), { flag: 'wx' });
+        process.stdout.write('native object checker case=' + Name + ' status=Started\n');
+        const Result = await Runˉprocess(Checker, ['check', Input], COMMAND_TIMEOUT_MILLISECONDS, 'object-' + Name);
+        const Expected = `object status=${Status} sections=${Sections} symbols=${Count} relocations=0 offset=${Offset}\n`;
+        if (Result.Code !== 2 || Result.Exceeded || Result.Timedˉout || Result.Output.replaceAll('\r\n', '\n') !== Expected)
+            Reject('The large-object rejection ' + Name + ' differed.\n' + Result.Output);
+    }
+    for (const Length of [14, 255]) {
+        const Header = Buffer.from(Object.subarray(0, Symbols)); Header.writeUInt32LE(4096, 16);
+        const Records = [Header];
+        for (let Index = 1; Index < 4096; Index++) {
+            const Record = Buffer.from(Object.subarray(Symbols, Symbols + 20)); Record.writeUInt32LE(Length, 16);
+            const Name = (Length === 14 ? '$function_' : '$' + 'x'.repeat(250)) + String(Index).padStart(4, '0');
+            Records.push(Record, Buffer.from(Name, 'ascii'));
+        }
+        Records.push(Object.subarray(Export));
+        const Input = join(Work, 'Large-Object-4096-Names-' + Length + '.wvo');
+        await writeFile(Input, Buffer.concat(Records), { flag: 'wx' });
+        process.stdout.write(`native object checker case=symbol-limit-4096 name-bytes=${Length} status=Started\n`);
+        await Requireˉsuccess(Checker, ['check', Input], 'object-symbol-limit-4096-names-' + Length);
+    }
+    const Groups = [[1, 'N1000'], [1, 'N3000'], [2, 'N0000'], [2, 'N2000'], [2, 'N4000'],
+        [3, 'N0500'], [3, 'N1500'], [3, 'N2500'], [3, 'N3500'], [3, 'N4500']];
+    const Groupˉcases = [
+        ['interleaved-groups', Values => {}, null, 0, 0],
+        ['local-cursor-reset', Values => { Values[6][1] = 'N1000'; }, 'Invalidˉsymbol', 6, 20],
+        ['export-cursor-reset', Values => { Values[5][1] = 'N2000'; }, 'Invalidˉsymbol', 5, 20],
+        ['duplicate-behind-cursor', Values => { Values[4][1] = 'N1000'; }, 'Invalidˉsymbol', 4, 20],
+        ['binding-order-duplicate', Values => { Values.push([1, 'N1000']); }, 'Invalidˉsymbol', 10, 20],
+        ['binding-order-unique', Values => { Values.push([1, 'N6000']); }, 'Noncanonicalˉorder', 10, 0],
+    ];
+    for (const [Name, Mutate, Status, Count, Field] of Groupˉcases) {
+        const Values = Groups.map(Value => [...Value]); Mutate(Values);
+        const Header = Buffer.from(Object.subarray(0, Symbols)); Header.writeUInt32LE(Values.length, 16);
+        const Records = [Header];
+        for (const [Binding, Name] of Values) {
+            const Record = Buffer.from(Object.subarray(Symbols, Symbols + 20)); Record[0] = Binding;
+            Record.writeUInt32LE(Name.length, 16);
+            if (Binding === 3) { Record.writeUInt32LE(0xffffffff, 4); Record.writeUInt32LE(0, 8); Record.writeUInt32LE(0, 12); }
+            Records.push(Record, Buffer.from(Name, 'ascii'));
+        }
+        const Input = join(Work, 'Large-Object-' + Name + '.wvo'); await writeFile(Input, Buffer.concat(Records), { flag: 'wx' });
+        process.stdout.write('native object checker case=' + Name + ' status=Started\n');
+        const Result = await Runˉprocess(Checker, ['check', Input], COMMAND_TIMEOUT_MILLISECONDS, 'object-' + Name);
+        const Expected = Status === null ? '' : `object status=${Status} sections=1 symbols=${Count} relocations=0 offset=${Symbols + Count * 25 + Field}\n`;
+        if (Result.Code !== (Status === null ? 0 : 2) || Result.Exceeded || Result.Timedˉout ||
+            Result.Output.replaceAll('\r\n', '\n') !== Expected) Reject('The sorted-group case ' + Name + ' differed.\n' + Result.Output);
+    }
+    process.stdout.write('native object checker status=Passed boundary-cases=12 symbol-limit=4096 name-limit=255 duplicate-priority=Preserved\n');
+}
+
+async function Runˉforeignˉrejections(Lowerer, Foreignˉsuccess) {
+    const Foreignˉlayout = Inspectˉforeignˉfixture(Foreignˉsuccess);
+    const Cases = [
+        ['old-minor', Value => Value.writeUInt16LE(37, 6)],
+        ['unknown-opcode', Value => { Value[Foreignˉlayout.Operation] = 225; }],
+        ['unregistered-binding', Value => Value.writeUInt32LE(0, Foreignˉlayout.Operation + 1)],
+        ['invalid-pointer-type', Value => Value.writeUInt32LE(Foreignˉlayout.Typeˉcount, Foreignˉlayout.Operation + 5)],
+        ['invalid-abi-type', Value => Value.writeUInt32LE(Foreignˉlayout.Typeˉcount, Foreignˉlayout.Operation + 9)],
+        ['abi-as-pointer', Value => Value.writeUInt32LE(Foreignˉlayout.Pointerˉtype, Foreignˉlayout.Operation + 9)],
+        ['pointer-as-abi', Value => Value.writeUInt32LE(Foreignˉlayout.Abiˉtype, Foreignˉlayout.Operation + 5)],
+        ['pointer-stack-kind', Value => Value.writeUInt32LE(Foreignˉlayout.Capacityˉlocal, Foreignˉlayout.Operation - 14)],
+        ['capacity-stack-kind', Value => Value.writeUInt32LE(Foreignˉlayout.Pointerˉlocal, Foreignˉlayout.Operation - 9)],
+        ['generation-stack-kind', Value => Value.writeUInt32LE(Foreignˉlayout.Pointerˉlocal, Foreignˉlayout.Operation - 4)],
+    ];
+    for (const [Index, [Name, Mutate]] of Cases.entries()) {
+        process.stdout.write(`native unsafe write pointer lowering item=${Index + 1}/${Cases.length} case=foreign-${Name} status=Started\n`);
+        const Candidate = Buffer.from(Foreignˉsuccess); Mutate(Candidate);
+        const Source = join(Work, `Malformed-Foreign-${Name}.wvb`), Destination = join(Work, `Malformed-Foreign-${Name}.wvo`);
+        await writeFile(Source, Candidate, { flag: 'wx' });
+        const Result = await Runˉprocess(Lowerer, [Source, Destination], COMMAND_TIMEOUT_MILLISECONDS, 'foreign-' + Name);
+        if (Result.Code !== 1 || Result.Exceeded || Result.Timedˉout || existsSync(Destination) ||
+            !/^native x64 status=(?:Invalidˉwvb|Unsupportedˉprofile|Unsupportedˉmodule|Unsupportedˉfunction|Unsupportedˉcode) /u.test(Result.Output))
+            Reject('The malformed Foreign case ' + Name + ' differed.\n' + Result.Output);
+    }
+    return Cases.length;
+}
+
 function Inspectˉforeignˉfixture(Input) {
     if (Input.length < 12 || Input.length > FIXTURE_LIMIT ||
         Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
@@ -1269,7 +1640,7 @@ async function Requireˉsuccess(
 
 async function Runˉprocess(Tool, Arguments, Timeout, Step) {
     const Deadline = Math.min(Date.now() + Timeout, Ownerˉdeadline ?? Number.MAX_SAFE_INTEGER);
-    const Result = await Runˉdevelopmentˉcommand(Tool, Arguments, Deadline, Prepareˉonly, OUTPUT_LIMIT);
+    const Result = await Runˉdevelopmentˉcommand(Tool, Arguments, Deadline, Prepareˉonly || Prepareˉsharedˉproducts, OUTPUT_LIMIT);
     return { Code: Result.Code, Output: Result.Output + Result.Error, Exceeded: false, Timedˉout: false };
 }
 async function Removeˉwork(Path) {
@@ -1285,16 +1656,23 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
-        '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|--owned-domain|--shared-storage|' +
+        '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|--owned-domain|--shared-storage|--shared-values|' +
+        '--shared-source-values --shared-compiler-host <application> <sha256> --maximum-seconds <30-5400>|' +
+        '--shared-plan-values|--shared-compiler-values (same explicit host/maximum-seconds arguments; --full-lowering permits up to7200 seconds)|' +
+        '--prepare-shared-source-products --compiler-checkpoint <current-key> --selection <source|plan|retained|all> --maximum-seconds <30-900>|' +
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
-        '--lowerer <application> <sha256> [--record-return-memory|--owned-helper-memory|--borrow-probe <wvb> <sha256>]] ' +
+        '--lowerer|--historical-lowerer <application> <sha256> [--record-return-memory|--owned-helper-memory|--compiler-boundaries (current only)|--borrow-probe <wvb> <sha256>]] ' +
+        '[--maximum-seconds <30-5400> (explicit current --lowerer run; default600)] ' +
         '[--budget-oracle <wvb> <sha256>] [--owned-vector <wvb> <sha256>] ' +
         '[--owned-growth <wvb> <sha256>] [--owned-append <wvb> <sha256>] ' +
-        '[--owned-helpers <wvb> <sha256>] [--owned-scalar-helpers <wvb> <sha256>]\n',
+        '[--owned-helpers <wvb> <sha256>] [--owned-scalar-helpers <wvb> <sha256>] ' +
+        '[--shared-compiler-host-record <Host-Bridge.json> <sha256> (required for candidate shared host)] ' +
+        '[--deadline-ms <absolute-unix-ms> (shared behavior, source preparation or explicitly budgeted current --lowerer)]\n',
     );
     process.exit(64);
 }
 
-function Reject(Message) {
+function Reject(Message, Code = 1) {
+    if (Code === 64) { process.stderr.write(Message + '\n'); process.exit(64); }
     throw new Error(Message);
 }

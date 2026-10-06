@@ -12,6 +12,7 @@ export record Compilerˉnativeˉx64ˉtypes {
     Itemˉoffsets: bytes;
     Itemˉcounts: bytes;
     Recordˉwidths: bytes;
+    Sharedˉplans: bytes;
 }
 
 export record Compilerˉnativeˉx64ˉshape {
@@ -34,6 +35,7 @@ fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉtypes {
         Emptyˉbytes,
         Emptyˉbytes,
         Emptyˉbytes,
+        Emptyˉbytes,
         Emptyˉbytes
     );
 }
@@ -45,6 +47,17 @@ fn Invalidˉshape() -> Compilerˉnativeˉx64ˉshape {
 fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     if Offset > Total { return false; }
     return Length <= Total - Offset;
+}
+
+fn Moduleˉminor(Input: bytes) -> u32 {
+    // Type readers also accept isolated sections, which have no module header.
+    if Bytesˉlength(Input) < 8u32 ||
+        Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 66u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 49u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return 0u32; }
+    return Bytesˉreadˉu16ˉlittle(Input, 6u32);
 }
 
 export fn Compilerˉnativeˉx64ˉtypesˉlimit() -> u32 {
@@ -200,10 +213,27 @@ export fn Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex: u32) -> u8 {
     );
 }
 
-export fn Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex: u32) -> u8 {
-    if Typeˉindex >= 64u32 { return 0u8; }
+export fn Compilerˉnativeˉx64ˉvariantˉtype(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> u8 {
+    if Typeˉindex >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 {
+        return 0u8;
+    }
+    // Internal variant slots count variants, independently of preceding records
+    // and enums. WVB operands and shape identities retain declaration indices.
+    var Ordinal: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Typeˉindex {
+        if Compilerˉnativeˉx64ˉtypeˉkind(Types, Index) == 3u8 {
+            Ordinal = Ordinal + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if Ordinal >= 64u32 { return 0u8; }
     return Bytesˉreadˉu8(
-        Bytesˉfromˉu32ˉlittle(64u32 + Typeˉindex),
+        Bytesˉfromˉu32ˉlittle(64u32 + Ordinal),
         0u32
     );
 }
@@ -223,10 +253,24 @@ export fn Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type: u8) -> bool {
     return Numeric >= 12u32 && Numeric < 64u32;
 }
 
-export fn Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type: u8) -> u32 {
+export fn Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Type: u8
+) -> u32 {
     if Compilerˉnativeˉx64ˉtypeˉisˉvariant(Type) {
-        return U32ˉfromˉu8(Type) - 64u32;
+        let Wanted: u32 = U32ˉfromˉu8(Type) - 64u32;
+        var Ordinal: u32 = 0u32;
+        var Index: u32 = 0u32;
+        while Index < Types.Count {
+            if Compilerˉnativeˉx64ˉtypeˉkind(Types, Index) == 3u8 {
+                if Ordinal == Wanted { return Index; }
+                Ordinal = Ordinal + 1u32;
+            }
+            Index = Index + 1u32;
+        }
+        return Types.Count;
     }
+    if !Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) { return Types.Count; }
     if U32ˉfromˉu8(Type) < 64u32 {
         return 64u32 + U32ˉfromˉu8(Type) - 12u32;
     }
@@ -253,6 +297,15 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
     if Limit > Bytesˉlength(Input) { return Invalidˉshape(); }
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Kind == 39u8 {
+        return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, 8u8, 39u32, 0u8);
+    }
+    if Kind == 40u8 {
+        if !Rangeˉisˉvalid(Limit, Cursor, 2u32) || Bytesˉreadˉu8(Input, Cursor + 1u32) != 4u8 {
+            return Invalidˉshape();
+        }
+        return Compilerˉnativeˉx64ˉshape(true, Cursor + 2u32, 7u8, 40u32, 40u8);
+    }
     if Kind == 20u8 {
         return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, 5u8, 20u32, 0u8);
     }
@@ -261,7 +314,8 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
         // Version admission belongs to the enclosing type-table reader.
         if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
         let Vectorˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-        if Compilerˉnativeˉx64ˉtypeˉkind(Types, Vectorˉindex) != 5u8 {
+        if Vectorˉindex >= Types.Count ||
+            Compilerˉnativeˉx64ˉtypeˉkind(Types, Vectorˉindex) != 5u8 {
             return Invalidˉshape();
         }
         var Vectorˉborrowˉkind: u8 = 0u8;
@@ -303,10 +357,11 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
         }
         Type = Compilerˉnativeˉx64ˉenumˉtype(Types, Typeˉindex);
     } else if Kind == 11u8 {
-        if Nominalˉkind != 3u8 || Typeˉindex >= 64u32 {
+        if Nominalˉkind != 3u8 {
             return Invalidˉshape();
         }
-        Type = Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex);
+        Type = Compilerˉnativeˉx64ˉvariantˉtype(Types, Typeˉindex);
+        if Type == 0u8 { return Invalidˉshape(); }
     } else {
         if Nominalˉkind != 8u8 { return Invalidˉshape(); }
         Type = 11u8;
@@ -332,30 +387,45 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
     if Limit > Bytesˉlength(Input) ||
         !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
-    if Kind == 20u8 && !Compilerˉnativeˉx64ˉownedˉminor(Minor) { return Invalidˉshape(); }
+    if (Kind == 39u8 || Kind == 40u8 || Kind == 41u8) && !Compilerˉnativeˉx64ˉsharedˉminor(Minor) { return Invalidˉshape(); }
+    if Kind == 41u8 {
+        if !Rangeˉisˉvalid(Limit, Cursor, 2u32) { return Invalidˉshape(); }
+        let Owner: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        if Owner == 39u32 {
+            return Compilerˉnativeˉx64ˉshape(true, Cursor + 2u32, 8u8, 39u32, 41u8);
+        }
+        if Minor == 45u32 && Owner == 25u32 {
+            return Compilerˉnativeˉx64ˉshape(true, Cursor + 2u32, 10u8, 25u32, 41u8);
+        }
+        return Invalidˉshape();
+    }
+    if Kind == 20u8 && !Compilerˉnativeˉx64ˉsharedˉminor(Minor) && !Compilerˉnativeˉx64ˉownedˉminor(Minor) { return Invalidˉshape(); }
     if (Kind == 26u8 || Kind == 27u8) &&
         (Minor < 26u32 || !Compilerˉnativeˉx64ˉownedˉminor(Minor)) { return Invalidˉshape(); }
     if Kind == 29u8 {
-        if Minor != 39u32 || !Rangeˉisˉvalid(Limit, Cursor, 5u32) {
+        if (Minor != 39u32 && !Compilerˉnativeˉx64ˉsharedˉminor(Minor)) || !Rangeˉisˉvalid(Limit, Cursor, 5u32) {
             return Invalidˉshape();
         }
         let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-        if Viewˉtype >= 64u32 ||
+        if Viewˉtype >= Types.Count ||
             Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(Input, Types, Viewˉtype) != 1u8 {
             return Invalidˉshape();
         }
         return Compilerˉnativeˉx64ˉshape(
-            true, Cursor + 5u32, Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype),
+            true, Cursor + 5u32, Compilerˉnativeˉx64ˉvariantˉtype(Types, Viewˉtype),
             Viewˉtype, 29u8
         );
     }
     if Kind == 37u8 {
-        if Minor != 39u32 && Minor != 41u32 && Minor != 42u32 && Minor != 43u32 { return Invalidˉshape(); }
+        if Minor != 39u32 && Minor != 41u32 && Minor != 42u32 && Minor != 43u32 && !Compilerˉnativeˉx64ˉsharedˉminor(Minor) { return Invalidˉshape(); }
         let Payload: Compilerˉnativeˉx64ˉshape =
             Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor + 1u32, Limit, Types);
-        // One ordinary native payload only: no nested loans or opaque owners.
+        // Shared editions also admit a read-only builder loan. Other opaque
+        // owners and nested loans remain outside this wrapper.
         if !Payload.Valid || Payload.Borrowˉkind != 0u8 ||
             (Payload.Type == 5u8 && Payload.Identity == 20u32) ||
+            (Payload.Type == 8u8 && Payload.Identity == 39u32 &&
+                !Compilerˉnativeˉx64ˉsharedˉminor(Minor)) ||
             (Payload.Type == 10u8 && (Payload.Identity == 25u32 ||
                 (Payload.Identity >= 2147483648u32 && Payload.Identity != 4294967295u32))) {
             return Invalidˉshape();
@@ -364,8 +434,11 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
             true, Payload.Next, Payload.Type, Payload.Identity, 37u8
         );
     }
-    if Kind == 36u8 && (Minor < 34u32 || Minor > 39u32) {
-        return Invalidˉshape();
+    if Kind == 36u8 {
+        if Compilerˉnativeˉx64ˉsharedˉminor(Minor) {
+            return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, 10u8, 25u32, 36u8);
+        }
+        if Minor < 34u32 || Minor > 39u32 { return Invalidˉshape(); }
     }
     if Kind == 28u8 && (Minor < 35u32 || Minor > 39u32) {
         return Invalidˉshape();
@@ -393,14 +466,18 @@ export fn Compilerˉnativeˉx64ˉreturnˉshapeˉread(
 fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return 0u32; }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Compilerˉnativeˉx64ˉsharedˉminor(Moduleˉminor(Input)) {
+        if Kind == 39u8 || Kind == 20u8 { return Cursor + 1u32; }
+        if Kind == 40u8 && Rangeˉisˉvalid(Limit, Cursor, 2u32) && Bytesˉreadˉu8(Input, Cursor + 1u32) == 4u8 { return Cursor + 2u32; }
+    }
     if U32ˉfromˉu8(Kind) >= 1u32 {
         if U32ˉfromˉu8(Kind) <= 10u32 && Kind != 7u8 && Kind != 8u8 {
             return Cursor + 1u32;
         }
     }
     if Kind == 25u8 { return Cursor + 1u32; }
-    if Kind == 20u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) { return Cursor + 1u32; }
-    if Kind == 23u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+    if Kind == 20u8 && Compilerˉnativeˉx64ˉownedˉminor(Moduleˉminor(Input)) { return Cursor + 1u32; }
+    if Kind == 23u8 && Compilerˉnativeˉx64ˉownedˉminor(Moduleˉminor(Input)) {
         if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return 0u32; }
         return Cursor + 5u32;
     }
@@ -414,13 +491,14 @@ fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
 fn Skipˉhostedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return 0u32; }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Compilerˉnativeˉx64ˉsharedˉminor(Moduleˉminor(Input)) && (Kind == 39u8 || Kind == 20u8) { return Cursor + 1u32; }
     let Numeric: u32 = U32ˉfromˉu8(Kind);
     if Numeric >= 1u32 && Numeric <= 10u32 && Kind != 7u8 && Kind != 8u8 {
         return Cursor + 1u32;
     }
     if Kind == 25u8 { return Cursor + 1u32; }
-    if Kind == 20u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) { return Cursor + 1u32; }
-    if Kind == 23u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
+    if Kind == 20u8 && Compilerˉnativeˉx64ˉownedˉminor(Moduleˉminor(Input)) { return Cursor + 1u32; }
+    if Kind == 23u8 && Compilerˉnativeˉx64ˉownedˉminor(Moduleˉminor(Input)) {
         if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return 0u32; }
         return Cursor + 5u32;
     }
@@ -509,7 +587,7 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         if Kind != 1u8 && Kind != 2u8 {
             if !Allowˉvariants ||
                 (Kind != 3u8 && Kind != 7u8 && Kind != 8u8 &&
-                    !(Kind == 5u8 && Compilerˉnativeˉx64ˉownedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)))) {
+                    !(Kind == 5u8 && Compilerˉnativeˉx64ˉownedˉminor(Moduleˉminor(Input)))) {
                 return Invalid(Input);
             }
         }
@@ -657,6 +735,7 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         Kinds,
         Itemˉoffsets,
         Itemˉcounts,
+        Empty(Input),
         Empty(Input)
     );
 
@@ -806,7 +885,8 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         Types.Kinds,
         Types.Itemˉoffsets,
         Types.Itemˉcounts,
-        Recordˉwidths
+        Recordˉwidths,
+        Empty(Input)
     );
 }
 
@@ -970,6 +1050,17 @@ export fn Compilerˉnativeˉx64ˉenumˉmemberˉnameˉis(
     return Nameˉequals(Input, Cursor, Expected);
 }
 
+export fn Compilerˉnativeˉx64ˉrecordˉfieldˉread(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Cursor: u32
+) -> Compilerˉnativeˉx64ˉshape {
+    if !Types.Valid { return Invalidˉshape(); }
+    let Shapeˉoffset: u32 = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+    if Shapeˉoffset == 0u32 { return Invalidˉshape(); }
+    return Compilerˉnativeˉx64ˉshapeˉread(Input, Shapeˉoffset, Bytesˉlength(Input), Types);
+}
+
 export fn Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
     Input: bytes,
     Types: Compilerˉnativeˉx64ˉtypes,
@@ -988,12 +1079,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
     );
     var Field: u32 = 0u32;
     while Field <= Fieldˉindex {
-        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
-        if Cursor == 0u32 { return Invalidˉshape(); }
         let Shape: Compilerˉnativeˉx64ˉshape =
-            Compilerˉnativeˉx64ˉshapeˉread(
-                Input, Cursor, Bytesˉlength(Input), Types
-            );
+            Compilerˉnativeˉx64ˉrecordˉfieldˉread(Input, Types, Cursor);
         if !Shape.Valid { return Invalidˉshape(); }
         if Field == Fieldˉindex { return Shape; }
         Cursor = Shape.Next;
@@ -1131,7 +1218,7 @@ export fn Compilerˉnativeˉx64ˉfoundationˉborrowˉpayload(
     Viewˉtype: u32,
     Projection: u32
 ) -> Compilerˉnativeˉx64ˉshape {
-    if Ownerˉtype >= 64u32 || Viewˉtype >= 64u32 ||
+    if Ownerˉtype >= Types.Count || Viewˉtype >= Types.Count ||
         Projection < 1u32 || Projection > 3u32 ||
         Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(Input, Types, Viewˉtype) != 1u8 {
         return Invalidˉshape();
@@ -1307,6 +1394,27 @@ fn Variantˉcaseˉcursor(
         Case = Case + 1u32;
     }
     return Cursor;
+}
+
+export fn Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉcount(
+    Input: bytes, Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32, Caseˉindex: u32
+) -> u32 {
+    var Cursor: u32 = Variantˉcaseˉcursor(Input, Types, Typeˉindex, Caseˉindex);
+    if Cursor == 0u32 { return 4294967295u32; }
+    Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+    if Cursor == 0u32 || !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor, 1u32) {
+        return 4294967295u32;
+    }
+    let Encoding: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Encoding == 0u8 { return 0u32; }
+    if Encoding == 1u8 { return 1u32; }
+    if Encoding != 2u8 || !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor + 1u32, 4u32) {
+        return 4294967295u32;
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+    if Count < 2u32 || Count > 64u32 { return 4294967295u32; }
+    return Count;
 }
 
 fn Variantˉfieldˉcursor(
@@ -1487,7 +1595,7 @@ export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉvalueˉtype(
         !Compilerˉnativeˉx64ˉtypeˉisˉrecord(Value.Type) {
         return Types.Count;
     }
-    let Valueˉtype: u32 = Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+    let Valueˉtype: u32 = Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types,
         Value.Type
     );
     if !Compilerˉnativeˉx64ˉunsafeˉtokenˉisˉexact(
@@ -1512,6 +1620,50 @@ export fn Compilerˉnativeˉx64ˉvectorˉresultˉisˉexact(
 
 export fn Compilerˉnativeˉx64ˉunitˉallocationˉresultˉisˉexact(Input: bytes, Types: Compilerˉnativeˉx64ˉtypes, Resultˉtype: u32) -> bool {
     return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, 2u32);
+}
+
+export fn Compilerˉnativeˉx64ˉbytesˉbuilderˉresultˉisˉexact(
+    Input: bytes, Types: Compilerˉnativeˉx64ˉtypes, Resultˉtype: u32
+) -> bool {
+    return Allocationˉresultˉisˉexact(Input, Types, Resultˉtype, 3u32) &&
+        Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Resultˉtype) == 5u32;
+}
+
+export fn Compilerˉnativeˉx64ˉbytesˉappendˉresultˉisˉexact(
+    Input: bytes, Types: Compilerˉnativeˉx64ˉtypes,
+    Resultˉtype: u32, Failureˉtype: u32
+) -> bool {
+    if Resultˉtype >= Types.Count || Failureˉtype >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Resultˉtype) != 3u8 ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Failureˉtype) != 3u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Resultˉtype) != 2u32 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Failureˉtype) != 2u32 ||
+        Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Resultˉtype) != 6u32 ||
+        Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Failureˉtype) != 4u32 ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Types, Resultˉtype, 0u32, "Valid") ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Types, Resultˉtype, 1u32, "Failure") ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(Input, Types, Resultˉtype, 0u32, 0u32, "Value") ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(Input, Types, Resultˉtype, 1u32, 0u32, "Error") ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Types, Failureˉtype, 0u32, "Maximumˉexceeded") ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(Input, Types, Failureˉtype, 1u32, "Arithmeticˉoverflow") ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(Input, Types, Failureˉtype, 0u32, 0u32, "Requested") ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(Input, Types, Failureˉtype, 0u32, 1u32, "Maximum") {
+        return false;
+    }
+    let Value: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Resultˉtype, 0u32, 0u32);
+    let Error: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Resultˉtype, 1u32, 0u32);
+    let Requested: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Failureˉtype, 0u32, 0u32);
+    let Maximum: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Failureˉtype, 0u32, 1u32);
+    let Overflow: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Types, Failureˉtype, 1u32);
+    let Extraˉvalue: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Resultˉtype, 0u32, 1u32);
+    let Extraˉerror: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Resultˉtype, 1u32, 1u32);
+    let Extraˉmaximum: Compilerˉnativeˉx64ˉshape = Compilerˉnativeˉx64ˉvariantˉcaseˉfield(Input, Types, Failureˉtype, 0u32, 2u32);
+    return Value.Valid && Value.Type == 5u8 && Value.Identity == 20u32 && Value.Borrowˉkind == 0u8 &&
+        Error.Valid && Compilerˉnativeˉx64ˉtypeˉisˉvariant(Error.Type) && Error.Identity == Failureˉtype &&
+        Requested.Valid && Requested.Type == 10u8 && Requested.Identity == 4294967295u32 && Requested.Borrowˉkind == 0u8 &&
+        Maximum.Valid && Maximum.Type == 10u8 && Maximum.Identity == 4294967295u32 && Maximum.Borrowˉkind == 0u8 &&
+        Overflow.Valid && Overflow.Type == 0u8 &&
+        !Extraˉvalue.Valid && !Extraˉerror.Valid && !Extraˉmaximum.Valid;
 }
 
 fn Allocationˉresultˉisˉexact(
@@ -1555,13 +1707,14 @@ fn Allocationˉresultˉisˉexact(
             Valid.Identity != 4294967295u32;
     }
     if Mode == 2u32 { Ownerˉmatches = Valid.Type == 5u8 && Valid.Identity == 20u32; }
-    if !Valid.Valid || (Mode != 2u32 && Valid.Type != 10u8) || !Ownerˉmatches ||
+    if Mode == 3u32 { Ownerˉmatches = Valid.Type == 8u8 && Valid.Identity == 39u32 && Valid.Borrowˉkind == 0u8; }
+    if !Valid.Valid || (Mode != 2u32 && Mode != 3u32 && Valid.Type != 10u8) || !Ownerˉmatches ||
         Extraˉvalid.Valid || !Failure.Valid || Extraˉfailure.Valid ||
         !Compilerˉnativeˉx64ˉtypeˉisˉrecord(Failure.Type) {
         return false;
     }
 
-    let Failureˉtype: u32 = Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+    let Failureˉtype: u32 = Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types,
         Failure.Type
     );
     if Failureˉtype >= Types.Count ||
@@ -1593,7 +1746,9 @@ fn Allocationˉresultˉisˉexact(
     if !Reason.Valid ||
         !Compilerˉnativeˉx64ˉtypeˉisˉenum(Reason.Type) ||
         !Requested.Valid || Requested.Type != 10u8 ||
-        !Available.Valid || Available.Type != 10u8 {
+        Requested.Identity != 4294967295u32 || Requested.Borrowˉkind != 0u8 ||
+        !Available.Valid || Available.Type != 10u8 ||
+        Available.Identity != 4294967295u32 || Available.Borrowˉkind != 0u8 {
         return false;
     }
     let Reasonˉtype: u32 = Compilerˉnativeˉx64ˉenumˉtypeˉindex(
@@ -1735,7 +1890,7 @@ export fn Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉbackingˉoffset(
             Offset = Offset + Compilerˉnativeˉx64ˉrecordˉwidth(
                 Input,
                 Types,
-                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Priorˉshape.Type)
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Priorˉshape.Type)
             );
         }
         Prior = Prior + 1u32;
@@ -1781,7 +1936,7 @@ fn Compilerˉnativeˉx64ˉvariantˉwidthˉfrom(
                     Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
                         Input,
                         Types,
-                        Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+                        Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types,
                             Payload.Type
                         ),
                         Rootˉtype,
@@ -1795,7 +1950,7 @@ fn Compilerˉnativeˉx64ˉvariantˉwidthˉfrom(
         } else if Encoding == 2u8 {
             let Inlineˉfields: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
             Cursor = Cursor + 4u32;
-            if Inlineˉfields < 2u32 || Inlineˉfields > 64u32 {
+            if Inlineˉfields < 2u32 || Inlineˉfields > 62u32 {
                 return 0u32;
             }
             var Inlineˉwidth: u32 = Inlineˉfields;
@@ -1816,13 +1971,13 @@ fn Compilerˉnativeˉx64ˉvariantˉwidthˉfrom(
                         Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
                             Input,
                             Types,
-                            Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+                            Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types,
                                 Inlineˉshape.Type
                             ),
                             Rootˉtype,
                             Depth + 1u32
                         );
-                    if Inlineˉchildˉwidth == 0u32 ||
+                    if Inlineˉchildˉwidth == 0u32 || Inlineˉchildˉwidth > 62u32 ||
                         Inlineˉwidth > 62u32 - Inlineˉchildˉwidth {
                         return 0u32;
                     }
@@ -1863,7 +2018,6 @@ fn Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
             Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() {
         return 0u32;
     }
-    if Kind == 3u8 && Typeˉindex >= 64u32 { return 0u32; }
     if Depth > 0u32 && Typeˉindex == Rootˉtype { return 0u32; }
     if Kind == 3u8 {
         return Compilerˉnativeˉx64ˉvariantˉwidthˉfrom(
@@ -1891,7 +2045,7 @@ fn Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
             let Childˉwidth: u32 = Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
                 Input,
                 Types,
-                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Fieldˉtype),
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Fieldˉtype),
                 Rootˉtype,
                 Depth + 1u32
             );
@@ -1949,7 +2103,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(
             Offset = Offset + Compilerˉnativeˉx64ˉrecordˉwidth(
                 Input,
                 Types,
-                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Fieldˉtype)
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Fieldˉtype)
             );
         }
         Field = Field + 1u32;
@@ -1987,7 +2141,7 @@ fn Compilerˉnativeˉx64ˉvariantˉhasˉdescriptorsˉfrom(
                     if Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
                         Input,
                         Types,
-                        Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Payload.Type),
+                        Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Payload.Type),
                         Depth + 1u32
                     ) { return true; }
                 }
@@ -2013,7 +2167,6 @@ fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
             Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() {
         return false;
     }
-    if Kind == 3u8 && Typeˉindex >= 64u32 { return false; }
     if Kind == 3u8 {
         return Compilerˉnativeˉx64ˉvariantˉhasˉdescriptorsˉfrom(
             Input,
@@ -2039,7 +2192,7 @@ fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
             if Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
                 Input,
                 Types,
-                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type),
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type),
                 Depth + 1u32
             ) { return true; }
         }
@@ -2122,6 +2275,11 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Resultˉu32ˉvalues));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bodyˉbytes + Emittedˉbytes));
     return Bytesˉconcat(Result, Resultˉstack);
+}
+
+// These two versions share ABI 25/context 11. Only 1.45 adds mutable Budget views.
+export fn Compilerˉnativeˉx64ˉsharedˉminor(Minor: u32) -> bool {
+    return Minor == 44u32 || Minor == 45u32;
 }
 
 export fn Compilerˉnativeˉx64ˉownedˉminor(Minor: u32) -> bool {

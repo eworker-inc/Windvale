@@ -17,11 +17,11 @@ fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
 
 fn Typeˉisˉdescriptor(Type: u8) -> bool {
     if Type == 3u8 { return true; }
-    return Type == 6u8;
+    return Type == 6u8 || Type == 7u8;
 }
 
 fn Typeˉisˉwideˉscalar(Type: u8) -> bool {
-    return Type == 9u8 || Type == 10u8;
+    return Type == 8u8 || Type == 9u8 || Type == 10u8;
 }
 
 fn Emitˉframeˉadjustment(
@@ -370,6 +370,58 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉparameters(
                 Type,
                 Frameˉbytes
             );
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Output;
+}
+
+fn Sharedˉtransfersˉhead(Type: u8, Identity: u32, Borrowˉkind: u8) -> bool {
+    if Borrowˉkind != 0u8 { return false; }
+    return Type == 8u8 || (Type == 10u8 && Identity == 25u32) ||
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type);
+}
+
+export fn Sharedˉtransferˉbytes(Parameterˉtypes: bytes,
+    Parameterˉidentities: bytes, Borrowˉkinds: bytes) -> u32 {
+    let Count: u32 = Bytesˉlength(Parameterˉtypes);
+    if Count > Compilerˉnativeˉx64ˉcallˉparameterˉlimit() ||
+        Bytesˉlength(Parameterˉidentities) != Count * 4u32 ||
+        Bytesˉlength(Borrowˉkinds) != Count { return 4294967295u32; }
+    var Result: u32 = 0u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Count {
+        if Sharedˉtransfersˉhead(Bytesˉreadˉu8(Parameterˉtypes, Parameter),
+            Bytesˉreadˉu32ˉlittle(Parameterˉidentities, Parameter * 4u32),
+            Bytesˉreadˉu8(Borrowˉkinds, Parameter)) { Result = Result + 18u32; }
+        Parameter = Parameter + 1u32;
+    }
+    return Result;
+}
+
+export fn Emitˉsharedˉtransfers(Initial: bytes, Argumentˉslots: bytes,
+    Parameterˉtypes: bytes, Parameterˉidentities: bytes, Borrowˉkinds: bytes) -> bytes {
+    let Count: u32 = Bytesˉlength(Parameterˉtypes);
+    if Sharedˉtransferˉbytes(Parameterˉtypes, Parameterˉidentities, Borrowˉkinds) ==
+        4294967295u32 || Bytesˉlength(Argumentˉslots) != Count * 4u32 {
+        return Bytesˉslice(Initial, 0u32, 0u32);
+    }
+    let Stackˉbytes: u32 = Compilerˉnativeˉx64ˉcallˉstackˉbytes(Count);
+    var Output: bytes = Initial;
+    var Parameter: u32 = 0u32;
+    while Parameter < Count {
+        if Sharedˉtransfersˉhead(Bytesˉreadˉu8(Parameterˉtypes, Parameter),
+            Bytesˉreadˉu32ˉlittle(Parameterˉidentities, Parameter * 4u32),
+            Bytesˉreadˉu8(Borrowˉkinds, Parameter)) {
+            // Argument registers and outgoing stack cells already hold the
+            // value. EAX leaves those registers and record backing intact.
+            let Offset: u32 = Bytesˉreadˉu32ˉlittle(Argumentˉslots, Parameter * 4u32) *
+                16u32 + Stackˉbytes;
+            Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(49201u32));
+            Output = Appendˉu32(Bytesˉconcat(Output,
+                Bytesˉfromˉu32ˉlittle(612665672u32)), Offset);
+            Output = Appendˉu32(Bytesˉconcat(Output,
+                Bytesˉfromˉu32ˉlittle(612665672u32)), Offset + 8u32);
         }
         Parameter = Parameter + 1u32;
     }

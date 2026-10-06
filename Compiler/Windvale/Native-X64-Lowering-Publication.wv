@@ -10,6 +10,7 @@ import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
+import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
 
 export enum Compilerˉnativeˉx64ˉpublicationˉstatus: i32 {
     Valid = 0;
@@ -158,6 +159,25 @@ fn Batchˉisˉpublishable(
             Plan.Directory,
             Batch.Firstˉfunction
         );
+    if Plan.Abi == 25u32 && Batch.Firstˉfunction <= Plan.Mainˉfunction &&
+        Batch.Nextˉfunction > Plan.Mainˉfunction {
+        let Mainˉoffset: u32 = Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+            Plan.Directory, Plan.Mainˉfunction
+        );
+        if Mainˉoffset < Codeˉbase || Mainˉoffset - Codeˉbase > Codeˉbytes {
+            return false;
+        }
+        if Sharedˉbytes.Entryˉbytes() > Codeˉbytes - (Mainˉoffset - Codeˉbase) {
+            return false;
+        }
+        if !Sharedˉbytes.Entryˉisˉexact(
+            Batch.Artifacts,
+            16u32 + Relocationˉbytes + Mainˉoffset - Codeˉbase,
+            Layout.Compilerˉnativeˉx64ˉlayoutˉreturnˉtype(
+                Plan.Directory, Plan.Mainˉfunction
+            )
+        ) { return false; }
+    }
     if Codeˉbase > Plan.Machineˉcodeˉbytes ||
         Codeˉbytes > Plan.Machineˉcodeˉbytes - Codeˉbase {
         return false;
@@ -174,7 +194,9 @@ fn Batchˉisˉpublishable(
             Batch.Artifacts,
             Entry + 4u32
         );
-        if Patchˉoffset < Codeˉbase || Targetˉdata >= Plan.Dataˉcount {
+        if Patchˉoffset < Codeˉbase ||
+            (Targetˉdata >= Plan.Dataˉcount && !(Plan.Abi == 25u32 &&
+                (Targetˉdata == 4294967293u32 || Targetˉdata == 4294967294u32))) {
             return false;
         }
         let Localˉoffset: u32 = Patchˉoffset - Codeˉbase;
@@ -294,7 +316,7 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
 
     var Padding: bytes = Empty(Input);
     let Textˉbytes: u32 = Plan.Machineˉcodeˉbytes + Plan.Helperˉbytes;
-    if Plan.Dataˉcount > 0u32 {
+    if Plan.Dataˉcount > 0u32 || Plan.Abi == 25u32 {
         while (Textˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
             Padding = Bytesˉconcat(Padding, Bytesˉfromˉu8(144u8));
         }
@@ -309,7 +331,8 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
             Plan.Mainˉfunction,
             Plan.Helper,
             Data(Plan),
-            Relocations
+            Relocations,
+            Plan.Abi
         );
     if !Objectˉregions.Valid || Objectˉregions.Objectˉbytes > 67108864u32 {
         return Invalidˉregions(Input);
@@ -321,7 +344,7 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
         Plan.Helper,
         Padding,
         Objectˉregions.Readˉonlyˉheader,
-        Plan.Dataˉbytes,
+        Objectˉregions.Readˉonlyˉdata,
         Objectˉregions.Symbols,
         Objectˉregions.Relocationˉrecords
     );
@@ -458,9 +481,10 @@ export fn Compilerˉnativeˉx64ˉpublicationˉnext(
         if Cursor.Nextˉfunction == Plan.Functionˉcount {
             if Plan.Helperˉbytes == 0u32 ||
                 Bytesˉlength(Regions.Helper) != Plan.Helperˉbytes ||
-                !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(
+                (!Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(
                     Regions.Helper
-                ) {
+                ) && !(Plan.Abi == 25u32 &&
+                    Sharedˉbytes.Helperˉisˉexact(Regions.Helper))) {
                 return Stepˉfailure(
                     Input,
                     Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉcursor,

@@ -240,7 +240,7 @@ fn Recordˉwidth(
     return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
         Input,
         Types,
-        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Type)
     );
 }
 

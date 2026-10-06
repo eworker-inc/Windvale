@@ -30,6 +30,43 @@ reconstructs compiler tools on a miss. The default selects the key derived from
 current compiler sources and construction inputs; a miss exits `64` with
 preparation instructions before invoking a compiler product.
 
+An explicit `WINDVALE_BOOTSTRAP_VERIFIER_CHECKPOINT=<sha256-key>` may select a
+prepared profile-8 hosted image of the preserved complete verifier when its
+pinned host image cannot finish a larger compiler input within its execution
+limits. The selected checkpoint must belong to this host's
+`segmented-hosted-wvb-v1` family and bind the exact immutable
+`Artifacts/Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb`. Preparation first
+packages that WVB with profile 8 while this variable is absent, then records
+and selects the returned key. There is no automatic fallback or reconstruction
+on a missing or invalid selection. Without this variable the pinned verifier
+remains selected.
+
+The compiler and hosted-product construction keys bind the selected checkpoint,
+semantic input, executable size and digest. Complete verification still runs
+before new hosted products are published, with the same exact successful report,
+bounded deadline, and input/producer rechecks. Selecting a larger host profile
+does not extend the preserved verifier's supported WVB versions; current-format
+consumers require their current complete verifier. This development selection
+does not establish current compiler qualification.
+
+For selected compiler-construction owners, `Verify-Changed.ps1
+-PreparationOnly` prepares or admits this profile-8 product within the shared
+absolute preparation deadline. It atomically records the full identity in
+`Bootstrap-Complete-Verifier-Selection.<windows-x64|linux-x64>.json` at the native
+cache root. The descriptor is canonical UTF-8 JSON with LF, bounded to 4,096
+bytes, and carries format `windvale-bootstrap-complete-verifier-selection-1`.
+Its identity contains the checkpoint key, host, profile, input size and digest,
+and executable size and digest.
+
+The corresponding `-UsePreparedProducts` execution admits that descriptor and
+its actual product before deriving compiler or verification-result cache keys.
+An explicit environment selection takes precedence. A missing, corrupted or
+wrong-host descriptor refuses execution without preparing a replacement.
+Verification-result identity rechecks the selected executable on each source
+state measurement; an unchanged key cannot preserve evidence after a product
+changes. These records are machine-local preparation state and are not tracked
+qualification evidence.
+
 Both commands accept `--compiler-checkpoint <sha256-key>` to deliberately use
 one existing checkpoint in the current host's `current-split-compiler-v2`
 family. The Project 4 publication command requires this option before the
@@ -56,6 +93,52 @@ deadline is supplied. The existing `--prepared-compiler-only` flag remains
 accepted. Publisher preparation is still a separate remaining cost in the
 transactional Project 4 front door; selecting a compiler does not imply a
 prepared publisher.
+
+### Bounded construction diagnostics
+
+The current split-project CLI preserves the original failure exit status and
+the existing 1 MiB UTF-8 diagnostic limit. When available, it reports error code
+and syscall fields of at most 64 characters and a path of at most 1,024 characters,
+with line breaks and tabs replaced by spaces. It includes at most 8 stack frames
+of 256 characters each, selected from the first 16,384 stack characters. Aggregate
+causes and cleanup failures remain bounded by the existing 32-value traversal.
+This adds diagnostic context without retrying or preparing a failed operation.
+
+### Prerequisite check
+
+The `--preflight-only` option checks prerequisites and returns before work-directory
+creation, full current-key derivation, prepared-product admission or construction.
+Ordinary builds run the same preliminary phase and then retain all compiler and
+product admission checks. Readiness does not establish source semantics or
+qualification.
+
+The phase uses the existing project-cache reader for declared input identities
+and the existing artifact generator's `--check` for generated readers. Preparation
+checks all six current tools; a target checks when its admitted closure contains
+the canonical generated marker or a maintained
+`Compiler/Windvale/*-Artifact*.wv` input. A missing generated marker therefore
+still triggers the check. No second source parser or generator catalog is added.
+
+The phase targets 30 seconds with a 60-second ceiling inside the inherited work
+deadline. Existing complete source hashing and filesystem operations can exceed
+the target; the outer workflow owns the hard process deadline. Node and Git
+versions, canonical filesystem parents, and free bytes are prerequisite
+observations. Temporary and output paths require positive space and one-byte
+write/cleanup checks because they materialize files even in prepared mode. A
+prepared-only cache requires an ordinary readable path, permits zero free space,
+and receives no write probe. A cache that may publish requires positive space and
+writable checks. Failed required writes, cleanup or tool checks refuse.
+The 2 GiB scratch and 1 GiB cache alerts are advisory cold-profile warnings, not
+space reservations or justified hard thresholds; warm reuse remains allowed
+below them. Readiness does not infer WVIR headroom or process-memory safety.
+
+The existing cache-test `--construction-readiness` selection runs 23 focused
+readiness controls with mocked compiler/child dependencies and the unchanged 13
+construction CLI process actions. Its existing process group also checks exact
+package deadline selection and inherited clipping. This selection does not run
+the memory integration owner or the broader cache suite. Actual generated-source
+analysis and independent WIR/WVB verification still follow the coherent compiler
+build.
 
 ### Reuse of all prepared products
 
@@ -185,7 +268,14 @@ not application output publication. Its checkpoint uses the existing emission
 record shape, with the complete authenticated request key also occupying the
 analysis-key field.
 The outer sequence has a fifteen-minute bound; individual native phases retain
-the existing five-minute ceiling. Diagnostics remain bounded to 64 KiB.
+the existing five-minute ceiling. Authenticated Project 4 accepts an optional
+`--source-emission-deadline-ms <absolute-unix-ms>` for source emission alone.
+It must be a future safe integer at most 600,000 milliseconds after coordinator
+start; duplicate, malformed, expired and non-Project-4 use rejects before any
+producer starts. The phase uses only the remaining absolute interval. Its
+success is rechecked against that same deadline, and the lower-only test timeout
+still shortens it. Other phases and commands without the option keep five
+minutes. Diagnostics remain bounded to 64 KiB.
 
 After fresh admission and authentication, `Run-Split-Compiler.mjs` can reuse
 an `authenticated-analysis-v1` checkpoint. Its key binds the six exact admitted
@@ -299,8 +389,17 @@ starts, so parallel execution does not duplicate native staging. Profile-specifi
 memory, instruction, file-count, and output limits remain unchanged. Both branches
 settle before final-product copying or temporary cleanup; failures prevent pair
 publication and retain each branch error. The coordinator uses the existing
-bounded process-tree command runner, with a ten-minute per-command timeout and
-a 1 MiB combined diagnostic bound. The `--deadline-ms` argument supplies
+bounded process-tree command runner and a 1 MiB combined diagnostic bound.
+Ordinary target builds and non-package commands retain a ten-minute command
+ceiling. Only cold compiler construction callbacks under explicit
+`--prepare-only` or `--prepare-compiler` use a 1,050-second ceiling for the exact
+`Package-Segmented-Compiler-Wvb` and
+`Build-Cached-Segmented-Hosted-Wvb.mjs` package commands. This ceiling allows
+the existing 120-second complete verification, shared 900-second image/container
+construction deadline and 30 seconds for settlement. It does not renew those
+internal deadlines or retry a failure. Ordinary target builds following
+`--prepare-compiler` retain the ten-minute ceiling.
+The `--deadline-ms` argument supplies
 an absolute Unix-millisecond deadline across the whole construction request;
 individual commands use the earlier of that deadline and their existing ceiling.
 The builder reserves thirty seconds for its cleanup, and predecessor construction
@@ -329,6 +428,7 @@ admission project manifests and their complete declared input closures,
 pinned analyzer/emitter WVB bytes,
 the coordinator, command lifecycle and split-cache implementations, source ordering, producer
 identity writing, the source-edition predecessor constructor, all segmented staging/linking/transport/admission producers,
+the direct-condition Analyzer intermediate owner,
 the hosted packager's complete producer context, and the Node version and
 executable identity. Requested test projects are separate downstream products.
 Every input is remeasured before accepting a hit and before publishing a miss.
@@ -374,8 +474,44 @@ recovery; cleanup diagnostics do not replace the primary failure. Ordinary inter
 native caches remain reusable. No managed Stage 0 or second maintained source
 implementation is introduced, and bootstrap executable pins do not change.
 
-The predecessor authenticates the first migrated analyzer/emitter and admission
-products. Later ordinary builds use the completed current set. Independent
+Project 4 construction first builds a direct-condition Analyzer with the actual
+recorded predecessor Analyzer, Emitter and four admission roles. This is one
+temporary source adaptation in the existing construction graph: three exact,
+hash-bound selections remove scalar-pool finalization from the current Analyzer
+closure, reducing it from 24 modules to 23. The adaptation restores the original
+bytes exactly; unrelated source stays unchanged. The resulting Analyzer then
+builds the full current Analyzer, including scalar finalization. The original
+predecessor Emitter and admission roles remain selected for that first build;
+later steps retain the existing current-tool graph. Project 2 is unchanged.
+
+The intermediate uses the host-separated `direct-condition-analyzer-v1` family
+and record `windvale-direct-condition-analyzer-checkpoint-1`. Its key binds the
+current construction request, actual predecessor revision/tree/key and all eight
+role/identity inputs, original and adapted source closures, selector version,
+loaded helper and Node identities, selected complete verifier, Profile 8, and
+existing source/package/identity commands. The caller must supply explicit
+preparation context and its unchanged-input guard. Both prepared-only environment
+restrictions refuse construction. An alternate project location must contain
+the exact current repository Analyzer manifest.
+
+The direct-condition Analyzer intermediate supplies this emission option as the
+earlier of its inherited deadline and invocation time plus 600,000 milliseconds.
+The enclosing source command retains its existing ten-minute ceiling; the
+option does not renew that command or the total preparation deadline.
+
+One inherited absolute deadline covers source adaptation, all commands, input
+rechecks and publication. The intermediate owns only an Analyzer WVB 1.11,
+native image and canonical identity; it never publishes the final current set.
+Sources are bounded to 4 MiB, snapshots to 64 files and 16 MiB, WVB to 16 MiB,
+native images to 64 MiB and records to 64 KiB. Existing entries require exact
+inventory, request and product bytes; corruption fails without reconstruction.
+Atomic concurrent publication requires equal products, and uncertain producer
+termination preserves its work. Changing this owner invalidates the current
+construction key; only exact unchanged phase requests may reuse earlier caches.
+The first complete integrated cold duration and dual-host reconstruction remain
+to be measured. Completed private source proofs are not a qualified checkpoint.
+
+Later ordinary builds use the completed current set. Independent
 reconstruction and two-generation byte convergence remain qualification gates;
 unit-tested construction ordering alone does not satisfy them.
 

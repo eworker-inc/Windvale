@@ -4,6 +4,31 @@ import { existsSync } from 'node:fs';
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+function Projectˉownedˉentryˉv1(Source) {
+    const Marker = '\n# ABI 25 descriptor bridge:';
+    const End = Source.indexOf(Marker);
+    if (Buffer.byteLength(Source) > 131_072 || End < 0 || Source.indexOf(Marker, End + 1) >= 0) {
+        throw new Error('Owned entry historical prefix boundary differs.');
+    }
+    const Added = new Set([
+        'symbol local function Shared_call in .text',
+        'symbol local function Shared_entry in .text',
+        'symbol local function Shared_query_initialize in .text',
+        'symbol export function Windvale_shared_bytes_entry in .text',
+        'symbol export function Windvale_shared_result_close in .text',
+        'symbol export function Windvale_shared_scalar_entry in .text',
+        'symbol import function Windvale_budgeted_storage',
+        'symbol import function Windvale_shared_bytes_body',
+        'symbol import function Windvale_shared_scalar_body',
+        'symbol import function Windvale_shared_storage',
+    ]);
+    const Prefix = Source.slice(0, End).split('\n').filter(Line => !Added.delete(Line)).join('\n');
+    if (Added.size !== 0 || !Prefix.endsWith('end define')) {
+        throw new Error('Owned entry historical declaration projection differs.');
+    }
+    return Prefix + '\nend section\n';
+}
+
 export async function Prepareˉownedˉvector(Context) {
     const { Repository, Work, Requireˉsuccess, Vectorˉproduct } = Context;
     const Wvb = Vectorˉproduct?.Path ?? join(Work, 'Owned-Vector.wvb');
@@ -49,7 +74,11 @@ export async function Runˉownedˉvectorˉcases(Context, Lowerer) {
 
     const Entry = join(Work, 'Owned-Entry.wvo');
     const Stub = join(Work, 'Owned-Body.wvo');
-    await Requireˉsuccess(Tool('Assemble-Wva'), [join(Repository, 'Runtime/Native/X64-Owned-Entry.wva'), Entry], 'owned-entry-assemble');
+    const Entryˉsource = join(Work, 'Owned-Entry-v1.wva');
+    await writeFile(Entryˉsource, Projectˉownedˉentryˉv1(
+        await readFile(join(Repository, 'Runtime/Native/X64-Owned-Entry.wva'), 'utf8')
+    ));
+    await Requireˉsuccess(Tool('Assemble-Wva'), [Entryˉsource, Entry], 'owned-entry-assemble');
     const Stubˉsource = join(Work, 'Owned-Body.wva');
     await writeFile(Stubˉsource, 'windvale-assembly 1\nsymbol export function Windvale_owned_body in .text\n' +
         'section code .text align 16\ndefine Windvale_owned_body\nreturn\nend define\nend section\n');

@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 356 |
+| Accepted | 361 |
 | Implemented | 502 |
 | Proposed | 7 |
 | Qualified | 95 |
@@ -50,6 +50,11 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0982: Complete direct budget helper authority in WVB 1.45](0982-Complete-Direct-Budget-Helper-Authority-In-WVB-1.45.md) | Accepted |
+| [Decision 0981: Bootstrap the current native compiler with a temporary serializer projection](0981-Bootstrap-The-Current-Native-Compiler-With-A-Temporary-Serializer-Projection.md) | Accepted |
+| [Decision 0980: Bind native shared values to budgets and tool entries](0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md) | Accepted |
+| [Decision 0979: Connect reserved byte construction to WVB 1.44](0979-Connect-Reserved-Byte-Construction-To-WVB-1.44.md) | Accepted |
+| [Decision 0978: Represent reserved byte construction in WVIR 1.39 and 1.40](0978-Represent-Reserved-Byte-Construction-In-WVIR-1.39-And-1.40.md) | Accepted |
 | [Decision 0977: Add native reserved byte builders and shared storage](0977-Add-Native-Reserved-Byte-Builders-And-Shared-Storage.md) | Accepted |
 | [Decision 0976: Focus Windvale 1.0 on the language and essential libraries](0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md) | Accepted |
 | [Decision 0975: Launch owned-storage console applications](0975-Launch-Owned-Storage-Console-Applications.md) | Proposed |
@@ -70,11 +75,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0960: admit verified Foundation borrows in the host scalar runner](0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md) | Implemented |
 | [Decision 0959: Windvale-owned native model chat](0959-Windvale-Owned-Native-Model-Chat.md) | Accepted |
 | [Decision 0958: preserve Foundation borrow identity across direct calls](0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md) | Implemented |
-| [Decision 0957: represent immutable Foundation payload borrows in candidate WVB 1.39](0957-Represent-Immutable-Foundation-Payload-Borrows-In-Candidate-Wvb-1.39.md) | Implemented |
-| [Decision 0956: coalesce overlapping generic nominal development products](0956-Coalesce-Overlapping-Generic-Nominal-Development-Products.md) | Implemented |
-| [Decision 0955: add a bounded language front-door development checkpoint](0955-Add-A-Bounded-Language-Front-Door-Development-Checkpoint.md) | Implemented |
-| [Decision 0954: balance qualification shards by paired-host timings](0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md) | Qualified |
-| [Decision 0953: bundle the root-split and depth-two database cases](0953-Bundle-The-Root-Split-And-Depth-Two-Database-Cases.md) | Implemented |
 
 ## Superseded or historical records
 
