@@ -6891,6 +6891,41 @@ if ($MixedSharedCompilerPlan.UseNativeSharedCompilerDevelopment -or
     $MixedSharedCompilerPlan.Suites -cnotcontains 'native-x64-lowering-development') {
     throw 'Focused shared-compiler selection suppressed broad native lowering coverage.'
 }
+foreach ($SharedCompilerDependencyPaths in @(
+    @('Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
+        'Specifications/Windvale-Native-X64-Lowering.md'),
+    @('Specifications/Windvale-Native-X64-Lowering.md'),
+    @('Runtime/Native/X64-Shared-Storage.wva',
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv')
+)) {
+    $DependencyPlan = & $NativePlanner -ChangedPath $SharedCompilerDependencyPaths -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if ($DependencyPlan.UseNativeSharedCompilerDevelopment -or $DependencyPlan.UseNativeSharedStorageDevelopment -or
+        !$DependencyPlan.NativeSharedCompilerBehaviorRequired -or !$DependencyPlan.NativeSharedCompilerHostRecordRequired -or
+        $DependencyPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
+        $DependencyPlan.NativeSharedCompilerBehaviorExpectedSeconds -ne 4800 -or
+        $DependencyPlan.NativeSharedCompilerBehaviorMaximumSeconds -ne 7200 -or
+        $DependencyPlan.Gaps.Count -ne 0 -or
+        $DependencyPlan.Suites -cnotcontains 'native-x64-lowering-development') {
+        throw "A lowering dependency selected obsolete compiler packaging: '$($SharedCompilerDependencyPaths -join ', ')'."
+    }
+}
+foreach ($NoSharedCompilerPath in @(
+    'Runtime/Native/X64-Shared-Storage.wva',
+    'Tools/Native/Native-Shared-Storage-Cases.mjs',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Native/Verify-Wvb.mjs',
+    'README.md'
+)) {
+    $NoCompilerPlan = & $NativePlanner -ChangedPath $NoSharedCompilerPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if ($NoCompilerPlan.NativeSharedCompilerBehaviorRequired -or $NoCompilerPlan.NativeSharedCompilerHostRecordRequired -or
+        $NoCompilerPlan.NativeSharedCompilerBehaviorExpectedSeconds -ne 0 -or
+        $NoCompilerPlan.NativeSharedCompilerBehaviorMaximumSeconds -ne 0) {
+        throw "A non-compiler selection requires an unrelated shared compiler: '$NoSharedCompilerPath'."
+    }
+}
 $StandaloneLoweringOwner = @(Get-Content (Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt') |
     Where-Object { $_.StartsWith('native-x64-lowering-development|', [StringComparison]::Ordinal) })
 $StandaloneLoweringDuration = @(Get-Content (Join-Path $RepositoryRoot 'Tests/Native/Verification-Duration-Profiles.txt') |

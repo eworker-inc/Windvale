@@ -5338,36 +5338,6 @@ $UseNativeSharedCompilerDevelopment = $SelectedSuites.Contains('native-x64-lower
             'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj')
     }).Count -gt 0 -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $NativeSharedCompilerDevelopmentInputs }).Count -eq 0
-$NativeSharedCompilerBehaviorRequired = $SelectedSuites.Contains('native-x64-lowering-development') -and
-    @($FocusedDevelopmentPaths | Where-Object {
-        $_ -cin $NativeSharedCompilerDevelopmentInputs -or
-        $_.StartsWith('Compiler/Windvale/Native-X64-Lowering-', [StringComparison]::Ordinal) -or
-        $_ -ceq 'Runtime/Native/X64-Shared-Value-Operations.wva'
-    } | Where-Object {
-        $_ -cnotin @('Tests/Native/Verification-Owners.txt', 'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
-            'Tools/Verify/Verify-Changed.ps1', 'Tools/Verify/Verify-Verification-Plan.ps1',
-            'Tools/Verify/Verify-GitHub-Native-Qualification.ps1', '.github/workflows/verify.yml')
-    }).Count -gt 0
-$NativeSharedCompilerBehaviorExpectedSeconds = [long]0
-$NativeSharedCompilerBehaviorMaximumSeconds = [long]0
-if ($NativeSharedCompilerBehaviorRequired) {
-    $CompilerOwner = @($SelectedSuiteEntries | Where-Object { $_.Name -eq 'native-x64-lowering-development' })[0]
-    # Includes source admission, repeated compiler-consumer image packaging and
-    # retained staging execution. The measured candidate path exceeds the old
-    # ten-minute declaration even with its compiler already prepared.
-    $NativeSharedCompilerBehaviorExpectedSeconds = [long]3600
-    $NativeSharedCompilerBehaviorMaximumSeconds = [long]5400
-    if (!$UseNativeSharedCompilerDevelopment) {
-        # The current-host regression adds runtime assembly and native behavior;
-        # the retained standalone owner's registered profile stays unchanged.
-        $NativeSharedCompilerBehaviorExpectedSeconds += 1200
-        $NativeSharedCompilerBehaviorMaximumSeconds += 1800
-    }
-    if ($NativeSharedCompilerBehaviorExpectedSeconds -gt $NativeSharedCompilerBehaviorMaximumSeconds) {
-        throw 'Native shared compiler behavior duration exceeds its selected maximum.'
-    }
-    Set-SelectedOwnerBudget -Name $CompilerOwner.Name -ExpectedSeconds $NativeSharedCompilerBehaviorExpectedSeconds -MaximumSeconds $NativeSharedCompilerBehaviorMaximumSeconds
-}
 $NativeSharedStorageDevelopmentInputs = @(
     'Runtime/Native/X64-Shared-Storage.wva',
     'Runtime/Native/X64-Budgeted-Storage.wva',
@@ -5396,6 +5366,32 @@ if ($UseNativeSharedStorageDevelopment) {
         $_.Name -eq 'native-x64-lowering-development'
     })[0]
     Set-SelectedOwnerBudget -Name $StorageOwner.Name -ExpectedSeconds 540 -MaximumSeconds 600
+}
+# Every lowering execution consumes the current memory-aware compiler host,
+# regardless of which dependency selected it. Only the private storage leaf
+# avoids compiler execution. A path-name filter can select obsolete packaging
+# for verifier, library, specification or fixture changes in the same closure.
+$NativeSharedCompilerBehaviorRequired = $SelectedSuites.Contains('native-x64-lowering-development') -and
+    !$UseNativeSharedStorageDevelopment
+$NativeSharedCompilerBehaviorExpectedSeconds = [long]0
+$NativeSharedCompilerBehaviorMaximumSeconds = [long]0
+if ($NativeSharedCompilerBehaviorRequired) {
+    $CompilerOwner = @($SelectedSuiteEntries | Where-Object { $_.Name -eq 'native-x64-lowering-development' })[0]
+    # Includes source admission, repeated compiler-consumer image packaging and
+    # retained staging execution. The measured candidate path exceeds the old
+    # ten-minute declaration even with its compiler already prepared.
+    $NativeSharedCompilerBehaviorExpectedSeconds = [long]3600
+    $NativeSharedCompilerBehaviorMaximumSeconds = [long]5400
+    if (!$UseNativeSharedCompilerDevelopment) {
+        # The current-host regression adds runtime assembly and native behavior;
+        # the retained standalone owner's registered profile stays unchanged.
+        $NativeSharedCompilerBehaviorExpectedSeconds += 1200
+        $NativeSharedCompilerBehaviorMaximumSeconds += 1800
+    }
+    if ($NativeSharedCompilerBehaviorExpectedSeconds -gt $NativeSharedCompilerBehaviorMaximumSeconds) {
+        throw 'Native shared compiler behavior duration exceeds its selected maximum.'
+    }
+    Set-SelectedOwnerBudget -Name $CompilerOwner.Name -ExpectedSeconds $NativeSharedCompilerBehaviorExpectedSeconds -MaximumSeconds $NativeSharedCompilerBehaviorMaximumSeconds
 }
 $UseCurrentVerifierDevelopment = $SelectedSuites.Contains('language-1-production-admission-ingress') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs') }).Count -gt 0 -and

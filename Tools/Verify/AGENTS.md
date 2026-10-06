@@ -138,6 +138,11 @@ separate required shared-host admission and control allowances yield 157 minutes
 The shared/native duration includes the measured native construction and
 packaging costs even when compiler products are already prepared. Keep the
 ordinary-feedback improvement open until those costs are removed or reused.
+Every selected native lowering execution uses the prepared current shared
+compiler host, including selections caused only by verifier, library, fixture
+or specification dependencies. The focused private shared-storage selection
+does not run the compiler and remains exempt. Full lowering coverage and its
+declared duration remain required outside the focused shared-compiler selection.
 Explicit cache, stream, callable, foreign, legacy and Seed owners remain selected
 when their own inputs change. Unknown implementations and projects are gaps.
 Actual changed compiler fixture manifests select the maintained compiler-analysis
