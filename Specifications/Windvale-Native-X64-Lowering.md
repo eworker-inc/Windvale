@@ -45,6 +45,11 @@ u32 offsets (4,100 bytes), including the section end; construction uses 64-row
 chunks. Nominal lookups use those offsets without rescanning earlier types.
 Earlier semantic-phase readers retain the same checks through an unindexed
 view. The index is invocation-local working state, not serialized WVB evidence.
+The native function reader separates parameter/return metadata from local
+storage tables. Signature-table construction and direct-call checks validate
+every local shape and code-metadata bound but retain only parameter tables;
+body compilation retains the complete local tables. Both paths share the same
+parsers and preserve admission limits and failure diagnostics.
 Functions without E1 loan dependencies use reverse control-flow reachability
 for resource-bearing locals, stopping across definitions. Each reached block
 is processed once per resource local. Functions with loan dependencies retain

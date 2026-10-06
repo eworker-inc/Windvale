@@ -318,6 +318,8 @@ export function Buildˉsharedˉsourceˉcases() {
     }
     const Word = Buffer.alloc(4); Word.writeUInt32LE(0x44332211);
     const Wide = Buffer.alloc(8); Wide.writeBigUInt64LE(0x8877665544332211n);
+    const Helperˉlocals = Array.from({ length: 96 }, (_, Index) =>
+        `    let Stepˉ${Index}: u32 = ${Index === 0 ? 'Value' : `Stepˉ${Index - 1}`} + 1u32;`).join('\n');
     Case('byte-family', `
 fn Markˉbyte(Builder: borrow mut Bytes.Bytesˉbuilder, Value: u8) -> bool {
     let Added = Bytes.Appendˉu8(borrow mut Builder, Value);
@@ -366,9 +368,13 @@ fn Range(Value: borrow bytes) -> Collections.Slice<u8> {
     return Bytes.Borrowˉrange(borrow Value, 0u64, 1u64);
 }
 fn Forwardˉslice(Value: Collections.Slice<u8>) -> Collections.Slice<u8> { return Value; }
+fn Manyˉlocals(Value: u32) -> u32 {
+${Helperˉlocals}
+    return Stepˉ95 - 96u32;
+}
 fn Readˉnarrow(Value: bytes, First: bool) -> u32 {
-    if First { return U32ˉfromˉu8(Bytes.At(borrow Value, 0u64)); }
-    return U32ˉfromˉu8(Bytes.At(borrow Value, 1u64));
+    if First { return Manyˉlocals(U32ˉfromˉu8(Bytes.At(borrow Value, 0u64))); }
+    return Manyˉlocals(U32ˉfromˉu8(Bytes.At(borrow Value, 1u64)));
 }
 fn Readˉwide(Value: bytes, First: bool) -> u64 {
     if First { return Bytes.Length(borrow Value); }

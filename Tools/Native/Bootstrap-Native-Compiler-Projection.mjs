@@ -139,7 +139,7 @@ export function Projectˉnativeˉsources(Current, Historicalˉlayout) {
     Replace(CORE, 'directory-initialize', Directoryˉanchor,
         '    var Directory: bytes = Compilerˉnativeˉx64ˉempty(Input);\n' + Directoryˉanchor);
     for (const [Owner, Expected, End] of [
-        ['Signature', 'd54352d8770f05eac78682aeb4fae1569b7e3763e2080d8a68ba99a76481b872',
+        ['Signature', '6d8366d2f1e7a1ada3b502be1a755b47cc5618e1d1fa7d11a87525f65e40e962',
             '        Expectedˉwvbˉcodeˉoffset ='],
         ['Directory', '94471967f3bcf7646b22d41b7b2b22913a27d0978f0ff2f446dfc350cc12e565',
             '        Expectedˉmachineˉcodeˉbytes ='],
@@ -149,9 +149,10 @@ export function Projectˉnativeˉsources(Current, Historicalˉlayout) {
             `            borrow mut ${Owner}ˉbuilder,\n`;
         const Block = Region(CORE, Start, End, Expected, Owner + '-append');
         const Arguments = Block.slice(Start.length, Block.indexOf('        );\n') + 11);
-        Unique(Arguments, '            borrow Bytesˉslice(', Owner + '-append-parameter-borrow');
-        const Historicalˉarguments = Arguments.replace(
-            '            borrow Bytesˉslice(', '            Bytesˉslice(');
+        const Borrowedˉargument = Owner === 'Signature'
+            ? '            borrow Function.Parameterˉtypes' : '            borrow Bytesˉslice(';
+        Unique(Arguments, Borrowedˉargument, Owner + '-append-parameter-borrow');
+        const Historicalˉarguments = Arguments.replace(Borrowedˉargument, Borrowedˉargument.replace('borrow ', ''));
         const Variable = Owner === 'Signature' ? 'Signatures' : 'Directory';
         Replace(CORE, Owner + '-append', Block,
             `        ${Variable} = Layoutˉwriter.Compilerˉnativeˉx64ˉlayoutˉappend(\n` +
