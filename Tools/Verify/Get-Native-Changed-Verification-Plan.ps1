@@ -3188,10 +3188,10 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
     )) {
         Add-Bytecode-Suites
+        # These owners consume current verifier source. The file-read and model
+        # applications use immutable compiler tools and keep their own input routes.
         Add-Suite @(
             'libraries',
-            'model-provider',
-            'file-read-application',
             'language-1-front-door',
             'language-1-callable-semantics',
             'language-1-memory-budget-split-execution'

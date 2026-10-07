@@ -1153,7 +1153,10 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                     $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-directories cases=27 expected-seconds=30'
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
-                    $OwnerArguments = @('--foundation-borrow-owners')
+                    $OwnerCommand = 'node'
+                    $FoundationOwnerDriverPath = Join-Path $RepositoryRoot `
+                        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs'
+                    $OwnerArguments = @($FoundationOwnerDriverPath, '--foundation-borrow-owners')
                     if ($UsePreparedProducts) { $OwnerArguments += @('--prepared-products-only', '--maximum-seconds', '600') }
                     $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=370 expected-seconds=180'
                 }

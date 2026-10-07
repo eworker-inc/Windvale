@@ -2180,8 +2180,6 @@ $NativeCases = @(
             'language-1-front-door',
             'language-1-callable-semantics',
             'language-1-memory-budget-split-execution',
-            'model-provider',
-            'file-read-application',
             'libraries'
         )
         Gaps = @()
@@ -8902,6 +8900,8 @@ foreach ($Marker in @(
     'Preparation owner=language-1-memory-budget-split-execution mode=foundation-borrow-owners',
     '$FoundationOwnerSeconds = [int][Math]::Min(4500, $RemainingSeconds)',
     '--foundation-borrow-owners --prepare-only --maximum-seconds $FoundationOwnerSeconds',
+    '$OwnerCommand = ''node''',
+    '$OwnerArguments = @($FoundationOwnerDriverPath, ''--foundation-borrow-owners'')',
     "if ($" + "UsePreparedProducts) { $" + "OwnerArguments += @('--prepared-products-only', '--maximum-seconds', '600') }",
     '!$NativePlan.UseFoundationLibraryDevelopment -and !$NativePlan.UseFoundationBorrowOwnerDevelopment -and'
 )) {
