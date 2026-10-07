@@ -974,6 +974,7 @@ const STAGING_NATIVE_CASES = Object.freeze([
     Object.freeze({ Name: 'staging-relocations', Project: 'Staging-Wvo-Relocations-Native', Assertions: 6, Instructions: 1_000_000 }),
     Object.freeze({ Name: 'staging-symbols', Project: 'Staging-Wvo-Symbols-Native', Assertions: 7, Instructions: 6_000_000 }),
 ]);
+const STAGING_NATIVE_COMPILATION_MILLISECONDS = 300_000;
 const RETIRED_SOURCE_ENTRIES = Object.freeze([
     "Compiler/Windvale/Source-Wvb-Memory-Adapter.wv",
     "Projects/Compiler/Windvale-Compiler-Memory.wvproj",
@@ -1199,7 +1200,8 @@ export async function Runˉsharedˉstagingˉcases(Context) {
         Sourceˉrequire(Input.length >= 24 && Input.toString('ascii', 0, 4) === 'WVB1' &&
             Input.readUInt16LE(4) === 1 && Input.readUInt16LE(6) >= 11 && Input.readUInt16LE(6) <= 43,
         'Retained staging source published a different WVB profile.');
-        const Lowered = await Requireˉsuccess(Host.Path, [Wvb, Object], 'shared-' + Case.Name + '-lower');
+        const Lowered = await Requireˉsuccess(Host.Path, [Wvb, Object], 'shared-' + Case.Name + '-lower',
+            STAGING_NATIVE_COMPILATION_MILLISECONDS);
         const Objectˉbytes = await Sourceˉread(Object, 4_194_304 - 32);
         await Requireˉsuccess(Tool('Check-Wvo'), [Object], 'shared-' + Case.Name + '-object-check');
         const Inspection = await Requireˉsuccess(Tool('Inspect-Wvo'), [Object], 'shared-' + Case.Name + '-object-inspect');
@@ -1234,6 +1236,7 @@ export async function Runˉsharedˉstagingˉcases(Context) {
 
 export async function Runˉadmissionˉproviderˉcase(Context) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess, Deadline } = Context;
+    const ADMISSION_TEMP_BASE = 21_037_056, ADMISSION_TEMP_LIMIT = ADMISSION_TEMP_BASE + 64;
     const Owner = await Sourceˉread(join(Repository, 'Linker/Startup/X64-Shared-Compiler-Host.wva'), 1_048_576);
     const Definitions = ['Admission_read', 'Admission_write'].map(Name => {
         const Matches = [...Owner.toString('utf8').matchAll(new RegExp('^define ' + Name + '\\n[\\s\\S]*?^end define$', 'gmu'))];
@@ -1246,7 +1249,7 @@ export async function Runˉadmissionˉproviderˉcase(Context) {
         'symbol export function Main in .text',
         'section code .text align 16', 'define Main', 'push r12', 'push r15', 'subtract_i32 rsp 40',
         'move r15 rdx', 'load_memory_u64 r12 r15 none 1 48',
-        'load_memory_u32 eax r15 none 1 56', 'compare_i32 eax 20983872', 'branch below Failed'];
+        'load_memory_u32 eax r15 none 1 56', 'compare_i32 eax ' + ADMISSION_TEMP_LIMIT, 'branch below Failed'];
     const Emit = (...Values) => Lines.push(...Values);
     const Set = (Offset, Value) => Emit('move_u32 eax ' + Value, 'store_memory_u32 r12 none 1 ' + Offset + ' eax');
     const Check = (Offset, Value) => Emit('load_memory_u32 eax r12 none 1 ' + Offset,
@@ -1256,8 +1259,8 @@ export async function Runˉadmissionˉproviderˉcase(Context) {
         Set(11384, 1); Set(11388, 0); Set(11392, 0); Set(8712, 48);
         Set(8688, 0); Set(8692, 0); Set(8696, 0); Set(8700, 0);
         Set(11600, 123); Set(11604, 0); Set(11608, 0); Set(11612, 0);
-        for (let At = 0; At < 64; At += 4) { Set(20983808 + At, 100 + At); Set(11312 + At, 17); }
-        Emit('move_u32 eax 20983872', 'store_memory_u32 r15 none 1 60 eax',
+        for (let At = 0; At < 64; At += 4) { Set(ADMISSION_TEMP_BASE + At, 100 + At); Set(11312 + At, 17); }
+        Emit('move_u32 eax ' + ADMISSION_TEMP_LIMIT, 'store_memory_u32 r15 none 1 60 eax',
             'move_u32 r10d 291', 'move_u32 r11d 1110');
     }
     function Status(Value) {
@@ -1269,7 +1272,7 @@ export async function Runˉadmissionˉproviderˉcase(Context) {
         Emit('move rcx r12', 'add_i32 rcx 11600', 'load_address r8 ' + Name,
             'move_u32 r9d ' + Length, 'call Admission_read');
     }
-    function Write(Length = 64, Offset = 20983808, Name = 'Response') {
+    function Write(Length = 64, Offset = ADMISSION_TEMP_BASE, Name = 'Response') {
         Emit('move rcx r12', 'add_i32 rcx ' + Offset, 'move_u32 edx ' + Length,
             'load_address r8 ' + Name, 'move_u32 r9d 8', 'call Admission_write');
     }
@@ -1297,7 +1300,8 @@ export async function Runˉadmissionˉproviderˉcase(Context) {
         if (Kind === 'invalid-live') Emit('load_memory_u32 eax r15 none 1 56', 'add_i32 eax 1',
             'store_memory_u32 r15 none 1 60 eax');
         const Length = Kind === 'short' ? 31 : Kind === 'middle' ? 33 : Kind === 'large' ? 65 : 64;
-        Write(Length, Kind === 'below-arena' ? 20983807 : Kind === 'past-live' ? 20983809 : 20983808,
+        Write(Length, Kind === 'below-arena' ? ADMISSION_TEMP_BASE - 1 :
+            Kind === 'past-live' ? ADMISSION_TEMP_BASE + 1 : ADMISSION_TEMP_BASE,
             Kind === 'name' ? 'Bad_response' : 'Response');
         Status(1); Check(11392, Kind === 'repeated' ? 1 : 0); Check(8696, 0); Check(11312, 17);
     }
@@ -1334,6 +1338,77 @@ export async function Runˉadmissionˉproviderˉcase(Context) {
     process.stdout.write('native shared admission providers status=Passed cases=' + Cases + ' executions=1\n');
 }
 
+export async function Runˉsharedˉpublicationˉcases(Context, Product) {
+    const { Work, Deadline, Runˉprocess, Requireˉsuccess, Sharedˉcompilerˉhost: Host,
+        Preparedˉsharedˉhost: Prepared } = Context;
+    const { Wvb, Bytecode, Nativeˉobject, Report, Invalidˉpath } = Product;
+    Sourceˉrequire(Number.isSafeInteger(Deadline) && Deadline > Date.now() &&
+        Buffer.isBuffer(Bytecode) && Buffer.isBuffer(Nativeˉobject) &&
+        Nativeˉobject.length >= 49 && Nativeˉobject.length <= 4_194_272 &&
+        typeof Host?.Path === 'string' && typeof Prepared?.Requireˉunchanged === 'function' &&
+        typeof Prepared.Segmentedˉconsumer?.Linker?.Path === 'string',
+    'Publication cases need the admitted current host, small ordinary oracle and finite deadline.');
+    async function Execute(Name, Input, Prefix, Code, Output) {
+        Sourceˉrequire(Date.now() < Deadline, 'Publication execution deadline reached.');
+        const Result = await Runˉprocess(Host.Path, ['--staged', Input, Prefix],
+            Math.min(30_000, Deadline - Date.now()), 'shared-publication-' + Name);
+        Sourceˉrequire(Result.Code === Code && !Result.Exceeded && !Result.Timedˉout && Result.Output === Output,
+            'Publication ' + Name + ' failed: code=' + Result.Code + ', output=' + Result.Output);
+    }
+    await Prepared.Requireˉunchanged();
+    const Prefix = join(Work, 'shared-publication-identity-✓');
+    await Sourceˉrequireˉabsent(Prefix + '.wvop');
+    await Execute('byte-identity', Wvb, Prefix, 0, Report);
+    const Lengths = Parseˉstagedˉnativeˉmanifest(await Sourceˉread(Prefix + '.wvop', 6240));
+    Sourceˉrequire(Lengths.length > 1 && Lengths[0] === 49,
+        'Publication did not preserve the independent staged-reader prefix boundary.');
+    let Position = 0;
+    for (const [Index, Length] of Lengths.entries()) {
+        const Chunk = await Sourceˉread(Prefix + '.chunk-' + Index, 4_194_304);
+        Sourceˉrequire(Chunk.length === Length && Length <= Nativeˉobject.length - Position &&
+            Chunk.equals(Nativeˉobject.subarray(Position, Position + Length)),
+        'Publication chunk differs from the ordinary native-object oracle: ' + Index);
+        Position += Length;
+    }
+    Sourceˉrequire(Position === Nativeˉobject.length, 'Publication omitted ordinary native-object bytes.');
+    await Requireˉsuccess(Prepared.Segmentedˉconsumer.Linker.Path,
+        [Prefix, Prefix + '.wvop', Prefix + '-image', Prefix + '-image.wvli', 'inspect', Prefix + '.wvsc'],
+        'shared-publication-independent-staged-admission');
+    process.stdout.write('native shared publication case=byte-identity status=Passed chunks=' +
+        Lengths.length + ' object-bytes=' + Position + ' downstream-admission=true domain-closed=true\n');
+
+    const Refusal = join(Work, 'shared-publication-malformed');
+    await Execute('typed-malformed-refusal', Invalidˉpath, Refusal, 1,
+        'native x64 status=Invalidˉwvb abi=22 code-bytes=0 object-bytes=0\n');
+    await Sourceˉrequireˉabsent(Refusal + '.wvop');
+    await Sourceˉrequireˉabsent(Refusal + '.chunk-0');
+
+    const Failedˉwrite = join(Work, 'shared-publication-failed-write');
+    await mkdir(Failedˉwrite + '.chunk-1');
+    await Execute('failed-write', Wvb, Failedˉwrite, 23, '');
+    Sourceˉrequire((await Sourceˉread(Failedˉwrite + '.chunk-0', 49)).equals(Nativeˉobject.subarray(0, 49)) &&
+        (await lstat(Failedˉwrite + '.chunk-1')).isDirectory(),
+    'Failed publication changed the completed prefix or its refused destination.');
+    await Sourceˉrequireˉabsent(Failedˉwrite + '.wvop');
+    await Sourceˉrequireˉabsent(Failedˉwrite + '.chunk-2');
+
+    const Collision = join(Work, 'shared-publication-input-collision');
+    const Collisionˉinput = Collision + '.chunk-0';
+    await writeFile(Collisionˉinput, Bytecode, { flag: 'wx' });
+    await Execute('exact-input-collision', Collisionˉinput, Collision, 23, '');
+    Sourceˉrequire((await Sourceˉread(Collisionˉinput, 4_194_304)).equals(Bytecode),
+        'Publication overwrote its exact input path.');
+    await Sourceˉrequireˉabsent(Collision + '.wvop');
+    await Sourceˉrequireˉabsent(Collision + '.chunk-1');
+    Sourceˉrequire((await Sourceˉread(Wvb, 4_194_304)).equals(Bytecode),
+        'Publication cases changed the source bytecode oracle.');
+    await Prepared.Requireˉunchanged();
+    process.stdout.write('native shared publication status=Passed cases=4 executions=5 ' +
+        'byte-identity=true staged-admission=true typed-refusal=true failed-write=true ' +
+        'exact-input-collision=true domain-closed=true qualification=false\n');
+    return { Cases: 4, Executions: 5 };
+}
+
 export async function Runˉsharedˉsourceˉcases(Context) {
     const Available = Buildˉsharedˉsourceˉcases(), Selection = Context.Sourceˉcases;
     Sourceˉrequire(Selection === undefined || (Array.isArray(Selection) && Selection.length > 0 &&
@@ -1363,7 +1438,7 @@ export async function Runˉsharedˉsourceˉcases(Context) {
     const Workspace = await Sourceˉworkspace(Context);
     const Cache = await Prepareˉassemblyˉobjectˉcache(Deadline);
     const Fatalˉtraps = Cases.filter(Case => Case.Trapˉstatus !== 0).length;
-    let Hostˉrefusals = 0;
+    let Hostˉrefusals = 0, Publicationˉcases = 0, Publicationˉexecutions = 0;
     for (const [Index, Case] of Cases.entries()) {
         Sourceˉrequire(Date.now() < Deadline, 'Source execution owner deadline reached.');
         await Compiler.Requireˉunchanged();
@@ -1396,6 +1471,10 @@ export async function Runˉsharedˉsourceˉcases(Context) {
             Hostˉrefusals += 1;
             process.stdout.write('native shared source host-refusal status=Passed code=1 ' +
                 'native-status=Invalidˉwvb abi=22 code-bytes=0 object-bytes=0 output-absent=true\n');
+            const Publication = await Runˉsharedˉpublicationˉcases(Context,
+                { Wvb, Bytecode, Nativeˉobject, Report: Compiled.Output, Invalidˉpath });
+            Publicationˉcases += Publication.Cases;
+            Publicationˉexecutions += Publication.Executions;
         }
         const Symbols = Sourceˉexports(Report.Output), Wrapper = Prefix + '-wrapper.wva', Wrapperˉobject = Prefix + '-wrapper.wvo';
         await writeFile(Wrapper, Sourceˉharness(Case, Symbols), { flag: 'wx' });
@@ -1428,13 +1507,14 @@ export async function Runˉsharedˉsourceˉcases(Context) {
     await Sourceˉsnapshotsˉunchanged(Workspace.Snapshots, 1_048_576);
     process.stdout.write(`native shared source status=Passed cases=${Cases.length} executions=${Cases.length} ` +
         `successes=${Cases.length - Fatalˉtraps} fatal-traps=${Fatalˉtraps} host-refusals=${Hostˉrefusals} ` +
+        `publication-cases=${Publicationˉcases} publication-executions=${Publicationˉexecutions} ` +
         `iterations=${Iterations.join(',')} selected=${Cases.length}/${Available.length} ` +
         'arena-bytes=64 application-budget=64 physical-high-water<=64 ' +
         'final-physical-charge=0 final-budget-charge=0 ' +
         `verifier-executions=${Cases.length} ` +
         'generated-source=true compiler=WVB44/45-native25 serializer=current qualification=false\n');
     return { Cases: Cases.length, Executions: Cases.length, Successes: Cases.length - Fatalˉtraps,
-        Fatalˉtraps, Hostˉrefusals, Verifierˉexecutions: Cases.length, Iterations,
+        Fatalˉtraps, Hostˉrefusals, Publicationˉcases, Publicationˉexecutions, Verifierˉexecutions: Cases.length, Iterations,
         Selectedˉcases: Cases.map(Case => Case.Name), Availableˉcases: Available.length };
 }
 

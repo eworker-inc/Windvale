@@ -15,6 +15,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native byte-result admission](../Windvale-Native-Byte-Result-Admission.md) | Current |
 | [Windvale native capability-provider table](../Windvale-Native-Capability-Provider-Table.md) | Candidate |
 | [Windvale native changed-file verification](../Windvale-Native-Changed-Verification.md) | Documented |
+| [Windvale native compiler publication](../Windvale-Native-Compiler-Publication.md) | Candidate |
 | [Windvale native compiler reconstruction inventory](../Windvale-Native-Compiler-Reconstruction.md) | Current |
 | [Windvale native compiler bootstrap and convergence](../Windvale-Native-Compiler-Seed-Bootstrap.md) | Implemented |
 | [Windvale native console-application publisher](../Windvale-Native-Console-Application-Publisher.md) | Candidate |

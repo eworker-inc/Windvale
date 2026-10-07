@@ -1,10 +1,9 @@
 windvale-assembly 1
 
 # Outer ABI22/context7 host I/O; the source compiler receives a separate ABI25/context11.
-# One request owns fixed metadata, a 16MiB physical arena and a 4MiB result copy.
+# One request owns 64KiB prepaid metadata, a 16MiB physical arena and a 4MiB copy.
 symbol local function Admission_read in .text
 symbol local function Admission_write in .text
-symbol local function Closure_check in .text
 symbol local data Report_abi in .rodata
 symbol local function Report_append_span in .text
 symbol local function Report_append_u32 in .text
@@ -20,10 +19,12 @@ symbol local data Report_unsupported_module in .rodata
 symbol local data Report_unsupported_profile in .rodata
 symbol local data Report_valid in .rodata
 symbol local function Shared_request_reset in .text
+symbol export function Windvale_shared_compiler_closure in .text
 symbol export function Windvale_shared_compiler_driver in .text
 symbol import function Main
 symbol import function Windvale_owned_domain_initialize
 symbol import data Windvale_shared_compiler_configuration
+symbol import function Windvale_shared_compiler_publication_run
 symbol import function Windvale_shared_storage
 section code .text align 16
 define Windvale_shared_compiler_driver
@@ -41,6 +42,7 @@ move_u32 eax 3
 store_memory_u32 rsp none 1 32 eax
 xor eax eax
 store_memory_u32 rsp none 1 36 eax
+store_memory_u32 rsp none 1 48 eax
 test r15 r15
 branch equal Failed
 test_i32 r15 7
@@ -55,7 +57,7 @@ load_memory_u32 eax r15 none 1 60
 test eax eax
 branch not_equal Failed
 load_memory_u32 eax r15 none 1 56
-compare_i32 eax 22032384
+compare_i32 eax 25231360
 branch below Failed
 load_memory_u64 r12 r15 none 1 48
 test r12 r12
@@ -64,7 +66,27 @@ test_i32 r12 15
 branch not_equal Failed
 load_memory_u64 rax r15 none 1 80
 compare_i32 rax 2
+branch equal Arguments_ready
+compare_i32 rax 3
 branch not_equal Usage
+load_memory_u64 rax r15 none 1 72
+test rax rax
+branch equal Failed
+load_memory_u32 ecx rax none 1 8
+compare_i32 ecx 8
+branch not_equal Usage
+load_memory_u64 rax rax none 1 0
+test rax rax
+branch equal Failed
+load_memory_u32 ecx rax none 1 0
+compare_i32 ecx 1953705261
+branch not_equal Usage
+load_memory_u32 ecx rax none 1 4
+compare_i32 ecx 1684367201
+branch not_equal Usage
+move_u32 eax 1
+store_memory_u32 rsp none 1 48 eax
+label Arguments_ready
 load_memory_u64 rax r15 none 1 72
 test rax rax
 branch equal Failed
@@ -78,11 +100,14 @@ store_memory_u64 r12 rcx 1 0 rax
 add_i32 ecx 8
 compare_i32 ecx 12288
 branch below Clear_metadata
-move_u32 eax 20983808
+move_u32 eax 21037056
 store_memory_u32 r15 none 1 60 eax
 move_u32 eax 4
 store_memory_u32 rsp none 1 32 eax
 load_memory_u64 rax r15 none 1 72
+load_memory_u32 ecx rsp none 1 48
+shift_left ecx 4
+add rax rcx
 load_memory_u64 r8 rax none 1 0
 load_memory_u32 r9d rax none 1 8
 move rcx r12
@@ -217,7 +242,7 @@ move rax r12
 add_i32 rax 4928
 store_memory_u64 r12 none 1 8360 rax
 move rax r12
-add_i32 rax 4206592
+add_i32 rax 4259840
 store_memory_u64 r12 none 1 8368 rax
 move rax r12
 add_i32 rax 6144
@@ -266,6 +291,9 @@ store_memory_u64 r12 none 1 8656 rax
 load_memory_u32 eax r12 none 1 8680
 store_memory_u32 r12 none 1 8664 eax
 store_memory_u32 r12 none 1 8668 eax
+load_memory_u32 eax rsp none 1 48
+test eax eax
+branch not_equal Staged_publication
 move_u32 eax 7
 store_memory_u32 rsp none 1 32 eax
 move rcx r12
@@ -592,7 +620,7 @@ add rax r14
 call_register rax
 test rax rax
 branch not_equal Failed
-call Closure_check
+call Windvale_shared_compiler_closure
 test eax eax
 branch not_equal Failed
 xor eax eax
@@ -634,6 +662,54 @@ test eax eax
 branch not_equal Failed
 move_u32 eax 1
 jump_label Finish
+label Staged_publication
+move rcx r12
+move rdx r15
+move r8 r14
+move r9 rbp
+call Windvale_shared_compiler_publication_run
+compare_i32 eax 1
+branch equal Staged_report_refusal
+test eax eax
+branch equal Staged_report_valid
+store_memory_u32 rsp none 1 32 eax
+jump_label Failed
+label Staged_report_valid
+call Windvale_shared_compiler_closure
+test eax eax
+branch not_equal Failed
+xor eax eax
+store_memory_u32 rsp none 1 36 eax
+store_memory_u32 rsp none 1 88 eax
+load_memory_u32 eax r12 none 1 13104
+store_memory_u32 rsp none 1 92 eax
+load_memory_u32 eax r12 none 1 13108
+store_memory_u32 rsp none 1 96 eax
+load_memory_u32 eax r12 none 1 13032
+store_memory_u32 rsp none 1 80 eax
+call Report_build
+load_memory_u64 rax r15 none 1 24
+load_memory_u64 rax rax none 1 8
+test rax rax
+branch equal Failed
+call_register rax
+test eax eax
+branch not_equal Failed
+xor eax eax
+jump_label Finish
+label Staged_report_refusal
+call Windvale_shared_compiler_closure
+test eax eax
+branch not_equal Failed
+xor eax eax
+store_memory_u32 rsp none 1 36 eax
+store_memory_u32 rsp none 1 80 eax
+store_memory_u32 rsp none 1 96 eax
+load_memory_u32 eax r12 none 1 13112
+store_memory_u32 rsp none 1 88 eax
+move_u32 eax 22
+store_memory_u32 rsp none 1 92 eax
+jump_label Report_refusal
 label Usage
 move_u32 eax 2
 store_memory_u32 rsp none 1 32 eax
@@ -655,7 +731,7 @@ call Windvale_shared_storage
 test eax eax
 branch not_equal Failure_cleanup
 label Failure_closed
-call Closure_check
+call Windvale_shared_compiler_closure
 test eax eax
 branch equal Failure_result
 label Failure_cleanup
@@ -763,7 +839,7 @@ load_memory_u32 r8d rax none 1 11392
 test r8d r8d
 branch not_equal Admission_write_failed
 move r8 rax
-add_i32 r8 20983808
+add_i32 r8 21037056
 branch below Admission_write_failed
 compare rcx r8
 branch below Admission_write_failed
@@ -802,7 +878,7 @@ move_u32 eax 1
 return
 end define
 
-define Closure_check
+define Windvale_shared_compiler_closure
 load_memory_u32 eax r12 none 1 220
 compare_i32 eax 1
 branch not_equal Invalid

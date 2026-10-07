@@ -6,8 +6,38 @@ authority application;
 
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
-import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadataˉreader;
+import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+import Compilerˉnativeˉx64ˉloweringˉpublicationˉsession as Publicationˉsession;
+import Foundationˉbytes as Bytes;
 import Foundationˉmemory as Memory;
+import Foundationˉresult as Results;
+
+// Root-module names remain stable in WVB. The native publication caller binds
+// these private entry points by signature and admitted local-symbol range.
+fn Publicationˉopen(Input: borrow bytes, Budget: borrow mut Memory.Memoryˉbudget,
+    Maximumˉobjectˉbytes: u32) -> Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession effects(memory.allocate) {
+    return Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsessionˉopen(
+        Input, borrow mut Budget, Maximumˉobjectˉbytes);
+}
+
+fn Publicationˉbegin(Session: borrow Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession)
+    -> Publication.Compilerˉnativeˉx64ˉpublicationˉcursor {
+    return Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsessionˉbegin(Session);
+}
+
+fn Publicationˉnext(Session: borrow Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession,
+    Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor)
+    -> Publication.Compilerˉnativeˉx64ˉpublicationˉstep {
+    return Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsessionˉnext(Session, Cursor);
+}
+
+fn Publicationˉrelease(Session: Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession) -> i32 {
+    return Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsessionˉrelease(Session);
+}
+
+fn Publicationˉstepˉrelease(Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep) -> i32 {
+    return Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉstepˉrelease(Step);
+}
 
 fn Statusˉnumber(Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus) -> u32 {
     if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid { return 0u32; }
@@ -20,8 +50,7 @@ fn Statusˉnumber(Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus) -> u32 {
     return 7u32;
 }
 
-fn Response(Status: u32, Abi: u32, Codeˉbytes: u32, Object: borrow bytes) -> bytes {
-    let Objectˉbytes: u32 = Bytesˉlength(Object);
+fn Responseˉheader(Status: u32, Abi: u32, Codeˉbytes: u32, Objectˉbytes: u32) -> bytes {
     var Output: bytes = Bytesˉfromˉu32ˉlittle(1380865623u32);
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(1u32));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(32u32 + Objectˉbytes));
@@ -30,23 +59,94 @@ fn Response(Status: u32, Abi: u32, Codeˉbytes: u32, Object: borrow bytes) -> by
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Codeˉbytes));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Objectˉbytes));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
-    return Bytesˉconcat(Output, Object);
+    return Output;
+}
+
+fn Response(Status: u32, Abi: u32, Codeˉbytes: u32, Object: borrow bytes) -> bytes {
+    return Bytesˉconcat(Responseˉheader(Status, Abi, Codeˉbytes, Bytesˉlength(Object)), Object);
+}
+
+fn Publicationˉcollect(Session: borrow Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession,
+    Initial: Bytes.Bytesˉbuilder) -> bytes {
+    var Builder: Bytes.Bytesˉbuilder = Initial;
+    let Empty: bytes = Bytesˉslice(Session.Input, 0u32, 0u32);
+    let Codeˉbytes: u32 = Session.Plan.Machineˉcodeˉbytes +
+        Session.Plan.Helperˉbytes + Bytesˉlength(Session.Regions.Padding);
+    let Header: bytes = Responseˉheader(0u32, Session.Plan.Abi, Codeˉbytes, Session.Regions.Objectˉbytes);
+    let Headerˉappended = Bytes.Appendˉbytes(borrow mut Builder, borrow Header);
+    let Headerˉaccepted: bool = match Headerˉappended {
+        case Results.Result.Valid { Value: _ } { true }
+        case Results.Result.Failure { Error: _ } { false }
+    };
+    if !Headerˉaccepted { return Empty; }
+    var Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor = Publicationˉbegin(Session);
+    var Position: u32 = 0u32;
+    var Steps: u32 = 0u32;
+    var Valid: bool = true;
+    while Cursor.Valid && Cursor.Kind != Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete &&
+        Valid && Steps < Session.Plan.Functionˉcount + 8u32 {
+        let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep = Publicationˉnext(Session, Cursor);
+        if Step.Status != Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid ||
+            Step.Position != Position || Position > Session.Regions.Objectˉbytes ||
+            Bytesˉlength(Step.Value) > Session.Regions.Objectˉbytes - Position {
+            Valid = false;
+        } else {
+            let Appended = Bytes.Appendˉbytes(borrow mut Builder, borrow Step.Value);
+            Valid = match Appended {
+                case Results.Result.Valid { Value: _ } { true }
+                case Results.Result.Failure { Error: _ } { false }
+            };
+            Position = Position + Bytesˉlength(Step.Value);
+            Cursor = Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+                Step.Nextˉvalid, Step.Nextˉkind, Step.Nextˉfunction, Step.Nextˉposition);
+        }
+        let Stepˉreleased: i32 = Publicationˉstepˉrelease(Step);
+        Steps = Steps + 1u32;
+    }
+    if !Valid || !Cursor.Valid || Cursor.Kind != Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete ||
+        Position != Session.Regions.Objectˉbytes { return Empty; }
+    return Bytes.Freeze(Builder);
+}
+
+fn Publicationˉresponse(Session: borrow Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession,
+    Budget: borrow mut Memory.Memoryˉbudget) -> bytes effects(memory.allocate) {
+    let Empty: bytes = Bytesˉslice(Session.Input, 0u32, 0u32);
+    let Maximum: u64 = U64ˉfromˉu32(32u32 + Session.Regions.Objectˉbytes);
+    let Charge: u64 = ((Maximum + 31u64) / 16u64) * 16u64;
+    let Split = Memory.Split(borrow mut Budget, Charge, 0u32);
+    return match Split {
+        case Results.Result.Valid { Value: Child } {
+            let Created = Bytes.Constructˉreserved(Child, Maximum);
+            match Created {
+                case Results.Result.Valid { Value: Reserved } {
+                    Publicationˉcollect(Session, Reserved)
+                }
+                case Results.Result.Failure { Error: _ } { Empty }
+            }
+        }
+        case Results.Result.Failure { Error: _ } { Empty }
+    };
 }
 
 export fn Main(Input: borrow bytes, Budget: Memory.Memoryˉbudget) -> bytes effects(memory.allocate) {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Bytesˉlength(Input) > 4194304u32 {
+        return Response(6u32, 22u32, 0u32, borrow Empty);
+    }
     var Parent: Memory.Memoryˉbudget = Budget;
-    let Normalized: bytes = Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉnormalize(Input);
-    var Loweringˉinput: bytes = Input;
-    if Bytesˉlength(Normalized) != 0u32 { Loweringˉinput = Normalized; }
-    let Summary: Nativeˉx64.Compilerˉnativeˉx64ˉsummary =
-        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64ˉbounded(
-            borrow Loweringˉinput, borrow mut Parent, 4194272u32);
-    if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
-        return Response(Statusˉnumber(Summary.Status), 22u32, 0u32,
-            borrow Bytesˉslice(Input, 0u32, 0u32));
+    let Session: Publicationˉsession.Compilerˉnativeˉx64ˉpublicationˉsession =
+        Publicationˉopen(Input, borrow mut Parent, 4194272u32);
+    var Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus = Session.Status;
+    var Output: bytes = Empty;
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        Output = Publicationˉresponse(borrow Session, borrow mut Parent);
+        if Bytesˉlength(Output) != 32u32 + Session.Regions.Objectˉbytes {
+            Status = Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit;
+        }
     }
-    if Bytesˉlength(Summary.Object) > 4194272u32 {
-        return Response(6u32, 22u32, 0u32, borrow Bytesˉslice(Input, 0u32, 0u32));
+    let Sessionˉreleased: i32 = Publicationˉrelease(Session);
+    if Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        return Response(Statusˉnumber(Status), 22u32, 0u32, borrow Empty);
     }
-    return Response(0u32, Summary.Abi, Summary.Codeˉbytes, borrow Summary.Object);
+    return Output;
 }

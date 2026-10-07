@@ -6835,13 +6835,19 @@ if ($MixedSharedPlan.UseNativeSharedStorageDevelopment) {
 }
 foreach ($SharedCompilerPath in @(
     'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv',
+    'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
     'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
     'Tools/Native/Build-Shared-Compiler-Host.mjs',
+    'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
+    'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
     'Tools/Native/Native-Shared-Value-Cases.mjs',
     'Linker/Startup/X64-Shared-Compiler-Host.wva',
+    'Linker/Startup/X64-Shared-Compiler-Publication.wva',
     'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
     'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
     'Specifications/Windvale-Native-Byte-Result-Admission.md',
+    'Specifications/Windvale-Native-Compiler-Publication.md',
     'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
     'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj'
 )) {

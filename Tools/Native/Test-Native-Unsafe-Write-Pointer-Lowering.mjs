@@ -7,6 +7,7 @@ import { Prepareˉownedˉhelpers, Runˉownedˉhelpers } from './Native-Owned-Hel
 import { Prepareˉsharedˉsourceˉproducts, Runˉsharedˉsourceˉcases, Runˉsharedˉplanˉconsumer,
     Checkˉsharedˉretirements, Runˉsharedˉstagingˉcases } from './Native-Shared-Value-Cases.mjs';
 import { Readˉpreparedˉsharedˉcompilerˉhost } from './Build-Shared-Compiler-Host.mjs';
+import { Checkˉpublicationˉbindingˉcases } from './Native-Compiler-Publication-Binding-Cases.mjs';
 import { Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
     Readˉpreparedˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
@@ -217,6 +218,8 @@ let Preserveˉwork = false;
 try {
     const Retiredˉentries = await Checkˉsharedˉretirements(Repositoryˉroot);
     process.stdout.write('native shared source retirement entries=' + Retiredˉentries + ' status=Passed\n');
+    const Publicationˉbindings = Checkˉpublicationˉbindingˉcases();
+    process.stdout.write('native compiler publication binding cases=' + Publicationˉbindings.Cases + ' status=Passed\n');
     if (Prepareˉsharedˉproducts) {
         async function Requireˉcurrentˉselection() {
             if (Date.now() >= Ownerˉdeadline) throw Object.assign(new Error('Shared source preparation deadline reached.'), { exitCode: 124 });

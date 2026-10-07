@@ -2,7 +2,7 @@
 
 > Status: Current language, toolchain and essential-library delivery plan
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-10-06
+> Last reviewed: 2026-10-07
 
 Deliver one usable Windvale language, compiler/runtime and essential library set
 on Windows and Debian/Linux. The maintainer selected this scope on 3 October
@@ -23,10 +23,26 @@ This plan does not accept draft signatures or rewrite frozen source semantics.
 | --- | --- | --- |
 | Language/compiler | [Slice 8 qualification](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) establishes the exact source compiler and target subsets. Current analysis/emission and admission tools are written in Windvale. | Complete later compiler/runtime integration and promote one selected generation; the qualified source scope is not general memory or installed qualification. |
 | Values and collections | The maintained package parser uses canonical Option and immutable borrowing. Candidate interpreter support adds Copy-record collections and owned-budget helpers. | General owner-bearing aggregates, wider mutation/borrowing, consuming value operations and complete public collection APIs remain open. |
-| Native memory | Candidate physical storage, budgets, scalar Vectors and owned-console startup have focused Windows/Debian evidence. The WVB 1.44/1.45 path now connects reserved byte builders, shared values, supported aggregate/call cleanup and the compiler serializer through ABI 25/context 11; both compiler hosts have development reconstruction evidence. | Finish this path's final verification and self-lowering, then close broader scope exits, arbitrary owner aggregates, collection/view APIs, hosted startup and interpreter working storage. Pinned tools retain their declared older profiles. |
+| Native memory | Candidate physical storage, budgets, scalar Vectors and owned-console startup have focused Windows/Debian evidence. The WVB 1.44/1.45 path now connects reserved byte builders, shared values, supported aggregate/call cleanup and the compiler serializer through ABI 25/context 11; both compiler hosts have development reconstruction evidence and the selected source/serializer/staging checks pass on both hosts. | Finish compiler-scale self-lowering, then close broader scope exits, arbitrary owner aggregates, collection/view APIs, hosted startup and interpreter working storage. Pinned tools retain their declared older profiles. |
 | Tools | Native build, admission, execution, assembler, linker and packaging paths exist; prepared current compiler products can be reused. Current-source verification has explicit preparation and an ordinary command that refuses construction. | Inspection/execution still select pinned generations. Publisher/lowerer preparation and affected compiler rebuild cost need a single explicit workflow. |
 | Libraries | Accepted Foundation declarations and reusable implementation leaves exist. | Finish the selected essential API/target mapping and drive integration with maintained compiler/runtime consumers. A filename or isolated fixture cannot close a row. |
 | Delivery | The released preview has installation, offline verification and package lifecycle evidence. | The newer compiler/runtime is not the preview installation. Self-host and qualify the selected current generation, then prove clean-install use. |
+
+The current compiler checkpoint connects its retained compilation plan to native
+chunked output. Its own object is about 55 MiB, beyond the single byte-result
+entry's 4 MiB response ceiling. The candidate
+[retained publication session](../../Specifications/Windvale-Native-Compiler-Publication.md)
+keeps one plan alive, copies bounded pieces and releases each temporary result.
+Small Windows and real Debian execution now produce the same object bytes as
+ordinary output, pass independent linker admission and check malformed refusal,
+write-failure cleanup and exact input-path collision. Both source reconstructions
+produce matching portable compiler bytecode and object chunks. Selected source
+memory, serializer and staging checks now pass on Windows and real Debian,
+using resumable verification with preserved intermediate products. A
+compiler-scale native run reached its 15-minute deadline before publishing a
+chunk; preparation performance and exact compiler-scale self-lowering remain
+open. This does not complete the broader memory, essential-library, installation
+or retirement work below.
 
 ## Supported toolchain and retirement map
 

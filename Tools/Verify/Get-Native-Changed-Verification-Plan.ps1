@@ -1382,7 +1382,8 @@ function Add-Native-Tool-Suite {
         Add-Suite 'libraries'
         return
     }
-    if ($Stem -in @('Bootstrap-Native-Compiler-Projection', 'Build-Shared-Compiler-Host', 'Native-Staging-Capacity-Bridge-Core')) {
+    if ($Stem -in @('Bootstrap-Native-Compiler-Projection', 'Build-Shared-Compiler-Host', 'Native-Staging-Capacity-Bridge-Core',
+        'Native-Compiler-Publication-Bindings', 'Native-Compiler-Publication-Binding-Cases')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -1902,11 +1903,14 @@ $CausalCompilerExtraInputs = @{
         'Runtime/Native/X64-Shared-Storage.wva',
         'Runtime/Native/X64-Shared-Value-Operations.wva',
         'Linker/Startup/X64-Shared-Compiler-Host.wva',
+        'Linker/Startup/X64-Shared-Compiler-Publication.wva',
         'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
         'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
         'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
         'Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs',
         'Tools/Native/Build-Shared-Compiler-Host.mjs',
+        'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
+        'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
         'Tools/Native/Native-Shared-Value-Cases.mjs',
         'Tools/Native/Native-Shared-Storage-Cases.mjs',
         'Tools/Native/Native-Owned-Domain-Cases.mjs',
@@ -1916,6 +1920,7 @@ $CausalCompilerExtraInputs = @{
         'Specifications/Windvale-Native-Budgeted-Storage.md',
         'Specifications/Windvale-Native-Owned-Domain.md',
         'Specifications/Windvale-Native-Shared-Storage.md',
+        'Specifications/Windvale-Native-Compiler-Publication.md',
         'Specifications/Windvale-Native-X64-Lowering.md'
     )
     'language-1-front-door' = @(
@@ -2223,6 +2228,7 @@ foreach ($Path in $Paths) {
     )
     if ($Path -in @(
         'Specifications/Windvale-Native-Byte-Result-Admission.md',
+        'Specifications/Windvale-Native-Compiler-Publication.md',
         'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv'
     )) {
         # The shared host uses the independent reader on actual ABI25 shares;
@@ -3886,6 +3892,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Owned-Frames.wv',
         'Compiler/Windvale/Native-X64-Lowering-Object.wv',
         'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv',
         'Compiler/Windvale/Native-X64-Lowering-Records.wv',
         'Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv',
         'Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv',
@@ -4532,6 +4539,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'console-publisher-reconstruction'
     } elseif ($Path -in @(
         'Linker/Startup/X64-Shared-Compiler-Host.wva',
+        'Linker/Startup/X64-Shared-Compiler-Publication.wva',
         'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
         'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj'
     )) {
@@ -5305,16 +5313,22 @@ if ($FocusedDevelopmentPaths -ccontains 'Tools/Native/Library-Foundation-Value-C
 }
 $NativeSharedCompilerDevelopmentInputs = @(
     'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv',
+    'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
     'Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs',
     'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
     'Tools/Native/Build-Shared-Compiler-Host.mjs',
+    'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
+    'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
     'Tools/Native/Native-Shared-Value-Cases.mjs',
     'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
     'Linker/Startup/X64-Shared-Compiler-Host.wva',
+    'Linker/Startup/X64-Shared-Compiler-Publication.wva',
     'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
     'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
     'Runtime/Windvale/Native-Byte-Result-Admission-Core.wv',
     'Specifications/Windvale-Native-Byte-Result-Admission.md',
+    'Specifications/Windvale-Native-Compiler-Publication.md',
     'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj',
     'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
     'Tests/Native/Verification-Owners.txt',
@@ -5327,13 +5341,19 @@ $NativeSharedCompilerDevelopmentInputs = @(
 $UseNativeSharedCompilerDevelopment = $SelectedSuites.Contains('native-x64-lowering-development') -and
     @($FocusedDevelopmentPaths | Where-Object {
         $_ -cin @('Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv',
+            'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
             'Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs',
             'Tools/Native/Bootstrap-Native-Compiler-Projection.mjs',
             'Tools/Native/Build-Shared-Compiler-Host.mjs', 'Tools/Native/Native-Shared-Value-Cases.mjs',
+            'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
+            'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
             'Linker/Startup/X64-Shared-Compiler-Host.wva',
+            'Linker/Startup/X64-Shared-Compiler-Publication.wva',
             'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
             'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
             'Specifications/Windvale-Native-Byte-Result-Admission.md',
+            'Specifications/Windvale-Native-Compiler-Publication.md',
             'Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv',
             'Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj')
     }).Count -gt 0 -and

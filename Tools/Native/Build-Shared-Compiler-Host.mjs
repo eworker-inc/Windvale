@@ -10,6 +10,7 @@ import { Prepareˉhostedˉapplicationˉcontext } from './Native-Hosted-Applicati
 import { Prepareˉassemblyˉobjectˉcache, Acquireˉassemblyˉobject } from './Native-Assembly-Object-Cache-Core.mjs';
 import { Prepareˉnativeˉprojectˉcacheˉcontext, Getˉnativeˉprojectˉcacheˉrequest,
     Requireˉnativeˉprojectˉcacheˉrequestˉunchanged } from './Native-Project-Cache-Key-Core.mjs';
+import { Bindˉpublicationˉentries } from './Native-Compiler-Publication-Bindings.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const NATIVE = path.dirname(SCRIPT);
@@ -23,6 +24,11 @@ const MAXIMUM_OBJECT_BYTES = MAXIMUM_CHUNK - RESPONSE_HEADER_BYTES;
 const MAXIMUM_IMAGE = 67_108_864;
 const MAXIMUM_STAGED_CHUNKS = 518;
 const MAXIMUM_INPUT_FILES = 1024;
+const PUBLICATION_PROFILE = Object.freeze({ manifestMagic: 'WVOP', manifestVersion: 1,
+    maximumObjectBytes: MAXIMUM_IMAGE, maximumChunkBytes: MAXIMUM_CHUNK,
+    maximumChunks: MAXIMUM_STAGED_CHUNKS, prepaidMetadataBytes: 65_536,
+    maximumPrefixBytes: 4078, codeCoalescingBytes: 1_310_720,
+    bindingsMagic: 'WVPC', bindingsVersion: 1, bindingsBytes: 64 });
 const FORMAT = 'windvale-shared-compiler-host-1';
 const DRIVER_SYMBOL = 'Windvale_shared_compiler_driver';
 const CONFIGURATION_SYMBOL = 'Windvale_shared_compiler_configuration';
@@ -55,8 +61,10 @@ const RUNTIME_SOURCES = [
 ];
 const SOURCE_INPUTS = [
     'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
+    'Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv',
     'Compiler/Windvale/Native-X64-Lowering-Metadata.wv',
     'Linker/Startup/X64-Shared-Compiler-Host.wva',
+    'Linker/Startup/X64-Shared-Compiler-Publication.wva',
     'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
     'Runtime/Windvale/Native-Byte-Result-Admission-Core.wv',
     'Projects/Linker/Windvale-Shared-Compiler-Byte-Result-Admission.wvproj',
@@ -75,6 +83,7 @@ const SOURCE_INPUTS = [
     ...RUNTIME_SOURCES,
 ];
 const TOOL_INPUTS = ['Build-Shared-Compiler-Host.mjs', 'Bootstrap-Native-Compiler-Projection.mjs',
+    'Native-Compiler-Publication-Bindings.mjs',
     'Native-Assembly-Object-Cache-Core.mjs', 'Native-Hosted-Application-Cache-Core.mjs',
     'Development-Command-Core.mjs', 'Verify-Wvb.mjs',
     ...['Assemble-Wva', 'Link-Wvo', 'Lower-Wvb-To-Wvo', 'Publish-Wvo', 'Transport-Compiler-Image', 'Package-Hosted-Wvb']
@@ -207,6 +216,7 @@ export async function Readˉpreparedˉsharedˉcompilerˉhost(Recordˉpath, Sha25
             Sameˉpath(await Directory(Value.work), path.dirname(Recordˉpath)) &&
             Value.qualified === false && Value.maximumInputBytes === MAXIMUM_CHUNK &&
             Value.maximumResultBytes === MAXIMUM_CHUNK && Value.maximumObjectBytes === MAXIMUM_OBJECT_BYTES &&
+            Object.entries(PUBLICATION_PROFILE).every(([Name, Expected]) => Value.stagedPublication?.[Name] === Expected) &&
             Value.response?.magic === 'WVNR' && Value.response.version === 1 && Value.response.headerBytes === 32 &&
             Value.physicalArenaBytes === 16_777_216 && Value.runtimeMaximum === 16_777_216 &&
             Value.applicationMaximum === 16_777_216 && Value.rootMaximum === 41_943_040 &&
@@ -349,7 +359,19 @@ async function Buildˉnativeˉcompanion(Options) {
             WINDOWS ? [Source, Object] : [path.join(NATIVE, 'Assemble-Wva.sh'), Source, Object]);
         Objects.push(Object); return Object;
     };
-    const Companion = await Options.Companion(Buffer.from(Configuration));
+    let Publication = null;
+    if (Options.Publicationˉentries === true) {
+        const Object = await Readˉstagedˉnativeˉobject(Sourceˉprefix);
+        Publication = Bindˉpublicationˉentries(Options.Sourceˉbytecode, Object.Chunks, Configuration);
+        const Source = path.join(Work, 'Publication.wva');
+        await writeFile(Source, Publication.Assembly, { flag: 'wx' });
+        await Assemble('Publication', Source);
+    }
+    if (Options.Publicationˉsource !== undefined) {
+        Require(Publication !== null, 'Publication caller requires admitted source bindings.');
+        await Assemble('PublicationDriver', Options.Publicationˉsource);
+    }
+    const Companion = await Options.Companion(Buffer.from(Configuration), Publication);
     Require(Companion && /^[A-Za-z_][A-Za-z0-9_]{0,127}$/u.test(Companion.Entry), 'Invalid source companion entry.');
     const Driverˉsymbol = Companion.Entry;
     let Companionˉsource = Companion.Path;
@@ -599,10 +621,11 @@ async function Main(Arguments) {
         projectionRecord: { path: Recordˉpath, sha256: Hash(Recordˉbytes) },
         maximumInputBytes: MAXIMUM_CHUNK, maximumResultBytes: MAXIMUM_CHUNK,
         maximumObjectBytes: MAXIMUM_OBJECT_BYTES,
+        stagedPublication: PUBLICATION_PROFILE,
         response: { magic: 'WVNR', version: 1, headerBytes: RESPONSE_HEADER_BYTES },
         physicalArenaBytes: 16_777_216, runtimeMaximum: 16_777_216, applicationMaximum: 16_777_216,
         rootMaximum: 41_943_040, sourceInputs: [], commandInputs: [], products: [], qualified: false,
-        selfLowering: 'PendingRetainedSessionOrHosted25Provider' };
+        selfLowering: 'RetainedPublicationSessionExecutionPending' };
     async function Save() { await writeFile(path.join(Work, 'Host-Bridge.json'), JSON.stringify(State, null, 2) + '\n'); }
     async function Step(Name, Tool, Parameters, Stream = false) {
         State.phase = Name; await Save();
@@ -656,6 +679,8 @@ async function Main(Arguments) {
     const Built = await Buildˉnativeˉcompanion({ Work, Step, Deadline: Options.Deadline, Sourceˉprefix, Stagingˉlinker,
         Carrier: path.join(Work, 'Carrier.wvb'), Admissionˉwvb: path.join(Work, 'Admission.wvb'),
         Runtimeˉpaths: RUNTIME_SOURCES.map(Name => path.join(Snapshots, Name)),
+        Publicationˉentries: true, Sourceˉbytecode: Module,
+        Publicationˉsource: path.join(Snapshots, 'Linker/Startup/X64-Shared-Compiler-Publication.wva'),
         Companion: () => ({ Path: path.join(Snapshots, 'Linker/Startup/X64-Shared-Compiler-Host.wva'), Entry: DRIVER_SYMBOL }) });
     const { Candidate, Packet, Providerˉpath, Finalˉconfiguration, Final } = Built;
     for (const Input of Inputs) {
@@ -681,6 +706,7 @@ async function Main(Arguments) {
     const Hostˉrecord = path.join(Work, 'Host-Bridge.json');
     process.stdout.write('shared compiler host status=Produced target=' + TARGET + ' maximum-result-bytes=' +
         MAXIMUM_CHUNK + ' maximum-object-bytes=' + MAXIMUM_OBJECT_BYTES +
+        ' maximum-staged-object-bytes=' + MAXIMUM_IMAGE +
         ' qualified=false self-lowering=pending workspace=' + Work +
         ' host-record=' + Hostˉrecord + ' host-record-sha256=' + Hash(await Read(Hostˉrecord, 1_048_576)) + '\n');
     } catch (Error) {

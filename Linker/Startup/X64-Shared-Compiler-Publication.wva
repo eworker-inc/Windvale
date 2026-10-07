@@ -1,0 +1,675 @@
+windvale-assembly 1
+
+# Private continuation over the host's fresh context11 domain. RCX is its
+# prepaid metadata base, RDX the outer context7, R8 the admitted module base,
+# and R9 its WVSC configuration. Source records use ordinary native backing.
+# Session12000(816B), Cursor12816(64B), Step12880(128B), control13008(128B),
+# manifest13136(6240B), path19584(32768B), copy65536(4MiB). Physical storage
+# starts at4259840. A manifest is written only after exact domain closure.
+symbol local function Publication_budget in .text
+symbol local function Publication_call in .text
+symbol local function Publication_flush in .text
+symbol local function Publication_path in .text
+symbol local function Publication_query_reset in .text
+symbol local function Publication_shared in .text
+symbol local function Publication_write in .text
+symbol export function Windvale_shared_compiler_publication_run in .text
+symbol import function Windvale_budgeted_storage
+symbol import function Windvale_shared_compiler_closure
+symbol import data Windvale_shared_compiler_publication
+symbol import function Windvale_shared_storage
+section code .text align 16
+define Windvale_shared_compiler_publication_run
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r15 rdx
+move r14 r8
+move rbp r9
+load_address r13 Windvale_shared_compiler_publication
+move_u32 eax 20
+store_memory_u32 rsp none 1 32 eax
+load_memory_u32 eax r13 none 1 0
+compare_i32 eax 1129338455
+branch not_equal Failed
+load_memory_u32 eax r13 none 1 4
+compare_i32 eax 1
+branch not_equal Failed
+load_memory_u32 eax r13 none 1 8
+compare_i32 eax 64
+branch not_equal Failed
+load_memory_u32 eax r13 none 1 12
+load_memory_u32 ecx rbp none 1 12
+compare eax ecx
+branch not_equal Failed
+xor eax eax
+move_u32 ecx 12000
+label Clear_metadata
+store_memory_u64 r12 rcx 1 0 rax
+add_i32 ecx 8
+compare_i32 ecx 65536
+branch below Clear_metadata
+store_memory_u64 r12 none 1 13056 r15
+load_memory_u64 rax r12 none 1 8
+test rax rax
+branch equal Failed
+store_memory_u64 r12 none 1 13040 rax
+load_memory_u64 rax r12 none 1 16
+test rax rax
+branch equal Failed
+compare_i32 rax 64
+branch above Failed
+store_memory_u64 r12 none 1 13048 rax
+load_memory_u64 rax r12 none 1 184
+test rax rax
+branch equal Failed
+store_memory_u64 r12 none 1 13120 rax
+xor eax eax
+store_memory_u64 r12 none 1 184 rax
+load_memory_u64 rax r15 none 1 72
+load_memory_u32 ecx rax none 1 40
+test ecx ecx
+branch equal Failed
+compare_i32 ecx 4078
+branch above Failed
+load_memory_u32 edx rax none 1 44
+test edx edx
+branch not_equal Failed
+store_memory_u32 r12 none 1 13080 ecx
+load_memory_u64 rsi rax none 1 32
+test rsi rsi
+branch equal Failed
+xor edx edx
+label Copy_prefix
+load_memory_u8 al rsi rdx 1 0
+store_memory_u8 r12 rdx 1 19584 al
+add_i32 edx 1
+compare edx ecx
+branch below Copy_prefix
+# The host initialized and checked the domain and admitted source mappings.
+# Helpers borrow the still-owned application budget; no Main is invoked here.
+move_u32 eax 21
+store_memory_u32 rsp none 1 32 eax
+move r8 r12
+add_i32 r8 8656
+load_memory_u64 r9 r12 none 1 13120
+test r9 r9
+branch equal Failed
+move_u32 ecx 67108864
+move rax r12
+add_i32 rax 12000
+move_u32 edx 16
+call Publication_call
+test rax rax
+branch not_equal Failed
+load_memory_u32 ecx r13 none 1 36
+load_memory_u32 eax r12 rcx 1 12000
+compare_i32 eax 6
+branch above Failed
+store_memory_u32 r12 none 1 13112 eax
+test eax eax
+branch not_equal Release_session
+load_memory_u32 ecx r13 none 1 56
+load_memory_u32 eax r12 rcx 1 12000
+compare_i32 eax 1
+branch not_equal Failed
+load_memory_u32 ecx r13 none 1 60
+load_memory_u32 eax r12 rcx 1 12000
+test eax eax
+branch equal Failed
+compare_i32 eax 67108864
+branch above Failed
+store_memory_u32 r12 none 1 13032 eax
+load_memory_u32 ecx r13 none 1 40
+load_memory_u32 eax r12 rcx 1 12000
+compare_i32 eax 22
+branch below Failed
+compare_i32 eax 25
+branch above Failed
+store_memory_u32 r12 none 1 13104 eax
+load_memory_u32 ecx r13 none 1 48
+load_memory_u32 eax r12 rcx 1 12000
+load_memory_u32 ecx r13 none 1 52
+load_memory_u32 edx r12 rcx 1 12000
+add eax edx
+branch below Failed
+add_i32 eax 15
+branch below Failed
+and_i32 eax -16
+store_memory_u32 r12 none 1 13108 eax
+move_u32 eax 22
+store_memory_u32 rsp none 1 32 eax
+move r8 r12
+add_i32 r8 12000
+move rax r12
+add_i32 rax 12816
+move_u32 edx 20
+call Publication_call
+test rax rax
+branch not_equal Failed
+label Next_piece
+move_u32 eax 23
+store_memory_u32 rsp none 1 32 eax
+load_memory_u32 eax r12 none 1 12816
+compare_i32 eax 1
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12832
+compare_i32 eax 7
+branch above Failed
+branch equal Publication_complete
+# Cursor is an outgoing value record. The helper may consume its backing;
+# preserve the expected kind before transferring it to the source entry.
+store_memory_u32 r12 none 1 13088 eax
+load_memory_u32 ecx r12 none 1 12864
+load_memory_u32 eax r12 none 1 13008
+compare eax ecx
+branch not_equal Failed
+load_memory_u32 ecx r13 none 1 44
+load_memory_u32 ecx r12 rcx 1 12000
+compare_i32 ecx 2048
+branch above Failed
+load_memory_u32 eax r12 none 1 12848
+compare eax ecx
+branch above Failed
+add_i32 ecx 8
+load_memory_u32 eax r12 none 1 13012
+compare eax ecx
+branch above_equal Failed
+add_i32 eax 1
+store_memory_u32 r12 none 1 13012 eax
+move r8 r12
+add_i32 r8 12000
+move r9 r12
+add_i32 r9 12816
+move rax r12
+add_i32 rax 12880
+move_u32 edx 24
+call Publication_call
+test rax rax
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12880
+test eax eax
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12896
+load_memory_u32 ecx r12 none 1 13088
+compare eax ecx
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12912
+load_memory_u32 edx r12 none 1 13008
+compare eax edx
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12936
+compare_i32 eax 4194304
+branch above Failed
+load_memory_u32 ecx r12 none 1 12940
+compare eax ecx
+branch not_equal Failed
+load_memory_u32 ecx r12 none 1 13032
+subtract ecx edx
+branch below Failed
+compare eax ecx
+branch above Failed
+store_memory_u32 r12 none 1 13068 eax
+add edx eax
+store_memory_u32 r12 none 1 13008 edx
+load_memory_u32 ecx r12 none 1 12992
+compare edx ecx
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12944
+compare_i32 eax 1
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 12960
+compare_i32 eax 7
+branch above Failed
+load_memory_u32 ecx r13 none 1 44
+load_memory_u32 ecx r12 rcx 1 12000
+load_memory_u32 eax r12 none 1 12976
+compare eax ecx
+branch above Failed
+load_memory_u32 eax r12 none 1 13068
+test eax eax
+branch equal Piece_copied
+call Publication_query_reset
+move_u32 eax 10
+store_memory_u32 r12 none 1 8520 eax
+load_memory_u64 rax r12 none 1 12928
+move edx eax
+and_i32 edx 127
+shift_right rax 32
+shift_left rax 32
+or rax rdx
+store_memory_u64 r12 none 1 8536 rax
+load_memory_u32 eax r12 none 1 12928
+shift_right eax 7
+store_memory_u64 r12 none 1 8552 rax
+load_memory_u32 eax r12 none 1 13068
+store_memory_u64 r12 none 1 8560 rax
+call Publication_shared
+test eax eax
+branch not_equal Failed
+load_memory_u64 rax r12 none 1 8584
+test rax rax
+branch equal Failed
+store_memory_u64 r12 none 1 13072 rax
+load_memory_u32 eax r12 none 1 13088
+compare_i32 eax 1
+branch not_equal Flush_before_piece
+load_memory_u32 eax r12 none 1 13016
+test eax eax
+branch equal Copy_piece
+load_memory_u32 ecx r12 none 1 13068
+add eax ecx
+compare_i32 eax 1310720
+branch below_equal Copy_piece
+# Coalesce only code. Prefix, padding, read-only declarations/data, symbols and
+# relocations retain separate resources required by staged linker admission.
+label Flush_before_piece
+call Publication_flush
+test eax eax
+branch not_equal Failed
+label Copy_piece
+load_memory_u64 rsi r12 none 1 13072
+move rdi r12
+add_i32 rdi 65536
+load_memory_u32 eax r12 none 1 13016
+add rdi rax
+load_memory_u32 edx r12 none 1 13068
+xor ecx ecx
+label Copy_words
+move eax edx
+subtract eax ecx
+compare_i32 eax 8
+branch below Copy_tail
+load_memory_u64 rax rsi rcx 1 0
+store_memory_u64 rdi rcx 1 0 rax
+add_i32 ecx 8
+jump_label Copy_words
+label Copy_tail
+compare ecx edx
+branch above_equal Copied_piece
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_tail
+label Copied_piece
+load_memory_u32 eax r12 none 1 13016
+add eax edx
+store_memory_u32 r12 none 1 13016 eax
+load_memory_u32 eax r12 none 1 13088
+compare_i32 eax 1
+branch equal Piece_copied
+call Publication_flush
+test eax eax
+branch not_equal Failed
+label Piece_copied
+# Next cursor cells are scalars. Copy them before transferring the owned Step.
+xor ecx ecx
+label Copy_cursor
+load_memory_u64 rax r12 rcx 1 12944
+store_memory_u64 r12 rcx 1 12816 rax
+add_i32 ecx 8
+compare_i32 ecx 64
+branch below Copy_cursor
+move_u32 eax 24
+store_memory_u32 rsp none 1 32 eax
+move r8 r12
+add_i32 r8 12880
+xor eax eax
+move_u32 edx 32
+call Publication_call
+test rax rax
+branch not_equal Failed
+xor eax eax
+xor ecx ecx
+label Clear_step
+store_memory_u64 r12 rcx 1 12880 rax
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Clear_step
+jump_label Next_piece
+label Publication_complete
+load_memory_u32 eax r12 none 1 12864
+load_memory_u32 ecx r12 none 1 13032
+compare eax ecx
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 13008
+compare eax ecx
+branch not_equal Failed
+label Release_session
+move_u32 eax 25
+store_memory_u32 rsp none 1 32 eax
+move r8 r12
+add_i32 r8 12000
+xor eax eax
+move_u32 edx 28
+call Publication_call
+test rax rax
+branch not_equal Failed
+xor eax eax
+xor ecx ecx
+label Clear_session
+store_memory_u64 r12 rcx 1 12000 rax
+add_i32 ecx 8
+compare_i32 ecx 816
+branch below Clear_session
+# Check live storage and both budgets before teardown can hide a leak.
+move_u32 eax 26
+store_memory_u32 rsp none 1 32 eax
+load_memory_u64 rax r12 none 1 248
+test rax rax
+branch not_equal Failed
+call Publication_query_reset
+move_u32 eax 8
+store_memory_u32 r12 none 1 8520 eax
+load_memory_u64 rax r12 none 1 176
+store_memory_u64 r12 none 1 8576 rax
+call Publication_budget
+test eax eax
+branch not_equal Failed
+load_memory_u64 rax r12 none 1 8592
+compare_i32 rax 16777216
+branch not_equal Failed
+call Publication_query_reset
+move_u32 eax 8
+store_memory_u32 r12 none 1 8520 eax
+load_memory_u64 rax r12 none 1 13120
+store_memory_u64 r12 none 1 8576 rax
+call Publication_budget
+test eax eax
+branch not_equal Failed
+load_memory_u64 rax r12 none 1 8592
+compare_i32 rax 16777216
+branch not_equal Failed
+call Publication_query_reset
+move_u32 eax 7
+store_memory_u32 r12 none 1 8520 eax
+load_memory_u64 rax r12 none 1 13120
+store_memory_u64 r12 none 1 8576 rax
+call Publication_budget
+test eax eax
+branch not_equal Failed
+xor eax eax
+store_memory_u64 r12 none 1 13120 rax
+move_u32 eax 27
+store_memory_u32 rsp none 1 32 eax
+xor ecx ecx
+move rdx r12
+load_memory_u32 eax rbp none 1 40
+add rax r14
+call_register rax
+test rax rax
+branch not_equal Failed
+call Windvale_shared_compiler_closure
+test eax eax
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 13112
+test eax eax
+branch equal Write_manifest
+move_u32 eax 1
+jump_label Finish
+label Write_manifest
+move_u32 eax 28
+store_memory_u32 rsp none 1 32 eax
+call Publication_flush
+test eax eax
+branch not_equal Failed
+load_memory_u32 eax r12 none 1 13024
+load_memory_u32 ecx r12 none 1 13032
+compare eax ecx
+branch not_equal Failed
+move_u32 eax 1347376727
+store_memory_u32 r12 none 1 13136 eax
+move_u32 eax 1
+store_memory_u32 r12 none 1 13140 eax
+load_memory_u32 eax r12 none 1 13020
+test eax eax
+branch equal Failed
+compare_i32 eax 518
+branch above Failed
+store_memory_u32 r12 none 1 13152 eax
+move ecx eax
+shift_left eax 3
+shift_left ecx 2
+add eax ecx
+add_i32 eax 24
+store_memory_u32 r12 none 1 13144 eax
+load_memory_u32 eax r12 none 1 13032
+store_memory_u32 r12 none 1 13148 eax
+move_u32 eax 4194304
+store_memory_u32 r12 none 1 13156 eax
+move_u32 eax 1
+call Publication_path
+move rcx r12
+add_i32 rcx 13136
+load_memory_u32 edx r12 none 1 13144
+call Publication_write
+test eax eax
+branch not_equal Failed
+xor eax eax
+jump_label Finish
+label Failed
+load_memory_u32 eax rsp none 1 32
+label Finish
+add_i32 rsp 40
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+# RAX is the hidden output; EDX selects a bound source-function offset. Native
+# helpers reuse cumulative fuel and depth and receive the same context in R15.
+define Publication_call
+push rbx
+subtract_i32 rsp 32
+load_memory_u32 ebx r13 rdx 1 0
+add rbx r14
+load_memory_u64 r10 r12 none 1 13048
+load_memory_u64 r11 r12 none 1 13040
+move r15 r12
+call_register rbx
+store_memory_u64 r12 none 1 13048 r10
+store_memory_u64 r12 none 1 13040 r11
+load_memory_u64 rcx r12 none 1 184
+or rax rcx
+load_memory_u64 r15 r12 none 1 13056
+add_i32 rsp 32
+pop rbx
+return
+end define
+
+define Publication_query_reset
+xor eax eax
+xor ecx ecx
+label Clear
+store_memory_u64 r12 rcx 1 8512 rax
+add_i32 ecx 8
+compare_i32 ecx 128
+branch below Clear
+move_u32 eax 2
+store_memory_u32 r12 none 1 8512 eax
+move_u32 eax 128
+store_memory_u32 r12 none 1 8516 eax
+move_u32 eax 1
+store_memory_u32 r12 none 1 8528 eax
+return
+end define
+
+define Publication_shared
+subtract_i32 rsp 40
+move r8 r12
+add_i32 r8 6144
+move r9 r12
+add_i32 r9 8512
+call Windvale_shared_storage
+add_i32 rsp 40
+return
+end define
+
+define Publication_budget
+subtract_i32 rsp 40
+move_u32 eax 112
+store_memory_u32 r12 none 1 8516 eax
+move r8 r12
+add_i32 r8 4928
+move r9 r12
+add_i32 r9 8512
+call Windvale_budgeted_storage
+add_i32 rsp 40
+return
+end define
+
+# One complete piece is at most4MiB. Each flush records exact accepted bytes;
+# any failure stops publication without retrying an uncertain write.
+define Publication_flush
+subtract_i32 rsp 40
+load_memory_u32 eax r12 none 1 13016
+test eax eax
+branch equal Empty
+compare_i32 eax 4194304
+branch above Failed
+load_memory_u32 ecx r12 none 1 13020
+compare_i32 ecx 518
+branch above_equal Failed
+xor eax eax
+call Publication_path
+move rcx r12
+add_i32 rcx 65536
+load_memory_u32 edx r12 none 1 13016
+call Publication_write
+test eax eax
+branch not_equal Failed
+load_memory_u32 ecx r12 none 1 13020
+move edx ecx
+shift_left ecx 3
+shift_left edx 2
+add ecx edx
+add_i32 ecx 13160
+load_memory_u32 edx r12 none 1 13020
+store_memory_u32 r12 rcx 1 0 edx
+load_memory_u32 eax r12 none 1 13016
+load_memory_u32 edx r12 none 1 13024
+store_memory_u32 r12 rcx 1 4 edx
+store_memory_u32 r12 rcx 1 8 eax
+add edx eax
+store_memory_u32 r12 none 1 13024 edx
+load_memory_u32 eax r12 none 1 13020
+add_i32 eax 1
+store_memory_u32 r12 none 1 13020 eax
+xor eax eax
+store_memory_u32 r12 none 1 13016 eax
+label Empty
+xor eax eax
+jump_label Finish
+label Failed
+move_u32 eax 1
+label Finish
+add_i32 rsp 40
+return
+end define
+
+# The copied prefix is bounded to4078 UTF-8 bytes. Index0..517 adds at most10
+# ASCII bytes; .wvop adds five. Neither name construction nor writes allocate.
+define Publication_path
+move r8 r12
+add_i32 r8 19584
+load_memory_u32 r9d r12 none 1 13080
+test eax eax
+branch equal Chunk
+move_u32 eax 1870034734
+store_memory_u32 r8 r9 1 0 eax
+move_u32 eax 112
+store_memory_u8 r8 r9 1 4 al
+add_i32 r9d 5
+return
+label Chunk
+move_u32 eax 1969775406
+store_memory_u32 r8 r9 1 0 eax
+move_u32 eax 110
+store_memory_u8 r8 r9 1 4 al
+move_u32 eax 107
+store_memory_u8 r8 r9 1 5 al
+move_u32 eax 45
+store_memory_u8 r8 r9 1 6 al
+add_i32 r9d 7
+load_memory_u32 edx r12 none 1 13020
+xor ecx ecx
+compare_i32 edx 100
+branch below Tens
+move_u32 eax 48
+label Hundreds
+subtract_i32 edx 100
+add_i32 eax 1
+compare_i32 edx 100
+branch above_equal Hundreds
+store_memory_u8 r8 r9 1 0 al
+add_i32 r9d 1
+move_u32 ecx 1
+label Tens
+compare_i32 edx 10
+branch above_equal Write_tens
+test ecx ecx
+branch equal Units
+label Write_tens
+move_u32 eax 48
+label Tens_count
+compare_i32 edx 10
+branch below Tens_ready
+subtract_i32 edx 10
+add_i32 eax 1
+jump_label Tens_count
+label Tens_ready
+store_memory_u8 r8 r9 1 0 al
+add_i32 r9d 1
+label Units
+add_i32 edx 48
+store_memory_u8 r8 r9 1 0 dl
+add_i32 r9d 1
+return
+end define
+
+define Publication_write
+push rbx
+subtract_i32 rsp 32
+load_memory_u64 rax r15 none 1 72
+load_memory_u32 r11d rax none 1 24
+compare r9d r11d
+branch not_equal Write
+load_memory_u64 r10 rax none 1 16
+xor eax eax
+label Input_name
+load_memory_u8 bl r8 rax 1 0
+load_memory_u8 r11b r10 rax 1 0
+compare bl r11b
+branch not_equal Write
+add_i32 eax 1
+compare eax r9d
+branch below Input_name
+jump_label Failed
+label Write
+load_memory_u64 rax r15 none 1 24
+load_memory_u64 rax rax none 1 96
+test rax rax
+branch equal Failed
+call_register rax
+jump_label Finish
+label Failed
+move_u32 eax 1
+label Finish
+add_i32 rsp 32
+pop rbx
+return
+end define
+end section

@@ -1,0 +1,88 @@
+#!wv/1 en@1
+module Compilerˉnativeˉx64ˉloweringˉpublicationˉsession;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉmetadata as Metadata;
+import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+import Foundationˉmemory as Memory;
+
+export record Compilerˉnativeˉx64ˉpublicationˉsession {
+    Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus;
+    Input: bytes;
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan;
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions;
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉsessionˉopen(
+    Input: borrow bytes,
+    Budget: borrow mut Memory.Memoryˉbudget,
+    Maximumˉobjectˉbytes: u32
+) -> Compilerˉnativeˉx64ˉpublicationˉsession effects(memory.allocate) {
+    let Normalized: bytes = Metadata.Compilerˉnativeˉx64ˉmetadataˉnormalize(Input);
+    var Source: bytes = Input;
+    if Bytesˉlength(Normalized) != 0u32 { Source = Normalized; }
+    let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(borrow Source, borrow mut Budget);
+    let Empty: bytes = Bytesˉslice(Source, 0u32, 0u32);
+    var Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉregions(
+            false, 0u32, Empty, Empty, Empty, Empty, Empty, Empty, Empty);
+    var Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus = Plan.Status;
+    if Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        // Machine code is already measured by the plan. Reject its lower bound
+        // before emitting any batches for a smaller complete-object request.
+        if Maximumˉobjectˉbytes == 0u32 || Maximumˉobjectˉbytes > 67108864u32 ||
+            Plan.Machineˉcodeˉbytes > Maximumˉobjectˉbytes ||
+            Plan.Helperˉbytes > Maximumˉobjectˉbytes - Plan.Machineˉcodeˉbytes {
+            Status = Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit;
+        } else {
+            Regions = Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
+                Source, Plan, 4194304u32);
+            if !Regions.Valid || Regions.Objectˉbytes > Maximumˉobjectˉbytes {
+                Status = Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit;
+            }
+        }
+    }
+    return Compilerˉnativeˉx64ˉpublicationˉsession(Status, Source, Plan, Regions);
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉsessionˉbegin(
+    Session: borrow Compilerˉnativeˉx64ˉpublicationˉsession
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉcursor {
+    if Session.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+            false, Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete, 0u32, 0u32);
+    }
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉbegin(Session.Regions);
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉsessionˉnext(
+    Session: borrow Compilerˉnativeˉx64ˉpublicationˉsession,
+    Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉstep {
+    if Session.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉstep(
+            Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉplan,
+            Cursor.Kind, Cursor.Position, Bytesˉslice(Session.Input, 0u32, 0u32),
+            false, Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete, 0u32, 0u32);
+    }
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+        Session.Input, Session.Plan, Session.Regions, Cursor, 4194304u32);
+}
+
+// The native caller transfers one retained record and clears its consumed
+// backing. Ordinary helper cleanup releases the record's semantic shares.
+export fn Compilerˉnativeˉx64ˉpublicationˉsessionˉrelease(
+    Session: Compilerˉnativeˉx64ˉpublicationˉsession
+) -> i32 {
+    return 0;
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉstepˉrelease(
+    Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep
+) -> i32 {
+    return 0;
+}
