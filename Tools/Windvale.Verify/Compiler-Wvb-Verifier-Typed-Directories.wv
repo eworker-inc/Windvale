@@ -4,6 +4,8 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
+data Iˉinstructionˉboundary: bytes = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+data Iˉblockˉboundary: bytes = [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 export record Hˉcontrolˉdirectory {
     Valid: bool;
@@ -106,10 +108,9 @@ export fn Hˉlocalˉshapes(
             // Five-byte internal cells use 64 + payload kind for shape 37.
             // Keep the full nominal u32; stack transfer kinds 26..38 are distinct.
             if Borrowed { Kind = Kind + 64u32; }
-            let Cell: bytes = Bytesˉconcat(
-                Bytesˉslice(Bytesˉfromˉu32ˉlittle(Kind), 0u32, 1u32),
-                Bytesˉfromˉu32ˉlittle(Nominal)
-            );
+            let Cell: bytes = Bytesˉslice(Bytesˉfromˉu64ˉlittle(
+                U64ˉfromˉu32(Nominal) * 256u64 + U64ˉfromˉu32(Kind)
+            ), 0u32, 5u32);
             Chunk = Bytesˉconcat(Chunk, Cell);
             // At most 128 bounded chunks for 8,192 slots, avoiding one growing
             // whole-directory copy for every five-byte cell.
@@ -137,6 +138,8 @@ export fn Iˉcontrolˉdirectory(
     }
     var Boundaries: bytes = Empty;
     var Branches: bytes = Empty;
+    var Boundaryˉchunk: bytes = Empty;
+    var Branchˉchunk: bytes = Empty;
     var Cursor: u32 = 0u32;
     var Previousˉopcode: u32 = 0u32;
     while Cursor < Codeˉlength {
@@ -157,7 +160,7 @@ export fn Iˉcontrolˉdirectory(
             Width = 5u32;
         }
         if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
-            (Opcode >= 151u32 && Opcode <= 153u32) || Opcode == 196u32 ||
+            (Opcode >= 151u32 && Opcode <= 154u32) || Opcode == 196u32 ||
             Opcode == 201u32 || Opcode == 206u32 || Opcode == 207u32 ||
             Opcode == 208u32 || Opcode == 211u32 || Opcode == 221u32 ||
             Opcode == 226u32 || Opcode == 227u32 || Opcode == 228u32 {
@@ -214,91 +217,39 @@ export fn Iˉcontrolˉdirectory(
             return Hˉcontrolˉdirectory(false, Empty, Empty);
         }
 
-        var Boundary: u8 = 1u8;
+        var Boundary: bytes = Iˉinstructionˉboundary;
         if Cursor > 0u32 && (Previousˉopcode == 48u32 ||
             Previousˉopcode == 49u32 || Previousˉopcode == 81u32) {
-            Boundary = 3u8;
+            Boundary = Iˉblockˉboundary;
         }
-        var Chunk: bytes = Bytesˉfromˉu8(Boundary);
-        if Width == 2u32 {
-            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu8(0u8));
+        // A bounded chunk avoids copying the whole directory per instruction.
+        Boundaryˉchunk = Bytesˉconcat(Boundaryˉchunk, Bytesˉslice(Boundary, 0u32, Width));
+        if Bytesˉlength(Boundaryˉchunk) >= 320u32 {
+            Boundaries = Bytesˉconcat(Boundaries, Boundaryˉchunk);
+            Boundaryˉchunk = Empty;
         }
-        if Width == 3u32 {
-            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu16ˉlittle(0u32));
-        }
-        if Width == 5u32 {
-            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu32ˉlittle(0u32));
-        }
-        if Width == 6u32 {
-            Chunk = Bytesˉconcat(
-                Chunk,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(0u32),
-                    Bytesˉfromˉu8(0u8)
-                )
-            );
-        }
-        if Width == 7u32 {
-            Chunk = Bytesˉconcat(
-                Chunk,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(0u32),
-                    Bytesˉfromˉu16ˉlittle(0u32)
-                )
-            );
-        }
-        if Width == 9u32 {
-            Chunk = Bytesˉconcat(
-                Chunk,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(0u32),
-                    Bytesˉfromˉu32ˉlittle(0u32)
-                )
-            );
-        }
-        if Width == 11u32 {
-            Chunk = Bytesˉconcat(
-                Chunk,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(0u32),
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(0u32),
-                        Bytesˉfromˉu16ˉlittle(0u32)
-                    )
-                )
-            );
-        }
-        if Width == 13u32 {
-            Chunk = Bytesˉconcat(
-                Chunk,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(0u32),
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(0u32),
-                        Bytesˉfromˉu32ˉlittle(0u32)
-                    )
-                )
-            );
-        }
-        Boundaries = Bytesˉconcat(Boundaries, Chunk);
 
         if Opcode == 48u32 || Opcode == 49u32 {
-            Branches = Bytesˉconcat(
-                Branches,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Cursor),
-                    Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
-                        Input,
-                        Functionˉcode + Cursor + 1u32
-                    ))
-                )
-            );
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 1u32);
+            Branchˉchunk = Bytesˉconcat(Branchˉchunk, Bytesˉfromˉu64ˉlittle(
+                U64ˉfromˉu32(Target) * 4294967296u64 + U64ˉfromˉu32(Cursor)
+            ));
+            if Bytesˉlength(Branchˉchunk) == 320u32 {
+                Branches = Bytesˉconcat(Branches, Branchˉchunk);
+                Branchˉchunk = Empty;
+            }
         }
         Previousˉopcode = Opcode;
         Cursor = Cursor + Width;
     }
     if Cursor != Codeˉlength {
         return Hˉcontrolˉdirectory(false, Empty, Empty);
+    }
+    if Bytesˉlength(Boundaryˉchunk) > 0u32 {
+        Boundaries = Bytesˉconcat(Boundaries, Boundaryˉchunk);
+    }
+    if Bytesˉlength(Branchˉchunk) > 0u32 {
+        Branches = Bytesˉconcat(Branches, Branchˉchunk);
     }
     if Bytesˉlength(Boundaries) != Codeˉlength {
         return Hˉcontrolˉdirectory(false, Empty, Empty);

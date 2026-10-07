@@ -1616,7 +1616,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=32 foundation-borrow-directory-cases=27 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=145 foundation-borrow-lifetime-cases=51 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=32 foundation-borrow-directory-cases=32 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=41 foundation-borrow-stack-cases=145 foundation-borrow-lifetime-cases=51 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         'foundation-source-ownership-cases=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +

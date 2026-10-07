@@ -60,6 +60,46 @@ fn Equal(Left: bytes, Right: bytes) -> bool {
     return true;
 }
 
+fn Branchˉmodule(Instruction: bytes, Opcode: u8, Target: u32) -> bytes {
+    let Code: u32 = Section(Earlier, 5u32);
+    let Main: bytes = Bytesˉconcat(Instruction, Bytesˉconcat(
+        Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Target)),
+        Bytesˉslice(Earlier, Code + 16u32, 16u32)));
+    let Module: bytes = Bytesˉconcat(Bytesˉslice(Earlier, 0u32, Code + 16u32),
+        Bytesˉconcat(Main, Bytesˉslice(Earlier, Code + 32u32,
+            Bytesˉlength(Earlier) - Code - 32u32)));
+    // The pinned earlier fixture has Main's code length at byte 121.
+    return Word(Word(Module, Code - 4u32, 16u32 + Bytesˉlength(Main)),
+        121u32, Bytesˉlength(Main));
+}
+
+fn Branchˉoperands(Instruction: bytes, Opcode: u8) -> bool {
+    let Width: u32 = Bytesˉlength(Instruction);
+    // Isolate the code-operand phase. Normalization, opcode admission and
+    // stack/type validity retain their independent complete-module cases.
+    let Forward: bytes = Branchˉmodule(Instruction, Opcode, Width + 5u32);
+    if !Equal(Semantic.Fˉcodeˉandˉexports(Forward), Forward) { return false; }
+    let Backward: bytes = Branchˉmodule(Instruction, Opcode, 0u32);
+    if !Equal(Semantic.Fˉcodeˉandˉexports(Backward), Backward) { return false; }
+    if Bytesˉlength(Semantic.Fˉcodeˉandˉexports(
+        Branchˉmodule(Instruction, Opcode, Width + 21u32))) != 0u32 ||
+        Bytesˉlength(Semantic.Fˉcodeˉandˉexports(
+            Branchˉmodule(Instruction, Opcode, 4294967295u32))) != 0u32 { return false; }
+    var Target: u32 = 1u32;
+    while Target < Width {
+        if Bytesˉlength(Semantic.Fˉcodeˉandˉexports(
+            Branchˉmodule(Instruction, Opcode, Target))) != 0u32 { return false; }
+        Target = Target + 1u32;
+    }
+    Target = Width + 1u32;
+    while Target < Width + 5u32 {
+        if Bytesˉlength(Semantic.Fˉcodeˉandˉexports(
+            Branchˉmodule(Instruction, Opcode, Target))) != 0u32 { return false; }
+        Target = Target + 1u32;
+    }
+    return true;
+}
+
 fn Failureˉstage(Input: bytes) -> u32 {
     let Completeˉresult: u32 = Complete.Compilerˉwvbˉverifyˉmetadata(Input);
     var State: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Input);
@@ -206,5 +246,31 @@ export fn Check(Candidate: bytes) -> i32 {
     // Minor 40 normalizes, but still requires E2 or projected Vector metadata.
     if Failureˉstage(Byte(Candidate, 6u32, 40u8)) != 6u32 { return 136; }
     if Complete.Compilerˉwvbˉverifyˉmetadata(Earlier) != 0u32 { return 137; }
+    let Empty: bytes = Bytesˉslice(Earlier, 0u32, 0u32);
+    let Plainˉbranch: bytes = Branchˉmodule(Empty, 48u8, 5u32);
+    let Boolˉliteral: bytes = Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(1u8));
+    let Boolˉbranch: bytes = Branchˉmodule(Boolˉliteral, 49u8, 7u32);
+    if Complete.Compilerˉwvbˉverifyˉmetadata(Plainˉbranch) != 0u32 ||
+        Complete.Compilerˉwvbˉverifyˉmetadata(Boolˉbranch) != 0u32 { return 138; }
+    if Failureˉstage(Branchˉmodule(Empty, 48u8, 1u32)) != 6u32 ||
+        Failureˉstage(Branchˉmodule(Boolˉliteral, 49u8, 3u32)) != 6u32 { return 139; }
+    let Convert: bytes = Bytesˉconcat(Bytesˉfromˉu8(192u8), Bytesˉfromˉu16ˉlittle(257u32));
+    let Literal: bytes = Bytesˉconcat(Bytesˉfromˉu8(193u8), Bytesˉfromˉu8(1u8));
+    let Numeric: bytes = Bytesˉconcat(Bytesˉfromˉu8(194u8), Bytesˉfromˉu16ˉlittle(257u32));
+    let Wideˉconvert: bytes = Bytesˉconcat(Bytesˉfromˉu8(192u8), Bytesˉfromˉu32ˉlittle(0u32));
+    let Wideˉliteral: bytes = Bytesˉconcat(Bytesˉfromˉu8(193u8),
+        Bytesˉconcat(Bytesˉfromˉu8(0u8), Bytesˉfromˉu32ˉlittle(0u32)));
+    let Wideˉnumeric: bytes = Bytesˉconcat(Bytesˉfromˉu8(194u8),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(0u32)));
+    let Floatˉnumeric: bytes = Bytesˉconcat(Bytesˉfromˉu8(194u8),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(19u32), Bytesˉfromˉu64ˉlittle(0u64)));
+    if !Branchˉoperands(Convert, 48u8) || !Branchˉoperands(Literal, 48u8) ||
+        !Branchˉoperands(Numeric, 48u8) || !Branchˉoperands(Wideˉconvert, 48u8) ||
+        !Branchˉoperands(Wideˉliteral, 48u8) || !Branchˉoperands(Wideˉnumeric, 48u8) ||
+        !Branchˉoperands(Floatˉnumeric, 48u8) { return 140; }
+    if !Branchˉoperands(Convert, 49u8) || !Branchˉoperands(Literal, 49u8) ||
+        !Branchˉoperands(Numeric, 49u8) || !Branchˉoperands(Wideˉconvert, 49u8) ||
+        !Branchˉoperands(Wideˉliteral, 49u8) || !Branchˉoperands(Wideˉnumeric, 49u8) ||
+        !Branchˉoperands(Floatˉnumeric, 49u8) { return 141; }
     return 0;
 }

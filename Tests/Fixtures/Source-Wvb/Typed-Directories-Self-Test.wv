@@ -11,7 +11,7 @@ data Scalars: bytes = [1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 17, 18, 19, 20, 25, 
 data Nominals: bytes = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35];
 data Badˉpayloads: bytes = [0, 12, 13, 21, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 65, 255];
 data Badˉshapes: bytes = [0, 12, 13, 21, 31, 32, 33, 38, 65, 255];
-data Fixedˉwidths: bytes = [1, 5, 2, 2, 4, 5, 64, 5, 81, 1, 106, 9, 151, 9, 196, 9, 209, 13, 214, 9, 219, 6, 221, 9, 222, 13, 223, 13, 224, 13, 225, 13];
+data Fixedˉwidths: bytes = [1, 5, 2, 2, 4, 5, 64, 5, 81, 1, 106, 9, 151, 9, 154, 9, 196, 9, 209, 13, 214, 9, 219, 6, 221, 9, 222, 13, 223, 13, 224, 13, 225, 13, 229, 13, 235, 13, 239, 5];
 
 fn Equal(Left: bytes, Right: bytes) -> bool {
     if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
@@ -55,6 +55,29 @@ fn Isˉcontrolˉvalid(Input: bytes) -> bool {
 fn Controlˉrangeˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
     let Value: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Input, Offset, Length);
     return Value.Valid;
+}
+
+fn Variableˉbranchˉboundaries(Instruction: bytes) -> bool {
+    let Width: u32 = Bytesˉlength(Instruction);
+    let Code: bytes = Bytesˉconcat(Instruction, Bytesˉconcat(
+        Cell(48u8, Width + 5u32), Bytesˉfromˉu8(81u8)));
+    let Value: Directories.Hˉcontrolˉdirectory = Control(Code);
+    if !Value.Valid || Bytesˉlength(Value.Boundaries) != Width + 6u32 ||
+        Bytesˉreadˉu8(Value.Boundaries, 0u32) != 1u8 ||
+        Bytesˉreadˉu8(Value.Boundaries, Width) != 1u8 ||
+        Bytesˉreadˉu8(Value.Boundaries, Width + 5u32) != 3u8 { return false; }
+    var Operand: u32 = 1u32;
+    while Operand < Width {
+        if Bytesˉreadˉu8(Value.Boundaries, Operand) != 0u8 { return false; }
+        Operand = Operand + 1u32;
+    }
+    Operand = Width + 1u32;
+    while Operand < Width + 5u32 {
+        if Bytesˉreadˉu8(Value.Boundaries, Operand) != 0u8 { return false; }
+        Operand = Operand + 1u32;
+    }
+    return Equal(Value.Branches, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Width),
+        Bytesˉfromˉu32ˉlittle(Width + 5u32)));
 }
 
 export fn Main() -> i32 {
@@ -218,5 +241,44 @@ export fn Main() -> i32 {
             8u32, 0u32, 8u32, 1u32)) != 0u32 { return 27; }
         Index = Index + 1u32;
     }
+    Index = 319u32;
+    while Index <= 321u32 {
+        let Chunkˉcontrol: Directories.Hˉcontrolˉdirectory =
+            Control(Repeat(Bytesˉfromˉu8(16u8), Index));
+        if !Chunkˉcontrol.Valid || !Equal(Chunkˉcontrol.Boundaries,
+            Repeat(Bytesˉfromˉu8(1u8), Index)) ||
+            Bytesˉlength(Chunkˉcontrol.Branches) != 0u32 { return 28; }
+        let Mixedˉcontrol: Directories.Hˉcontrolˉdirectory =
+            Control(Bytesˉconcat(Repeat(Bytesˉfromˉu8(16u8), Index), Floatˉnumeric));
+        if !Mixedˉcontrol.Valid || !Equal(Mixedˉcontrol.Boundaries,
+            Bytesˉconcat(Repeat(Bytesˉfromˉu8(1u8), Index + 1u32),
+                Repeat(Bytesˉfromˉu8(0u8), 10u32))) { return 29; }
+        Index = Index + 1u32;
+    }
+    Index = 39u32;
+    while Index <= 41u32 {
+        let Manyˉbranches: Directories.Hˉcontrolˉdirectory =
+            Control(Repeat(Cell(48u8, 4294967295u32), Index));
+        if !Manyˉbranches.Valid || Bytesˉlength(Manyˉbranches.Branches) != Index * 8u32 {
+            return 30;
+        }
+        var Branch: u32 = 0u32;
+        while Branch < Index {
+            if Bytesˉreadˉu32ˉlittle(Manyˉbranches.Branches, Branch * 8u32) != Branch * 5u32 ||
+                Bytesˉreadˉu32ˉlittle(Manyˉbranches.Branches, Branch * 8u32 + 4u32) != 4294967295u32 ||
+                Bytesˉreadˉu8(Manyˉbranches.Boundaries, Branch * 5u32 + 1u32) != 0u8 {
+                return 31;
+            }
+            var Flag: u8 = 3u8;
+            if Branch == 0u32 { Flag = 1u8; }
+            if Bytesˉreadˉu8(Manyˉbranches.Boundaries, Branch * 5u32) != Flag { return 31; }
+            Branch = Branch + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if !Variableˉbranchˉboundaries(Convert) || !Variableˉbranchˉboundaries(Literal) ||
+        !Variableˉbranchˉboundaries(Numeric) || !Variableˉbranchˉboundaries(Wideˉconvert) ||
+        !Variableˉbranchˉboundaries(Wideˉliteral) || !Variableˉbranchˉboundaries(Wideˉnumeric) ||
+        !Variableˉbranchˉboundaries(Floatˉnumeric) { return 32; }
     return 42;
 }

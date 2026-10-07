@@ -3156,10 +3156,7 @@ fn Fˉinstructionˉoperandsˉareˉvalid(
     Firstˉvector: u32,
     Firstˉsequence: u32,
     Dataˉpayload: u32,
-    Dataˉcount: u32,
-    Codeˉpayload: u32,
-    Codeˉoffset: u32,
-    Codeˉlength: u32
+    Dataˉcount: u32
 ) -> bool {
     var Typeˉkind: u32 = 0u32;
     var Typeˉnameˉlength: u32 = 0u32;
@@ -3175,9 +3172,6 @@ fn Fˉinstructionˉoperandsˉareˉvalid(
     var Dataˉskip: u32 = 0u32;
     var Targetˉtypeˉcursor: u32 = 0u32;
     var Targetˉtypeˉindex: u32 = 0u32;
-    var Boundary: u32 = 0u32;
-    var Boundaryˉopcode: u32 = 0u32;
-    var Boundaryˉwidth: u32 = 0u32;
     if Opcode == 64u32 {
         if Operand >= Functionˉcount { return false; }
     }
@@ -3326,26 +3320,6 @@ fn Fˉinstructionˉoperandsˉareˉvalid(
         if Dataˉkind != Requiredˉdataˉkind { return false; }
     }
 
-    var Needsˉboundary: bool = false;
-    if Opcode == 48u32 { Needsˉboundary = true; }
-    if Opcode == 49u32 { Needsˉboundary = true; }
-    if Needsˉboundary {
-        if Operand >= Codeˉlength { return false; }
-        Boundary = 0u32;
-        while Boundary < Operand {
-            Boundaryˉopcode = U32ˉfromˉu8(
-                Bytesˉreadˉu8(
-                    Input,
-                    Codeˉpayload + Codeˉoffset + Boundary
-                )
-            );
-            Boundaryˉwidth = Fˉboundaryˉinstructionˉwidth(
-                Boundaryˉopcode
-            );
-            Boundary = Boundary + Boundaryˉwidth;
-        }
-        if Boundary != Operand { return false; }
-    }
     return true;
 }
 
@@ -3530,6 +3504,8 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             }
         }
 
+        var Functionˉcontrol: Typedˉdirectories.Hˉcontrolˉdirectory =
+            Typedˉdirectories.Hˉcontrolˉdirectory(false, Invalid, Invalid);
         Cursor = 0u32;
         while Cursor < Codeˉlength {
             Opcode = U32ˉfromˉu8(
@@ -3758,11 +3734,24 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 Foreignˉcallˉinstructions = Foreignˉcallˉinstructions + 1u32;
                 if Foreignˉcallˉinstructions > 4096u32 { return Invalid; }
             }
+            if Opcode == 48u32 || Opcode == 49u32 {
+                // Build once, only for functions with branches; operands are
+                // never instruction boundaries, including variable-width ones.
+                if !Functionˉcontrol.Valid {
+                    Functionˉcontrol = Typedˉdirectories.Iˉcontrolˉdirectory(
+                        Input, Codeˉpayload + Codeˉoffset, Codeˉlength);
+                    if !Functionˉcontrol.Valid { return Invalid; }
+                }
+                if Operand >= Codeˉlength ||
+                    Bytesˉreadˉu8(Functionˉcontrol.Boundaries, Operand) == 0u8 {
+                    return Invalid;
+                }
+            }
             if !Fˉinstructionˉoperandsˉareˉvalid(
                 Input, Opcode, Operand, Secondˉoperand, Functionˉcount,
                 Capabilityˉcount, Typesˉpayload, Typeˉcount,
                 Firstˉenum, Firstˉvariant, Firstˉarray, Firstˉvector, Firstˉsequence,
-                Dataˉpayload, Dataˉcount, Codeˉpayload, Codeˉoffset, Codeˉlength
+                Dataˉpayload, Dataˉcount
             ) { return Invalid; }
             Cursor = Cursor + Width;
         }
