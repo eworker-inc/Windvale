@@ -167,22 +167,37 @@ export fn Compilerˉnativeˉx64ˉaddˉallˉliveˉrecordˉinterference(
     return Result;
 }
 
-fn Interferenceˉrowˉor(
-    Row: bytes,
-    Events: bytes,
-    Snapshotˉoffset: u32,
-    Rowˉbytes: u32
-) -> bytes {
-    var Result: bytes = Empty(Row);
-    var Index: u32 = 0u32;
-    while Index < Rowˉbytes {
-        let Combined: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Row, Index)) |
-            U32ˉfromˉu8(Bytesˉreadˉu8(Events, Snapshotˉoffset + Index));
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉslice(Bytesˉfromˉu32ˉlittle(Combined), 0u32, 1u32)
-        );
-        Index = Index + 1u32;
+// A short final word reads exactly its admitted bytes, never the following row.
+fn Interferenceˉreadˉword(Input: borrow bytes, Offset: u32, Width: u32) -> u32 {
+    if Width == 4u32 { return Bytesˉreadˉu32ˉlittle(Input, Offset); }
+    var Result: u32 = 0u32;
+    var Byte: u32 = 0u32;
+    while Byte < Width {
+        Result = Result | (U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Byte)) << (Byte * 8u32));
+        Byte = Byte + 1u32;
+    }
+    return Result;
+}
+
+// Accumulate a word in scalar storage and materialize it only after all events.
+fn Interferenceˉword(Matrix: borrow bytes, Events: borrow bytes, Left: u32,
+    Rowˉbytes: u32, Index: u32, Width: u32) -> u32 {
+    var Result: u32 = Interferenceˉreadˉword(borrow Matrix, Left * Rowˉbytes + Index, Width);
+    let Eventˉbytes: u32 = 4u32 + Rowˉbytes;
+    let Eventsˉlength: u32 = Bytesˉlength(Events);
+    var Cursor: u32 = 0u32;
+    while Cursor < Eventsˉlength {
+        let Value: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor);
+        var Relevant: bool = Value == Left;
+        if Value == 4294967295u32 {
+            let Liveˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Events,
+                Cursor + 4u32 + Left / 8u32));
+            Relevant = (Liveˉbyte & (1u32 << (Left % 8u32))) != 0u32;
+        }
+        if Relevant {
+            Result = Result | Interferenceˉreadˉword(borrow Events, Cursor + 4u32 + Index, Width);
+        }
+        Cursor = Cursor + Eventˉbytes;
     }
     return Result;
 }
@@ -200,31 +215,16 @@ export fn Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
     var Result: bytes = Empty(Matrix);
     var Left: u32 = 0u32;
     while Left < Count {
-        var Row: bytes = Bytesˉslice(
-            Matrix,
-            Left * Rowˉbytes,
-            Rowˉbytes
-        );
-        var Cursor: u32 = 0u32;
-        while Cursor < Bytesˉlength(Events) {
-            let Value: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor);
-            var Relevant: bool = Value == Left;
-            if Value == 4294967295u32 {
-                let Liveˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Events,
-                    Cursor + 4u32 + Left / 8u32
-                ));
-                Relevant = (Liveˉbyte & (1u32 << (Left % 8u32))) != 0u32;
-            }
-            if Relevant {
-                Row = Interferenceˉrowˉor(
-                    Row,
-                    Events,
-                    Cursor + 4u32,
-                    Rowˉbytes
-                );
-            }
-            Cursor = Cursor + Eventˉbytes;
+        var Row: bytes = Empty(Matrix);
+        var Index: u32 = 0u32;
+        while Index < Rowˉbytes {
+            var Width: u32 = Rowˉbytes - Index;
+            if Width > 4u32 { Width = 4u32; }
+            let Word: u32 = Interferenceˉword(borrow Matrix, borrow Events, Left, Rowˉbytes, Index, Width);
+            var Encoded: bytes = Bytesˉfromˉu32ˉlittle(Word);
+            if Width < 4u32 { Encoded = Bytesˉslice(Encoded, 0u32, Width); }
+            Row = Bytesˉconcat(Row, Encoded);
+            Index = Index + Width;
         }
         Result = Bytesˉconcat(Result, Row);
         Left = Left + 1u32;

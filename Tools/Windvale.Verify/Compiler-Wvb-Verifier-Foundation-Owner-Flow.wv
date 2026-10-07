@@ -733,27 +733,37 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
                 while Edge < 2u32 {
                     let Target: u32 = Bytesˉreadˉu32ˉlittle(Graph.Edges, Selected * 8u32 + Edge * 4u32);
                     if Target != 4294967295u32 {
-                        let Cost: u32 = Bytesˉlength(Entries) * 3u32 + Stride + Count * 3u32;
-                        if Cost > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
-                        Work = Work + Cost;
-                        var Merged: bytes = Empty;
-                        var Chunk: bytes = Empty;
+                        // Compare without materializing a row when the incoming
+                        // state adds no bits; the scan remains charged and bounded.
+                        let Comparison: u32 = Stride * 3u32;
+                        if Comparison > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+                        Work = Work + Comparison;
                         var Changed: bool = false;
-                        var Slot: u32 = 0u32;
-                        while Slot < Stride {
-                            let Old: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Slot));
-                            let New: u32 = Old | U32ˉfromˉu8(Bytesˉreadˉu8(State, Slot));
-                            if New != Old { Changed = true; }
-                            var Step: u32 = Bytesˉlength(Chunk) + 1u32;
-                            if Bytesˉlength(Chunk) == 63u32 { Step = Step + Bytesˉlength(Merged) + 64u32; }
-                            if Step > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
-                            Work = Work + Step;
-                            Chunk = Bytesˉconcat(Chunk, Bytesˉslice(Bytesˉfromˉu32ˉlittle(New), 0u32, 1u32));
-                            if Bytesˉlength(Chunk) == 64u32 { Merged = Bytesˉconcat(Merged, Chunk); Chunk = Empty; }
-                            Slot = Slot + 1u32;
+                        var Compared: u32 = 0u32;
+                        while Compared < Stride {
+                            let Comparedˉold: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Compared));
+                            if (Comparedˉold | U32ˉfromˉu8(Bytesˉreadˉu8(State, Compared))) != Comparedˉold { Changed = true; }
+                            Compared = Compared + 1u32;
                         }
-                        Merged = Bytesˉconcat(Merged, Chunk);
                         if Changed {
+                            let Cost: u32 = Bytesˉlength(Entries) * 3u32 + Stride + Count * 3u32;
+                            if Cost > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+                            Work = Work + Cost;
+                            var Merged: bytes = Empty;
+                            var Chunk: bytes = Empty;
+                            var Slot: u32 = 0u32;
+                            while Slot < Stride {
+                                let Old: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Slot));
+                                let New: u32 = Old | U32ˉfromˉu8(Bytesˉreadˉu8(State, Slot));
+                                var Step: u32 = Bytesˉlength(Chunk) + 1u32;
+                                if Bytesˉlength(Chunk) == 63u32 { Step = Step + Bytesˉlength(Merged) + 64u32; }
+                                if Step > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+                                Work = Work + Step;
+                                Chunk = Bytesˉconcat(Chunk, Bytesˉslice(Bytesˉfromˉu32ˉlittle(New), 0u32, 1u32));
+                                if Bytesˉlength(Chunk) == 64u32 { Merged = Bytesˉconcat(Merged, Chunk); Chunk = Empty; }
+                                Slot = Slot + 1u32;
+                            }
+                            Merged = Bytesˉconcat(Merged, Chunk);
                             Entries = Bytesˉconcat(Bytesˉslice(Entries, 0u32, Target * Stride),
                                 Bytesˉconcat(Merged, Bytesˉslice(Entries, (Target + 1u32) * Stride,
                                     Bytesˉlength(Entries) - (Target + 1u32) * Stride)));

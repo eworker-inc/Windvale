@@ -659,19 +659,6 @@ fn Buildˉstorage(
     Instructions: u32,
     Shared: Sharedˉliveness.Plan
 ) -> bytes {
-    let Livenessˉcells: u32 = Blocks * Recordˉlocals.Count;
-    let Uses: bytes = Cellˉeventˉmap(
-        Input,
-        Cellˉevents,
-        1u8,
-        Livenessˉcells
-    );
-    let Definitions: bytes = Cellˉeventˉmap(
-        Input,
-        Cellˉevents,
-        2u8,
-        Livenessˉcells
-    );
     var Persistent: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
         Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(Empty(Input), 4294967295u32);
     if Nominalˉtypes.Compilerˉnativeˉx64ˉsharedˉminor(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
@@ -679,6 +666,9 @@ fn Buildˉstorage(
         Persistent = Localˉliveness.Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
             Input, Codeˉoffset, Recordˉlocals, Types, Shared.Rows, Shared.Locals, Shared.Rowˉbytes);
     } else {
+        let Livenessˉcells: u32 = Blocks * Recordˉlocals.Count;
+        let Uses: bytes = Cellˉeventˉmap(Input, Cellˉevents, 1u8, Livenessˉcells);
+        let Definitions: bytes = Cellˉeventˉmap(Input, Cellˉevents, 2u8, Livenessˉcells);
         Persistent =
         Localˉliveness.Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
             Input,

@@ -88,6 +88,8 @@ fn Joined(First: bytes, Second: bytes, Limit: u32) -> Buffer {
         return Rejected(First, 0u32);
     }
     let Length: u32 = Firstˉlength + Secondˉlength;
+    if Firstˉlength == 0u32 { return Buffer(true, Second, Length); }
+    if Secondˉlength == 0u32 { return Buffer(true, First, Length); }
     return Buffer(true, Bytesˉconcat(First, Second), Length);
 }
 fn Zeroes(Input: bytes, Length: u32, Limit: u32) -> Buffer {
@@ -651,13 +653,28 @@ fn Unionˉbytes(Entries: bytes, First: u32, Second: u32,
         var Cursor: u32 = Start;
         var Leafˉwork: u32 = 0u32;
         while Cursor < End {
-            let Cost: u32 = Bytesˉlength(Leaf) + 10u32;
+            var Width: u32 = End - Cursor;
+            if Width > 4u32 { Width = 4u32; }
+            let Cost: u32 = Bytesˉlength(Leaf) + 4u32 + Width * 4u32;
             if Cost > Limit - Leafˉwork { return Rejected(Entries, Leafˉwork); }
-            let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, First + Cursor)) |
-                U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Second + Cursor));
-            Leaf = Bytesˉconcat(Leaf, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32));
+            var Value: u32 = 0u32;
+            if Width == 4u32 {
+                Value = Bytesˉreadˉu32ˉlittle(Entries, First + Cursor) |
+                    Bytesˉreadˉu32ˉlittle(Entries, Second + Cursor);
+            } else {
+                var Byte: u32 = 0u32;
+                while Byte < Width {
+                    let Combined: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, First + Cursor + Byte)) |
+                        U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Second + Cursor + Byte));
+                    Value = Value | (Combined << (Byte * 8u32));
+                    Byte = Byte + 1u32;
+                }
+            }
+            var Chunk: bytes = Bytesˉfromˉu32ˉlittle(Value);
+            if Width < 4u32 { Chunk = Bytesˉslice(Chunk, 0u32, Width); }
+            Leaf = Bytesˉconcat(Leaf, Chunk);
             Leafˉwork = Leafˉwork + Cost;
-            Cursor = Cursor + 1u32;
+            Cursor = Cursor + Width;
         }
         return Buffer(true, Leaf, Leafˉwork);
     }
@@ -880,6 +897,7 @@ fn Resourceˉlocal(Types: bytes, Identities: bytes, Local: u32) -> bool {
     let Type: u8 = Bytesˉreadˉu8(Types, Local);
     if Type == 3u8 || Type == 6u8 || Type == 7u8 ||
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) { return true; }
+    if Type != 8u8 && Type != 10u8 { return false; }
     let Identity: u32 = Bytesˉreadˉu32ˉlittle(Identities, Local * 4u32);
     return (Type == 8u8 && Identity == 39u32) || (Type == 10u8 && Identity == 25u32);
 }
@@ -909,25 +927,37 @@ fn Transposed(Matrix: bytes, Locals: u32, Blocks: u32,
     First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
     if Depth > 19u32 { return Rejected(Matrix, 0u32); }
     if End - First <= 16u32 {
+        let Packed: u32 = Packedˉbytes(Locals);
+        let Blockˉbytes: u32 = Packedˉbytes(Blocks);
         var Leaf: bytes = Emptyˉbytes(Matrix);
         var Leafˉwork: u32 = 0u32;
         var Cursor: u32 = First;
         while Cursor < End {
-            let Cost: u32 = Bytesˉlength(Leaf) + 32u32;
+            var Width: u32 = End - Cursor;
+            if Width > 4u32 { Width = 4u32; }
+            let Cost: u32 = Bytesˉlength(Leaf) + 4u32 + Width * 36u32;
             if Cost > Limit - Leafˉwork { return Rejected(Matrix, Leafˉwork); }
-            let Packed: u32 = Packedˉbytes(Locals);
-            let Block: u32 = Cursor / Packed;
-            let Local: u32 = (Cursor % Packed) * 8u32;
-            var Value: u32 = 0u32;
-            var Bit: u32 = 0u32;
-            while Bit < 8u32 && Local + Bit < Locals {
-                let Byte: u8 = Bytesˉreadˉu8(Matrix, (Local + Bit) * Packedˉbytes(Blocks) + Block / 8u32);
-                if (U32ˉfromˉu8(Byte) & (1u32 << (Block % 8u32))) != 0u32 { Value = Value | (1u32 << Bit); }
-                Bit = Bit + 1u32;
+            var Word: u32 = 0u32;
+            var Byteˉindex: u32 = 0u32;
+            while Byteˉindex < Width {
+                let Position: u32 = Cursor + Byteˉindex;
+                let Block: u32 = Position / Packed;
+                let Local: u32 = (Position % Packed) * 8u32;
+                var Value: u32 = 0u32;
+                var Bit: u32 = 0u32;
+                while Bit < 8u32 && Local + Bit < Locals {
+                    let Byte: u8 = Bytesˉreadˉu8(Matrix, (Local + Bit) * Blockˉbytes + Block / 8u32);
+                    if (U32ˉfromˉu8(Byte) & (1u32 << (Block % 8u32))) != 0u32 { Value = Value | (1u32 << Bit); }
+                    Bit = Bit + 1u32;
+                }
+                Word = Word | (Value << (Byteˉindex * 8u32));
+                Byteˉindex = Byteˉindex + 1u32;
             }
-            Leaf = Bytesˉconcat(Leaf, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32));
+            var Chunk: bytes = Bytesˉfromˉu32ˉlittle(Word);
+            if Width < 4u32 { Chunk = Bytesˉslice(Chunk, 0u32, Width); }
+            Leaf = Bytesˉconcat(Leaf, Chunk);
             Leafˉwork = Leafˉwork + Cost;
-            Cursor = Cursor + 1u32;
+            Cursor = Cursor + Width;
         }
         return Buffer(true, Leaf, Leafˉwork);
     }

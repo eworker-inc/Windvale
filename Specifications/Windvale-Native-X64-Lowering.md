@@ -74,6 +74,11 @@ copy lengths before allocation. Refusal publishes no partial dependencies;
 the existing 8,192-row and 16 MiB work limits remain unchanged.
 Local-slot lookup walks backward to the last matching map entry and charges
 only inspected entries; virtual operand slots require no map scan.
+Successor-state joins first compare the incoming loan bits with the retained
+row, charging both reads and the union before the scan. A join that adds no
+bits retains the existing row and pending state. Only a changed join constructs
+and copies a replacement; its materialization remains charged before allocation.
+The dependency bytes, first-observation order and 16 MiB work bound are unchanged.
 The native function reader separates parameter/return metadata from local
 storage tables. Signature-table construction and direct-call checks validate
 every local shape and code-metadata bound but retain only parameter tables;
@@ -85,7 +90,25 @@ is processed once per resource local. Functions with loan dependencies retain
 the bounded fixed-point analysis. Its non-publishing instruction passes retain
 one working live boundary instead of a recursive chain of prior boundaries.
 Publishing uses leaves of at most sixteen instructions and balanced row joins;
-all materialized copies remain charged to the same work limit. Resource-local
+all materialized copies remain charged to the same work limit. Boundary
+unions process up to four bytes in a scalar word before constructing
+each output fragment. A short final word reads only the remaining row bytes;
+the bounded work charge covers both inputs, word construction and all copied
+output bytes. Record interference also accumulates each word in scalar storage
+across all relevant events, then materializes the final row once instead of
+allocating a replacement for each event. Its observation helpers borrow the
+same immutable matrix and event backing and retain the event length outside
+the scan; scalar returns carry no share. Transposition also constructs up to
+four output bytes per word, retaining both packed row widths outside the bit
+loops and charging the reads, word construction and copied output before
+allocation. Empty-sided table joins reuse the nonempty immutable value after
+the existing length and work checks. Scalar-local classification avoids reading
+an identity when the type cannot represent a resource-bearing wrapper.
+Record storage constructs the older
+use/definition maps only for the non-shared path that consumes them. These
+changes preserve the published lifetime rows, interference bits and native
+layout; they do not add collection APIs or complete mutable working-storage
+integration. Resource-local
 classification includes every admitted record and variant tag through the
 canonical nominal-type predicate. Both paths publish the same instruction-level
 ownership rows, and an incomplete analysis refuses instead of authorizing
@@ -1101,8 +1124,12 @@ compiler host construction.
 
 It owns the supplied budget and lends it exclusively to the core. This
 ABI-25/context-11 entry and its shared compiler host are candidates; their
-generated execution remains pending. Retained adapters preserve the earlier
-one-input interface and recorded qualification. The hosted shell remains
+focused generated execution passes on Windows and real Debian for shared-value
+source cases, the compiler's signature and machine-code-directory serializer and
+object-staging consumers. Full compiler self-lowering, installed-toolchain
+promotion and broader target qualification remain open. Retained adapters
+preserve the earlier one-input interface and recorded qualification. The hosted
+shell remains
 `Compiler/Windvale/Native-X64-Lowering-Tool.wv`:
 
 ```text

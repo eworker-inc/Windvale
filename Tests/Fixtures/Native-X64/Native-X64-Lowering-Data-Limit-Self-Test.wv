@@ -16,6 +16,7 @@ import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
 import Compilerˉnativeˉx64ˉloweringˉsharedˉlocalˉliveness as Liveness;
 import Compilerˉnativeˉx64ˉloweringˉsharedˉaggregates as Sharedˉaggregates;
 import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉallocation as Allocation;
 
 fn Exactˉdataˉsection() -> bytes {
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(1u32);
@@ -857,6 +858,52 @@ fn Repeatedˉbyte(Value: u8, Count: u32) -> bytes {
 fn Localˉinstruction(Opcode: u8, Operand: u32) -> bytes {
     return Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Operand));
 }
+fn Recordˉinterferenceˉwords() -> bool {
+    var Case: u32 = 0u32;
+    while Case < 11u32 {
+        var Count: u32 = 0u32;
+        if Case == 1u32 { Count = 1u32; }
+        if Case == 2u32 { Count = 8u32; }
+        if Case == 3u32 { Count = 9u32; }
+        if Case == 4u32 { Count = 24u32; }
+        if Case == 5u32 { Count = 25u32; }
+        if Case == 6u32 { Count = 32u32; }
+        if Case == 7u32 { Count = 33u32; }
+        if Case == 8u32 { Count = 128u32; }
+        if Case == 9u32 { Count = 129u32; }
+        if Case == 10u32 { Count = 1024u32; }
+        let Rowˉbytes: u32 = (Count + 7u32) / 8u32;
+        let Matrix: bytes = Repeatedˉbyte(16u8, Count * Rowˉbytes);
+        var Events: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32), Repeatedˉbyte(85u8, Rowˉbytes));
+        Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Count / 2u32), Repeatedˉbyte(170u8, Rowˉbytes)));
+        Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32), Repeatedˉbyte(195u8, Rowˉbytes)));
+        // Repeated observations are idempotent. Known patterns give a scalar
+        // oracle independent of row construction and machine-word boundaries.
+        Events = Bytesˉconcat(Events, Events);
+        let Built: bytes = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(Matrix, Events, Count);
+        if Bytesˉlength(Built) != Count * Rowˉbytes { return false; }
+        var Left: u32 = 0u32;
+        while Left < Count {
+            let Mask: u32 = 1u32 << (Left % 8u32);
+            var Expected: u32 = 16u32;
+            if (85u32 & Mask) != 0u32 { Expected = Expected | 85u32; }
+            if Left == Count / 2u32 { Expected = Expected | 170u32; }
+            if (195u32 & Mask) != 0u32 { Expected = Expected | 195u32; }
+            var Byte: u32 = 0u32;
+            while Byte < Rowˉbytes {
+                if U32ˉfromˉu8(Bytesˉreadˉu8(Built, Left * Rowˉbytes + Byte)) != Expected { return false; }
+                Byte = Byte + 1u32;
+            }
+            Left = Left + 1u32;
+        }
+        let Truncated: bytes = Bytesˉslice(Events, 0u32, Bytesˉlength(Events) - 1u32);
+        if !Sharedˉbytes.Bytesˉareˉequal(Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(Matrix, Truncated, Count), Matrix) {
+            return false;
+        }
+        Case = Case + 1u32;
+    }
+    return true;
+}
 fn Emptyˉroots() -> bytes {
     return Bytesˉconcat(Textˉtoˉutf8("WvLR"), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
         Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(0u32))));
@@ -925,6 +972,51 @@ fn Recordˉbranchˉliveness() -> bool {
                 Liveness.Edgeˉendingˉmask(Plan, 2u32, 5u32, 0u32) != 0u32 { return false; }
         }
         Tag = Tag + 1u32;
+    }
+    return true;
+}
+fn Wideˉbranchˉliveness() -> bool {
+    let Five: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8), Repeatedˉbyte(0u8, 4u32));
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let One: bytes = Bytesˉfromˉu8(1u8);
+    let Instructions: bytes = Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(0u8)),
+        Bytesˉconcat(Five, Bytesˉconcat(Five, Bytesˉconcat(Five, Bytesˉconcat(One, Bytesˉconcat(Five, One))))));
+    let Blocks: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(7u32), Bytesˉfromˉu32ˉlittle(18u32)));
+    let Edges: bytes = Bytesˉconcat(Localˉinstruction(2u8, 18u32),
+        Bytesˉconcat(Localˉinstruction(3u8, 0u32), Localˉinstruction(3u8, 0u32)));
+    var Case: u32 = 0u32;
+    while Case < 11u32 {
+        var Locals: u32 = 1u32;
+        if Case == 1u32 { Locals = 7u32; }
+        if Case == 2u32 { Locals = 24u32; }
+        if Case == 3u32 { Locals = 25u32; }
+        if Case == 4u32 { Locals = 31u32; }
+        if Case == 5u32 { Locals = 32u32; }
+        if Case == 6u32 { Locals = 33u32; }
+        if Case == 7u32 { Locals = 127u32; }
+        if Case == 8u32 { Locals = 128u32; }
+        if Case == 9u32 { Locals = 129u32; }
+        if Case == 10u32 { Locals = 2047u32; }
+        let Last: u32 = Locals - 1u32;
+        let Middle: u32 = Locals / 2u32;
+        let Code: bytes = Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu8(2u8), Bytesˉfromˉu8(1u8)),
+            Bytesˉconcat(Localˉinstruction(49u8, 18u32), Bytesˉconcat(Localˉinstruction(4u8, 0u32),
+            Bytesˉconcat(Localˉinstruction(4u8, Last), Bytesˉconcat(Return, Bytesˉconcat(Localˉinstruction(4u8, Middle), Return))))));
+        let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 0u32,
+            Repeatedˉbyte(6u8, Locals), Repeatedˉbyte(255u8, Locals * 4u32), Instructions, Blocks, Edges, Emptyˉroots());
+        if !Plan.Valid || Bytesˉlength(Plan.Rows) != 7u32 * Plan.Rowˉbytes || Plan.Work > 1048576u32 { return false; }
+        var Local: u32 = 0u32;
+        while Local < Locals {
+            let Joined: bool = Local == 0u32 || Local == Last || Local == Middle;
+            if Liveness.Liveˉbefore(Plan, 0u32, Local) != Joined || Liveness.Liveˉafter(Plan, 1u32, Local) != Joined ||
+                Liveness.Liveˉbefore(Plan, 2u32, Local) != (Local == 0u32 || Local == Last) ||
+                Liveness.Liveˉbefore(Plan, 3u32, Local) != (Local == Last) ||
+                Liveness.Liveˉbefore(Plan, 5u32, Local) != (Local == Middle) ||
+                Liveness.Liveˉafter(Plan, 4u32, Local) || Liveness.Liveˉafter(Plan, 6u32, Local) { return false; }
+            Local = Local + 1u32;
+        }
+        Case = Case + 1u32;
     }
     return true;
 }
@@ -1245,9 +1337,10 @@ export fn Main() -> i32 {
     if !Allocationˉresultˉshapes() { return 12; }
     let Created: i32 = Variantˉcreation();
     if Created != 0 { return Created; }
-    if !Loopˉliveness() || !Recordˉbranchˉliveness() { return 14; }
+    if !Loopˉliveness() || !Recordˉbranchˉliveness() || !Wideˉbranchˉliveness() { return 14; }
     if !Longˉliveness() || !Endingˉmasks() { return 15; }
     if !Borrowˉliveness() { return 16; }
     if !Oversizedˉliveness() { return 17; }
+    if !Recordˉinterferenceˉwords() { return 18; }
     return 42;
 }
