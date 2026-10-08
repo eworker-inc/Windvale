@@ -4,9 +4,6 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
-data Iˉinstructionˉboundary: bytes = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-data Iˉblockˉboundary: bytes = [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
 export record Hˉcontrolˉdirectory {
     Valid: bool;
     Boundaries: bytes;
@@ -157,6 +154,9 @@ export fn Iˉcontrolˉdirectory(
     var Boundaries: bytes = Empty;
     var Branches: bytes = Empty;
     var Boundaryˉchunk: bytes = Empty;
+    var Boundaryˉlow: u32 = 0u32;
+    var Boundaryˉhigh: u32 = 0u32;
+    var Boundaryˉbytes: u32 = 0u32;
     var Branchˉchunk: bytes = Empty;
     var Cursor: u32 = 0u32;
     var Previousˉopcode: u32 = 0u32;
@@ -235,16 +235,30 @@ export fn Iˉcontrolˉdirectory(
             return Hˉcontrolˉdirectory(false, Empty, Empty);
         }
 
-        var Boundary: bytes = Iˉinstructionˉboundary;
+        var Boundary: u32 = 1u32;
         if Cursor > 0u32 && (Previousˉopcode == 48u32 ||
             Previousˉopcode == 49u32 || Previousˉopcode == 81u32) {
-            Boundary = Iˉblockˉboundary;
+            Boundary = 3u32;
         }
-        // A bounded chunk avoids copying the whole directory per instruction.
-        Boundaryˉchunk = Bytesˉconcat(Boundaryˉchunk, Bytesˉslice(Boundary, 0u32, Width));
-        if Bytesˉlength(Boundaryˉchunk) >= 320u32 {
-            Boundaries = Bytesˉconcat(Boundaries, Boundaryˉchunk);
-            Boundaryˉchunk = Empty;
+        // Only the first byte of an instruction is marked. Accumulate eight
+        // bytes in two scalars before allocating; widths at most 13 flush twice.
+        if Boundaryˉbytes < 4u32 {
+            Boundaryˉlow = Boundaryˉlow | (Boundary << (Boundaryˉbytes * 8u32));
+        } else {
+            Boundaryˉhigh = Boundaryˉhigh | (Boundary << ((Boundaryˉbytes - 4u32) * 8u32));
+        }
+        Boundaryˉbytes = Boundaryˉbytes + Width;
+        while Boundaryˉbytes >= 8u32 {
+            Boundaryˉchunk = Bytesˉconcat(Boundaryˉchunk, Bytesˉfromˉu64ˉlittle(
+                U64ˉfromˉu32(Boundaryˉhigh) * 4294967296u64 + U64ˉfromˉu32(Boundaryˉlow)
+            ));
+            Boundaryˉlow = 0u32;
+            Boundaryˉhigh = 0u32;
+            Boundaryˉbytes = Boundaryˉbytes - 8u32;
+            if Bytesˉlength(Boundaryˉchunk) == 320u32 {
+                Boundaries = Bytesˉconcat(Boundaries, Boundaryˉchunk);
+                Boundaryˉchunk = Empty;
+            }
         }
 
         if Opcode == 48u32 || Opcode == 49u32 {
@@ -262,6 +276,12 @@ export fn Iˉcontrolˉdirectory(
     }
     if Cursor != Codeˉlength {
         return Hˉcontrolˉdirectory(false, Empty, Empty);
+    }
+    if Boundaryˉbytes > 0u32 {
+        Boundaryˉchunk = Bytesˉconcat(Boundaryˉchunk, Bytesˉslice(
+            Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Boundaryˉhigh) * 4294967296u64 +
+                U64ˉfromˉu32(Boundaryˉlow)), 0u32, Boundaryˉbytes
+        ));
     }
     if Bytesˉlength(Boundaryˉchunk) > 0u32 {
         Boundaries = Bytesˉconcat(Boundaries, Boundaryˉchunk);

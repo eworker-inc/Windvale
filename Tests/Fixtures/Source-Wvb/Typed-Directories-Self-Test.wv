@@ -80,6 +80,39 @@ fn Variableˉbranchˉboundaries(Instruction: bytes) -> bool {
         Bytesˉfromˉu32ˉlittle(Width + 5u32)));
 }
 
+fn Packedˉboundaries(Instruction: bytes) -> bool {
+    let Empty: bytes = Bytesˉslice(Instruction, 0u32, 0u32);
+    let Width: u32 = Bytesˉlength(Instruction);
+    let Opcode: u8 = Bytesˉreadˉu8(Instruction, 0u32);
+    var Nextˉflag: u8 = 1u8;
+    if Opcode == 48u8 || Opcode == 49u8 || Opcode == 81u8 { Nextˉflag = 3u8; }
+    var Prefix: u32 = 0u32;
+    while Prefix < 16u32 {
+        let Leading: bytes = Repeat(Bytesˉfromˉu8(16u8), Prefix);
+        let Code: bytes = Bytesˉconcat(Leading,
+            Bytesˉconcat(Instruction, Bytesˉfromˉu8(16u8)));
+        let Expected: bytes = Bytesˉconcat(Repeat(Bytesˉfromˉu8(1u8), Prefix + 1u32),
+            Bytesˉconcat(Repeat(Bytesˉfromˉu8(0u8), Width - 1u32), Bytesˉfromˉu8(Nextˉflag)));
+        var Expectedˉbranches: bytes = Empty;
+        if Opcode == 48u8 || Opcode == 49u8 {
+            Expectedˉbranches = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Prefix),
+                Bytesˉslice(Instruction, 1u32, 4u32));
+        }
+        // Poison outside the declared range must not affect decoding or packing.
+        let Padded: bytes = Bytesˉconcat(Bytesˉfromˉu8(255u8),
+            Bytesˉconcat(Code, Bytesˉfromˉu8(193u8)));
+        let Value: Directories.Hˉcontrolˉdirectory =
+            Directories.Iˉcontrolˉdirectory(Padded, 1u32, Bytesˉlength(Code));
+        if !Value.Valid || !Equal(Value.Boundaries, Expected) ||
+            !Equal(Value.Branches, Expectedˉbranches) { return false; }
+        if Width > 1u32 && Controlˉrangeˉvalid(Padded, 1u32, Prefix + Width - 1u32) {
+            return false;
+        }
+        Prefix = Prefix + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
     let Empty: bytes = Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
     let Scalar: bytes = Bytesˉfromˉu8(5u8);
@@ -183,6 +216,7 @@ export fn Main() -> i32 {
         if !Fixedˉcontrol.Valid || !Equal(Fixedˉcontrol.Boundaries,
             Bytesˉconcat(Bytesˉfromˉu8(1u8), Repeat(Bytesˉfromˉu8(0u8), Width - 1u32))) { return 21; }
         if Width > 1u32 && Isˉcontrolˉvalid(Bytesˉslice(Instruction, 0u32, Width - 1u32)) { return 21; }
+        if !Packedˉboundaries(Instruction) { return 33; }
         Index = Index + 2u32;
     }
     let Convert: bytes = Bytesˉconcat(Bytesˉfromˉu8(192u8), Bytesˉfromˉu16ˉlittle(257u32));
@@ -280,5 +314,11 @@ export fn Main() -> i32 {
         !Variableˉbranchˉboundaries(Numeric) || !Variableˉbranchˉboundaries(Wideˉconvert) ||
         !Variableˉbranchˉboundaries(Wideˉliteral) || !Variableˉbranchˉboundaries(Wideˉnumeric) ||
         !Variableˉbranchˉboundaries(Floatˉnumeric) { return 32; }
+    if !Packedˉboundaries(Convert) || !Packedˉboundaries(Literal) ||
+        !Packedˉboundaries(Numeric) || !Packedˉboundaries(Wideˉconvert) ||
+        !Packedˉboundaries(Wideˉliteral) || !Packedˉboundaries(Wideˉnumeric) ||
+        !Packedˉboundaries(Floatˉnumeric) ||
+        !Packedˉboundaries(Cell(48u8, 4294967295u32)) ||
+        !Packedˉboundaries(Cell(49u8, 0u32)) { return 34; }
     return 42;
 }
