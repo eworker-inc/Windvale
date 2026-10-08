@@ -1,6 +1,6 @@
 {
   "Format": "windvale-toolchain-retirement-1",
-  "LastReviewed": "2026-10-07",
+  "LastReviewed": "2026-10-08",
   "Scope": "Tracked and non-ignored working source/project/host-tool files in the declared repository areas; module imports, owner paths/names and project inclusion of matching source consumers.",
   "Limits": {
     "MaximumFileBytes": 8388608,
@@ -353,7 +353,7 @@
     },
     {
       "Id": "MEM-003",
-      "Status": "Planned",
+      "Status": "Migrating",
       "Name": "Compiler working tables and stacks represented as rebuilt bytes",
       "Owners": [
         {
@@ -365,14 +365,21 @@
         {
           "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
           "Anchor": "module Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories",
-          "Status": "Planned",
+          "Status": "Migrating",
           "DeletionScope": "Migrate mutable analysis state and stacks to typed owned collections. WVB/WVO bytes and bounded serialized indexes remain appropriate."
+        },
+        {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "Anchor": "fn Hˉcallˉsignature(",
+          "Status": "Migrating",
+          "DeletionScope": "The per-call rebuilt parameter directory is removed. Migrate remaining byte-encoded operand stacks and working tables; preserve actual serialized evidence."
         }
       ],
       "RetirementScope": "Migrate mutable analysis state and stacks to typed owned collections. WVB/WVO bytes and bounded serialized indexes remain appropriate.",
       "Replacements": [
         "Libraries/Foundation/Collections/Collections.wv",
-        "Specifications/Windvale-Native-Owned-Collections.md"
+        "Specifications/Windvale-Native-Owned-Collections.md",
+        "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
       ],
       "Gates": [
         "Inventory actual working-state fields before each coherent conversion.",
@@ -381,7 +388,8 @@
       ],
       "ReferenceModules": [
         "Compilerˉnativeˉx64ˉlowering",
-        "Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+        "Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories",
+        "Windvaleˉcompilerˉwvbˉverifierˉexecutable"
       ],
       "References": [
         {
@@ -446,7 +454,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -455,7 +464,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -464,7 +474,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -473,7 +484,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -481,7 +493,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -489,7 +502,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -497,7 +511,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -506,7 +521,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -522,7 +538,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -530,7 +547,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -538,7 +556,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -546,7 +565,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -554,7 +574,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -562,7 +583,8 @@
           "Kind": "Project",
           "Status": "NeedsReview",
           "References": [
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -574,11 +596,28 @@
           ]
         },
         {
+          "Path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉexecutable"
+          ]
+        },
+        {
           "Path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
           "Kind": "Source",
           "Status": "NeedsReview",
           "References": [
-            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories",
+            "import Windvaleˉcompilerˉwvbˉverifierˉexecutable"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉexecutable"
           ]
         },
         {
@@ -586,7 +625,8 @@
           "Kind": "Source",
           "Status": "NeedsReview",
           "References": [
-            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories",
+            "import Windvaleˉcompilerˉwvbˉverifierˉexecutable"
           ]
         },
         {
@@ -611,7 +651,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -628,15 +669,8 @@
           "Status": "NeedsReview",
           "References": [
             "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
-            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
-          ]
-        },
-        {
-          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
-          "Kind": "Source",
-          "Status": "NeedsReview",
-          "References": [
-            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
           ]
         },
         {
@@ -648,12 +682,33 @@
           ]
         },
         {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉexecutable"
+          ]
+        },
+        {
           "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
           "Kind": "Source",
           "Status": "NeedsReview",
           "References": [
-            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories",
+            "import Windvaleˉcompilerˉwvbˉverifierˉexecutable"
           ]
+        }
+      ],
+      "ConvertedScopes": [
+        {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "Scope": "Per-call parameter validation uses a scalar decoded shape and a source cursor instead of constructing a temporary byte directory. Other byte-encoded stacks and working tables remain open.",
+          "Status": "CandidateConverted",
+          "Anchors": [
+            "var Parameter: u32 = Targetˉparameterˉtypes;",
+            "Typedˉdirectories.Hˉlocalˉshapeˉread(Input, Parameter, 0u32, Version)"
+          ],
+          "Evidence": "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
         }
       ]
     },
@@ -3305,5 +3360,5 @@
       ]
     }
   ],
-  "BaseRevision": "8b8d89c40b074ef036d9d878bad6ec0437b2af0b"
+  "BaseRevision": "6ce0fa481a39302d9b71441c97bcccf0d39da408"
 }

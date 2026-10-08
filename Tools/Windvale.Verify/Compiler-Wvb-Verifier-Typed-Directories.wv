@@ -20,6 +20,82 @@ fn Hˉnominalˉshape(Kind: u32) -> bool {
         Kind == 29u32 || Kind == 30u32 || Kind == 35u32;
 }
 
+// A decoded shape stays in scalar fields. Version is the caller's raw WVB minor.
+export record Hˉlocalˉshape {
+    Next: u32;
+    Kind: u32;
+    Nominal: u32;
+}
+
+export fn Hˉlocalˉshapeˉread(Input: bytes, Cursor: u32, Stage: u32, Version: u32)
+    -> Hˉlocalˉshape {
+    let Length: u32 = Bytesˉlength(Input);
+    if Stage > 1u32 { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+    var Next: u32 = Cursor;
+    if Next >= Length { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+    var Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Next));
+    Next = Next + 1u32;
+    var Borrowed: bool = false;
+    var Mutableˉbudget: bool = false;
+    var Element: u32 = 0u32;
+    if Kind >= 39u32 && Kind <= 41u32 {
+        if Length < 8u32 || (Version != 44u32 && Version != 45u32) ||
+            (Kind == 41u32 && Stage != 0u32 &&
+                Version != 45u32) { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+        if Kind != 39u32 {
+            if Next >= Length { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+            Element = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Next));
+            Next = Next + 1u32;
+            if (Kind == 40u32 && Element != 4u32) ||
+                (Kind == 41u32 && Element != 39u32 &&
+                    !(Version == 45u32 && Element == 25u32)) { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+            if Kind == 41u32 {
+                if Stage != 0u32 && Element != 25u32 { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+                if Element == 25u32 { Kind = 89u32; Mutableˉbudget = true; }
+                Element = 0u32;
+            }
+        }
+    }
+    if Kind == 37u32 {
+        if Next >= Length { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+        Borrowed = true;
+        Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Next));
+        Next = Next + 1u32;
+        // The minor-40 Vector payload extension is local-only. Existing
+        // Vector parameters retain their distinct modes 23, 26, and 27.
+        if Kind == 23u32 && (Stage != 1u32 || Length < 8u32 ||
+            Version != 40u32 &&
+            (Version != 41u32 && (Version != 42u32 && (Version != 43u32 && (Version != 44u32 && Version != 45u32))))) { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+        if !((Kind >= 1u32 && Kind <= 11u32) ||
+            (Kind >= 14u32 && Kind <= 20u32) ||
+            Kind == 22u32 || Kind == 23u32 || Kind == 24u32 || Kind == 35u32 ||
+            (Kind == 39u32 && (Version == 44u32 || Version == 45u32))) {
+            return Hˉlocalˉshape(0u32, 0u32, 0u32);
+        }
+    } else {
+        if !((Kind >= 1u32 && Kind <= 11u32) ||
+            (Kind >= 14u32 && Kind <= 20u32) ||
+            (Kind >= 22u32 && Kind <= 30u32) ||
+            (Kind >= 34u32 && Kind <= 36u32) ||
+            (Kind >= 39u32 && Kind <= 41u32 && (Version == 44u32 || Version == 45u32)) || (Kind == 89u32 && Mutableˉbudget)) {
+            return Hˉlocalˉshape(0u32, 0u32, 0u32);
+        }
+        if Stage == 1u32 && (Kind == 26u32 || Kind == 27u32) {
+            return Hˉlocalˉshape(0u32, 0u32, 0u32);
+        }
+    }
+    if Kind == 36u32 && Length >= 8u32 && Version == 45u32 { Kind = 90u32; }
+    var Nominal: u32 = Element;
+    if Hˉnominalˉshape(Kind) {
+        if Length - Next < 4u32 { return Hˉlocalˉshape(0u32, 0u32, 0u32); }
+        Nominal = Bytesˉreadˉu32ˉlittle(Input, Next);
+        Next = Next + 4u32;
+    }
+    // Shape 37 retains the payload kind; transfer kinds 26..38 stay distinct.
+    if Borrowed { Kind = Kind + 64u32; }
+    return Hˉlocalˉshape(Next, Kind, Nominal);
+}
+
 export fn Hˉlocalˉshapes(
     Input: bytes,
     Parameterˉtypes: u32,
@@ -33,6 +109,8 @@ export fn Hˉlocalˉshapes(
         Parameterˉtypes > Length || Localˉtypes > Length {
         return Empty;
     }
+    var Version: u32 = 0u32;
+    if Length >= 8u32 { Version = Bytesˉreadˉu16ˉlittle(Input, 6u32); }
     var Result: bytes = Empty;
     var Chunk: bytes = Empty;
     var Stage: u32 = 0u32;
@@ -46,70 +124,11 @@ export fn Hˉlocalˉshapes(
         if Count > Length - Cursor { return Empty; }
         var Index: u32 = 0u32;
         while Index < Count {
-            if Cursor >= Length { return Empty; }
-            var Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-            Cursor = Cursor + 1u32;
-            var Borrowed: bool = false;
-            var Mutableˉbudget: bool = false;
-            var Element: u32 = 0u32;
-            if Kind >= 39u32 && Kind <= 41u32 {
-                if Length < 8u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32) ||
-                    (Kind == 41u32 && Stage != 0u32 &&
-                        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32) { return Empty; }
-                if Kind != 39u32 {
-                    if Cursor >= Length { return Empty; }
-                    Element = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-                    Cursor = Cursor + 1u32;
-                    if (Kind == 40u32 && Element != 4u32) ||
-                        (Kind == 41u32 && Element != 39u32 &&
-                            !(Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 && Element == 25u32)) { return Empty; }
-                    if Kind == 41u32 {
-                        if Stage != 0u32 && Element != 25u32 { return Empty; }
-                        if Element == 25u32 { Kind = 89u32; Mutableˉbudget = true; }
-                        Element = 0u32;
-                    }
-                }
-            }
-            if Kind == 37u32 {
-                if Cursor >= Length { return Empty; }
-                Borrowed = true;
-                Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-                Cursor = Cursor + 1u32;
-                // The minor-40 Vector payload extension is local-only. Existing
-                // Vector parameters retain their distinct modes 23, 26, and 27.
-                if Kind == 23u32 && (Stage != 1u32 || Length < 8u32 ||
-                    Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 &&
-                    (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32))))) { return Empty; }
-                if !((Kind >= 1u32 && Kind <= 11u32) ||
-                    (Kind >= 14u32 && Kind <= 20u32) ||
-                    Kind == 22u32 || Kind == 23u32 || Kind == 24u32 || Kind == 35u32 ||
-                    (Kind == 39u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32))) {
-                    return Empty;
-                }
-            } else {
-                if !((Kind >= 1u32 && Kind <= 11u32) ||
-                    (Kind >= 14u32 && Kind <= 20u32) ||
-                    (Kind >= 22u32 && Kind <= 30u32) ||
-                    (Kind >= 34u32 && Kind <= 36u32) ||
-                    (Kind >= 39u32 && Kind <= 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32)) || (Kind == 89u32 && Mutableˉbudget)) {
-                    return Empty;
-                }
-                if Stage == 1u32 && (Kind == 26u32 || Kind == 27u32) {
-                    return Empty;
-                }
-            }
-            if Kind == 36u32 && Length >= 8u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 { Kind = 90u32; }
-            var Nominal: u32 = Element;
-            if Hˉnominalˉshape(Kind) {
-                if Length - Cursor < 4u32 { return Empty; }
-                Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor);
-                Cursor = Cursor + 4u32;
-            }
-            // Five-byte internal cells use 64 + payload kind for shape 37.
-            // Keep the full nominal u32; stack transfer kinds 26..38 are distinct.
-            if Borrowed { Kind = Kind + 64u32; }
+            let Shape: Hˉlocalˉshape = Hˉlocalˉshapeˉread(Input, Cursor, Stage, Version);
+            if Shape.Next == 0u32 { return Empty; }
+            Cursor = Shape.Next;
             let Cell: bytes = Bytesˉslice(Bytesˉfromˉu64ˉlittle(
-                U64ˉfromˉu32(Nominal) * 256u64 + U64ˉfromˉu32(Kind)
+                U64ˉfromˉu32(Shape.Nominal) * 256u64 + U64ˉfromˉu32(Shape.Kind)
             ), 0u32, 5u32);
             Chunk = Bytesˉconcat(Chunk, Cell);
             // At most 128 bounded chunks for 8,192 slots, avoiding one growing

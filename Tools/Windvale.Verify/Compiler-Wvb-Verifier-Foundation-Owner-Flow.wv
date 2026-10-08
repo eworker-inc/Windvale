@@ -102,9 +102,11 @@ export fn Loanˉevent(Trace: Loanˉtrace, Offset: u32, Operation: u32,
     if Cost > Trace.Limit - Trace.Work {
         return Loanˉnext(Trace, false, Trace.Events, Trace.Chunk, Trace.Work);
     }
-    let Cell: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Offset),
-        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Operation),
-        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Destination), Bytesˉfromˉu32ˉlittle(Source))));
+    let Cell: bytes = Bytesˉconcat(
+        Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Offset) +
+            U64ˉfromˉu32(Operation) * 4294967296u64),
+        Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Destination) +
+            U64ˉfromˉu32(Source) * 4294967296u64));
     var Chunk: bytes = Bytesˉconcat(Trace.Chunk, Cell);
     var Events: bytes = Trace.Events;
     if Bytesˉlength(Chunk) == 1024u32 {
@@ -289,6 +291,18 @@ fn Reject(Rule: u32, Offset: u32, Work: u32) -> Flowˉresult {
     return Flowˉresult(false, Rule, Offset, Work);
 }
 
+fn Repeatedˉrow(Value: bytes, Count: u32) -> bytes {
+    var Chunk: bytes = Value;
+    var Result: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 != 0u32 { Result = Bytesˉconcat(Result, Chunk); }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+
 fn Repeatedˉbyte(Value: u8, Count: u32) -> bytes {
     var Chunk: bytes = Bytesˉfromˉu8(Value);
     var Result: bytes = Bytesˉslice(Chunk, 0u32, 0u32);
@@ -340,6 +354,7 @@ fn Buildˉedges(Input: bytes, Code: u32, Length: u32,
     Limit: u32) -> Edgesˉresult {
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Edges: bytes = Empty;
+    var Edgeˉchunk: bytes = Empty;
     var Work: u32 = 0u32;
     let Count: u32 = Bytesˉlength(Blocks) / 4u32;
     var Block: u32 = 0u32;
@@ -371,11 +386,22 @@ fn Buildˉedges(Input: bytes, Code: u32, Length: u32,
         } else if Opcode != 81u8 || End - Last != 1u32 {
             return Edgesˉresult(false, Empty, 2u32, Last, Work);
         }
-        let Cost: u32 = Bytesˉlength(Edges) + 8u32;
+        var Cost: u32 = Bytesˉlength(Edgeˉchunk) + 8u32;
+        if Bytesˉlength(Edgeˉchunk) == 248u32 { Cost = Cost + Bytesˉlength(Edges) + 256u32; }
         if Cost > Limit - Work { return Edgesˉresult(false, Empty, 5u32, Last, Work); }
         Work = Work + Cost;
-        Edges = Bytesˉconcat(Edges, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(First), Bytesˉfromˉu32ˉlittle(Second)));
+        Edgeˉchunk = Bytesˉconcat(Edgeˉchunk, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(First), Bytesˉfromˉu32ˉlittle(Second)));
+        if Bytesˉlength(Edgeˉchunk) == 256u32 { Edges = Bytesˉconcat(Edges, Edgeˉchunk); Edgeˉchunk = Empty; }
         Block = Block + 1u32;
+    }
+    if Bytesˉlength(Edgeˉchunk) != 0u32 {
+        if Bytesˉlength(Edges) == 0u32 { Edges = Edgeˉchunk; }
+        else {
+            let Finish: u32 = Bytesˉlength(Edges) + Bytesˉlength(Edgeˉchunk);
+            if Finish > Limit - Work { return Edgesˉresult(false, Empty, 5u32, 0u32, Work); }
+            Work = Work + Finish;
+            Edges = Bytesˉconcat(Edges, Edgeˉchunk);
+        }
     }
     return Edgesˉresult(true, Edges, 0u32, 0u32, Work);
 }
@@ -394,7 +420,14 @@ record Loanˉstate {
 fn Loanˉtransfer(State: bytes, Operation: u32, Destination: u32,
     Source: u32, Root: u32, Map: bytes, Limit: u32) -> Loanˉstate {
     let Slots: u32 = Bytesˉlength(State) - 1u32;
-    let Cost: u32 = Bytesˉlength(State) * 3u32;
+    var Cost: u32 = Bytesˉlength(State) * 3u32;
+    // Slot reads and an unrelated owner's update retain the same byte backing.
+    // Only actual state construction keeps the size-dependent copy charge.
+    if Operation == 3u32 || Operation == 7u32 || Operation == 8u32 ||
+        Operation == 10u32 ||
+        ((Operation == 4u32 || Operation == 5u32) && Destination != Root) {
+        Cost = 16u32;
+    }
     if Cost > Limit { return Loanˉstate(false, State, 5u32, 0u32); }
     if Operation == 11u32 {
         return Loanˉstate(true, Setˉstate(State, Destination, 1u32), 0u32, Cost);
@@ -543,9 +576,120 @@ fn Loanˉdependency(Dependencies: bytes, Chunk: bytes, Map: bytes, Loans: u32,
     return Loanˉdependencyˉbuffer(0u32, Cost, Dependencies, Next);
 }
 
+// The typed caller proves empty operand stacks at every control-flow edge.
+// A local's incoming value matters only when some block reads it before a
+// definition. Borrowed parameters remain in the compact row's initial prefix.
+
+record Loanˉedgeˉprofile {
+    Valid: bool;
+    Mask: bytes;
+    Count: u32;
+    Work: u32;
+}
+
+fn Loanˉedgeˉlocals(Locals: u32, Parameters: u32, Map: bytes,
+    Starts: bytes, Events: bytes, Limit: u32) -> Loanˉedgeˉprofile {
+    let Initial: u32 = Locals * 3u32;
+    let Empty: bytes = Bytesˉslice(Map, 0u32, 0u32);
+    if Initial > Limit { return Loanˉedgeˉprofile(false, Empty, 0u32, 0u32); }
+    var Work: u32 = Initial;
+    var Required: bytes = Bytesˉconcat(Repeatedˉbyte(1u8, Parameters), Zeroes(Locals - Parameters));
+    var Block: u32 = 0u32;
+    while Block < Bytesˉlength(Starts) / 4u32 {
+        if Locals > Limit - Work { return Loanˉedgeˉprofile(false, Empty, 0u32, Work); }
+        Work = Work + Locals;
+        var Written: bytes = Zeroes(Locals);
+        var Event: u32 = Bytesˉreadˉu32ˉlittle(Starts, Block * 4u32);
+        var End: u32 = Bytesˉlength(Events);
+        if Block + 1u32 < Bytesˉlength(Starts) / 4u32 {
+            End = Bytesˉreadˉu32ˉlittle(Starts, Block * 4u32 + 4u32);
+        }
+        while Event < End {
+            if 32u32 > Limit - Work { return Loanˉedgeˉprofile(false, Empty, 0u32, Work); }
+            Work = Work + 32u32;
+            let Operation: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 4u32);
+            let Destination: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 8u32);
+            let Source: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 12u32);
+            var Read: u32 = 0u32;
+            while Read < 3u32 {
+                var Slot: u32 = Locals;
+                if Read == 0u32 && (Operation == 2u32 || Operation == 10u32) { Slot = Source; }
+                if Read == 1u32 && (Operation == 3u32 || Operation == 7u32 || Operation == 8u32 ||
+                    Operation == 10u32 || Operation == 12u32) { Slot = Destination; }
+                if Read == 2u32 && Operation == 8u32 { Slot = Bytesˉreadˉu32ˉlittle(Map, Source * 4u32); }
+                if Slot < Locals && Bytesˉreadˉu8(Written, Slot) == 0u8 &&
+                    Bytesˉreadˉu8(Required, Slot) == 0u8 {
+                    if Initial > Limit - Work { return Loanˉedgeˉprofile(false, Empty, 0u32, Work); }
+                    Work = Work + Initial;
+                    Required = Setˉstate(Required, Slot, 1u32);
+                }
+                Read = Read + 1u32;
+            }
+            if (Operation == 1u32 || Operation == 2u32 || Operation == 9u32 || Operation == 11u32) &&
+                Destination < Locals && Bytesˉreadˉu8(Written, Destination) == 0u8 {
+                if Initial > Limit - Work { return Loanˉedgeˉprofile(false, Empty, 0u32, Work); }
+                Work = Work + Initial;
+                Written = Setˉstate(Written, Destination, 1u32);
+            }
+            Event = Event + 16u32;
+        }
+        Block = Block + 1u32;
+    }
+    if Locals > Limit - Work { return Loanˉedgeˉprofile(false, Empty, 0u32, Work); }
+    Work = Work + Locals;
+    var Count: u32 = 0u32;
+    var Local: u32 = 0u32;
+    while Local < Locals {
+        if Bytesˉreadˉu8(Required, Local) != 0u8 { Count = Count + 1u32; }
+        Local = Local + 1u32;
+    }
+    return Loanˉedgeˉprofile(true, Required, Count, Work);
+}
+
+fn Loanˉedgeˉstate(State: bytes, Mask: bytes, Count: u32, Locals: u32,
+    Slots: u32, Expand: bool, Limit: u32) -> Loanˉstate {
+    var Length: u32 = Count;
+    if Expand { Length = Slots; }
+    var Work: u32 = (Length + 1u32) * 3u32 + Locals;
+    if Work > Limit { return Loanˉstate(false, State, 5u32, 0u32); }
+    var Output: bytes = Bytesˉslice(State, 0u32, 0u32);
+    var Chunk: bytes = Output;
+    var Local: u32 = 0u32;
+    var Edge: u32 = 0u32;
+    while Local < Locals {
+        let Kept: bool = Bytesˉreadˉu8(Mask, Local) != 0u8;
+        if Expand || Kept {
+            var Value: u8 = 1u8;
+            if Expand && Kept { Value = Bytesˉreadˉu8(State, Edge); Edge = Edge + 1u32; }
+            if !Expand { Value = Bytesˉreadˉu8(State, Local); }
+            var Step: u32 = Bytesˉlength(Chunk) + 1u32;
+            if Bytesˉlength(Chunk) == 63u32 { Step = Step + Bytesˉlength(Output) + 64u32; }
+            if Step > Limit - Work { return Loanˉstate(false, State, 5u32, Work); }
+            Work = Work + Step;
+            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu8(Value));
+            if Bytesˉlength(Chunk) == 64u32 { Output = Bytesˉconcat(Output, Chunk); Chunk = Bytesˉslice(State, 0u32, 0u32); }
+        }
+        Local = Local + 1u32;
+    }
+    Output = Bytesˉconcat(Output, Chunk);
+    if Expand {
+        return Loanˉstate(true, Bytesˉconcat(Output,
+            Bytesˉconcat(Repeatedˉbyte(1u8, Slots - Locals), Bytesˉslice(State, Count, 1u32))), 0u32, Work);
+    }
+    return Loanˉstate(true, Bytesˉconcat(Output, Bytesˉslice(State, Slots, 1u32)), 0u32, Work);
+}
+
+fn Pendingˉscale(Block: u32) -> u32 {
+    let Position: u32 = Block % 4u32;
+    if Position == 1u32 { return 4u32; }
+    if Position == 2u32 { return 16u32; }
+    if Position == 3u32 { return 64u32; }
+    return 1u32;
+}
+
 fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
     Parameters: u32, Control: Directories.Hˉcontrolˉdirectory,
-    Trace: Loanˉtrace, Collectˉroots: bool) -> Loanˉevidence {
+    Trace: Loanˉtrace, Collectˉroots: bool, Emptyˉedges: bool) -> Loanˉevidence {
     if !Trace.Valid || Trace.Work > Trace.Limit || Trace.Limit > 16777216u32 ||
         Code > Bytesˉlength(Input) || Length > Bytesˉlength(Input) - Code ||
         Length == 0u32 || Length > 4194304u32 || !Control.Valid ||
@@ -622,28 +766,46 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
     // Borrowed parameters still need initialization/forwarding checks when a
     // function never creates a loan from an ordinary local owner.
     if Bytesˉlength(Roots) == 0u32 { Roots = Bytesˉfromˉu32ˉlittle(4294967295u32); }
-    var Blocks: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Blocks: bytes = Empty;
+    var Blockˉchunk: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     var Cursor: u32 = 1u32;
     while Cursor < Length {
         if Work >= Limit { return Loanˉreject(Input, 5u32, Cursor, Work); }
         Work = Work + 1u32;
         if Bytesˉreadˉu8(Control.Boundaries, Cursor) == 3u8 {
-            if Bytesˉlength(Blocks) >= 16384u32 || Bytesˉlength(Blocks) + 4u32 > Limit - Work {
+            var Append: u32 = Bytesˉlength(Blockˉchunk) + 4u32;
+            if Bytesˉlength(Blockˉchunk) == 252u32 { Append = Append + Bytesˉlength(Blocks) + 256u32; }
+            if Bytesˉlength(Blocks) + Bytesˉlength(Blockˉchunk) >= 16384u32 || Append > Limit - Work {
                 return Loanˉreject(Input, 5u32, Cursor, Work);
             }
-            Work = Work + Bytesˉlength(Blocks) + 4u32;
-            Blocks = Bytesˉconcat(Blocks, Bytesˉfromˉu32ˉlittle(Cursor));
+            Work = Work + Append;
+            Blockˉchunk = Bytesˉconcat(Blockˉchunk, Bytesˉfromˉu32ˉlittle(Cursor));
+            if Bytesˉlength(Blockˉchunk) == 256u32 { Blocks = Bytesˉconcat(Blocks, Blockˉchunk); Blockˉchunk = Empty; }
         }
         Cursor = Cursor + 1u32;
+    }
+    if Bytesˉlength(Blockˉchunk) != 0u32 {
+        if Bytesˉlength(Blocks) == 0u32 { Blocks = Blockˉchunk; }
+        else {
+            let Finishˉblocks: u32 = Bytesˉlength(Blocks) + Bytesˉlength(Blockˉchunk);
+            if Finishˉblocks > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+            Work = Work + Finishˉblocks;
+            Blocks = Bytesˉconcat(Blocks, Blockˉchunk);
+        }
     }
     let Graph: Edgesˉresult = Buildˉedges(Input, Code, Length, Control, Blocks, Limit - Work);
     Work = Work + Graph.Work;
     if !Graph.Valid { return Loanˉreject(Input, Graph.Rule, Graph.Offset, Work); }
     let Count: u32 = Bytesˉlength(Blocks) / 4u32;
-    let Stride: u32 = Slots + 1u32;
+    let Stateˉstride: u32 = Slots + 1u32;
+    var Edgeˉlocals: u32 = Trace.Locals;
+    var Edgeˉmask: bytes = Empty;
+    var Stride: u32 = Stateˉstride;
+    if Emptyˉedges { Stride = Edgeˉlocals + 1u32; }
     // Division before multiplication bounds the retained rows and their zeroing.
     if Count > (Limit - Work) / Stride { return Loanˉreject(Input, 5u32, 0u32, Work); }
     var Starts: bytes = Empty;
+    var Startˉchunk: bytes = Empty;
     var Block: u32 = 0u32;
     Event = 0u32;
     while Block < Count {
@@ -659,19 +821,42 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
                 Seekˉstart = Event < Eventˉbytes;
             }
         }
-        if Bytesˉlength(Starts) + 4u32 > Limit - Work { return Loanˉreject(Input, 5u32, Start, Work); }
-        Work = Work + Bytesˉlength(Starts) + 4u32;
-        Starts = Bytesˉconcat(Starts, Bytesˉfromˉu32ˉlittle(Event));
+        var Appendˉstart: u32 = Bytesˉlength(Startˉchunk) + 4u32;
+        if Bytesˉlength(Startˉchunk) == 252u32 { Appendˉstart = Appendˉstart + Bytesˉlength(Starts) + 256u32; }
+        if Appendˉstart > Limit - Work { return Loanˉreject(Input, 5u32, Start, Work); }
+        Work = Work + Appendˉstart;
+        Startˉchunk = Bytesˉconcat(Startˉchunk, Bytesˉfromˉu32ˉlittle(Event));
+        if Bytesˉlength(Startˉchunk) == 256u32 { Starts = Bytesˉconcat(Starts, Startˉchunk); Startˉchunk = Empty; }
         Block = Block + 1u32;
+    }
+    if Bytesˉlength(Startˉchunk) != 0u32 {
+        if Bytesˉlength(Starts) == 0u32 { Starts = Startˉchunk; }
+        else {
+            let Finishˉstarts: u32 = Bytesˉlength(Starts) + Bytesˉlength(Startˉchunk);
+            if Finishˉstarts > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+            Work = Work + Finishˉstarts;
+            Starts = Bytesˉconcat(Starts, Startˉchunk);
+        }
+    }
+    if Emptyˉedges {
+        let Profile: Loanˉedgeˉprofile = Loanˉedgeˉlocals(Trace.Locals,
+            Trace.Parameters, Trace.Map, Starts, Events, Limit - Work);
+        Work = Work + Profile.Work;
+        if !Profile.Valid { return Loanˉreject(Input, 5u32, 0u32, Work); }
+        Edgeˉlocals = Profile.Count;
+        Edgeˉmask = Profile.Mask;
+        Stride = Edgeˉlocals + 1u32;
     }
     var Rootˉindex: u32 = 0u32;
     while Rootˉindex < Bytesˉlength(Roots) / 4u32 {
         let Root: u32 = Bytesˉreadˉu32ˉlittle(Roots, Rootˉindex * 4u32);
-        let Allocation: u32 = 4u32 * (Count * Stride + Count + Stride);
+        let Allocation: u32 = 4u32 * (Count * Stride + Count + Stateˉstride);
         if Allocation > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
         Work = Work + Allocation;
+        var Initialˉslots: u32 = Slots;
+        if Emptyˉedges { Initialˉslots = Edgeˉlocals; }
         var Initial: bytes = Bytesˉconcat(Repeatedˉbyte(4u8, Trace.Parameters),
-            Repeatedˉbyte(1u8, Slots - Trace.Parameters));
+            Repeatedˉbyte(1u8, Initialˉslots - Trace.Parameters));
         if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32) && Root < Parameters {
             let Rootˉloan: u32 = Bytesˉreadˉu32ˉlittle(Trace.Map, Root * 4u32);
             if Rootˉloan != 4294967295u32 { Initial = Setˉstate(Initial, Rootˉloan, 2u32); }
@@ -687,8 +872,13 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
         var Available: u8 = 1u8;
         if Root < Parameters || Root == 4294967295u32 { Available = 2u8; }
         Initial = Bytesˉconcat(Initial, Bytesˉfromˉu8(Available));
-        var Entries: bytes = Bytesˉconcat(Initial, Zeroes((Count - 1u32) * Stride));
-        var Pending: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Zeroes(Count - 1u32));
+        // Unseen rows are placeholders. First arrival replaces them, while
+        // subsequent arrivals union actual states. Each queue byte packs four
+        // two-bit states: 0 unseen, 1 queued, 2 seen. Updates preserve adjacent states.
+        var Entries: bytes = Empty;
+        if Emptyˉedges { Entries = Repeatedˉrow(Initial, Count); }
+        else { Entries = Bytesˉconcat(Initial, Zeroes((Count - 1u32) * Stride)); }
+        var Pending: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Zeroes((Count + 3u32) / 4u32 - 1u32));
         var Continue: bool = true;
         while Continue {
             if Count > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
@@ -696,14 +886,25 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
             var Selected: u32 = Count;
             Block = 0u32;
             while Block < Count {
-                if Selected == Count && Bytesˉreadˉu8(Pending, Block) != 0u8 { Selected = Block; }
+                let Encoded: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Pending, Block / 4u32));
+                if Selected == Count && (Encoded / Pendingˉscale(Block)) % 4u32 == 1u32 { Selected = Block; }
                 Block = Block + 1u32;
             }
             if Selected == Count {
                 Continue = false;
             } else {
-                Pending = Setˉstate(Pending, Selected, 0u32);
+                let Selectedˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Pending, Selected / 4u32));
+                let Selectedˉscale: u32 = Pendingˉscale(Selected);
+                Pending = Setˉstate(Pending, Selected / 4u32,
+                    Selectedˉbyte - (Selectedˉbyte / Selectedˉscale) % 4u32 * Selectedˉscale + 2u32 * Selectedˉscale);
                 var State: bytes = Bytesˉslice(Entries, Selected * Stride, Stride);
+                if Emptyˉedges {
+                    let Expanded: Loanˉstate = Loanˉedgeˉstate(State, Edgeˉmask,
+                        Edgeˉlocals, Trace.Locals, Slots, true, Limit - Work);
+                    Work = Work + Expanded.Work;
+                    if !Expanded.Valid { return Loanˉreject(Input, Expanded.Rule, 0u32, Work); }
+                    State = Expanded.State;
+                }
                 Event = Bytesˉreadˉu32ˉlittle(Starts, Selected * 4u32);
                 var Stop: u32 = Eventˉbytes;
                 if Selected + 1u32 < Count { Stop = Bytesˉreadˉu32ˉlittle(Starts, Selected * 4u32 + 4u32); }
@@ -729,12 +930,23 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
                     }
                     Event = Event + 16u32;
                 }
+                var Outgoing: bytes = State;
+                if Emptyˉedges {
+                    let Compressed: Loanˉstate = Loanˉedgeˉstate(State, Edgeˉmask,
+                        Edgeˉlocals, Trace.Locals, Slots, false, Limit - Work);
+                    Work = Work + Compressed.Work;
+                    if !Compressed.Valid { return Loanˉreject(Input, Compressed.Rule, 0u32, Work); }
+                    Outgoing = Compressed.State;
+                }
                 var Edge: u32 = 0u32;
                 while Edge < 2u32 {
                     let Target: u32 = Bytesˉreadˉu32ˉlittle(Graph.Edges, Selected * 8u32 + Edge * 4u32);
                     if Target != 4294967295u32 {
                         // Compare without materializing a row when the incoming
                         // state adds no bits; the scan remains charged and bounded.
+                        let Targetˉbyte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Pending, Target / 4u32));
+                        let Targetˉscale: u32 = Pendingˉscale(Target);
+                        let First: bool = (Targetˉbyte / Targetˉscale) % 4u32 == 0u32;
                         let Comparison: u32 = Stride * 3u32;
                         if Comparison > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
                         Work = Work + Comparison;
@@ -742,19 +954,27 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
                         var Compared: u32 = 0u32;
                         while Compared < Stride {
                             let Comparedˉold: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Compared));
-                            if (Comparedˉold | U32ˉfromˉu8(Bytesˉreadˉu8(State, Compared))) != Comparedˉold { Changed = true; }
+                            let Incoming: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Outgoing, Compared));
+                            if First {
+                                if Incoming != Comparedˉold { Changed = true; }
+                            } else if (Comparedˉold | Incoming) != Comparedˉold { Changed = true; }
                             Compared = Compared + 1u32;
                         }
                         if Changed {
-                            let Cost: u32 = Bytesˉlength(Entries) * 3u32 + Stride + Count * 3u32;
+                            let Prefix: u32 = Target * Stride;
+                            let Suffix: u32 = Bytesˉlength(Entries) - Prefix - Stride;
+                            var Shorter: u32 = Prefix;
+                            if Suffix < Prefix { Shorter = Suffix; }
+                            let Cost: u32 = Bytesˉlength(Entries) * 2u32 + Shorter + Stride + Bytesˉlength(Pending) * 3u32;
                             if Cost > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
                             Work = Work + Cost;
                             var Merged: bytes = Empty;
                             var Chunk: bytes = Empty;
                             var Slot: u32 = 0u32;
                             while Slot < Stride {
-                                let Old: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Slot));
-                                let New: u32 = Old | U32ˉfromˉu8(Bytesˉreadˉu8(State, Slot));
+                                var Old: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Slot));
+                                if First { Old = 0u32; }
+                                let New: u32 = Old | U32ˉfromˉu8(Bytesˉreadˉu8(Outgoing, Slot));
                                 var Step: u32 = Bytesˉlength(Chunk) + 1u32;
                                 if Bytesˉlength(Chunk) == 63u32 { Step = Step + Bytesˉlength(Merged) + 64u32; }
                                 if Step > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
@@ -764,10 +984,22 @@ fn Loanˉprove(Input: bytes, Code: u32, Length: u32,
                                 Slot = Slot + 1u32;
                             }
                             Merged = Bytesˉconcat(Merged, Chunk);
-                            Entries = Bytesˉconcat(Bytesˉslice(Entries, 0u32, Target * Stride),
-                                Bytesˉconcat(Merged, Bytesˉslice(Entries, (Target + 1u32) * Stride,
-                                    Bytesˉlength(Entries) - (Target + 1u32) * Stride)));
-                            Pending = Setˉstate(Pending, Target, 1u32);
+                            if Prefix <= Suffix {
+                                Entries = Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Entries, 0u32, Prefix), Merged),
+                                    Bytesˉslice(Entries, Prefix + Stride, Suffix));
+                            } else {
+                                Entries = Bytesˉconcat(Bytesˉslice(Entries, 0u32, Prefix),
+                                    Bytesˉconcat(Merged, Bytesˉslice(Entries, Prefix + Stride, Suffix)));
+                            }
+                            }
+                        if First && !Changed {
+                            let Scheduling: u32 = Bytesˉlength(Pending) * 3u32;
+                            if Scheduling > Limit - Work { return Loanˉreject(Input, 5u32, 0u32, Work); }
+                            Work = Work + Scheduling;
+                        }
+                        if First || Changed {
+                            Pending = Setˉstate(Pending, Target / 4u32,
+                                Targetˉbyte - (Targetˉbyte / Targetˉscale) % 4u32 * Targetˉscale + Targetˉscale);
                         }
                     }
                     Edge = Edge + 1u32;
@@ -792,14 +1024,30 @@ export fn Loanˉcheck(Input: bytes, Code: u32, Length: u32,
     Parameters: u32, Control: Directories.Hˉcontrolˉdirectory,
     Trace: Loanˉtrace) -> Flowˉresult {
     let Evidence: Loanˉevidence = Loanˉprove(Input, Code, Length,
-        Parameters, Control, Trace, false);
+        Parameters, Control, Trace, false, false);
     return Flowˉresult(Evidence.Valid, Evidence.Rule, Evidence.Offset, Evidence.Work);
 }
 
 export fn Loanˉcheckˉroots(Input: bytes, Code: u32, Length: u32,
     Parameters: u32, Control: Directories.Hˉcontrolˉdirectory,
     Trace: Loanˉtrace) -> Loanˉevidence {
-    return Loanˉprove(Input, Code, Length, Parameters, Control, Trace, true);
+    return Loanˉprove(Input, Code, Length, Parameters, Control, Trace, true, false);
+}
+
+// These entries require the caller's completed typed-stack proof, including
+// empty stacks at branches and returns. Generic trace fixtures use Loanˉcheck.
+
+export fn Loanˉcheckˉemptyˉedges(Input: bytes, Code: u32, Length: u32,
+    Parameters: u32, Control: Directories.Hˉcontrolˉdirectory,
+    Trace: Loanˉtrace) -> Flowˉresult {
+    let Evidence: Loanˉevidence = Loanˉprove(Input, Code, Length,
+        Parameters, Control, Trace, false, true);
+    return Flowˉresult(Evidence.Valid, Evidence.Rule, Evidence.Offset, Evidence.Work);
+}
+export fn Loanˉcheckˉrootsˉemptyˉedges(Input: bytes, Code: u32, Length: u32,
+    Parameters: u32, Control: Directories.Hˉcontrolˉdirectory,
+    Trace: Loanˉtrace) -> Loanˉevidence {
+    return Loanˉprove(Input, Code, Length, Parameters, Control, Trace, true, true);
 }
 
 // The complete verifier supplies its validated instruction directory and exact

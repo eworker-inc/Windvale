@@ -3216,22 +3216,21 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: Hˉtypeˉtable,
     Targetˉparameters: u32, Targetˉparameterˉtypes: u32, Targetˉreturn: u32,
     Stack: bytes, Depth: u32) -> Hˉoperationˉstate {
     if Targetˉparameters > Depth { return Hˉoperationˉfailure(Stack, Depth); }
-    // Decode parameters once and index their fixed-width cells in reverse.
-    // Neither argument lookup nor stack consumption copies a growing prefix.
-    let Parameters: bytes = Typedˉdirectories.Hˉlocalˉshapes(
-        Input, Targetˉparameterˉtypes, Targetˉparameters, Targetˉparameterˉtypes, 0u32
-    );
-    if Bytesˉlength(Parameters) != Targetˉparameters * 5u32 {
-        return Hˉoperationˉfailure(Stack, Depth);
-    }
+    // Walk source parameters in order and compare their corresponding stack cells.
+    // No temporary parameter directory is allocated for an individual call.
+    let Version: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    var Parameter: u32 = Targetˉparameterˉtypes;
     var Argument: u32 = 0u32;
     while Argument < Targetˉparameters {
-        let Parameter: u32 = (Targetˉparameters - Argument - 1u32) * 5u32;
-        let Declaredˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Parameters, Parameter));
-        let Expectedˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Parameters, Parameter + 1u32);
+        let Shape: Typedˉdirectories.Hˉlocalˉshape =
+            Typedˉdirectories.Hˉlocalˉshapeˉread(Input, Parameter, 0u32, Version);
+        if Shape.Next == 0u32 { return Hˉoperationˉfailure(Stack, Depth); }
+        Parameter = Shape.Next;
+        let Declaredˉkind: u32 = Shape.Kind;
+        let Expectedˉnominal: u32 = Shape.Nominal;
         var Expectedˉkind: u32 = Declaredˉkind;
         if Declaredˉkind >= 64u32 {
-            if (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 40u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 41u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 42u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 43u32 && (Bytesˉreadˉu16ˉlittle(Input, 6u32) != 44u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) != 45u32))))) {
+            if (Version != 39u32 && Version != 40u32 && (Version != 41u32 && (Version != 42u32 && (Version != 43u32 && (Version != 44u32 && Version != 45u32))))) {
                 return Hˉoperationˉfailure(Stack, Depth);
             }
         } else {
@@ -3252,12 +3251,12 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: Hˉtypeˉtable,
             );
             if Expectedˉkind == 37u32 { return Hˉoperationˉfailure(Stack, Depth); }
         }
-        let Actual: u32 = (Depth - Argument - 1u32) * 5u32;
+        let Actual: u32 = (Depth - Targetˉparameters + Argument) * 5u32;
         let Actualˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Actual));
         // This direct-call bridge observes a Foundation Vector payload without
         // erasing its caller-side loan or granting value/exclusive transfer.
         var Borrowedˉvectorˉargument: bool =
-            (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32))))) &&
+            (Version == 40u32 || (Version == 41u32 || (Version == 42u32 || (Version == 43u32 || (Version == 44u32 || Version == 45u32))))) &&
             Declaredˉkind == 26u32 && Actualˉkind == 87u32;
         if Borrowedˉvectorˉargument {
             let Borrowedˉvectorˉtypes: u32 = Bytesˉreadˉu32ˉlittle(Input, Types.Offset);
@@ -3287,7 +3286,7 @@ fn Hˉcallˉsignature(Input: bytes, Minor: u32, Types: Hˉtypeˉtable,
         Declaredˉpushˉkind, Pushˉnominal, Minor) {
         Pushˉkind = Hˉownedˉtransferˉkind(Declaredˉpushˉkind);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 && Declaredˉpushˉkind == 25u32 { Pushˉkind = 27u32; }
+    if Version == 45u32 && Declaredˉpushˉkind == 25u32 { Pushˉkind = 27u32; }
     Pushˉkind = Hˉaffineˉresultˉtransferˉkind(Input, Types, Minor, Pushˉkind, Pushˉnominal);
     if Pushˉkind == 37u32 { return Hˉoperationˉfailure(Stack, Depth); }
     return Hˉoperationˉstate(true, Bytesˉslice(Stack, 0u32, (Depth - Targetˉparameters) * 5u32),
@@ -3352,9 +3351,9 @@ fn Hˉcallˉsignatures(Input: bytes, Functions: u32, End: u32) -> bytes {
         let Target: Hˉcallˉtarget = Hˉcallˉtargetˉread(Input, Cursor, End);
         if Target.Next == 0u32 { return Empty; }
         Chunk = Bytesˉconcat(Chunk, Bytesˉconcat(
-            Bytesˉfromˉu32ˉlittle(Target.Parameters), Bytesˉconcat(
-                Bytesˉfromˉu32ˉlittle(Target.Parameterˉtypes),
-                Bytesˉfromˉu32ˉlittle(Target.Returnˉtype))));
+            Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Target.Parameters) +
+                U64ˉfromˉu32(Target.Parameterˉtypes) * 4294967296u64),
+            Bytesˉfromˉu32ˉlittle(Target.Returnˉtype)));
         if Bytesˉlength(Chunk) == 768u32 {
             Directory = Bytesˉconcat(Directory, Chunk);
             Chunk = Empty;
@@ -5838,6 +5837,7 @@ export fn Hˉexecutableˉwithˉtypes(
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
     let Minor: u32 = Hˉeffectiveˉminor(Input);
+    let Version: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     var Envelope: u32 = 12u32;
     var Sectionˉkind: u32 = 1u32;
     var Payload: u32 = 0u32;
@@ -5878,7 +5878,7 @@ export fn Hˉexecutableˉwithˉtypes(
     }
     if Bytesˉlength(Types.Positions) == 0u32 { return Invalid; }
     var Foundationˉtypes: bytes = Invalid;
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 40u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32))))) {
+    if (Version == 39u32 || Version == 40u32 || (Version == 41u32 || (Version == 42u32 || (Version == 43u32 || (Version == 44u32 || Version == 45u32))))) {
         Foundationˉtypes = Hˉfoundationˉtypesˉwithˉtypes(Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types.Offset));
     }
     var Functionˉindex: u32 = 0u32;
@@ -5888,7 +5888,7 @@ export fn Hˉexecutableˉwithˉtypes(
     var Rootˉdirectory: bytes = Invalid;
     var Rootˉfunctions: u32 = 0u32;
     var Exclusiveˉvectorˉfunctions: bytes = Invalid;
-    if (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 41u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 42u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 43u32 || (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32)))) {
+    if (Version == 41u32 || (Version == 42u32 || (Version == 43u32 || (Version == 44u32 || Version == 45u32)))) {
         Exclusiveˉvectorˉfunctions = Hˉexclusiveˉvectorˉfunctions(Input,
             Functions, Functionsˉend, Types, Minor);
         if Bytesˉlength(Exclusiveˉvectorˉfunctions) != Functionˉcount { return Invalid; }
@@ -6361,18 +6361,18 @@ export fn Hˉexecutableˉwithˉtypes(
                         Loans.Locals, Returnˉowner);
                 }
                 var Budgetˉparameters: u32 = 0u32;
-                if Opcode == 64u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 {
+                if Opcode == 64u32 && Version == 45u32 {
                     let Budgetˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcode + Cursor + 1u32);
                     if Budgetˉtarget >= Bytesˉlength(Callˉsignatures) / 12u32 { return Invalid; }
                     Budgetˉparameters = Bytesˉreadˉu32ˉlittle(Callˉsignatures, Budgetˉtarget * 12u32);
                     Loans = Hˉbudgetˉcallˉloans(Loans, Beforeˉstack, Budgetˉparameters, Cursor, false);
                 }
                 let Byteˉcallˉoutput: bool = Opcode == 64u32 && Hasˉpush && Pushˉkind == 6u32 &&
-                    (Bytesˉreadˉu16ˉlittle(Input, 6u32) == 44u32 || Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32);
+                    (Version == 44u32 || Version == 45u32);
                 Loans = Foundationˉowners.Loanˉobserve(Loans, Input,
                     Functionˉcode, Cursor, Previousˉopcode, Beforeˉstack,
                     Depth, Hasˉpush && !Byteˉcallˉoutput, Pushˉkind);
-                if Opcode == 64u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 45u32 {
+                if Opcode == 64u32 && Version == 45u32 {
                     Loans = Hˉbudgetˉcallˉloans(Loans, Beforeˉstack, Budgetˉparameters, Cursor, true);
                 }
                 // Finish borrowed argument reads and exclusive mutations before
@@ -6412,7 +6412,7 @@ export fn Hˉexecutableˉwithˉtypes(
                 Typedˉdirectories.Iˉcontrolˉdirectory(Input,
                     Functionˉcode, Functionˉcodeˉlength);
             if Collectˉroots {
-                let Lifetime: Foundationˉowners.Loanˉevidence = Foundationˉowners.Loanˉcheckˉroots(
+                let Lifetime: Foundationˉowners.Loanˉevidence = Foundationˉowners.Loanˉcheckˉrootsˉemptyˉedges(
                     Input, Functionˉcode, Functionˉcodeˉlength, Parameterˉcount,
                     Loanˉcontrol, Loans);
                 if !Lifetime.Valid { return Invalid; }
@@ -6433,7 +6433,7 @@ export fn Hˉexecutableˉwithˉtypes(
                     Rootˉfunctions = Rootˉfunctions + 1u32;
                 }
             } else {
-                let Checkedˉlifetime: Foundationˉowners.Flowˉresult = Foundationˉowners.Loanˉcheck(
+                let Checkedˉlifetime: Foundationˉowners.Flowˉresult = Foundationˉowners.Loanˉcheckˉemptyˉedges(
                     Input, Functionˉcode, Functionˉcodeˉlength, Parameterˉcount,
                     Loanˉcontrol, Loans);
                 if !Checkedˉlifetime.Valid { return Invalid; }

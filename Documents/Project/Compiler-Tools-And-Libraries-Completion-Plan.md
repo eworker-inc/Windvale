@@ -2,7 +2,7 @@
 
 > Status: Current language, toolchain and essential-library delivery plan
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-10-07
+> Last reviewed: 2026-10-08
 
 Deliver one usable Windvale language, compiler/runtime and essential library set
 on Windows and Debian/Linux. The maintainer selected this scope on 3 October
@@ -39,10 +39,25 @@ write-failure cleanup and exact input-path collision. Both source reconstruction
 produce matching portable compiler bytecode and object chunks. Selected source
 memory, serializer and staging checks now pass on Windows and real Debian,
 using resumable verification with preserved intermediate products. A
-compiler-scale native run reached its 15-minute deadline before publishing a
-chunk; preparation performance and exact compiler-scale self-lowering remain
-open. This does not complete the broader memory, essential-library, installation
-or retirement work below.
+fresh compiler-scale native run reached its 15-minute deadline before publishing
+a chunk. Current compiler memory planning passes on Windows and Debian within
+its unchanged work bounds, and both reconstructed compiler objects match byte
+for byte. The current serializer fixture exceeds the source compiler's bounded
+intermediate-output profile during preparation; its new execution evidence is
+incomplete. Resolve that size failure and the measured native execution cost
+before repeating broad verification. Preparation performance and exact
+compiler-scale self-lowering remain open, alongside the broader memory,
+essential-library, installation and retirement work below.
+
+The candidate verifier now checks call parameters directly from scalar decoded
+shapes instead of constructing a byte table for every call. Its loan analysis
+retains only required local state across typed control-flow edges, with a
+full-row reference path and bounded work accounting. The existing Windows and
+Debian owners pass 384 ownership cases and 27 type-directory cases; both hosts
+admit the same current 1,162-function compiler bytecode and collect matching
+borrow-root evidence. This is source/verifier development evidence. Native
+compiler throughput, self-lowering and the serializer size failure remain open;
+this checkpoint does not complete the memory gate or qualify a new toolchain.
 
 ## Supported toolchain and retirement map
 

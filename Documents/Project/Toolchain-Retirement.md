@@ -2,7 +2,7 @@
 
 > Status: Current migration and deletion checklist
 > Authority: Informative; accepted contracts and qualification gates apply
-> Last reviewed: 2026-10-07
+> Last reviewed: 2026-10-08
 
 Mark old implementations before replacing them, track their users, then remove
 them when the supported replacement works and no required construction edge
@@ -29,7 +29,7 @@ result alone does not prove that deletion is safe.
 | --- | --- | --- |
 | `MEM-001` | General byte/text lifetime handling through record-return checkpoints and loop compaction. | Migrating; shared ownership and complete exit/aggregate cleanup must replace these uses. |
 | `MEM-002` | Historical native byte concatenation and text/integer allocation mechanisms. | Migrating; preserve required operations while connecting their storage to ownership and budgets. |
-| `MEM-003` | Compiler working tables and stacks repeatedly rebuilt as byte sequences. | Planned; use typed owned collections where appropriate. Actual WVB/WVO serialization remains bytes. |
+| `MEM-003` | Compiler working tables and stacks repeatedly rebuilt as byte sequences. | Migrating; per-call parameter checks now use scalar decoded shapes and a cursor. Remaining stacks and working tables still need conversion; actual serialized formats remain bytes. |
 | `MEM-004` | Remaining users of the historical byte-construction leaf. | Migrating; the compiler signature and machine-code-directory writers have candidate conversions to canonical reserved builders. |
 | `MEM-005` | Interpreter budget state and execution frames repeatedly rebuilt as bytes. | Planned; native working storage needs separate reclamation evidence from guest accounting. |
 | `BOOT-001` | Temporary serializer projection and staging-capacity construction bridge. | Required bootstrap; exact self-lowering and independent reconstruction remain open. |

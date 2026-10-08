@@ -315,6 +315,124 @@ fn Checkˉdependencyˉchunks() -> i32 {
     return 0;
 }
 
+fn Edgeˉevidence(Code: bytes, Shape: bytes, Parameters: u32,
+    Events: bytes, Limit: u32, Compact: bool) -> Owners.Loanˉevidence {
+    let Header: bytes = Word(Fragmentˉheader, 4u32, 1u32 + 45u32 * 65536u32);
+    let Input: bytes = Bytesˉconcat(Header, Code);
+    let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Shape, Parameters, 64u32, Limit);
+    let Trace: Owners.Loanˉtrace = Owners.Loanˉtrace(Initial.Valid, Initial.Map,
+        Initial.Parameters, Initial.Locals, Initial.Maximum, Events,
+        Bytesˉslice(Events, 0u32, 0u32), Initial.Work, Initial.Limit);
+    let Control: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Input, 8u32, Bytesˉlength(Code));
+    if Compact {
+        return Owners.Loanˉcheckˉrootsˉemptyˉedges(Input, 8u32,
+            Bytesˉlength(Code), Parameters, Control, Trace);
+    }
+    return Owners.Loanˉcheckˉroots(Input, 8u32, Bytesˉlength(Code), Parameters, Control, Trace);
+}
+
+fn Edgeˉequivalent(Code: bytes, Shape: bytes, Parameters: u32, Events: bytes) -> bool {
+    let Oracle: Owners.Loanˉevidence = Edgeˉevidence(Code, Shape, Parameters, Events, 16777216u32, false);
+    let Compact: Owners.Loanˉevidence = Edgeˉevidence(Code, Shape, Parameters, Events, 16777216u32, true);
+    if Oracle.Valid != Compact.Valid || Oracle.Rule != Compact.Rule || Oracle.Offset != Compact.Offset ||
+        Bytesˉlength(Oracle.Dependencies) != Bytesˉlength(Compact.Dependencies) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Bytesˉlength(Oracle.Dependencies) {
+        if Bytesˉreadˉu8(Oracle.Dependencies, Offset) != Bytesˉreadˉu8(Compact.Dependencies, Offset) { return false; }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+// Preserve non-adjacent carried loans while recreating block-local temporaries.
+data Edgeˉshapes: bytes = [
+    5, 0, 0, 0, 0, 5, 0, 0, 0, 0,
+    69, 0, 0, 0, 0, 69, 0, 0, 0, 0, 69, 0, 0, 0, 0, 69, 0, 0, 0, 0
+];
+
+fn Edgeˉworkload(Blockˉcount: u32, Limit: u32, Compact: bool) -> Owners.Flowˉresult {
+    var Shape: bytes = Bytesˉslice(Shapes, 0u32, 5u32);
+    var Local: u32 = 0u32;
+    while Local < 7u32 {
+        Shape = Bytesˉconcat(Shape, Bytesˉslice(Shapes, 10u32, 5u32));
+        Local = Local + 1u32;
+    }
+    var Trace: Owners.Loanˉtrace = Owners.Loanˉbegin(Shape, 1u32, 64u32, Limit);
+    var Code: bytes = Bytesˉslice(Shapes, 0u32, 0u32);
+    var Block: u32 = 0u32;
+    while Block < Blockˉcount {
+        let Offset: u32 = Block * 5u32;
+        Local = 0u32;
+        while Local < 7u32 {
+            Trace = Owners.Loanˉevent(Trace, Offset, 1u32, Local, 0u32);
+            Trace = Owners.Loanˉevent(Trace, Offset, 3u32, Local, 0u32);
+            Local = Local + 1u32;
+        }
+        Trace = Owners.Loanˉevent(Trace, Offset, 2u32, 7u32, 0u32);
+        Trace = Owners.Loanˉevent(Trace, Offset, 3u32, 7u32, 0u32);
+        if Block + 1u32 < Blockˉcount { Code = Bytesˉconcat(Code, Instruction(48u8, Offset + 5u32)); }
+        else { Code = Bytesˉconcat(Code, Bytesˉfromˉu8(81u8)); }
+        Block = Block + 1u32;
+    }
+    let Input: bytes = Bytesˉconcat(Fragmentˉheader, Code);
+    let Control: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Input, 8u32, Bytesˉlength(Code));
+    if Compact { return Owners.Loanˉcheckˉemptyˉedges(Input, 8u32, Bytesˉlength(Code), 1u32, Control, Trace); }
+    return Owners.Loanˉcheck(Input, 8u32, Bytesˉlength(Code), 1u32, Control, Trace);
+}
+
+fn Checkˉedgeˉstates() -> i32 {
+    let Start: bytes = Event(0u32, 1u32, 0u32, 0u32);
+    let Write: bytes = Event(2u32, 4u32, 0u32, 0u32);
+    if !Edgeˉequivalent(Straight, Shapes, 2u32,
+        Join(Start, Event(1u32, 3u32, 0u32, 0u32), Write)) { return 257; }
+    if !Edgeˉequivalent(Straight, Shapes, 2u32,
+        Join(Start, Write, Event(3u32, 3u32, 0u32, 0u32))) { return 258; }
+    let Branches: bytes = Bytesˉconcat(Event(5u32, 1u32, 0u32, 0u32), Event(10u32, 1u32, 0u32, 1u32));
+    if !Edgeˉequivalent(Diamond, Shapes, 2u32,
+        Bytesˉconcat(Branches, Event(15u32, 3u32, 0u32, 0u32))) { return 259; }
+    if !Edgeˉequivalent(Diamond, Shapes, 2u32,
+        Bytesˉconcat(Event(5u32, 1u32, 0u32, 0u32), Event(15u32, 3u32, 0u32, 0u32))) { return 260; }
+    let Loopˉread: bytes = Bytesˉconcat(Start, Event(5u32, 3u32, 0u32, 0u32));
+    if !Edgeˉequivalent(Loop, Shapes, 2u32,
+        Bytesˉconcat(Loopˉread, Event(10u32, 4u32, 0u32, 0u32))) { return 261; }
+    if !Edgeˉequivalent(Straight, Borrowedˉparameter, 1u32,
+        Bytesˉconcat(Event(0u32, 2u32, 1u32, 0u32), Event(1u32, 3u32, 1u32, 0u32))) { return 262; }
+    let Pair: bytes = Bytesˉconcat(Event(5u32, 1u32, 0u32, 0u32), Event(5u32, 1u32, 3u32, 1u32));
+    let Otherˉpair: bytes = Bytesˉconcat(Event(10u32, 1u32, 0u32, 0u32), Event(10u32, 1u32, 3u32, 1u32));
+    let Temporary: bytes = Bytesˉconcat(Event(15u32, 1u32, 1u32, 0u32), Event(15u32, 1u32, 2u32, 1u32));
+    let Reads: bytes = Bytesˉconcat(Event(16u32, 3u32, 0u32, 0u32), Event(16u32, 3u32, 3u32, 0u32));
+    if !Edgeˉequivalent(Diamond, Edgeˉshapes, 2u32,
+        Join(Pair, Otherˉpair, Bytesˉconcat(Temporary, Reads))) { return 263; }
+    let Fast: Owners.Flowˉresult = Edgeˉworkload(128u32, 16777216u32, true);
+    let Reference: Owners.Flowˉresult = Edgeˉworkload(128u32, 16777216u32, false);
+    // This named 128-block, seven-loan, 64-operand workload must retain the
+    // copying improvement and remain below 2.5 MiB of charged work.
+    if !Fast.Valid || !Reference.Valid || Fast.Work > 2621440u32 ||
+        Fast.Work * 4u32 >= Reference.Work * 3u32 { return 264; }
+    let Exact: Owners.Flowˉresult = Edgeˉworkload(128u32, Fast.Work, true);
+    let Refused: Owners.Flowˉresult = Edgeˉworkload(128u32, Fast.Work - 1u32, true);
+    if !Exact.Valid || Exact.Work != Fast.Work || Refused.Valid || Refused.Rule != 5u32 ||
+        Refused.Work >= Fast.Work { return 265; }
+    // Exercise partial, full and subsequent queue bytes against the full-row oracle.
+    var Blocks: u32 = 3u32;
+    while Blocks <= 5u32 {
+        let Smallˉfast: Owners.Flowˉresult = Edgeˉworkload(Blocks, 16777216u32, true);
+        let Smallˉreference: Owners.Flowˉresult = Edgeˉworkload(Blocks, 16777216u32, false);
+        if !Smallˉfast.Valid || !Smallˉreference.Valid { return 266; }
+        Blocks = Blocks + 1u32;
+    }
+    let Crossˉbyteˉloop: bytes = Bytesˉconcat(
+        Bytesˉconcat(Instruction(48u8, 5u32), Instruction(48u8, 10u32)),
+        Bytesˉconcat(Instruction(48u8, 15u32),
+            Bytesˉconcat(Instruction(48u8, 20u32), Instruction(48u8, 5u32))));
+    let Loopˉevents: bytes = Join(Start, Event(5u32, 3u32, 0u32, 0u32), Event(20u32, 4u32, 0u32, 0u32));
+    let Loopˉresult: Owners.Loanˉevidence = Edgeˉevidence(
+        Crossˉbyteˉloop, Shapes, 2u32, Loopˉevents, 16777216u32, true);
+    if Loopˉresult.Valid || Loopˉresult.Rule != 8u32 ||
+        !Edgeˉequivalent(Crossˉbyteˉloop, Shapes, 2u32, Loopˉevents) { return 267; }
+    return 0;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Start: bytes = Event(0u32, 1u32, 0u32, 0u32);
     let Read: bytes = Event(1u32, 3u32, 0u32, 0u32);
@@ -360,6 +478,8 @@ export fn Check(Candidate: bytes) -> i32 {
     let Rewrite: bytes = Bytesˉconcat(Instruction(9u8, 42u32), Instruction(5u8, 0u32));
     let Readˉloan: bytes = Bytesˉconcat(Instruction(4u8, 1u32), Return);
     let Forward: bytes = Bytesˉconcat(Instruction(4u8, 1u32), Instruction(5u8, 2u32));
+    if Typedˉresult(Probe(Input, Join(Loan, Instruction(4u8, 1u32),
+        Bytesˉconcat(Instruction(48u8, 20u32), Return)), 1u32)) != 2u32 { return 256; }
     if Typedˉresult(Word(Input, Section(Input, 5u32) + 1152u32, 1u32)) != 2u32 { return 221; }
     let Copy: bytes = Bytesˉconcat(Bytesˉfromˉu8(176u8), Bytesˉfromˉu8(176u8));
     let Ownerˉresult: bytes = Bytesˉconcat(Instruction(4u8, 0u32), Return);
@@ -399,5 +519,7 @@ export fn Check(Candidate: bytes) -> i32 {
     if Indexed != 0 { return Indexed; }
     let Chunked: i32 = Checkˉdependencyˉchunks();
     if Chunked != 0 { return Chunked; }
+    let Edges: i32 = Checkˉedgeˉstates();
+    if Edges != 0 { return Edges; }
     return Checkˉsharedˉcallˉroots();
 }
