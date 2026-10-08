@@ -474,6 +474,21 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
     );
 }
 
+fn Packedˉrowsˉequal(Left: borrow bytes, Right: borrow bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Length - Index >= 4u32 {
+        if Bytesˉreadˉu32ˉlittle(Left, Index) != Bytesˉreadˉu32ˉlittle(Right, Index) { return false; }
+        Index = Index + 4u32;
+    }
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
 // The shared profile uses the independently proved owner roots in its ordinary
 // local live rows. The existing offset allocator still owns coloring.
 export fn Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
@@ -508,6 +523,7 @@ export fn Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
     var Interference: bytes = Zeros(Input,
         Allocation.Compilerˉnativeˉx64ˉrecordˉinterferenceˉbytes(Count));
     var Events: bytes = Empty(Input);
+    var Previousˉclique: bytes = Empty(Input);
     var Row: u32 = 0u32;
     var Previous: u32 = 0u32;
     while Row < Bytesˉlength(Rows) / Rowˉbytes {
@@ -567,7 +583,16 @@ export fn Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
             var Value: u32 = 4294967295u32;
             if Side == 1u32 { Value = Store; }
             // An empty live set adds no edges, including for a stored record.
-            if Any { Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Packed)); }
+            if Any {
+                // OR is idempotent, including across flushes and intervening
+                // store events. Store-specific edges must still be recorded.
+                var Append: bool = true;
+                if Value == 4294967295u32 {
+                    Append = !Packedˉrowsˉequal(borrow Packed, borrow Previousˉclique);
+                    Previousˉclique = Packed;
+                }
+                if Append { Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Packed)); }
+            }
             // A definition may not overwrite a root whose final borrowed use
             // is this store: ordinary last-use cleanup runs after the copy.
             if Any && Side == 0u32 && Store != 4294967295u32 {

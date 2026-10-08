@@ -897,7 +897,91 @@ fn Sharedˉrecordˉprojection(Count: u32) -> bool {
         4u32 + Width * 2u32);
     return Rejected.Fields == 4294967295u32;
 }
+fn Recordˉinterferenceˉindexedˉrows(Count: u32) -> bool {
+    let Width: u32 = (Count + 7u32) / 8u32;
+    let Eventˉbytes: u32 = Width + 4u32;
+    var Matrix: bytes = Repeatedˉbyte(0u8, 0u32);
+    var Index: u32 = 0u32;
+    while Index < Count * Width {
+        Matrix = Bytesˉconcat(Matrix, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Index % 251u32), 0u32, 1u32));
+        Index = Index + 1u32;
+    }
+    var Events: bytes = Repeatedˉbyte(0u8, 0u32);
+    var Event: u32 = 0u32;
+    while Event < 7u32 {
+        var Value: u32 = Event * (Count / 2u32);
+        if Event == 1u32 || Event == 4u32 { Value = 4294967295u32; }
+        Events = Bytesˉconcat(Events, Bytesˉfromˉu32ˉlittle(Value));
+        Index = 0u32;
+        while Index < Width {
+            let Bits: u32 = (Index * 37u32 + Event * 53u32) % 256u32;
+            Events = Bytesˉconcat(Events, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Bits), 0u32, 1u32));
+            Index = Index + 1u32;
+        }
+        Event = Event + 1u32;
+    }
+    let Built: bytes = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(Matrix, Events, Count);
+    if Bytesˉlength(Built) != Count * Width { return false; }
+    var Left: u32 = 0u32;
+    while Left < Count {
+        Index = 0u32;
+        while Index < Width {
+            var Expected: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Matrix, Left * Width + Index));
+            Event = 0u32;
+            while Event < 7u32 {
+                let Cursor: u32 = Event * Eventˉbytes;
+                let Eventˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor);
+                var Relevant: bool = Eventˉvalue == Left;
+                if Eventˉvalue == 4294967295u32 {
+                    Relevant = (U32ˉfromˉu8(Bytesˉreadˉu8(Events, Cursor + 4u32 + Left / 8u32)) &
+                        (1u32 << (Left % 8u32))) != 0u32;
+                }
+                if Relevant { Expected = Expected | U32ˉfromˉu8(Bytesˉreadˉu8(Events, Cursor + 4u32 + Index)); }
+                Event = Event + 1u32;
+            }
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Built, Left * Width + Index)) != Expected { return false; }
+            Index = Index + 1u32;
+        }
+        Left = Left + 1u32;
+    }
+    // Batch boundaries cannot change the union, even when a row has no events.
+    let First: bytes = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
+        Matrix, Bytesˉslice(Events, 0u32, 3u32 * Eventˉbytes), Count);
+    let Split: bytes = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
+        First, Bytesˉslice(Events, 3u32 * Eventˉbytes, 4u32 * Eventˉbytes), Count);
+    return Sharedˉbytes.Bytesˉareˉequal(Built, Split) &&
+        Sharedˉbytes.Bytesˉareˉequal(Matrix, Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
+            Matrix, Bytesˉslice(Events, 0u32, 0u32), Count));
+}
+fn Sharedˉrecordˉstoreˉcoalescing() -> bool {
+    let Storeˉsection: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Recordˉtypeˉentry());
+    let Storeˉtypes: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Storeˉsection, 0u32, Bytesˉlength(Storeˉsection));
+    let Storeˉindices: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(1u32));
+    let Storeˉdirectory: Recordˉlocals.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory =
+        Recordˉlocals.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory(Storeˉindices,
+            Repeatedˉbyte(Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(0u32), 2u32), 2u32);
+    var Storeˉinput: bytes = Repeatedˉbyte(0u8, 0u32);
+    var Storeˉrows: bytes = Storeˉinput;
+    var Storeˉrow: u32 = 0u32;
+    while Storeˉrow < 17u32 {
+        Storeˉinput = Bytesˉconcat(Storeˉinput, Localˉinstruction(5u8, 1u32));
+        Storeˉrows = Bytesˉconcat(Storeˉrows, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Storeˉrow * 5u32),
+            Bytesˉconcat(Bytesˉfromˉu8(1u8), Bytesˉfromˉu8(2u8))));
+        Storeˉrow = Storeˉrow + 1u32;
+    }
+    // The live sets are repeated singletons. Only the store's before-copy edge
+    // prevents its destination from overwriting the source's final borrowed use.
+    let Storeˉplan: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Recordˉlocals.Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
+            Storeˉinput, 0u32, Storeˉdirectory, Storeˉtypes, Storeˉrows, 2u32, 6u32);
+    return Storeˉplan.Fields == 2u32 && Bytesˉlength(Storeˉplan.Offsets) == 8u32 &&
+        Bytesˉreadˉu32ˉlittle(Storeˉplan.Offsets, 0u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Storeˉplan.Offsets, 4u32) == 1u32;
+}
 fn Recordˉinterferenceˉwords() -> bool {
+    if !Sharedˉrecordˉstoreˉcoalescing() { return false; }
+    if !Recordˉinterferenceˉindexedˉrows(65u32) || !Recordˉinterferenceˉindexedˉrows(129u32) { return false; }
     var Case: u32 = 0u32;
     while Case < 11u32 {
         var Count: u32 = 0u32;

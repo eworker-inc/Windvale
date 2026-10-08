@@ -202,6 +202,37 @@ fn Interferenceˉword(Matrix: borrow bytes, Events: borrow bytes, Left: u32,
     return Result;
 }
 
+// Select once per row; its index is at most the event input's byte length.
+fn Interferenceˉrowˉevents(Events: borrow bytes, Left: u32, Rowˉbytes: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Events, 0u32, 0u32);
+    let Eventˉbytes: u32 = 4u32 + Rowˉbytes;
+    let Liveˉoffset: u32 = 4u32 + Left / 8u32;
+    let Liveˉmask: u32 = 1u32 << (Left % 8u32);
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Events) {
+        let Value: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor);
+        var Relevant: bool = Value == Left;
+        if Value == 4294967295u32 {
+            Relevant = (U32ˉfromˉu8(Bytesˉreadˉu8(Events, Cursor + Liveˉoffset)) & Liveˉmask) != 0u32;
+        }
+        if Relevant { Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Cursor + 4u32)); }
+        Cursor = Cursor + Eventˉbytes;
+    }
+    return Result;
+}
+
+fn Interferenceˉindexedˉword(Matrix: borrow bytes, Events: borrow bytes,
+    Selected: borrow bytes, Offset: u32, Index: u32, Width: u32) -> u32 {
+    var Result: u32 = Interferenceˉreadˉword(borrow Matrix, Offset + Index, Width);
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Selected) {
+        let Source: u32 = Bytesˉreadˉu32ˉlittle(Selected, Cursor);
+        Result = Result | Interferenceˉreadˉword(borrow Events, Source + Index, Width);
+        Cursor = Cursor + 4u32;
+    }
+    return Result;
+}
+
 export fn Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
     Matrix: bytes,
     Events: bytes,
@@ -215,12 +246,25 @@ export fn Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
     var Result: bytes = Empty(Matrix);
     var Left: u32 = 0u32;
     while Left < Count {
+        var Selected: bytes = Empty(Events);
+        // A single word already scans once and needs no temporary index.
+        if Rowˉbytes > 4u32 { Selected = Interferenceˉrowˉevents(borrow Events, Left, Rowˉbytes); }
         var Row: bytes = Empty(Matrix);
         var Index: u32 = 0u32;
+        if Rowˉbytes > 4u32 && Bytesˉlength(Selected) == 0u32 {
+            Row = Bytesˉslice(Matrix, Left * Rowˉbytes, Rowˉbytes);
+            Index = Rowˉbytes;
+        }
         while Index < Rowˉbytes {
             var Width: u32 = Rowˉbytes - Index;
             if Width > 4u32 { Width = 4u32; }
-            let Word: u32 = Interferenceˉword(borrow Matrix, borrow Events, Left, Rowˉbytes, Index, Width);
+            var Word: u32 = 0u32;
+            if Rowˉbytes <= 4u32 {
+                Word = Interferenceˉword(borrow Matrix, borrow Events, Left, Rowˉbytes, Index, Width);
+            } else {
+                Word = Interferenceˉindexedˉword(borrow Matrix, borrow Events, borrow Selected,
+                    Left * Rowˉbytes, Index, Width);
+            }
             var Encoded: bytes = Bytesˉfromˉu32ˉlittle(Word);
             if Width < 4u32 { Encoded = Bytesˉslice(Encoded, 0u32, Width); }
             Row = Bytesˉconcat(Row, Encoded);
