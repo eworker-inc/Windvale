@@ -194,6 +194,7 @@ function Preparedˉfailure(Message) {
     return Object.assign(new Error(Message + ' ' + PREPARATION_GUIDANCE), { exitCode: 64 });
 }
 const Preparedˉhosts = new WeakSet();
+const Preparedˉexecutionˉchecks = new WeakMap();
 // This is a read-only selection boundary. Every input is revalidated before
 // behavior and again on completion; no preparation callback exists here.
 export async function Readˉpreparedˉsharedˉcompilerˉhost(Recordˉpath, Sha256, Compilerˉkey, Deadline = Date.now() + 600_000) {
@@ -304,8 +305,40 @@ export async function Readˉpreparedˉsharedˉcompilerˉhost(Recordˉpath, Sha25
                 'Prepared host producers or current compiler changed.');
                 Checkˉdeadline();
             } });
+        Preparedˉexecutionˉchecks.set(Selected, async () => {
+            Checkˉdeadline();
+            Require((await Read(Recordˉpath, 1_048_576)).equals(Original), 'Prepared host record changed.');
+            const Items = [Product, ...Object.values(Segmented).map(Component =>
+                Value.inputs.find(Item => Sameˉpath(Item.path, Component.Path)))];
+            const Seen = new Set();
+            for (const Item of Items) {
+                const Name = WINDOWS ? Item.path.toLowerCase() : Item.path;
+                if (!Seen.has(Name)) { Seen.add(Name); await Check(Item); }
+            }
+            await Checkˉconfiguration(); Checkˉdeadline();
+        });
         Checkˉdeadline(); Preparedˉhosts.add(Selected); return Selected;
     } catch (Error) { throw Preparedˉfailure(Error.message); }
+}
+
+// The caller owns this batch and must close it before publishing success.
+// Full construction provenance surrounds the batch; nested operations retain
+// exact execution/configuration checks without replaying the recovery graph.
+export async function Openˉpreparedˉsharedˉcompilerˉhost(Recordˉpath, Sha256, Compilerˉkey, Deadline) {
+    const Original = await Readˉpreparedˉsharedˉcompilerˉhost(Recordˉpath, Sha256, Compilerˉkey, Deadline);
+    const Check = Preparedˉexecutionˉchecks.get(Original);
+    Require(typeof Check === 'function', 'Prepared host has no execution guard.');
+    let Active = true;
+    const Host = Object.freeze({ ...Original, Requireˉunchanged: async () => {
+        Require(Active, 'Prepared shared compiler host batch is closed.');
+        await Check();
+    } });
+    Preparedˉhosts.add(Host);
+    return Object.freeze({ Host, Close: async () => {
+        Require(Active, 'Prepared shared compiler host batch is already closed.');
+        Active = false; Preparedˉhosts.delete(Host);
+        await Original.Requireˉunchanged();
+    } });
 }
 export function Parseˉstagedˉnativeˉmanifest(Manifest) {
     Require(Buffer.isBuffer(Manifest) && Manifest.length >= 24 &&

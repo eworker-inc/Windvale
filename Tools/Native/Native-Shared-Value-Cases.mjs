@@ -1,9 +1,11 @@
 import { Buildˉownedˉdomainˉfixture } from './Native-Owned-Domain-Cases.mjs';
 import { createHash } from 'node:crypto';
-import { lstat, mkdir, open, realpath, writeFile } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, open, readdir, realpath, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { Prepareˉassemblyˉobjectˉcache, Acquireˉassemblyˉobject } from './Native-Assembly-Object-Cache-Core.mjs';
+import { Prepareˉsourceˉobjectˉcache, Acquireˉsourceˉobject } from './Native-Source-Object-Cache-Core.mjs';
 import { Buildˉsharedˉnativeˉconsumer, Parseˉstagedˉnativeˉmanifest } from './Build-Shared-Compiler-Host.mjs';
+import { Withˉcurrentˉverification } from './Current-Wvb-Verification-Batch-Core.mjs';
 
 export async function Readˉsharedˉvalueˉtemplate(Context, Valueˉobject) {
     const { Repository, Work, Target, Requireˉsuccess } = Context;
@@ -956,28 +958,26 @@ async function Sourceˉcompileˉproduct(Context, Common, Project, Wvb, Label, Ma
 }
 
 // Compilation and header checks do not replace complete bytecode admission.
-// Every native use admits the exact bytes afresh through the existing read-only CLI.
-async function Sourceˉadmitˉproduct(Context, Product, Object, Label) {
+// Every native use admits the exact bytes afresh through the current verifier.
+async function Sourceˉadmitˉproduct(Context, Product, Object) {
     Sourceˉproductˉcontext(Context);
-    const { Repository, Deadline, Requireˉsuccess, Compilerˉcheckpoint: Compiler } = Context;
+    const { Deadline, Currentˉverifier: Verifier } = Context;
     Sourceˉrequire(Buffer.isBuffer(Product.Bytecode) && Product.Bytecode.length <= 4_194_304,
         'Shared source admission needs the bounded compiled bytecode.');
-    await Compiler.Requireˉunchanged();
+    Sourceˉrequire(typeof Verifier?.Verify === 'function', 'Shared source admission requires its current verifier batch.');
     Sourceˉrequire((await Sourceˉread(Product.Wvb, 4_194_304)).equals(Product.Bytecode),
         'Shared source bytecode changed before complete admission.');
     await Sourceˉrequireˉabsent(Object);
     Sourceˉrequire(Date.now() < Deadline, 'Shared source deadline reached before complete admission.');
     let Report;
     try {
-        Report = await Requireˉsuccess(process.execPath,
-            [join(Repository, 'Tools/Native/Verify-Wvb.mjs'), '--current', Product.Wvb], Label);
+        Report = await Verifier.Verify(Product.Wvb);
     } finally {
         Sourceˉrequire((await Sourceˉread(Product.Wvb, 4_194_304)).equals(Product.Bytecode),
             'Shared source bytecode changed during complete admission.');
         await Sourceˉrequireˉabsent(Object);
-        await Compiler.Requireˉunchanged();
     }
-    Sourceˉrequire(Report.Code === 0 && !Report.Exceeded && !Report.Timedˉout &&
+    Sourceˉrequire(Report.Code === 0 && Report.Error === '' &&
         Report.Output.replaceAll('\r\n', '\n') === 'wvb status=Valid profile=compiler-aligned\n',
     'Shared source complete bytecode admission did not return the exact Valid report.');
     Sourceˉrequire(Date.now() < Deadline, 'Shared source deadline reached after complete admission.');
@@ -1065,30 +1065,146 @@ async function Sourceˉprepareˉretainedˉproducts(Context) {
     return { Wvbs: Specs.length, Images };
 }
 
-// This executes the admitted lowerer to construct an object. It does not execute
-// the generated application; actual export lengths determine the wrapper bytes.
-async function Sourceˉwarmˉsourceˉwrapper(Context, Cache, Case, Product) {
+function Sourceˉrequireˉadmittedˉkey(Cache, Bytecode, Key) {
+    Sourceˉrequire(Key === Sourceˉhash(Buffer.concat([Buffer.from(Cache.Fingerprint + '\n'), Bytecode])),
+        'Native object key differs from the completely admitted bytecode.');
+}
+
+async function Sourceˉnativeˉobject(Context, Cache, Product, Object, Label) {
     const { Repository, Requireˉsuccess, Preparedˉsharedˉhost: Host } = Context;
     const Suffix = Context.Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools/Native', Name + '.' + Suffix);
-    await Host.Requireˉunchanged();
-    const Object = Product.Prefix + '.wvo';
-    await Sourceˉadmitˉproduct(Context, Product, Object, 'shared-source-' + Case.Name + '-prepare-wvb-admission');
-    await Host.Requireˉunchanged();
-    const Lowered = await Requireˉsuccess(Host.Path, [Product.Wvb, Object],
-        'shared-source-' + Case.Name + '-prepare-native-object');
-    const Bytes = await Sourceˉread(Object, 4_194_304 - 32);
-    await Requireˉsuccess(Tool('Check-Wvo'), [Object], 'shared-source-' + Case.Name + '-prepare-object-check');
-    const Inspected = await Requireˉsuccess(Tool('Inspect-Wvo'), [Object],
-        'shared-source-' + Case.Name + '-prepare-object-inspect');
-    Sourceˉhostˉsuccess(Lowered.Output, Bytes, Inspected.Output);
+    await Sourceˉadmitˉproduct(Context, Product, Object);
+    const Native = await Acquireˉsourceˉobject(Cache, Product.Wvb, Object,
+        async (Input, Output) => {
+            Sourceˉrequire((await Sourceˉread(Input, 4_194_304)).equals(Product.Bytecode),
+                'Completely admitted bytecode changed before native compilation.');
+            return (await Requireˉsuccess(Host.Path, [Input, Output], Label + '-native-object')).Output;
+        },
+        async (Output, Compilerˉreport) => {
+            const Bytes = await Sourceˉread(Output, 4_194_304 - 32);
+            await Requireˉsuccess(Tool('Check-Wvo'), [Output], Label + '-object-check');
+            const Inspection = await Requireˉsuccess(Tool('Inspect-Wvo'), [Output], Label + '-object-inspect');
+            Sourceˉhostˉsuccess(Compilerˉreport, Bytes, Inspection.Output);
+            return { Bytes, Inspection, Compilerˉreport };
+        });
+    Sourceˉrequireˉadmittedˉkey(Cache, Product.Bytecode, Native.Key);
+    Sourceˉrequire((await Sourceˉread(Product.Wvb, 4_194_304)).equals(Product.Bytecode),
+        'Completely admitted bytecode changed during native object acquisition.');
+    return Native;
+}
+
+// Preparation retains the checked object as well as its wrapper. Behavior can
+// reuse it only for the same bytecode, compiler host and validation identities.
+async function Sourceˉwarmˉsourceˉwrapper(Context, Cache, Objects, Case, Product) {
+    const Native = await Sourceˉnativeˉobject(Context, Objects, Product, Product.Prefix + '.wvo',
+        'shared-source-' + Case.Name + '-prepare');
     const Source = Product.Prefix + '-wrapper.wva', Output = Product.Prefix + '-wrapper.wvo';
-    await writeFile(Source, Sourceˉharness(Case, Sourceˉexports(Inspected.Output)), { flag: 'wx' });
+    await writeFile(Source, Sourceˉharness(Case, Sourceˉexports(Native.Validation.Inspection.Output)), { flag: 'wx' });
     await Acquireˉassemblyˉobject(Cache, Source, Output);
-    await Host.Requireˉunchanged();
+    return Native;
+}
+
+export async function Checkˉsourceˉobjectˉcache(Context, Cache, Product, Nativeˉpath, Admitted) {
+    const Private = join(Context.Work, 'Source-Object-Cache-Cases'); await mkdir(Private);
+    const Family = join(Private, 'Cache'); await mkdir(Family);
+    const Input = join(Private, 'Input.wvb'); await writeFile(Input, Product.Bytecode, { flag: 'wx' });
+    // An already inspected real object supplies fixture bytes. These isolated
+    // lifecycle cases never publish into the production cache or run a compiler.
+    const Fixture = { ...Cache, Family, Prepared: false, Requireˉunchanged: async () => {
+        Sourceˉrequire(Date.now() < Context.Deadline, 'Source-object lifecycle deadline reached.');
+    } };
+    const Prepared = { ...Fixture, Prepared: true };
+    let Constructions = 0, Checks = 0, Cases = 0;
+    const Produce = async (Snapshot, Output) => {
+        Sourceˉrequire((await Sourceˉread(Snapshot, 4_194_304)).equals(Product.Bytecode), 'Cache fixture input differs.');
+        Constructions++;
+        await copyFile(Nativeˉpath, Output);
+        return Admitted.Compilerˉreport;
+    };
+    const Check = async (Output, Report) => {
+        Checks++;
+        Sourceˉrequire(Report === Admitted.Compilerˉreport &&
+            (await Sourceˉread(Output, 4_194_272)).equals(Admitted.Bytes), 'Cache fixture object or report differs.');
+    };
+    const Refuse = async (Action, Message, Code = 1) => {
+        try { await Action(); }
+        catch (Error) {
+            Sourceˉrequire((Error.exitCode ?? 1) === Code && Error.message.includes(Message), 'Source-object cache refusal differs: ' + Error.message);
+            Cases++; return;
+        }
+        throw new Error('Source-object cache accepted a refused request.');
+    };
+    const Request = (Owner, Name, Producer = Produce) => Acquireˉsourceˉobject(Owner, Input,
+        join(Private, Name + '.wvo'), Producer, Check);
+    await Refuse(() => Request(Prepared, 'Missing'), 'Prepared source object missing', 64);
+    await Sourceˉrequireˉabsent(join(Private, 'Missing.wvo'));
+    Sourceˉrequire(Constructions === 0 && Checks === 0 && (await readdir(Family)).length === 0,
+        'Prepared source-object miss started construction or validation.');
+    const Cold = await Request(Fixture, 'Cold');
+    Sourceˉrequire(Cold.Status === 'Created' && Constructions === 1 && Checks === 2, 'Cold source-object admission differs.'); Cases++;
+    const Warm = await Request(Prepared, 'Warm');
+    Sourceˉrequire(Warm.Status === 'Hit' && Warm.Key === Cold.Key && Constructions === 1 && Checks === 3,
+        'Prepared source-object reuse skipped validation or repeated construction.'); Cases++;
+    await Refuse(() => Request(Fixture, 'Cold'), 'requires a new output');
+    await Refuse(() => Request({ ...Prepared, Fingerprint: Prepared.Fingerprint + '-changed-producer' }, 'Producer'),
+        'Prepared source object missing', 64);
+    await Sourceˉrequireˉabsent(join(Private, 'Producer.wvo'));
+    const Changed = Buffer.from(Product.Bytecode); Changed[0] ^= 1; await writeFile(Input, Changed);
+    await Refuse(async () => Sourceˉrequireˉadmittedˉkey(Fixture, Changed, Cold.Key), 'differs from the completely admitted bytecode');
+    await Refuse(Cold.Requireˉunchanged, 'bytecode changed');
+    await Refuse(() => Request(Prepared, 'Changed'), 'Prepared source object missing', 64);
+    await Sourceˉrequireˉabsent(join(Private, 'Changed.wvo')); await writeFile(Input, Product.Bytecode);
+    const Checkpoint = join(Family, Cold.Key), Record = join(Checkpoint, 'Checkpoint.json');
+    const Original = await Sourceˉread(Record, 4096);
+    await writeFile(Record, Buffer.concat([Original, Buffer.from('\n')]));
+    await Refuse(() => Request(Fixture, 'Corrupt-record'), 'checkpoint record differs');
+    await Sourceˉrequireˉabsent(join(Private, 'Corrupt-record.wvo')); await writeFile(Record, Original);
+    const Cachedˉobject = join(Checkpoint, 'Product.wvo'), Damaged = Buffer.from(Admitted.Bytes); Damaged[Damaged.length - 1] ^= 1;
+    await writeFile(Cachedˉobject, Damaged);
+    await Refuse(() => Request(Fixture, 'Corrupt-object'), 'checkpoint record differs');
+    await Sourceˉrequireˉabsent(join(Private, 'Corrupt-object.wvo')); await writeFile(Cachedˉobject, Admitted.Bytes);
+    const Broken = { ...Fixture, Fingerprint: Fixture.Fingerprint + '-failed-construction' };
+    await Refuse(() => Request(Broken, 'Malformed', async () => 'invalid\n'), 'compiler report differs');
+    await Sourceˉrequireˉabsent(join(Private, 'Malformed.wvo'));
+    Sourceˉrequire((await readdir(Family)).length === 1, 'Failed source-object construction left temporary state.');
+    await Refuse(() => Request({ ...Prepared, Requireˉunchanged: async () => {
+        throw Object.assign(new Error('Changed fixture producer.'), { exitCode: 1 });
+    } }, 'Changed-producer'), 'Changed fixture producer');
+    await Sourceˉrequireˉabsent(join(Private, 'Changed-producer.wvo'));
+    await writeFile(Input, Buffer.alloc(4_194_305));
+    await Refuse(() => Request(Fixture, 'Oversized'), 'not a bounded ordinary file');
+    await Sourceˉrequireˉabsent(join(Private, 'Oversized.wvo'));
+    Sourceˉrequire(Constructions === 1 && (await Sourceˉread(join(Private, 'Cold.wvo'), 4_194_272)).equals(Admitted.Bytes) &&
+        (await readdir(Family)).length === 1, 'Source-object refusal rebuilt or mutated an admitted product.');
+    const Image = join(Private, 'Compiler-image.bin'); await writeFile(Image, Admitted.Bytes, { flag: 'wx' });
+    let Hostˉchecks = 0, Provenanceˉchanged = false;
+    const Guarded = await Prepareˉsourceˉobjectˉcache({ Deadline: Context.Deadline,
+        Family: join(Private, 'Guard-Cache/native-assembly-objects-v1', process.platform + '-x64'),
+        Fingerprint: 'isolated-identity-fixture', Prepared: true, Requireˉunchanged: async () => {} },
+    { Path: Image, Bytes: Admitted.Bytes.length, Sha256: Sourceˉhash(Admitted.Bytes),
+        Recordˉsha256: Sourceˉhash(Admitted.Bytes), Compilerˉkey: Sourceˉhash(Product.Bytecode),
+        Requireˉunchanged: async () => {
+            Hostˉchecks++;
+            if (Provenanceˉchanged) throw new Error('Changed fixture construction provenance.');
+        } });
+    await Guarded.Requireˉunchanged();
+    Sourceˉrequire(Hostˉchecks === 1, 'Per-object image validation repeated full construction admission.'); Cases++;
+    await writeFile(Image, Damaged);
+    await Refuse(Guarded.Requireˉunchanged, 'compiler image changed'); await writeFile(Image, Admitted.Bytes);
+    Provenanceˉchanged = true;
+    await Refuse(Guarded.Requireˉhostˉunchanged, 'Changed fixture construction provenance');
+    process.stdout.write(`native shared source object cache status=Passed cases=${Cases} fixture-constructions=1 native-compiler-executions=0\n`);
 }
 
 export async function Prepareˉsharedˉsourceˉproducts(Context) {
+    if (Context.Preparedˉsharedˉhost && ['source', 'all'].includes(Context.Selection))
+        return Withˉcurrentˉverification({ Prepare: false, Deadline: Context.Deadline }, Verifier =>
+            Sourceˉprepareˉproducts({ ...Context, Currentˉverifier: Verifier }));
+    return Sourceˉprepareˉproducts(Context);
+}
+
+async function Sourceˉprepareˉproducts(Context) {
     Sourceˉproductˉcontext(Context);
     const { Selection, Deadline, Compilerˉcheckpoint: Compiler, Preparedˉsharedˉhost: Host } = Context;
     Sourceˉrequire(['source', 'plan', 'retained', 'all'].includes(Selection) &&
@@ -1096,13 +1212,15 @@ export async function Prepareˉsharedˉsourceˉproducts(Context) {
     'Shared source preparation requires an explicit selection and a preparation environment.');
     await Compiler.Requireˉunchanged();
     let Sourceˉproducts = 0, Planˉproducts = 0, Wrapperˉobjects = 0, Runtimeˉobjects = 0;
-    let Cache = null;
+    let Cache = null, Objects = null, Lowererˉexecutions = 0, Objectˉhits = 0, Admissionˉobjects = 0;
     if (Host && ['source', 'all'].includes(Selection)) {
-        await Host.Requireˉunchanged();
         Sourceˉrequire(typeof Context.Prepareˉruntimeˉobjects === 'function',
             'Shared assembly preparation needs the existing runtime object owner.');
         Runtimeˉobjects = (await Context.Prepareˉruntimeˉobjects()).length;
         Cache = await Prepareˉassemblyˉobjectˉcache(Deadline);
+        await Runˉadmissionˉproviderˉcase({ ...Context, Prepareˉadmissionˉprovider: true });
+        Admissionˉobjects = 1;
+        Objects = await Prepareˉsourceˉobjectˉcache(Cache, Host);
     }
     if (['source', 'all'].includes(Selection)) {
         const Workspace = await Sourceˉworkspace(Context), Cases = Buildˉsharedˉsourceˉcases();
@@ -1112,7 +1230,9 @@ export async function Prepareˉsharedˉsourceˉproducts(Context) {
             const Product = await Sourceˉcaseˉproduct(Context, Workspace, Case);
             Sourceˉproducts += 1;
             if (Host) {
-                await Sourceˉwarmˉsourceˉwrapper(Context, Cache, Case, Product);
+                const Native = await Sourceˉwarmˉsourceˉwrapper(Context, Cache, Objects, Case, Product);
+                Lowererˉexecutions += Native.Constructed ? 1 : 0;
+                Objectˉhits += Native.Status === 'Hit' ? 1 : 0;
                 Wrapperˉobjects += 1;
             }
             process.stdout.write(`native shared source preparation case=${Case.Name} status=Prepared ` +
@@ -1138,7 +1258,7 @@ export async function Prepareˉsharedˉsourceˉproducts(Context) {
     Sourceˉrequire(Date.now() < Deadline, 'Shared prerequisite preparation deadline reached.');
     return { Sourceˉproducts, Planˉproducts, Products: Sourceˉproducts + Planˉproducts,
         Retainedˉproducts: Retained.Wvbs, Retainedˉimages: Retained.Images,
-        Runtimeˉobjects, Wrapperˉobjects, Lowererˉexecutions: Wrapperˉobjects,
+        Runtimeˉobjects, Wrapperˉobjects, Lowererˉexecutions, Objectˉhits, Admissionˉobjects,
         Verifierˉexecutions: Wrapperˉobjects, Executions: 0,
         Sourceˉwrappersˉprepared: Sourceˉproducts === 0 || Wrapperˉobjects === Sourceˉproducts };
 }
@@ -1271,6 +1391,9 @@ export async function Runˉsharedˉstagingˉcases(Context) {
 
 export async function Runˉadmissionˉproviderˉcase(Context) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess, Deadline } = Context;
+    const Prepare = Context.Prepareˉadmissionˉprovider === true;
+    Sourceˉrequire(!Prepare || process.env.WINDVALE_PREPARED_PRODUCTS_ONLY === undefined,
+        'Admission-provider preparation requires a preparation environment.');
     const ADMISSION_TEMP_BASE = 21_037_056, ADMISSION_TEMP_LIMIT = ADMISSION_TEMP_BASE + 64;
     const Owner = await Sourceˉread(join(Repository, 'Linker/Startup/X64-Shared-Compiler-Host.wva'), 1_048_576);
     const Definitions = ['Admission_read', 'Admission_write'].map(Name => {
@@ -1358,7 +1481,15 @@ export async function Runˉadmissionˉproviderˉcase(Context) {
         Image = Prefix + '.chunk-0', Application = Prefix + (Target === 'windows' ? '.exe' : '.elf');
     const Tool = Name => join(Repository, 'Tools/Native', Name + (Target === 'windows' ? '.cmd' : '.sh'));
     await writeFile(Source, Lines.join('\n'), { flag: 'wx' });
-    await Requireˉsuccess(Tool('Assemble-Wva'), [Source, Object], 'shared-admission-providers-assemble');
+    const Cache = await Prepareˉassemblyˉobjectˉcache(Deadline);
+    const Product = await Acquireˉassemblyˉobject(Cache, Source, Object);
+    await Cache.Requireˉunchanged();
+    if (Prepare) {
+        Sourceˉrequire((await Sourceˉread(join(Repository, 'Linker/Startup/X64-Shared-Compiler-Host.wva'), 1_048_576)).equals(Owner),
+            'Admission providers changed during preparation.');
+        process.stdout.write('native shared admission providers status=Prepared objects=1 cache=' + Product.Status + ' behavior-cases=0 executions=0\n');
+        return;
+    }
     const Report = await Requireˉsuccess(Tool('Link-Wvo'), ['0', 'Main', Image, Object], 'shared-admission-providers-link');
     const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Report.Output);
     Sourceˉrequire(Entry !== null, 'Admission provider probe has no native entry.');
@@ -1445,6 +1576,11 @@ export async function Runˉsharedˉpublicationˉcases(Context, Product) {
 }
 
 export async function Runˉsharedˉsourceˉcases(Context) {
+    return Withˉcurrentˉverification({ Prepare: false, Deadline: Context.Deadline }, Verifier =>
+        Sourceˉrunˉcases({ ...Context, Currentˉverifier: Verifier }));
+}
+
+async function Sourceˉrunˉcases(Context) {
     const Available = Buildˉsharedˉsourceˉcases(), Selection = Context.Sourceˉcases;
     Sourceˉrequire(Selection === undefined || (Array.isArray(Selection) && Selection.length > 0 &&
         Selection.length <= Available.length && new Set(Selection).size === Selection.length &&
@@ -1472,23 +1608,21 @@ export async function Runˉsharedˉsourceˉcases(Context) {
         'Source execution requires exactly the existing six runtime leaves.');
     const Workspace = await Sourceˉworkspace(Context);
     const Cache = await Prepareˉassemblyˉobjectˉcache(Deadline);
+    const Objects = await Prepareˉsourceˉobjectˉcache(Cache, Context.Preparedˉsharedˉhost);
     const Fatalˉtraps = Cases.filter(Case => Case.Trapˉstatus !== 0).length;
-    let Hostˉrefusals = 0, Publicationˉcases = 0, Publicationˉexecutions = 0;
+    let Hostˉrefusals = 0, Publicationˉcases = 0, Publicationˉexecutions = 0, Objectˉhits = 0, Lowererˉexecutions = 0;
     for (const [Index, Case] of Cases.entries()) {
         Sourceˉrequire(Date.now() < Deadline, 'Source execution owner deadline reached.');
-        await Compiler.Requireˉunchanged();
         process.stdout.write(`native shared source step=compile item=${Index + 1}/${Cases.length} case=${Case.Name} status=Started\n`);
         const { Prefix, Wvb, Bytecode } = await Sourceˉcaseˉproduct(Context, Workspace, Case);
         const Object = Prefix + '.wvo';
-        await Sourceˉadmitˉproduct(Context, { Wvb, Bytecode }, Object,
-            'shared-source-' + Case.Name + '-wvb-admission');
-        await Context.Preparedˉsharedˉhost.Requireˉunchanged();
-        const Compiled = await Requireˉsuccess(Host.Path, [Wvb, Object], 'shared-source-' + Case.Name + '-native-compiler');
-        const Nativeˉobject = await Sourceˉread(Object, 4_194_304 - 32);
-        await Requireˉsuccess(Tool('Check-Wvo'), [Object], 'shared-source-' + Case.Name + '-object-check');
-        const Report = await Requireˉsuccess(Tool('Inspect-Wvo'), [Object], 'shared-source-' + Case.Name + '-object-inspect');
-        Sourceˉhostˉsuccess(Compiled.Output, Nativeˉobject, Report.Output);
+        const Native = await Sourceˉnativeˉobject(Context, Objects, { Wvb, Bytecode }, Object,
+            'shared-source-' + Case.Name);
+        const Report = Native.Validation.Inspection;
+        Objectˉhits += Native.Status === 'Hit' ? 1 : 0;
+        Lowererˉexecutions += Native.Constructed ? 1 : 0;
         if (Case.Name === 'byte-family') {
+            await Checkˉsourceˉobjectˉcache(Context, Objects, { Wvb, Bytecode }, Object, Native.Validation);
             const Invalidˉinput = Buffer.from(Bytecode); Invalidˉinput[0] ^= 1;
             const Invalidˉpath = Prefix + '-invalid-magic.wvb', Refusedˉobject = Prefix + '-refused.wvo';
             await writeFile(Invalidˉpath, Invalidˉinput, { flag: 'wx' });
@@ -1507,7 +1641,8 @@ export async function Runˉsharedˉsourceˉcases(Context) {
             process.stdout.write('native shared source host-refusal status=Passed code=1 ' +
                 'native-status=Invalidˉwvb abi=22 code-bytes=0 object-bytes=0 output-absent=true\n');
             const Publication = await Runˉsharedˉpublicationˉcases(Context,
-                { Wvb, Bytecode, Nativeˉobject, Report: Compiled.Output, Invalidˉpath });
+                { Wvb, Bytecode, Nativeˉobject: Native.Validation.Bytes,
+                    Report: Native.Validation.Compilerˉreport, Invalidˉpath });
             Publicationˉcases += Publication.Cases;
             Publicationˉexecutions += Publication.Executions;
         }
@@ -1527,7 +1662,7 @@ export async function Runˉsharedˉsourceˉcases(Context) {
             Math.min(30_000, Deadline - Date.now()), 'shared-source-' + Case.Name + '-execute');
         Sourceˉrequire(Execution.Code === 42 && !Execution.Exceeded && !Execution.Timedˉout && Execution.Output === '',
             `Generated source ${Case.Name} failed: code=${Execution.Code}, output=${Execution.Output}.`);
-        await Compiler.Requireˉunchanged();
+        await Native.Requireˉunchanged();
         process.stdout.write(`native shared source case=${Case.Name} status=Passed ` +
             `source-outcome=${Case.Trapˉstatus === 0 ? 'returned-bytes' : 'checked-overflow-domain-closed'} ` +
             `iterations=${Case.Iterations} ` +
@@ -1540,16 +1675,18 @@ export async function Runˉsharedˉsourceˉcases(Context) {
             `elapsed-ms=${Math.round(performance.now() - Started)}\n`);
     }
     await Sourceˉsnapshotsˉunchanged(Workspace.Snapshots, 1_048_576);
+    await Objects.Requireˉhostˉunchanged();
     process.stdout.write(`native shared source status=Passed cases=${Cases.length} executions=${Cases.length} ` +
         `successes=${Cases.length - Fatalˉtraps} fatal-traps=${Fatalˉtraps} host-refusals=${Hostˉrefusals} ` +
         `publication-cases=${Publicationˉcases} publication-executions=${Publicationˉexecutions} ` +
         `iterations=${Iterations.join(',')} selected=${Cases.length}/${Available.length} ` +
         'arena-bytes=64 application-budget=64 physical-high-water<=64 ' +
         'final-physical-charge=0 final-budget-charge=0 ' +
-        `verifier-executions=${Cases.length} ` +
+        `verifier-executions=${Cases.length} source-object-hits=${Objectˉhits} lowerer-executions=${Lowererˉexecutions} ` +
         'generated-source=true compiler=WVB44/45-native25 serializer=current qualification=false\n');
     return { Cases: Cases.length, Executions: Cases.length, Successes: Cases.length - Fatalˉtraps,
         Fatalˉtraps, Hostˉrefusals, Publicationˉcases, Publicationˉexecutions, Verifierˉexecutions: Cases.length, Iterations,
+        Objectˉhits, Lowererˉexecutions,
         Selectedˉcases: Cases.map(Case => Case.Name), Availableˉcases: Available.length };
 }
 

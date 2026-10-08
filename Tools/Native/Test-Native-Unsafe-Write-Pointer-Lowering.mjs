@@ -6,7 +6,7 @@ import { Prepareˉvectorˉaccess, Runˉvectorˉaccess } from './Native-Owned-Vec
 import { Prepareˉownedˉhelpers, Runˉownedˉhelpers } from './Native-Owned-Helper-Cases.mjs';
 import { Prepareˉsharedˉsourceˉproducts, Runˉsharedˉsourceˉcases, Runˉsharedˉplanˉconsumer,
     Checkˉsharedˉretirements, Runˉsharedˉstagingˉcases } from './Native-Shared-Value-Cases.mjs';
-import { Readˉpreparedˉsharedˉcompilerˉhost } from './Build-Shared-Compiler-Host.mjs';
+import { Openˉpreparedˉsharedˉcompilerˉhost } from './Build-Shared-Compiler-Host.mjs';
 import { Checkˉpublicationˉbindingˉcases } from './Native-Compiler-Publication-Binding-Cases.mjs';
 import { Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
     Readˉpreparedˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
@@ -30,6 +30,7 @@ let Helperˉproduct = null;
 let Scalarˉhelperˉproduct = null;
 let Sharedˉhostˉrecord = null;
 let Preparedˉsharedˉhost = null;
+let Sharedˉhostˉbatch = null;
 let Currentˉobjectˉchecker = null;
 while (['--budget-oracle', '--owned-vector', '--owned-growth', '--owned-append', '--owned-helpers', '--owned-scalar-helpers', '--shared-compiler-host-record'].includes(process.argv.at(-3))) {
     if (!/^[0-9a-f]{64}$/u.test(process.argv.at(-1))) Usage();
@@ -67,6 +68,14 @@ if (Deadlineˉposition !== -1) {
         Number(Value) <= Date.now() || Number(Value) > Date.now() + 7_200_000 ||
         process.argv.indexOf('--deadline-ms', Deadlineˉposition + 1) !== -1) Usage();
     Suppliedˉdeadline = Number(Value); process.argv.splice(Deadlineˉposition, 2);
+}
+const Compilerˉonlyˉposition = process.argv.indexOf('--compiler-lowering-only', 4);
+const Compilerˉloweringˉonly = Compilerˉonlyˉposition !== -1;
+if (Compilerˉloweringˉonly) {
+    if (process.argv[4] !== '--shared-compiler-values' ||
+        !process.argv.includes('--full-lowering') ||
+        process.argv.indexOf('--compiler-lowering-only', Compilerˉonlyˉposition + 1) !== -1) Usage();
+    process.argv.splice(Compilerˉonlyˉposition, 1);
 }
 const Fullˉloweringˉposition = process.argv.indexOf('--full-lowering', 4);
 const Fullˉsharedˉlowering = Fullˉloweringˉposition !== -1;
@@ -245,8 +254,9 @@ try {
         const Compilerˉcheckpoint = await Readˉpreparedˉsplitˉcompiler(
             await Getˉcurrentˉsplitˉcompilerˉfamily(), Sharedˉproductsˉkey);
         await Compilerˉcheckpoint.Requireˉunchanged();
-        const Preparedˉhost = Sharedˉhostˉrecord === null ? null : await Readˉpreparedˉsharedˉcompilerˉhost(
+        if (Sharedˉhostˉrecord !== null) Sharedˉhostˉbatch = await Openˉpreparedˉsharedˉcompilerˉhost(
             Sharedˉhostˉrecord.Path, Sharedˉhostˉrecord.Sha256, Sharedˉproductsˉkey, Ownerˉdeadline);
+        const Preparedˉhost = Sharedˉhostˉbatch?.Host ?? null;
         const Products = await Prepareˉsharedˉsourceˉproducts({ Repository: Repositoryˉroot, Work, Target,
             Deadline: Ownerˉdeadline, Compilerˉcheckpoint, Compilerˉkey: Sharedˉproductsˉkey,
             Preparedˉsharedˉhost: Preparedˉhost, Selection: Sharedˉproductsˉselection,
@@ -258,12 +268,15 @@ try {
                 Math.min(300_000, Ownerˉdeadline - Date.now())) });
         if (['retained', 'all'].includes(Sharedˉproductsˉselection)) await Prepareˉcurrentˉobjectˉchecker();
         await Compilerˉcheckpoint.Requireˉunchanged(); await Requireˉcurrentˉselection();
+        await Closeˉsharedˉhostˉbatch();
         process.stdout.write(`native shared source products status=Prepared selection=${Sharedˉproductsˉselection} ` +
             `source-products=${Products.Sourceˉproducts} plan-products=${Products.Planˉproducts} products=${Products.Products} ` +
             `retained-wvb-products=${Products.Retainedˉproducts} retained-images=${Products.Retainedˉimages} ` +
             `current-object-checker=${Currentˉobjectˉchecker === null ? 0 : 1} ` +
             `runtime-objects=${Products.Runtimeˉobjects} wrapper-objects=${Products.Wrapperˉobjects} ` +
+            `admission-provider-objects=${Products.Admissionˉobjects} ` +
             `source-wrappers-prepared=${Products.Sourceˉwrappersˉprepared} lowerer-executions=${Products.Lowererˉexecutions} ` +
+            `source-object-hits=${Products.Objectˉhits} ` +
             `behavior-cases=0 compiler-source=current compiler-checkpoint=${Sharedˉproductsˉkey} host=${Target}\n`);
     }
     if (Sharedˉcompilerˉvalues) {
@@ -283,6 +296,7 @@ try {
         const Stagingˉcases = Sourceˉvaluesˉonly && Planˉvaluesˉonly ?
             await Runˉsharedˉstagingˉcases(Context) : { Cases: 0, Executions: 0 };
         await Confirmˉsharedˉcompilerˉhost();
+        if (!Fullˉsharedˉlowering) await Closeˉsharedˉhostˉbatch();
         if (Sourceˉvaluesˉonly && !Planˉvaluesˉonly) process.stdout.write(`native shared source values status=Passed cases=${Cases.Cases} ` +
             `executions=${Cases.Executions} iterations=${Cases.Iterations} host=${Target} ` +
             `compiler-source=current compiler-checkpoint=${Key} qualification=false\n`);
@@ -310,7 +324,11 @@ try {
         process.stdout.write(`native owned helper memory selection status=Passed cases=${Cases.Cases} ` +
             `executions=${Cases.Executions} malformed=${Cases.Malformed} host=${Target} qualification=false\n`);
     } else {
-    const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
+    // These assembly-only fixtures do not invoke the selected compiler. Keep
+    // them in the default full run and the explicit runtime selections.
+    if (Compilerˉloweringˉonly) process.stdout.write(
+        'native owned storage status=NotSelected scope=compiler-lowering assembly-only=true\n');
+    const Ownedˉcases = !Compilerˉloweringˉonly && !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
         Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct, Domainˉonly, Sharedˉonly, Valuesˉonly,
         Deadline: Ownerˉdeadline, Storageˉonly: Ownedˉonly, Prepareˉstorage: Storageˉpreparation,
     }) : 0;
@@ -583,10 +601,12 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     if (Fullˉsharedˉlowering) await Confirmˉsharedˉcompilerˉhost();
+    await Closeˉsharedˉhostˉbatch();
     process.stdout.write(
         `native unsafe write pointer lowering status=Passed cases=${53 + Capacityˉcases.Cases + Recordˉcases + Ownedˉcases + Vectorˉcases.Cases + Accessˉcases.Cases + Helperˉcases.Cases} ` +
         `valid=${28 + Capacityˉcases.Valid + Recordˉcases + Ownedˉcases + Vectorˉcases.Valid + Accessˉcases.Valid + Helperˉcases.Valid} malformed=${25 + Capacityˉcases.Malformed + Vectorˉcases.Malformed + Accessˉcases.Malformed + Helperˉcases.Malformed} native-execution=${13 + Recordˉcases + Ownedˉcases + Vectorˉcases.Executions + Accessˉcases.Executions + Helperˉcases.Executions} ` +
         `record-return-cases=${Recordˉcases} owned-storage-cases=${Ownedˉcases} owned-vector-cases=${Vectorˉcases.Cases} vector-access-cases=${Accessˉcases.Cases} owned-helper-cases=${Helperˉcases.Cases} foundation-borrow-cases=12 ` +
+        `scope=${Compilerˉloweringˉonly ? 'compiler-lowering' : 'compiler-and-runtime'} ` +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=' +
         (Historicalˉlowerer ? 'supplied-historical ' : 'current-candidate ') +
         'package-cache=development\n',
@@ -604,7 +624,27 @@ try {
     if (Preserveˉwork) process.stderr.write(`native lowering diagnostic workspace=${Work}\n`);
     process.exitCode = Error.exitCode ?? 1;
 } finally {
+    try { await Closeˉsharedˉhostˉbatch(); }
+    catch (Error) {
+        Preserveˉwork = true; process.exitCode = process.exitCode || Error.exitCode || 1;
+        process.stderr.write('Prepared host batch closure failed: ' + Error.message + '\n');
+    }
     if (!Preserveˉwork) await Removeˉwork(Work);
+}
+
+async function Closeˉsharedˉhostˉbatch() {
+    if (Sharedˉhostˉbatch === null) return;
+    const Batch = Sharedˉhostˉbatch; Sharedˉhostˉbatch = null;
+    await Batch.Close();
+    let Refused = false;
+    try { await Batch.Host.Requireˉunchanged(); }
+    catch (Error) { if (Error.message !== 'Prepared shared compiler host batch is closed.') throw Error; Refused = true; }
+    if (!Refused) Reject('A closed prepared host batch remained usable.');
+    Refused = false;
+    try { await Batch.Close(); }
+    catch (Error) { if (Error.message !== 'Prepared shared compiler host batch is already closed.') throw Error; Refused = true; }
+    if (!Refused) Reject('A prepared host batch closed twice.');
+    process.stdout.write('native shared host batch status=Passed construction-boundaries=2 closed-refusals=2\n');
 }
 
 async function Readˉsuppliedˉlowerer() {
@@ -631,8 +671,9 @@ async function Confirmˉsharedˉcompilerˉhost() {
     if (Sharedˉhostˉrecord === null) Reject('A candidate shared host requires its exact Host-Bridge.json identity.');
     if (Preparedˉsharedˉhost === null) {
         process.stdout.write('native shared host step=prepared-selection status=Started\n');
-        Preparedˉsharedˉhost = await Readˉpreparedˉsharedˉcompilerˉhost(
+        Sharedˉhostˉbatch = await Openˉpreparedˉsharedˉcompilerˉhost(
             Sharedˉhostˉrecord.Path, Sharedˉhostˉrecord.Sha256, undefined, Ownerˉdeadline);
+        Preparedˉsharedˉhost = Sharedˉhostˉbatch.Host;
         if (Preparedˉsharedˉhost.Path !== Product.Path || Preparedˉsharedˉhost.Sha256 !== Product.Sha256)
             Reject('Supplied shared host differs from the exact prepared record.');
         process.stdout.write(`native shared host step=prepared-selection status=Passed record-sha256=${Sharedˉhostˉrecord.Sha256}\n`);
@@ -1676,7 +1717,7 @@ function Usage() {
         '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|--owned-domain|--shared-storage|--shared-values|' +
         '--prepare-owned-storage|--prepare-shared-storage --maximum-seconds <30-1800>|' +
         '--shared-source-values --shared-compiler-host <application> <sha256> --maximum-seconds <30-5400>|' +
-        '--shared-plan-values|--shared-compiler-values (same explicit host/maximum-seconds arguments; --full-lowering permits up to7200 seconds)|' +
+        '--shared-plan-values|--shared-compiler-values (same explicit host/maximum-seconds arguments; --full-lowering permits up to7200 seconds; --compiler-lowering-only with --full-lowering excludes assembly-only runtime fixtures)|' +
         '--prepare-shared-source-products --compiler-checkpoint <current-key> --selection <source|plan|retained|all> --maximum-seconds <30-900>|' +
         '--prepare-only --maximum-seconds <30-5400>|--prepared-products-only --maximum-seconds <30-600>|' +
         '--lowerer|--historical-lowerer <application> <sha256> [--record-return-memory|--owned-helper-memory|--compiler-boundaries (current only)|--borrow-probe <wvb> <sha256>]] ' +

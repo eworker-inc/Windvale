@@ -6210,6 +6210,8 @@ function Test-NativeSharedCompilerSelection {
     if ($BehaviorBranches.Count -ne 1 -or
         !$BehaviorBranches[0].Extent.Text.Contains('$ExpectedSeconds = [long]$NativePlan.NativeSharedCompilerBehaviorExpectedSeconds') -or
         !$BehaviorBranches[0].Extent.Text.Contains('$MaximumSeconds = [long]$NativePlan.NativeSharedCompilerBehaviorMaximumSeconds') -or
+        !$BehaviorBranches[0].Extent.Text.Contains('$BehaviorSelection = $NativePlan.NativeSharedCompilerBehaviorSelection') -or
+        !$BehaviorBranches[0].Extent.Text.Contains('$HostTarget, $RepositoryRoot, $BehaviorSelection,') -or
         !$BehaviorBranches[0].Extent.Text.Contains('$ExpectedSeconds -gt $MaximumSeconds') -or
         !$BehaviorBranches[0].Extent.Text.Contains('+ $MaximumSeconds * 1000') -or
         !$BehaviorBranches[0].Extent.Text.Contains("'--maximum-seconds', `"`$MaximumSeconds`"") -or
@@ -6230,6 +6232,7 @@ function Test-NativeSharedCompilerSelection {
     $Admissions = [System.Collections.Generic.List[string]]::new()
     $Preparations = [System.Collections.Generic.List[long]]::new()
     $ProductPreparations = [System.Collections.Generic.List[string]]::new()
+    $NativePlan = [pscustomobject]@{ UseNativeSharedSourceDevelopment = $false }
     function Get-NativeSharedCompilerIdentity {
         param([string]$RecordPath,[string]$RecordSha256,[long]$RequestedDeadline)
         if ($RecordPath -cne $Identity.recordPath -or $RecordSha256 -cne $Identity.recordSha256) {
@@ -6315,6 +6318,16 @@ function Test-NativeSharedCompilerSelection {
             ($ProductPreparations -join ',') -cne 'source,plan,retained,source,plan,retained') {
             throw 'Reused host preparation omitted fixture acquisition or reconstructed its host.'
         }
+        $ProductPreparations.Clear()
+        $NativePlan = [pscustomobject]@{ UseNativeSharedSourceDevelopment = $true }
+        $null = Initialize-NativeSharedCompilerSelection -Prepare $true -Deadline $Deadline
+        if ($Preparations.Count -ne 1 -or ($ProductPreparations -join ',') -cne 'source') {
+            throw 'Source-object cache preparation selected unrelated Plan or retained products.'
+        }
+        $null = Initialize-NativeSharedCompilerSelection -Prepare $false -Deadline $Deadline
+        if ($Preparations.Count -ne 1 -or $ProductPreparations.Count -ne 1) {
+            throw 'Source-only prepared behavior reconstructed its host or products.'
+        }
     } finally {
         $env:WINDVALE_NATIVE_CACHE_ROOT = $PreviousRoot
         if ([IO.Directory]::Exists($Work)) {
@@ -6343,10 +6356,22 @@ function Arguments(Full,Short=false){const Maximum=Full?7200:5400,Values=['node'
         '--shared-compiler-host-record','Host-Bridge.json',Digest);return Values;}
 function Run(Values){const Context={process:{argv:Values,env:{}},resolve:Value=>Value,Date:{now:()=>Now},
     Usage(){throw Error('usage');},Reject(Message,Code){throw Error('refusal:'+Code);}};vm.createContext(Context);
-    vm.runInContext(Prefix+'\nResult={Deadline:Ownerˉdeadline,Full:Fullˉsharedˉlowering,Shared:Sharedˉcompilerˉvalues,Supplied:Suppliedˉlowerer,Boundaries:Boundariesˉonly,Phase:process.argv[4]};',Context,{timeout:1000});return Context.Result;}
+    vm.runInContext(Prefix+'\nResult={Deadline:Ownerˉdeadline,Full:Fullˉsharedˉlowering,CompilerOnly:Compilerˉloweringˉonly,Shared:Sharedˉcompilerˉvalues,Supplied:Suppliedˉlowerer,Boundaries:Boundariesˉonly,Phase:process.argv[4]};',Context,{timeout:1000});return Context.Result;}
 for(const Full of [false,true])for(const Short of [false,true]){const Result=Run(Arguments(Full,Short));
     if(Result.Deadline!==Now+(Short?500000:(Full?7200000:5400000))||Result.Full!==Full||
-    Result.Supplied!==Full||!Result.Shared||Result.Phase!==(Full?'--lowerer':'--shared-compiler-values'))throw Error('One selected owner deadline/full route was lost.');}
+    Result.CompilerOnly||Result.Supplied!==Full||!Result.Shared||Result.Phase!==(Full?'--lowerer':'--shared-compiler-values'))throw Error('One selected owner deadline/full route was lost.');}
+const CompilerOnly=Arguments(true,true);CompilerOnly.splice(-3,0,'--compiler-lowering-only');
+const CompilerResult=Run([...CompilerOnly]);
+if(!CompilerResult.CompilerOnly||!CompilerResult.Full||!CompilerResult.Supplied||
+    !CompilerResult.Shared||CompilerResult.Deadline!==Now+500000)throw Error('Compiler-only lowering lost its exact host or deadline.');
+const CompilerFocused=Arguments(false);CompilerFocused.splice(-3,0,'--compiler-lowering-only');
+const DuplicateCompiler=[...CompilerOnly];DuplicateCompiler.splice(-3,0,'--compiler-lowering-only');
+const WrongCompiler=[...CompilerOnly];WrongCompiler[4]='--shared-source-values';
+for(const Values of [CompilerFocused,DuplicateCompiler,WrongCompiler]){
+    let Rejected=false;try{Run(Values);}catch(Error){if(Error.message!=='usage')throw Error;Rejected=true;}
+    if(!Rejected)throw Error('Invalid compiler-only lowering selection was admitted.');}
+const Runtime=Run(['node','owner','windows','repo','--owned-storage']);
+if(Runtime.CompilerOnly||Runtime.Shared||Runtime.Full)throw Error('Explicit runtime selection lost its coverage.');
 const Missing=Arguments(false);Missing.splice(-3);
 const Expired=Arguments(true);Expired[Expired.indexOf('--deadline-ms')+1]=String(Now);
 const Duplicate=Arguments(false);Duplicate.splice(-3,0,'--deadline-ms',String(Now+1000));
@@ -6368,11 +6393,11 @@ const DuplicateBoundary=[...Boundary];DuplicateBoundary.splice(8,0,'--compiler-b
 for(const [Values,Expected] of [[MissingBoundary,'refusal:64'],[HistoricalBoundary,'usage'],[DuplicateBoundary,'usage']]){
     let Rejected=false;try{Run(Values);}catch(Error){if(Error.message!==Expected)throw Error;Rejected=true;}
     if(!Rejected)throw Error('Invalid compiler-boundary arguments were admitted.');}
-process.stdout.write('native shared arguments status=Passed cases=13 construction=Forbidden\n');
+process.stdout.write('native shared arguments status=Passed cases=18 construction=Forbidden\n');
 '@
     $Output = @(& node --input-type=module -e $ArgumentTest shared-compiler-arguments `
         (Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs') 2>&1)
-    if ($LASTEXITCODE -ne 0 -or ($Output -join "`n") -cne 'native shared arguments status=Passed cases=13 construction=Forbidden') {
+    if ($LASTEXITCODE -ne 0 -or ($Output -join "`n") -cne 'native shared arguments status=Passed cases=18 construction=Forbidden') {
         throw "Shared compiler argument handoff differs: $($Output -join '`n')"
     }
 }
@@ -6964,6 +6989,33 @@ foreach ($SharedCompilerPath in @(
         $SharedCompilerPlan.Suites[0] -cne 'native-x64-lowering-development' -or
         $SharedCompilerPlan.Gaps.Count -ne 0) {
         throw "Prepared shared-compiler routing differs for '$SharedCompilerPath'."
+    }
+}
+$SourceObjectCachePath = 'Tools/Native/Native-Source-Object-Cache-Core.mjs'
+foreach ($SourceObjectPaths in @(
+    @($SourceObjectCachePath),
+    @($SourceObjectCachePath, 'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+        'Tools/Verify/Verify-Changed.ps1', 'Tools/Verify/Verify-Verification-Plan.ps1')
+)) {
+    $SourceObjectPlan = & $NativePlanner -ChangedPath $SourceObjectPaths -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$SourceObjectPlan.UseNativeSharedSourceDevelopment -or
+        !$SourceObjectPlan.UseNativeSharedCompilerDevelopment -or
+        !$SourceObjectPlan.NativeSharedCompilerHostRecordRequired -or
+        $SourceObjectPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-source-values' -or
+        $SourceObjectPlan.ExpectedSeconds -ne 480 -or $SourceObjectPlan.MaximumSeconds -ne 600 -or
+        $SourceObjectPlan.Suites.Count -ne 1 -or $SourceObjectPlan.Gaps.Count -ne 0) {
+        throw 'A source-object cache change selected unrelated compiler consumers or lost its admitted host.'
+    }
+}
+foreach ($SourceObjectCompanion in @('Compiler/Windvale/Native-X64-Lowering-Core.wv',
+    'Tools/Native/Native-Shared-Value-Cases.mjs', 'Runtime/Native/X64-Shared-Storage.wva')) {
+    $SourceObjectMixedPlan = & $NativePlanner -ChangedPath @($SourceObjectCachePath, $SourceObjectCompanion) `
+        -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+    if ($SourceObjectMixedPlan.UseNativeSharedSourceDevelopment -or
+        $SourceObjectMixedPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
+        $SourceObjectMixedPlan.ExpectedSeconds -lt 3600) {
+        throw 'A source-object cache change suppressed a changed compiler, consumer or runtime boundary.'
     }
 }
 $MemoryAdapterCompanionPlan = & $NativePlanner -ChangedPath @(

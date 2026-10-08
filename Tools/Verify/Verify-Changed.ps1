@@ -317,7 +317,8 @@ function Get-NativeSharedCompilerIdentity {
 import { pathToFileURL } from 'node:url';
 const Module = await import(pathToFileURL(process.argv[2]));
 const Host = await Module.Readˉpreparedˉsharedˉcompilerˉhost(process.argv[3],process.argv[4],undefined,Number(process.argv[5]));
-await Host.Requireˉunchanged();
+// Read already validates the complete construction graph. No product runs
+// between that admission and this immutable identity handoff.
 process.stdout.write(JSON.stringify({recordPath:process.argv[3],recordSha256:Host.Recordˉsha256,
     compilerKey:Host.Compilerˉkey,path:Host.Path,bytes:Host.Bytes,sha256:Host.Sha256,
     host:process.platform+'-'+process.arch})+'\n');
@@ -513,7 +514,9 @@ function Initialize-NativeSharedCompilerSelection {
         # reused host. Prepared behavior still refuses every analysis cache miss.
         $SourceHost = if ($HostFamily -ceq 'windows-x64') { 'windows' } else { 'linux' }
         $SourceProducts = Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'
-        foreach ($ProductSelection in @('source','plan','retained')) {
+        $ProductSelections = if ($NativePlan.UseNativeSharedSourceDevelopment) { @('source') }
+            else { @('source','plan','retained') }
+        foreach ($ProductSelection in $ProductSelections) {
             # Each step retains its existing finite ceiling; all three also
             # share the original absolute preparation deadline.
             $ProductArguments = @($SourceProducts,$SourceHost,$RepositoryRoot,
@@ -1003,28 +1006,30 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $OwnerMessage = "Native owner native-x64-lowering-development mode=$StorageArgument expected-seconds=540 maximum-seconds=600 construction=Forbidden preparation=Separate"
             }
             if ($IsNativeSharedCompiler) {
+                $BehaviorSelection = $NativePlan.NativeSharedCompilerBehaviorSelection
+                if ($BehaviorSelection -cnotin @('--shared-source-values', '--shared-compiler-values')) {
+                    throw 'Prepared shared compiler behavior selection differs.'
+                }
                 $ExpectedSeconds = [long]$NativePlan.NativeSharedCompilerBehaviorExpectedSeconds
                 $MaximumSeconds = [long]$NativePlan.NativeSharedCompilerBehaviorMaximumSeconds
                 if ($ExpectedSeconds -le 0 -or $ExpectedSeconds -gt $MaximumSeconds -or $MaximumSeconds -gt 7200) {
                     throw 'Prepared shared compiler owner has an invalid selected duration.'
                 }
                 $NativeSharedCompilerDeadline = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + $MaximumSeconds * 1000
-                $ConfirmedSharedCompiler = Get-NativeSharedCompilerIdentity $NativeSharedCompilerIdentity.recordPath `
-                    $NativeSharedCompilerIdentity.recordSha256 $NativeSharedCompilerDeadline
-                if ((Get-NativeSharedCompilerSelectionText $ConfirmedSharedCompiler) -cne
-                    (Get-NativeSharedCompilerSelectionText $NativeSharedCompilerIdentity)) {
-                    throw 'Prepared shared compiler selection changed before owner execution.'
-                }
+                # The owner admits this exact record before any case and checks
+                # full provenance again at close. Replaying that graph here
+                # consumes its behavior deadline without adding another use.
                 $OwnerCommand = 'node'
                 $HostTarget = if ($IsWindowsHost) { 'windows' } else { 'linux' }
                 $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs'),
-                    $HostTarget, $RepositoryRoot, '--shared-compiler-values', '--shared-compiler-host',
+                    $HostTarget, $RepositoryRoot, $BehaviorSelection, '--shared-compiler-host',
                     $NativeSharedCompilerIdentity.path, $NativeSharedCompilerIdentity.sha256,
                     '--maximum-seconds', "$MaximumSeconds")
                 if (!$NativePlan.UseNativeSharedCompilerDevelopment) { $OwnerArguments += '--full-lowering' }
                 $OwnerArguments += @('--deadline-ms', "$NativeSharedCompilerDeadline", '--shared-compiler-host-record',
                     $NativeSharedCompilerIdentity.recordPath, $NativeSharedCompilerIdentity.recordSha256)
-                $OwnerMessage = "Native owner native-x64-lowering-development mode=prepared-shared-compiler source-cases=10 consumer-cases=3 full-lowering=$(!$NativePlan.UseNativeSharedCompilerDevelopment) expected-seconds=$ExpectedSeconds maximum-seconds=$MaximumSeconds compiler-construction=Forbidden"
+                $ConsumerCases = if ($BehaviorSelection -ceq '--shared-source-values') { 0 } else { 3 }
+                $OwnerMessage = "Native owner native-x64-lowering-development mode=$BehaviorSelection source-cases=10 consumer-cases=$ConsumerCases full-lowering=$(!$NativePlan.UseNativeSharedCompilerDevelopment) expected-seconds=$ExpectedSeconds maximum-seconds=$MaximumSeconds compiler-construction=Forbidden"
             }
             if ($Suite -eq 'language-1-callable-semantics' -and $UsePreparedProducts) {
                 $OwnerCommand = 'node'

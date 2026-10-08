@@ -2,7 +2,7 @@
 
 > Status: Current native verification procedure
 > Authority: Informative procedure; verification specifications own exact contracts
-> Last reviewed: 2026-10-03
+> Last reviewed: 2026-10-08
 
 This runbook owns the first .NET-free repository test slice accepted by
 [Decision 0218](../Decisions/0218-First-Native-Test-Orchestration.md). Its exact
@@ -209,6 +209,55 @@ that previously relied on implicit compiler construction now need a separately
 prepared current checkpoint. The foreign-binding CI preparation phase and the
 explicit Foundation construction selection request preparation themselves;
 prepared behavior execution remains unable to reconstruct compiler tools.
+
+For a compiler-only native change, the existing lowering owner accepts
+`--compiler-lowering-only` together with `--shared-compiler-values --full-lowering`.
+It retains source execution, serializer/staging consumers, native lowering,
+record/collection cleanup, malformed inputs and host-specific execution. It
+excludes the assembly-only owned-storage fixtures, which never invoke the
+selected compiler. Use this selection only when those runtime sources and
+fixtures are unchanged; the default full run and explicit `--owned-storage`
+selection retain them. The result reports `scope=compiler-lowering` and
+`owned-storage-cases=0` so the narrower claim remains visible.
+
+```text
+node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs <windows|linux> <repository> --shared-compiler-values --shared-compiler-host <image> <image-sha256> --full-lowering --compiler-lowering-only --maximum-seconds <selected-budget-seconds> --shared-compiler-host-record <Host-Bridge.json> <record-sha256>
+```
+
+Inspect the causal plan and declare its duration before a longer run. This
+selection still requires the exact prepared current host and does not make
+compiler reconstruction part of ordinary behavior execution.
+
+Shared-source preparation also retains its ten checked native objects, alongside
+their assembled wrappers and the admission-provider harness. Use
+`--prepare-shared-source-products --selection source`
+with the current compiler checkpoint and exact shared-host record before
+`--shared-source-values` behavior execution. The `native-source-objects-v1` cache
+binds exact WVB bytes, compiler image, host record, compiler checkpoint, host and
+validation producers. Prepared behavior refuses a missing object with exit 64;
+it never reconstructs that object. Each use still repeats complete WVB admission,
+native object checking and inspection. A source batch materializes one prepared
+current verifier through the [bounded batch API](Native-Source-To-Wvb.md#current-source-verification)
+and admits every input afresh. The prepared-host scope checks full construction
+provenance at entry and close; nested operations check exact compiler and
+packaging executables, host record and provider configuration. The owner closes
+the scope before reporting success. Missing or corrupt cache products cannot
+fall back to compilation. Reports expose `source-object-hits` and
+`lowerer-executions` for these ten products; malformed-input and publication
+checks retain their separate compiler invocations. Admission-provider behavior
+still executes all 21 cases against its prepared harness.
+
+A change limited to `Native-Source-Object-Cache-Core.mjs` selects this existing
+source-only owner automatically, with an eight-minute estimate and ten-minute
+behavior ceiling. Explicit preparation acquires only source products. Changes
+to compiler, runtime, host construction or the shared consumer cases keep their
+broader selection. This routing avoids unrelated Plan-consumer packaging while
+retaining the cache's admission, corruption, lifecycle and execution checks.
+
+See the [current throughput measurements](../Project/Verification-Throughput-Plan.md#current-checkpoint)
+for source preparation, prepared behavior and compiler reconstruction measured
+separately on both hosts. These development measurements do not establish the
+complete lowering owner's duration or cold compiler-reconstruction cost.
 
 ### Focused Vector borrow integration
 

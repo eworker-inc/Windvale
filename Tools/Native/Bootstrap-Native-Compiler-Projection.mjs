@@ -489,6 +489,14 @@ async function Construct(Options, Compiler) {
         '--workspace', path.join(Value.work, Workspace, 'Windvale.wvws'),
         '--project', path.join(Value.work, Workspace, Project),
         '--manifest-reader', path.join(Compiler.directory, 'Reader' + SUFFIX), Output];
+    // Refuse the actual compiler's bytecode before constructing its temporary
+    // stager or packaging native code. Source compilation needs only the six.
+    const Successorˉwvb = path.join(Products, 'Successor.wvb');
+    await Step('true-successor-source', process.execPath, Sourceˉarguments('Current', SUCCESSOR_PROJECT, Successorˉwvb));
+    await Phase('true-successor-wvb-admission', async () => {
+        await Admitˉwvb(Successorˉwvb, false, Options.Deadline);
+        await Product(Value, 'Successor.wvb');
+    });
     const Projectedˉwvb = path.join(Products, 'Projected-Stager.wvb');
     await Step('projected-source', process.execPath, Sourceˉarguments('Projection', PROJECT, Projectedˉwvb));
     await Phase('projected-wvb-admission', async () => {
@@ -501,12 +509,6 @@ async function Construct(Options, Compiler) {
         Value.capacityPackage = await Packageˉwithˉstagingˉcapacity(Capacity, Projectedˉwvb, Stager, '8', Options.Deadline);
     });
     await Product(Value, 'Projected-Stager' + SUFFIX);
-    const Successorˉwvb = path.join(Products, 'Successor.wvb');
-    await Step('true-successor-source', process.execPath, Sourceˉarguments('Current', SUCCESSOR_PROJECT, Successorˉwvb));
-    await Phase('true-successor-wvb-admission', async () => {
-        await Admitˉwvb(Successorˉwvb, false, Options.Deadline);
-        await Product(Value, 'Successor.wvb');
-    });
     await Step('true-successor-object', Stager, [Successorˉwvb,
         path.join(Products, 'Successor-Object'), path.join(Products, 'Successor-Object.wvop')]);
     const Object = await Readˉobject(Products, 'Successor-Object');

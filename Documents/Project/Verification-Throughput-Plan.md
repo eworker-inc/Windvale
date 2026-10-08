@@ -2,7 +2,7 @@
 
 > Status: Active implementation plan
 > Authority: Informative
-> Last reviewed: 2026-09-26
+> Last reviewed: 2026-10-08
 
 ## Goal
 
@@ -41,12 +41,71 @@ phase on Windows and Linux before making a target enforceable.
 ## Current checkpoint
 
 Equivalent WVB version predicates now use bounded ranges instead of repeated
-comparisons. The current development staging consumer constructs within the
-unchanged 4 MiB intermediate-output profile in 2 minutes 24 seconds on Windows
-and 3 minutes 58 seconds on real Debian, with 28,876 bytes of headroom. Both
-outputs match byte for byte and every assertion remains. These measurements
-reuse prepared compiler checkpoints; native execution, reconstruction cost and
-the complete lowering-owner duration remain separate obligations.
+comparisons. Construction and strict WVB admission of the current compiler and
+development staging consumer pass on Windows and real Debian. The staging
+consumer uses 4,169,004 bytes of intermediate output, leaving 25,300 bytes under
+the unchanged 4 MiB profile. The combined construction checks took 4 minutes
+55 seconds on Windows and 6 minutes 27 seconds on Debian using prepared compiler
+checkpoints. Native execution, reconstruction cost and the complete
+lowering-owner duration remain separate obligations.
+
+Native compiler verification still exceeds the ordinary development target.
+The broad prepared lowering owner retains an 80-minute planning estimate;
+compiler reconstruction is a separate cost. Do not interpret earlier focused
+improvements as proof that this complete path now takes a few minutes.
+The [compiler-only selection](../Runbooks/Native-Tests.md#separate-current-compiler-preparation)
+excludes unchanged assembly-only runtime fixtures while retaining generated-code
+and consumer checks. Its complete duration still needs measurement; the default
+full selection retains runtime coverage.
+
+Shared-source preparation now retains its ten checked native objects under exact
+input, compiler, host and validation identities. Prepared behavior reuses those
+objects and repeats WVB admission and native object validation; a missing or
+corrupt product refuses instead of starting compilation. Preparation also retains
+the assembled admission-provider harness; behavior still executes its 21 cases.
+A batch materializes one prepared current verifier and admits every input
+afresh. Full native-host construction provenance is checked at entry and close;
+nested operations retain exact execution and configuration checks. This avoids
+repeatedly traversing the same recovery construction graph for each fixture.
+The coordinator passes the already validated host identity to the owner instead
+of repeating full construction checks immediately before owner entry.
+
+The source-object cache now has a causal route through the existing source-only
+owner: eight minutes expected, ten minutes maximum for prepared behavior.
+Explicit preparation selects source products only. Mixed compiler, runtime,
+host-construction and consumer changes retain their broader coverage. This
+removes unrelated Plan-consumer packaging from a cache-only edit; it does not
+reduce the broad compiler owner's declared duration.
+
+The 8 October current-compiler measurements separate preparation from behavior:
+
+| Work | Windows | Real Debian |
+| --- | --- | --- |
+| Prepare ten source objects | 2 minutes 43 seconds | 10 minutes 4 seconds |
+| Execute prepared source behavior | 1 minute 18 seconds | 7 minutes 57 seconds |
+| Reconstruct the current compiler host | 15 minutes 26 seconds | 40 minutes 28 seconds |
+
+Frontend, analysis and assembly products were already prepared for the source
+selection. Behavior includes sixteen cache lifecycle cases, 21 provider cases
+and four publication cases. Each host reused all ten source objects without
+invoking their native lowerer; publication retains five separate compiler
+executions. The exact WVB inputs and generated native objects match across
+hosts. The Windows changed-file dispatcher also passed this source-only
+selection in 1 minute 21 seconds.
+
+The reconstructed compiler's 52 native object chunks match across hosts. Windows
+self-compilation reached its fifteen-minute compilation limit without producing
+output. Self-compilation and the broader compiler gate remain incomplete; an
+unchanged retry is not the next performance step.
+
+These are individual development measurements, not stable benchmark thresholds,
+cold compiler-reconstruction costs or the duration of the complete lowering
+owner. The [bounded verifier API](../Runbooks/Native-Source-To-Wvb.md#current-source-verification)
+has its own focused owner; its committed change passes GitHub development
+verification on both hosts. The larger compiler and consumer batch still needs
+its remaining integration evidence.
+Compiler-scale runtime validation and fresh native consumer execution remain
+the next performance work. Increasing a deadline does not close these items.
 
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing

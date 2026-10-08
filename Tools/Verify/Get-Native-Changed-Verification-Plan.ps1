@@ -1392,7 +1392,7 @@ function Add-Native-Tool-Suite {
         return
     }
     if ($Stem -in @('Bootstrap-Native-Compiler-Projection', 'Build-Shared-Compiler-Host', 'Native-Staging-Capacity-Bridge-Core',
-        'Native-Compiler-Publication-Bindings', 'Native-Compiler-Publication-Binding-Cases')) {
+        'Native-Compiler-Publication-Bindings', 'Native-Compiler-Publication-Binding-Cases', 'Native-Source-Object-Cache-Core')) {
         Add-Suite 'native-x64-lowering-development'
         return
     }
@@ -1921,6 +1921,7 @@ $CausalCompilerExtraInputs = @{
         'Tools/Native/Build-Shared-Compiler-Host.mjs',
         'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
         'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
+        'Tools/Native/Native-Source-Object-Cache-Core.mjs',
         'Tools/Native/Native-Shared-Value-Cases.mjs',
         'Tools/Native/Native-Shared-Storage-Cases.mjs',
         'Tools/Native/Native-Owned-Domain-Cases.mjs',
@@ -5332,6 +5333,7 @@ $NativeSharedCompilerDevelopmentInputs = @(
     'Tools/Native/Build-Shared-Compiler-Host.mjs',
     'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
     'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
+    'Tools/Native/Native-Source-Object-Cache-Core.mjs',
     'Tools/Native/Native-Shared-Value-Cases.mjs',
     'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
     'Linker/Startup/X64-Shared-Compiler-Host.wva',
@@ -5360,6 +5362,7 @@ $UseNativeSharedCompilerDevelopment = $SelectedSuites.Contains('native-x64-lower
             'Tools/Native/Build-Shared-Compiler-Host.mjs', 'Tools/Native/Native-Shared-Value-Cases.mjs',
             'Tools/Native/Native-Compiler-Publication-Bindings.mjs',
             'Tools/Native/Native-Compiler-Publication-Binding-Cases.mjs',
+            'Tools/Native/Native-Source-Object-Cache-Core.mjs',
             'Linker/Startup/X64-Shared-Compiler-Host.wva',
             'Linker/Startup/X64-Shared-Compiler-Publication.wva',
             'Linker/Startup/Shared-Compiler-Byte-Result-Admission-Adapter.wv',
@@ -5431,6 +5434,13 @@ if ($UseNativeStorageDevelopment) {
 # for verifier, library, specification or fixture changes in the same closure.
 $NativeSharedCompilerBehaviorRequired = $SelectedSuites.Contains('native-x64-lowering-development') -and
     !$UseNativeStorageDevelopment
+$UseNativeSharedSourceDevelopment = $NativeSharedCompilerBehaviorRequired -and
+    $FocusedDevelopmentPaths -ccontains 'Tools/Native/Native-Source-Object-Cache-Core.mjs' -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cnotin @('Tools/Native/Native-Source-Object-Cache-Core.mjs',
+            'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+            'Tools/Verify/Verify-Changed.ps1', 'Tools/Verify/Verify-Verification-Plan.ps1')
+    }).Count -eq 0
 $NativeSharedCompilerBehaviorExpectedSeconds = [long]0
 $NativeSharedCompilerBehaviorMaximumSeconds = [long]0
 if ($NativeSharedCompilerBehaviorRequired) {
@@ -5440,7 +5450,12 @@ if ($NativeSharedCompilerBehaviorRequired) {
     # ten-minute declaration even with its compiler already prepared.
     $NativeSharedCompilerBehaviorExpectedSeconds = [long]3600
     $NativeSharedCompilerBehaviorMaximumSeconds = [long]5400
-    if (!$UseNativeSharedCompilerDevelopment) {
+    if ($UseNativeSharedSourceDevelopment) {
+        # Only source products use this cache. Keep its admission, corruption,
+        # lifecycle, publication and execution checks without packaging a Plan consumer.
+        $NativeSharedCompilerBehaviorExpectedSeconds = [long]480
+        $NativeSharedCompilerBehaviorMaximumSeconds = [long]600
+    } elseif (!$UseNativeSharedCompilerDevelopment) {
         # The current-host regression adds runtime assembly and native behavior;
         # the retained standalone owner's registered profile stays unchanged.
         $NativeSharedCompilerBehaviorExpectedSeconds += 1200
@@ -6184,11 +6199,13 @@ if ($PassThru) {
         UseNativeStorageDevelopment = $UseNativeStorageDevelopment
         NativeStorageDevelopmentTarget = $NativeStorageDevelopmentTarget
         UseNativeSharedCompilerDevelopment = $UseNativeSharedCompilerDevelopment
+        UseNativeSharedSourceDevelopment = $UseNativeSharedSourceDevelopment
         NativeSharedCompilerBehaviorRequired = $NativeSharedCompilerBehaviorRequired
         NativeSharedCompilerBehaviorExpectedSeconds = $NativeSharedCompilerBehaviorExpectedSeconds
         NativeSharedCompilerBehaviorMaximumSeconds = $NativeSharedCompilerBehaviorMaximumSeconds
         NativeSharedCompilerHostRecordRequired = $NativeSharedCompilerBehaviorRequired
-        NativeSharedCompilerBehaviorSelection = $(if ($NativeSharedCompilerBehaviorRequired) { '--shared-compiler-values' } else { $null })
+        NativeSharedCompilerBehaviorSelection = $(if ($UseNativeSharedSourceDevelopment) { '--shared-source-values' }
+            elseif ($NativeSharedCompilerBehaviorRequired) { '--shared-compiler-values' } else { $null })
         NativeSharedCompilerPreparationGuidance = $(if ($NativeSharedCompilerBehaviorRequired) {
             'Prepare the exact current compiler, native projection and shared host separately; supply --shared-compiler-host-record <Host-Bridge.json> <sha256>. Behavior never prepares products.'
         } else { $null })
