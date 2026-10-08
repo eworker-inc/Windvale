@@ -40,6 +40,14 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Equivalent WVB version predicates now use bounded ranges instead of repeated
+comparisons. The current development staging consumer constructs within the
+unchanged 4 MiB intermediate-output profile in 2 minutes 24 seconds on Windows
+and 3 minutes 58 seconds on real Debian, with 28,876 bytes of headroom. Both
+outputs match byte for byte and every assertion remains. These measurements
+reuse prepared compiler checkpoints; native execution, reconstruction cost and
+the complete lowering-owner duration remain separate obligations.
+
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing
 compiler checkpoint instead of reconstructing the toolchain. An explicit

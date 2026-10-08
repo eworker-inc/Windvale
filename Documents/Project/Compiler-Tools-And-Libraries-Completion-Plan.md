@@ -42,10 +42,12 @@ using resumable verification with preserved intermediate products. A
 fresh compiler-scale native run reached its 15-minute deadline before publishing
 a chunk. Current compiler memory planning passes on Windows and Debian within
 its unchanged work bounds, and both reconstructed compiler objects match byte
-for byte. The current serializer fixture exceeds the source compiler's bounded
-intermediate-output profile during preparation; its new execution evidence is
-incomplete. Resolve that size failure and the measured native execution cost
-before repeating broad verification. Preparation performance and exact
+for byte. Equivalent version-range checks now let the development staging
+consumer fit the unchanged 4 MiB intermediate-output profile on Windows and Debian, with 28,876
+bytes of headroom and byte-identical output. Every staging assertion remains;
+construction does not establish fresh native execution evidence. Resolve the
+measured native execution cost before repeating broad verification. Preparation
+performance and exact
 compiler-scale self-lowering remain open, alongside the broader memory,
 essential-library, installation and retirement work below.
 
@@ -56,8 +58,9 @@ full-row reference path and bounded work accounting. The existing Windows and
 Debian owners pass 384 ownership cases and 27 type-directory cases; both hosts
 admit the same current 1,162-function compiler bytecode and collect matching
 borrow-root evidence. This is source/verifier development evidence. Native
-compiler throughput, self-lowering and the serializer size failure remain open;
-this checkpoint does not complete the memory gate or qualify a new toolchain.
+compiler throughput, self-lowering and fresh native consumer execution remain
+open; this checkpoint does not complete the memory gate or qualify a new
+toolchain.
 
 ## Supported toolchain and retirement map
 
