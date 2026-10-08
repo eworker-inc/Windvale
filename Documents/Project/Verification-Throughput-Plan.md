@@ -120,9 +120,23 @@ These individual measurements isolate complete budgeted validation, including
 physical-binding checks. They do not establish a whole-compiler speedup or a
 stable regression threshold. The
 [budgeted-storage contract](../../Specifications/Windvale-Native-Budgeted-Storage.md)
-records the stack bound and unchanged refusal rules. Repackage the unchanged
-current compiler objects with this runtime before measuring native consumer
-execution. Self-compilation and the complete compiler owner remain open.
+records the stack bound and unchanged refusal rules.
+
+Both current compiler hosts have been repackaged with this runtime, reusing the
+same 52 compiler object chunks. Packaging and complete admission took 5 minutes
+2 seconds on Windows and 12 minutes 11 seconds on Debian. Two preserved WVB
+workloads produce the same native objects before and after, on both hosts:
+
+| Compiler workload | Windows before / after | Real Debian before / after |
+| --- | --- | --- |
+| Staging relocations | 104.0 / 57.6 seconds | 115.3 / 61.6 seconds |
+| Staging symbols | 89.3 / 53.2 seconds | 85.9 / 56.4 seconds |
+
+These are individual fixed-input development measurements of the
+[runtime optimization](https://github.com/eworker-inc/Windvale/commit/c184f80f4334397edd88bc6826336290e607a8ed).
+Process peak memory is recorded separately; no memory reduction is claimed.
+Self-compilation, complete compiler-owner timing and installed-toolchain
+promotion remain open. The broad owner's declared estimate is unchanged.
 
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing
