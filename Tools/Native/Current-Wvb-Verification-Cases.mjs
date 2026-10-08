@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
-import { copyFile, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { copyFile, lstat, mkdir, mkdtemp, open, opendir, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Parseˉcurrentˉverification } from './Verify-Wvb.mjs';
+import { Withˉcurrentˉverification } from './Current-Wvb-Verification-Batch-Core.mjs';
+import { Readˉbootstrapˉverifier, Validateˉsegmentedˉhostedˉcheckpoint } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
 import {
     Acquireˉcurrentˉsplitˉcompiler, Getˉcurrentˉsplitˉcompilerˉfamily, Getˉcurrentˉsplitˉcompilerˉkey,
 } from './Current-Split-Compiler-Cache-Core.mjs';
@@ -67,7 +70,7 @@ export async function Runˉcurrentˉverificationˉcases(Context) {
     let Cases = 0;
     const Pass = Name => {
         Cases += 1;
-        process.stdout.write(`current verification case=${Name} status=Passed item=${Cases}/12\n`);
+        process.stdout.write(`current verification case=${Name} status=Passed item=${Cases}/23\n`);
     };
     await Workˉwith(async Work => {
         const Now = 1_000_000;
@@ -121,7 +124,23 @@ export async function Runˉcurrentˉverificationˉcases(Context) {
         const Handle = await open(Large, 'wx');
         try { await Handle.truncate(16_777_217); } finally { await Handle.close(); }
         await Invoke('input-size-limit', ['--current', Large], 1, /not a bounded ordinary file/u);
+        const Bootstrap = await Readˉbootstrapˉverifier();
+        async function Retainˉbootstrap(Root) {
+            if (Bootstrap === null) return;
+            // A cache-miss fixture removes its selected product, while retaining
+            // the explicit bootstrap dependency needed to compute that key.
+            const Directory = join(Root, 'segmented-hosted-wvb-v1', Bootstrap.identity.host, Bootstrap.identity.key);
+            await mkdir(Directory, { recursive: true });
+            for (const Name of ['Checkpoint.txt', basename(Bootstrap.productPath)]) {
+                await copyFile(join(dirname(Bootstrap.productPath), Name), join(Directory, Name), constants.COPYFILE_EXCL);
+            }
+            const Copied = await Validateˉsegmentedˉhostedˉcheckpoint(Directory, Bootstrap.identity.key, '8',
+                { bytes: Bootstrap.identity.inputBytes, sha256: Bootstrap.identity.inputSha256 });
+            assert.equal(Copied.product.bytes, Bootstrap.identity.productBytes);
+            assert.equal(Copied.product.sha256, Bootstrap.identity.productSha256);
+        }
         const Missing = join(Work, 'Missing-Compiler');
+        await Retainˉbootstrap(Missing);
         await Invoke('missing-compiler', ['--current', Input], 64, /Current compiler checkpoint missing/u,
             { ...Environment, WINDVALE_NATIVE_CACHE_ROOT: Missing });
         const Key = await Getˉcurrentˉsplitˉcompilerˉkey();
@@ -130,6 +149,7 @@ export async function Runˉcurrentˉverificationˉcases(Context) {
                 assert.equal(await Getˉcurrentˉsplitˉcompilerˉkey(), Key);
             });
         const Partial = join(Work, 'Compiler-Only');
+        await Retainˉbootstrap(Partial);
         const Copy = join(Partial, 'current-split-compiler-v2', `${process.platform}-${process.arch}`, Key);
         await mkdir(Copy, { recursive: true });
         const Products = await readdir(Compiler.directory);
@@ -151,7 +171,86 @@ export async function Runˉcurrentˉverificationˉcases(Context) {
             `Warm verification exceeded the named ${MAXIMUM_WARM_MILLISECONDS}-millisecond feedback bound.`);
         assert(Canonical.equals(await readFile(Input)), 'Verification changed its input.');
         process.stdout.write(`current verification warm elapsed-ms=${Repeated.elapsed} maximum-ms=${MAXIMUM_WARM_MILLISECONDS} input-bytes=${Canonical.length}\n`);
+        Cases += await Runˉcurrentˉverificationˉbatchˉcases(Input, Deadline);
     });
-    assert.equal(Cases, 12);
+    assert.equal(Cases, 23);
     process.stdout.write(`native current WVB verification status=Passed cases=${Cases} host=${process.platform} qualification=false\n`);
+}
+
+export async function Runˉcurrentˉverificationˉbatchˉcases(Input, Deadline) {
+    let Cases = 0;
+    const Pass = Name => {
+        Cases++;
+        process.stdout.write(`current verification batch case=${Name} status=Passed item=${Cases}/11\n`);
+    };
+    const Temporary = await realpath(tmpdir()), Prefix = 'windvale-current-verify-';
+    async function Directories() {
+        const Values = [], Directory = await opendir(Temporary); let Items = 0;
+        for await (const Entry of Directory) {
+            assert(++Items <= 4_096, 'Verifier batch test temporary inventory exceeds its bound.');
+            if (Entry.name.startsWith(Prefix)) Values.push(Entry.name);
+        }
+        return Values.sort();
+    }
+    async function Batch(Action) {
+        const Before = await Directories();
+        try { return await Withˉcurrentˉverification({ Prepare: false, Deadline },
+            Verifier => Action(Verifier, Before)); }
+        finally { assert.deepEqual(await Directories(), Before, 'Verifier batch retained its private directory.'); }
+    }
+    async function Corruptˉprivateˉimage(Before) {
+        const Added = (await Directories()).filter(Name => !Before.includes(Name));
+        assert.equal(Added.length, 1, 'The test must own exactly one new verifier batch directory.');
+        const Directory = await realpath(join(Temporary, Added[0]));
+        assert.equal(dirname(Directory), Temporary);
+        const Image = join(Directory, process.platform === 'win32' ? 'Verifier.exe' : 'Verifier.elf');
+        const Information = await lstat(Image);
+        assert(Information.isFile() && !Information.isSymbolicLink() && Information.nlink === 1);
+        const Bytes = await readFile(Image); Bytes[0] ^= 1;
+        await writeFile(Image, Bytes);
+    }
+    for (const Selection of [{ Prepare: false, Deadline: Date.now() - 1 },
+        { Prepare: false, Deadline: 1.5 }, { Prepare: false, Deadline: Number.MAX_SAFE_INTEGER },
+        { Prepare: 'false', Deadline }, { Prepare: true, Deadline }])
+        await assert.rejects(() => Withˉcurrentˉverification(Selection, async () => {}), /Invalid current verification batch/u);
+    await assert.rejects(() => Withˉcurrentˉverification({ Prepare: false, Deadline }, null), /Invalid current verification batch/u);
+    Pass('invalid-selection');
+    let Borrowed;
+    const Value = await Batch(async Verifier => {
+        Borrowed = Verifier;
+        for (const Name of ['valid-admission', 'repeated-admission']) {
+            const Result = await Verifier.Verify(Input);
+            assert.equal(Result.Code, 0); assert.equal(Result.Error, '');
+            assert.equal(Result.Output.replaceAll('\r\n', '\n'), 'wvb status=Valid profile=compiler-aligned\n'); Pass(Name);
+        }
+        const Invalid = join(dirname(Input), 'Batch-Malformed.wvb');
+        const Bytes = await readFile(Input); Bytes[0] ^= 1; await writeFile(Invalid, Bytes, { flag: 'wx' });
+        const Rejected = await Verifier.Verify(Invalid);
+        assert.equal(Rejected.Code, 1); assert.equal(Rejected.Output, '');
+        assert.match(Rejected.Error, /^wvb status=Invalid phase=[a-z-]+(?: step=[a-z-]+)?\r?\n$/u);
+        Pass('malformed-admission');
+        await assert.rejects(() => Withˉcurrentˉverification({ Prepare: false, Deadline }, async () => {}),
+            /batch is already active/u);
+        const Pending = Verifier.Verify(Input);
+        assert.throws(() => Verifier.Verify(Input), /busy/u);
+        assert.equal((await Pending).Code, 0); Pass('concurrent-use-refusal');
+        return 123;
+    });
+    assert.equal(Value, 123);
+    assert.throws(() => Borrowed.Verify(Input), /closed/u); Pass('closed-use-refusal');
+    Pass('successful-batch-cleanup');
+    await assert.rejects(() => Batch(async () => { throw new Error('Selected callback failure.'); }),
+        /Selected callback failure/u); Pass('callback-failure-cleanup');
+    await assert.rejects(() => Batch(async (Verifier, Before) => {
+        await Corruptˉprivateˉimage(Before); await Verifier.Verify(Input);
+    }), /Current verifier executable changed/u); Pass('executable-change-refusal');
+    await assert.rejects(() => Batch(async (_Verifier, Before) => { await Corruptˉprivateˉimage(Before); }),
+        /Current verifier executable changed/u); Pass('final-executable-change-refusal');
+    let Outstanding;
+    await assert.rejects(() => Batch(async Verifier => { Outstanding = Verifier.Verify(Input); }),
+        /unfinished input/u);
+    assert.equal((await Outstanding).Code, 0); Pass('unfinished-input-drained');
+    assert.equal(Cases, 11);
+    process.stdout.write(`current verification batch status=Passed cases=${Cases} native-admissions=5 qualification=false\n`);
+    return Cases;
 }

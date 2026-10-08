@@ -1069,7 +1069,7 @@ if ($Plan.Scope -in @('development', 'qualification')) {
                 $Plan.Scope -eq 'development' -and $NativePlan.UseCurrentVerifierDevelopment) {
                 $OwnerCommand = 'node'
                 $OwnerArguments = @((Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs'), '--current-verifier')
-                $OwnerMessage = 'Native owner language-1-production-admission-ingress mode=current-verifier cases=12 expected-seconds=300 maximum-seconds=600'
+                $OwnerMessage = 'Native owner language-1-production-admission-ingress mode=current-verifier cases=23 expected-seconds=300 maximum-seconds=600'
             } elseif ($Suite -eq 'language-1-production-admission-ingress' -and
                 $Plan.Scope -eq 'development' -and $NativePlan.UseProject4LauncherDevelopment) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }

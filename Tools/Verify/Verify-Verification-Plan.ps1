@@ -7045,6 +7045,7 @@ foreach ($Marker in @('--shared-storage', 'if ($NativePlan.UseFoundationLibraryD
 }
 foreach ($VerifierPath in @(
     'Tools/Native/Verify-Wvb.mjs',
+    'Tools/Native/Current-Wvb-Verification-Batch-Core.mjs',
     'Tools/Native/Current-Wvb-Verification-Cases.mjs'
 )) {
     $CurrentVerifierPlan = & $NativePlanner -ChangedPath $VerifierPath -PassThru -Quiet `
@@ -7059,6 +7060,7 @@ foreach ($VerifierPath in @(
 }
 $CurrentVerifierCompanionPlan = & $NativePlanner -ChangedPath @(
     'Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs',
+    'Tools/Native/Current-Wvb-Verification-Batch-Core.mjs',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
     'Tools/Verify/Verify-Verification-Plan.ps1', '.github/workflows/verify.yml',
     'Documents/Runbooks/Native-Source-To-Wvb.md'

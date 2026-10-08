@@ -1878,6 +1878,7 @@ $OwnedConsoleDevelopmentInputs = @(
 )
 $CurrentVerifierDevelopmentInputs = @(
     'Tools/Native/Verify-Wvb.mjs',
+    'Tools/Native/Current-Wvb-Verification-Batch-Core.mjs',
     'Tools/Native/Current-Wvb-Verification-Cases.mjs',
     'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
     'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
@@ -2159,7 +2160,7 @@ foreach ($Path in $Paths) {
         if ($UseCausalCompilerDevelopment) { $null = $CausalCompilerFrontDoorPaths.Add($Path) }
         continue
     }
-    if ($Path -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs')) {
+    if ($Path -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Batch-Core.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs')) {
         Add-Suite 'language-1-production-admission-ingress'
         continue
     }
@@ -5424,7 +5425,7 @@ if ($NativeSharedCompilerBehaviorRequired) {
     Set-SelectedOwnerBudget -Name $CompilerOwner.Name -ExpectedSeconds $NativeSharedCompilerBehaviorExpectedSeconds -MaximumSeconds $NativeSharedCompilerBehaviorMaximumSeconds
 }
 $UseCurrentVerifierDevelopment = $SelectedSuites.Contains('language-1-production-admission-ingress') -and
-    @($FocusedDevelopmentPaths | Where-Object { $_ -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs') }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cin @('Tools/Native/Verify-Wvb.mjs', 'Tools/Native/Current-Wvb-Verification-Batch-Core.mjs', 'Tools/Native/Current-Wvb-Verification-Cases.mjs') }).Count -gt 0 -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $CurrentVerifierDevelopmentInputs }).Count -eq 0
 if ($UseCurrentVerifierDevelopment) {
     $VerifierOwner = @($SelectedSuiteEntries | Where-Object Name -eq 'language-1-production-admission-ingress')[0]

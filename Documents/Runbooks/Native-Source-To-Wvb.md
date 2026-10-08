@@ -2,7 +2,7 @@
 
 > Status: Current mixed pinned/bootstrap and Project 4 development workflow
 > Authority: Informative; linked contracts own admission and publication rules
-> Last reviewed: 2026-10-03
+> Last reviewed: 2026-10-08
 
 This runbook owns the ordinary project source-to-verified-WVB workflow introduced
 by [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md).
@@ -126,6 +126,20 @@ operation has a two-minute deadline. Success reports
 precede the result during a slow cache check. Malformed modules report an invalid
 phase and optional step. Admission does not establish an execution target,
 grant capabilities, or promote these development products to installed delivery.
+
+Repository owners that admit several modules can use
+`Withˉcurrentˉverification({ Prepare: false, Deadline }, Use)` from
+[`Current-Wvb-Verification-Batch-Core.mjs`](../../Tools/Native/Current-Wvb-Verification-Batch-Core.mjs).
+It materializes one prepared current verifier and passes a temporary `Verify`
+operation to `Use`. Each call admits a fresh private input snapshot and checks
+the exact verifier executable before and after execution. The batch repeats
+source and compiler identity checks before returning and releases its private
+directory on success or failure. One batch may be active per process; overlapping
+starts refuse before changing preparation mode. Calls are sequential, limited to 1,024 inputs,
+and retain the two-minute per-input execution limit within the caller's finite
+deadline of at most two hours. A closed batch refuses reuse; a callback that
+returns with unfinished verification fails after that operation has been drained.
+This API does not reuse admission results or enable compiler reconstruction.
 
 ## Pinned bootstrap verification and inspection
 
