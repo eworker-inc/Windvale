@@ -99,20 +99,28 @@ reserved for that workflow and reject in an ordinary local command.
 ### Separate current compiler preparation
 
 Windvale's native and verification-result caches can live on a different drive
-from the checkout. On Windows, set their roots for the current shell before
-starting a build:
+from the checkout. Prefer fast storage with enough free space for current
+products and subsequent construction. On Windows, set their roots for the
+current shell before starting a build:
 
 ```powershell
-$env:WINDVALE_NATIVE_CACHE_ROOT = 'E:\Windvale\Cache\Native'
-$env:WINDVALE_VERIFICATION_RESULT_CACHE_ROOT = 'E:\Windvale\Cache\Verification'
+$env:WINDVALE_NATIVE_CACHE_ROOT = 'D:\Windvale\Cache\Native'
+$env:WINDVALE_VERIFICATION_RESULT_CACHE_ROOT = 'D:\Windvale\Cache\Verification'
 ```
 
 For persistent settings, use the corresponding user environment variables and
 restart the terminal. Add both names with `/p` to `WSLENV`, preserving its other
 entries, so WSL translates their paths. The example roots become
-`/mnt/e/Windvale/Cache/Native` and `/mnt/e/Windvale/Cache/Verification` in Debian.
+`/mnt/d/Windvale/Cache/Native` and `/mnt/d/Windvale/Cache/Verification` in Debian.
 Compiler and result identities remain host-specific even when their parent
 directory is shared.
+
+When changing roots, copy the required prepared checkpoints, verify the copied
+bytes and admit them through the existing cache readers before selecting the
+new location. Keep the original entries until that succeeds. Older products
+can remain at the original root; a missing checkpoint at the selected root
+still requires explicit preparation. Do not rebuild tools merely to relocate
+unchanged valid products or edit their manifests to manufacture a cache hit.
 
 WSL access to an NTFS cache needs working Linux permission metadata so cached
 executables retain their executable bit. If needed, configure its DrvFs mount
@@ -120,8 +128,8 @@ with `metadata` and the actual Linux user's UID/GID, then verify `chmod` and
 execution on that mount before constructing tools. Keep large temporary Git
 source checkouts on Debian's native filesystem if DrvFs metadata operations
 exceed a bounded checkout phase. For example, scoped `TMPDIR=/var/tmp` keeps
-temporary compiler reconstruction on disk while both durable cache roots stay
-on E:. Check free space and the temporary filesystem's type first; a memory-backed
+temporary compiler reconstruction on disk while the durable caches stay on
+the selected volume. Check free space and the temporary filesystem's type first; a memory-backed
 `/tmp` adds source-checkout storage to the process workflow's memory pressure.
 
 The current split-project builder can prepare its identity-bound compiler and

@@ -160,6 +160,15 @@ and QA services remain intact. Current-workload profiling and reuse of unchanged
 compiler components remain necessary; moving execution does not close the
 self-compilation gate.
 
+The local active caches now use the maintainer's SSD on D. A 1.1 GiB selection
+of prepared compiler, project, native-object and verifier products was copied
+and checked byte for byte. Windows and WSL2 admit the existing compiler and
+verifier checkpoints there with unchanged identities and no reconstruction.
+Linux permission metadata and executable behavior on D were verified. Older
+cache history remains on E; complete relocation was stopped when its observed
+copy rate exceeded the selected duration. This storage change has not yet been
+measured against a complete compiler reconstruction or verification owner.
+
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing
 compiler checkpoint instead of reconstructing the toolchain. An explicit
