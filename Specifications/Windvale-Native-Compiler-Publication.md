@@ -26,6 +26,13 @@ value Cursor and returns an owned Step. Ordinary source cleanup releases each
 Step and the final Session. The single-result adapter uses this same session
 and one reserved byte builder within its unchanged response ceiling.
 
+Publication validates helper bytes against the existing SHA-256 template, the
+owned-frame cleanup template for ABI 24, or the shared-storage template for
+ABI 25. Automatic budget, vector and allocation-result cleanup therefore uses
+the same exact owned-frame helper in ordinary and staged output. An ABI-specific
+helper under another ABI, or an inexact template, is refused before that piece
+is published.
+
 [`Build-Shared-Compiler-Host.mjs`](../Tools/Native/Build-Shared-Compiler-Host.mjs)
 first obtains independent segmented WVO admission. Its bounded binding reader
 checks WVB 1.45 root-function signatures, nominal identities, field kinds,
@@ -63,6 +70,9 @@ code pieces are coalesced, up to 1,310,720 bytes when a buffer is already live;
 individual pieces retain the 4 MiB limit. Prefix, padding, read-only header/data,
 symbols and relocations retain separate chunk resources required by the
 independent staged reader. The prefix is at most 4,078 UTF-8 bytes.
+The successful code-byte report counts machine code, helper bytes and only the
+padding actually emitted. ABI 24 output without read-only data is not padded;
+its staged and ordinary reports retain the same exact code length.
 
 Use a fresh private output prefix. Each file write is attempted once. A generated
 output path equal to the exact input argument is rejected before writing;

@@ -1,4 +1,5 @@
 import { Buildˉstorageˉfixture } from './Native-Storage-Fixture.mjs';
+import { Parseˉstagedˉnativeˉmanifest } from './Build-Shared-Compiler-Host.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readFile, stat, writeFile } from 'node:fs/promises';
@@ -406,6 +407,25 @@ export async function Runˉownedˉhelpers(Context, Lowerer) {
         if (Index === 0) {
             await Requireˉsuccess(Lowerer, [Prefix + '.wvb', Prefix + '-repeat.wvo'], 'helper-repeat');
             if (!(await readFile(Prefix + '.wvo')).equals(await readFile(Prefix + '-repeat.wvo'))) throw new Error('Helper lowering is not deterministic.');
+        }
+        if (Case.Name === 'implicit-vector-single') {
+            if ((await stat(Prefix + '.wvo')).size > 4_194_272) throw new Error('Owned helper object exceeds its bound.');
+            const Staged = Prefix + '-staged', Ordinary = await readFile(Prefix + '.wvo');
+            const Published = await Requireˉsuccess(Lowerer, ['--staged', Prefix + '.wvb', Staged], 'helper-implicit-publication');
+            if (Published.Output !== Lowered.Output) throw new Error('Owned helper publication report differs.');
+            if ((await stat(Staged + '.wvop')).size > 6240) throw new Error('Owned helper manifest exceeds its bound.');
+            const Lengths = Parseˉstagedˉnativeˉmanifest(await readFile(Staged + '.wvop'));
+            let Position = 0;
+            for (const [Chunk, Length] of Lengths.entries()) {
+                if ((await stat(Staged + '.chunk-' + Chunk)).size !== Length) throw new Error('Owned helper chunk size differs.');
+                const Value = await readFile(Staged + '.chunk-' + Chunk);
+                if (Length > Ordinary.length - Position || !Value.equals(Ordinary.subarray(Position, Position + Length))) {
+                    throw new Error('Owned helper publication differs from ordinary lowering.');
+                }
+                Position += Length;
+            }
+            if (Position !== Ordinary.length) throw new Error('Owned helper publication is incomplete.');
+            process.stdout.write('native owned helper publication status=Passed abi=24 byte-identity=true domain-closed=true\n');
         }
         const Fixture = Buildˉstorageˉfixture(Case.Name, Case.Arena ?? 64, ({ Emit, Set, Check }) => {
             Set('rsp', 14000, 10); Set('rsp', 14004, 136);

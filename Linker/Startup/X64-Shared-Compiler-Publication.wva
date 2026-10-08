@@ -140,9 +140,6 @@ load_memory_u32 ecx r13 none 1 52
 load_memory_u32 edx r12 rcx 1 12000
 add eax edx
 branch below Failed
-add_i32 eax 15
-branch below Failed
-and_i32 eax -16
 store_memory_u32 r12 none 1 13108 eax
 move_u32 eax 22
 store_memory_u32 rsp none 1 32 eax
@@ -234,6 +231,19 @@ load_memory_u32 eax r12 none 1 12976
 compare eax ecx
 branch above Failed
 load_memory_u32 eax r12 none 1 13068
+# Count only emitted padding; ABI 24 without read-only data has none.
+load_memory_u32 ecx r12 none 1 13088
+compare_i32 ecx 2
+branch not_equal Padding_counted
+compare_i32 eax 15
+branch above Failed
+load_memory_u32 ecx r12 none 1 13108
+add ecx eax
+branch below Failed
+compare_i32 ecx 67108864
+branch above Failed
+store_memory_u32 r12 none 1 13108 ecx
+label Padding_counted
 test eax eax
 branch equal Piece_copied
 call Publication_query_reset

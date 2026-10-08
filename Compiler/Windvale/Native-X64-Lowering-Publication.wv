@@ -9,6 +9,7 @@ import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
+import Compilerˉnativeˉx64ˉloweringˉownedˉframes as Ownedˉframes;
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
 
@@ -483,7 +484,8 @@ export fn Compilerˉnativeˉx64ˉpublicationˉnext(
                 Bytesˉlength(Regions.Helper) != Plan.Helperˉbytes ||
                 (!Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(
                     Regions.Helper
-                ) && !(Plan.Abi == 25u32 &&
+                ) && !(Plan.Abi == 24u32 &&
+                    Ownedˉframes.Helperˉisˉexact(Regions.Helper)) && !(Plan.Abi == 25u32 &&
                     Sharedˉbytes.Helperˉisˉexact(Regions.Helper))) {
                 return Stepˉfailure(
                     Input,
