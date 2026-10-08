@@ -230,7 +230,7 @@ jobs:
             $NativeExpectedSeconds = $NativePlan.ExpectedSeconds
             $NativeMaximumSeconds = $NativePlan.MaximumSeconds
             $NativeOwnerCount = @($NativePlan.Suites).Count
-            $PreparationRequired = $NativePlan.UseOwnedConsoleDevelopment -or $NativePlan.UseCurrentVerifierDevelopment -or $NativePlan.UseFoundationLibraryDevelopment -or $NativePlan.UseFoundationBorrowOwnerDevelopment -or $NativePlan.UseLanguage1FrontDoorPreparation -or $NativePlan.UseCallablePreparation -or @($NativePlan.Suites | Where-Object { $_ -eq 'language-1-authenticated-foreign-binding' -or ($_ -eq 'native-x64-lowering-development' -and !$NativePlan.UseNativeSharedStorageDevelopment) }).Count -ne 0
+            $PreparationRequired = $NativePlan.UseOwnedConsoleDevelopment -or $NativePlan.UseCurrentVerifierDevelopment -or $NativePlan.UseFoundationLibraryDevelopment -or $NativePlan.UseFoundationBorrowOwnerDevelopment -or $NativePlan.UseLanguage1FrontDoorPreparation -or $NativePlan.UseCallablePreparation -or @($NativePlan.Suites | Where-Object { $_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -ne 0
           }
           $Shards = if ($env:SCOPE -eq 'development') {
             @(./Tools/Verify/Get-Native-Development-Shards.ps1 -NativePlan $NativePlan)

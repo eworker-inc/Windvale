@@ -76,6 +76,7 @@ if (Fullˉsharedˉlowering) {
     process.argv.splice(Fullˉloweringˉposition, 1);
 }
 const Phase = process.argv[4];
+const Storageˉpreparation = ['--prepare-owned-storage', '--prepare-shared-storage'].includes(Phase);
 let Lowererˉmaximum = null;
 if (Phase === '--lowerer') {
     const Maximumˉposition = process.argv.indexOf('--maximum-seconds', 4);
@@ -97,6 +98,16 @@ const Preparedˉonly = Phase === '--prepared-products-only';
 const Prepareˉsharedˉproducts = Phase === '--prepare-shared-source-products';
 let Sharedˉproductsˉkey = null, Sharedˉproductsˉselection = null;
 let Ownerˉdeadline = null;
+if (Storageˉpreparation) {
+    const Seconds = Number(process.argv[6]);
+    if (process.argv.length !== 7 || process.argv[5] !== '--maximum-seconds' ||
+        !/^[1-9][0-9]*$/u.test(process.argv[6]) || Seconds < 30 || Seconds > 1800 ||
+        process.env.WINDVALE_PREPARED_PRODUCTS_ONLY !== undefined ||
+        [Oracleˉproduct, Vectorˉproduct, Growthˉproduct, Appendˉproduct,
+            Helperˉproduct, Scalarˉhelperˉproduct].some(Product => Product !== null)) Usage();
+    Ownerˉdeadline = Math.min(Date.now() + Seconds * 1000, Suppliedˉdeadline ?? Number.MAX_SAFE_INTEGER);
+    process.argv.splice(4, 3, Phase.replace('--prepare-', '--'));
+}
 if (Prepareˉsharedˉproducts) {
     const Seconds = Number(process.argv[10]);
     if (process.argv.length !== 11 || process.argv[5] !== '--compiler-checkpoint' ||
@@ -128,7 +139,7 @@ if (Sharedˉcompilerˉvalues) {
     if (Fullˉsharedˉlowering) process.argv.splice(4, 1, '--lowerer', Sharedˉcompilerˉhost.Path, Sharedˉcompilerˉhost.Sha256);
 }
 if (Suppliedˉdeadline !== null && !Sharedˉcompilerˉvalues && !Prepareˉsharedˉproducts &&
-    Lowererˉmaximum === null) Usage();
+    !Storageˉpreparation && Lowererˉmaximum === null) Usage();
 if (Prepareˉonly || Preparedˉonly) {
     const Seconds = Number(process.argv[6]);
     if (process.argv.length !== 7 || process.argv[5] !== '--maximum-seconds' ||
@@ -149,7 +160,10 @@ const Domainˉonly = process.argv[4] === '--owned-domain';
 const Sharedˉonly = process.argv[4] === '--shared-storage';
 const Valuesˉonly = process.argv[4] === '--shared-values';
 const Ownedˉonly = process.argv[4] === '--owned-storage' || Domainˉonly || Sharedˉonly || Valuesˉonly;
-if (Ownedˉonly) Ownerˉdeadline = Date.now() + 600_000;
+if (Ownedˉonly && !Storageˉpreparation) {
+    Ownerˉdeadline = Date.now() + 600_000;
+    process.env.WINDVALE_PREPARED_PRODUCTS_ONLY = '1';
+}
 const Recordˉonly = process.argv.length === 8 && process.argv[7] === '--record-return-memory';
 const Helperˉonly = process.argv.length === 8 && process.argv[7] === '--owned-helper-memory';
 const Boundariesˉonly = process.argv.length === 8 && process.argv[7] === '--compiler-boundaries';
@@ -298,7 +312,7 @@ try {
     } else {
     const Ownedˉcases = !Prepareˉonly && !Borrowˉonly && !Recordˉonly ? await Runˉownedˉstorageˉcases({
         Repository: Repositoryˉroot, Work, Target, Requireˉsuccess, Runˉprocess, Oracleˉproduct, Domainˉonly, Sharedˉonly, Valuesˉonly,
-        Deadline: Ownerˉdeadline,
+        Deadline: Ownerˉdeadline, Storageˉonly: Ownedˉonly, Prepareˉstorage: Storageˉpreparation,
     }) : 0;
     if (!Ownedˉonly) {
     await Verifyˉsourceˉclosures();
@@ -585,7 +599,7 @@ try {
     }
 } catch (Error) {
     Preserveˉwork = Error.cleanupUncertain === true ||
-        ((Sourceˉvaluesˉonly || Prepareˉsharedˉproducts || Suppliedˉlowerer) && Error.exitCode !== 64);
+        ((Ownedˉonly || Sourceˉvaluesˉonly || Prepareˉsharedˉproducts || Suppliedˉlowerer) && Error.exitCode !== 64);
     process.stderr.write(`${Error.message}\n`);
     if (Preserveˉwork) process.stderr.write(`native lowering diagnostic workspace=${Work}\n`);
     process.exitCode = Error.exitCode ?? 1;
@@ -1660,6 +1674,7 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
         '<windows|linux> <repository-root> [--foundation-borrow-emission|--owned-storage|--owned-domain|--shared-storage|--shared-values|' +
+        '--prepare-owned-storage|--prepare-shared-storage --maximum-seconds <30-1800>|' +
         '--shared-source-values --shared-compiler-host <application> <sha256> --maximum-seconds <30-5400>|' +
         '--shared-plan-values|--shared-compiler-values (same explicit host/maximum-seconds arguments; --full-lowering permits up to7200 seconds)|' +
         '--prepare-shared-source-products --compiler-checkpoint <current-key> --selection <source|plan|retained|all> --maximum-seconds <30-900>|' +

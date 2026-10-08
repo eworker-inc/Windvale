@@ -133,6 +133,42 @@ export function Buildˉbudgetedˉstorageˉcases(Oracle) {
         ]) { Set(Base, Index, Value); Begin(3); Call(5); Set(Base, Index, Original); }
         Request(5); Call();
     });
+    Case('binding-identity-boundaries', 256, ({ Entry, Allocate, Set, Request, Call, Check }) => {
+        const Identities = [1, 2, 31, 32, 33, 63, 64, 65];
+        Entry(1, 1, 0, 4096, Identities.length - 1, (Identities.length - 1) * 32);
+        for (const Identity of Identities.slice(1)) Entry(Identity, 1, 1, 32);
+        for (const Identity of Identities) Allocate(Identity, 1, 1);
+        Request(12); Call(); Check('rsp', 84, Identities.length);
+        // Each replacement names another current equal-charge lease. Only the
+        // duplicate binding makes the state invalid; refusal preserves it.
+        const Last = 64 + (Identities.length - 1) * 16 + 8;
+        for (const Identity of Identities.slice(0, -1)) {
+            Set('r12', Last, Identity); Request(12); Call(5); Set('r12', Last, 65);
+        }
+        Request(5); Call(); Check('rsp', 88, 0);
+    });
+    Case('binding-full-inventory', 2048, ({ Entry, Emit, Set, Request, Call, Check }) => {
+        Entry(1, 1, 0, 4096, 64, 2048);
+        // Seed all 64 children without expanding the same initialization code.
+        Emit('move_u32 ecx 17560', 'label Seed_inventory', 'move_u32 eax 1',
+            'store_memory_u32 rsp rcx 1 0 eax', 'store_memory_u32 rsp rcx 1 4 eax',
+            'store_memory_u32 rsp rcx 1 8 eax', 'store_memory_u32 rsp rcx 1 12 eax',
+            'move_u32 eax 64', 'store_memory_u32 rsp rcx 1 16 eax',
+            'move_u32 eax 32', 'store_memory_u32 rsp rcx 1 24 eax',
+            'add_i32 ecx 40', 'compare_i32 ecx 20120', 'branch below Seed_inventory');
+        Set('rsp', 13200, 2); Emit('label Allocate_inventory');
+        Request(1, { Capacity: 1, Length: 1, Alignment: 16 });
+        Emit('load_memory_u32 eax rsp none 1 13200', 'store_memory_u32 r13 none 1 64 eax');
+        Set('r13', 68, 1); Call();
+        Emit('load_memory_u32 eax rsp none 1 13200', 'add_i32 eax 1',
+            'store_memory_u32 rsp none 1 13200 eax', 'compare_i32 eax 65',
+            'branch below_equal Allocate_inventory');
+        Request(12); Call(); Check('rsp', 84, 64); Check('rsp', 88, 2048);
+        for (const Identity of [2, 32, 33, 64]) {
+            Set('r12', 1080, Identity); Request(12); Call(5); Set('r12', 1080, 65);
+        }
+        Request(5); Call(); Check('rsp', 84, 0); Check('rsp', 88, 0);
+    });
     Case('budget-corruption', 64, ({ Entry, Allocate, Offset, Set, Request, Call }) => {
         Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48);
         // A zero-charge child in the final slot still contributes to the count.

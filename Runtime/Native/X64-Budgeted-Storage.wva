@@ -292,6 +292,19 @@ test eax eax
 branch not_equal Corrupt
 
 # Every live physical slot binds one distinct current accounting lease.
+# Canonical generation checks make identities sufficient for uniqueness. The
+# 65-byte seen table reuses scalar scratch until validation finishes; mapped
+# bindings use the same table. No trust survives this call.
+xor eax eax
+store_memory_u64 rsp none 1 184 rax
+store_memory_u64 rsp none 1 192 rax
+store_memory_u64 rsp none 1 200 rax
+store_memory_u64 rsp none 1 208 rax
+store_memory_u64 rsp none 1 216 rax
+store_memory_u64 rsp none 1 224 rax
+store_memory_u64 rsp none 1 232 rax
+store_memory_u64 rsp none 1 240 rax
+store_memory_u64 rsp none 1 248 rax
 xor esi esi
 xor ebp ebp
 label Bindings
@@ -356,18 +369,12 @@ load_memory_u64 rax rsp none 1 176
 load_memory_u32 eax rax none 1 16
 compare rax rcx
 branch above Corrupt
-move_u32 ecx 64
-load_memory_u64 rdx rdi none 1 8
-label Unique_binding
-move rax r12
-add rax rcx
-compare rax rdi
-branch above_equal Binding_next
-load_memory_u64 rax rax none 1 8
-compare rax rdx
-branch equal Corrupt
-add_i32 ecx 16
-jump_label Unique_binding
+load_memory_u32 ecx rdi none 1 8
+load_memory_u8 al rsp rcx 1 183
+test al al
+branch not_equal Corrupt
+move_u32 eax 1
+store_memory_u8 rsp rcx 1 183 al
 label Binding_next
 add_i32 esi 1
 compare_i32 esi 64
@@ -481,24 +488,12 @@ subtract rcx rdx
 load_memory_u64 rax rdi none 1 24
 compare rax rcx
 branch above Corrupt
-load_memory_u64 rdx rdi none 1 32
-move_u32 ecx 64
-label Mapped_unique
-load_memory_u64 rax r12 rcx 1 8
-compare rax rdx
-branch equal Corrupt
-add_i32 ecx 16
-compare_i32 ecx 1088
-branch below Mapped_unique
-test esi esi
-branch equal Mapped_count
-load_memory_u32 eax r12 none 1 1092
-test eax eax
-branch equal Mapped_count
-load_memory_u64 rax r12 none 1 1120
-compare rax rdx
-branch equal Corrupt
-label Mapped_count
+load_memory_u32 ecx rdi none 1 32
+load_memory_u8 al rsp rcx 1 183
+test al al
+branch not_equal Corrupt
+move_u32 eax 1
+store_memory_u8 rsp rcx 1 183 al
 add_i32 ebp 1
 label Mapped_next
 add_i32 esi 1

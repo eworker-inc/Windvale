@@ -161,7 +161,7 @@ foreach ($Fragment in @(
     '"native_control_maximum_seconds=$($Budget.ControlMaximumSeconds)" >> $env:GITHUB_OUTPUT',
     '"development_timeout_minutes=$($Budget.TimeoutMinutes)" >> $env:GITHUB_OUTPUT',
     "`$SharedCompilerRequired = `$NativePlan.NativeSharedCompilerHostRecordRequired",
-    "`$PreparationRequired = `$NativePlan.UseOwnedConsoleDevelopment -or `$NativePlan.UseCurrentVerifierDevelopment -or `$NativePlan.UseFoundationLibraryDevelopment -or `$NativePlan.UseFoundationBorrowOwnerDevelopment -or `$NativePlan.UseLanguage1FrontDoorPreparation -or `$NativePlan.UseCallablePreparation -or @(`$NativePlan.Suites | Where-Object { `$_ -eq 'language-1-authenticated-foreign-binding' -or (`$_ -eq 'native-x64-lowering-development' -and !`$NativePlan.UseNativeSharedStorageDevelopment) }).Count -ne 0"
+    "`$PreparationRequired = `$NativePlan.UseOwnedConsoleDevelopment -or `$NativePlan.UseCurrentVerifierDevelopment -or `$NativePlan.UseFoundationLibraryDevelopment -or `$NativePlan.UseFoundationBorrowOwnerDevelopment -or `$NativePlan.UseLanguage1FrontDoorPreparation -or `$NativePlan.UseCallablePreparation -or @(`$NativePlan.Suites | Where-Object { `$_ -in @('language-1-authenticated-foreign-binding', 'native-x64-lowering-development') }).Count -ne 0"
 )) {
     Assert-Workflow ($ClassificationBlock.Contains($Fragment)) "Preparation selection lacks '$Fragment'."
 }

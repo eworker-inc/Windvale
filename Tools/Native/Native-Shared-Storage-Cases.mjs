@@ -378,6 +378,19 @@ export function Buildˉsharedˉstorageˉcases() {
         Word(48, 1); Call(1); Check('rsp', ACCOUNTING + 48, 12);
         Request(11); Call(); Check('rsp', ACCOUNTING + 48, 0);
     });
+    Mappedˉcase('duplicate-lease-bindings', 32, ({ Split, Childˉreserve, Mapped, Request, Call, Check, Set }) => {
+        Split(32); Childˉreserve(1);
+        Split(32); Mapped(32, INPUT, 2);
+        Split(32); Mapped(32, INPUT + 32, 4);
+        Request(12); Call();
+        // Equal physical/mapped charges let these corruptions reach the exact
+        // uniqueness check after current generation and charge validation.
+        for (const [Offset, Identity, Original] of [[1120, 2, 3], [1184, 2, 4],
+            [1184, 3, 4], [72, 3, 2]]) {
+            Set('r12', Offset, Identity); Request(12); Call(5); Set('r12', Offset, Original);
+        }
+        Request(11); Call(); Check('rsp', ACCOUNTING + 48, 0);
+    });
     Mappedˉcase('geometry-corruption-and-mutation-rejection', 32, ({ Split, Mapped, Request, Call, Check, Set,
         Word, Wide, Emit, Append, Release, Lower, Requestˉoffset: R }) => {
         Set('rsp', INPUT, 0x44332211); Split(4);

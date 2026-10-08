@@ -151,6 +151,25 @@ that environment setting scoped to behavior execution, after preparation.
 This mode still permits building the requested product from a valid compiler.
 It does not make a cold owner profile cheap or qualify a restored compiler.
 
+Runtime-only allocator, budget and shared-storage edits use the existing native
+lowering owner's focused storage selection. Prepare its exact assembly products
+with an explicit deadline, then execute behavior without construction:
+
+```powershell
+node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows . --prepare-owned-storage --maximum-seconds 1800
+node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows . --owned-storage
+```
+
+Use `linux` on real Debian. Sharing-only work may use `--prepare-shared-storage`
+and `--shared-storage`. Preparation keeps each admitted object under its exact
+source and producer identities. Behavior refuses a missing or corrupt product
+and retains its ten-minute maximum. The accounting oracle requires the prepared
+current compiler tools described above. Report first-time preparation and
+behavior durations separately; a prepared run does not measure cold setup.
+`Verify-Changed.ps1 -PreparationOnly -AllowLongRun` and GitHub's preparation job
+select this same focused path. Mixed compiler/runtime edits retain compiler
+integration coverage, and the complete owner retains repeated assembly.
+
 The selected owned-console development path separates construction in the same
 way. Use `Test-Console-Packager-Source-Reconstruction.mjs --prepare-only
 --maximum-seconds <budget>` to prepare its current compiler and native tools;

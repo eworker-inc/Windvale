@@ -6157,14 +6157,16 @@ function Test-BootstrapVerifierSelection {
         if ($Selector.Count -ne 1) { throw 'The causal bootstrap verifier selector is missing.' }
         $SelectorCode = [scriptblock]::Create($Selector[0].Extent.Text)
         foreach ($Selected in @(
-            @{ Suite = 'native-x64-lowering-development'; Shared = $false; Expected = $true },
-            @{ Suite = 'native-x64-lowering-development'; Shared = $true; Expected = $false },
-            @{ Suite = 'language-1-authenticated-foreign-binding'; Shared = $false; Expected = $true },
-            @{ Suite = 'native-owned-storage'; Shared = $false; Expected = $false },
-            @{ Suite = 'assembler-golden'; Shared = $false; Expected = $false })) {
+            @{ Suite = 'native-x64-lowering-development'; Shared = $false; Target = 'none'; Expected = $true },
+            @{ Suite = 'native-x64-lowering-development'; Shared = $true; Target = 'shared'; Expected = $false },
+            @{ Suite = 'native-x64-lowering-development'; Shared = $true; Target = 'owned'; Expected = $true },
+            @{ Suite = 'language-1-authenticated-foreign-binding'; Shared = $false; Target = 'none'; Expected = $true },
+            @{ Suite = 'native-owned-storage'; Shared = $false; Target = 'none'; Expected = $false },
+            @{ Suite = 'assembler-golden'; Shared = $false; Target = 'none'; Expected = $false })) {
             $Plan = [pscustomobject]@{ Scope = 'development' }
             $NativePlan = [pscustomobject]@{
-                Suites = @($Selected.Suite); UseNativeSharedStorageDevelopment = $Selected.Shared
+                Suites = @($Selected.Suite); UseNativeStorageDevelopment = $Selected.Shared
+                NativeStorageDevelopmentTarget = $Selected.Target
                 UseOwnedConsoleDevelopment = $false; UseCurrentVerifierDevelopment = $false
                 UseFoundationLibraryDevelopment = $false; UseLanguage1FrontDoorPreparation = $false
             }
@@ -6378,6 +6380,45 @@ Test-PreparedOwnerEnvironment
 Test-BootstrapVerifierSelection
 Test-NativeSharedCompilerSelection
 Test-NativeSharedCompilerArguments
+
+function Test-NativeStorageArguments {
+    $ArgumentTest = @'
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+const Source=readFileSync(process.argv[2],'utf8');
+const Start=Source.indexOf('let Oracleˉproduct = null;'),End=Source.indexOf('const Target = process.argv[2];');
+if(Start<0||End<=Start||End-Start>32768)throw Error('Storage argument boundary differs.');
+const Prefix=Source.slice(Start,End),Now=100000;let Cases=0;
+function Run(Values,Environment={}){Cases++;const Context={process:{argv:Values,env:Environment},
+    resolve:Value=>Value,Date:{now:()=>Now},Usage(){throw Error('usage');},Reject(){throw Error('refusal');}};
+    vm.createContext(Context);vm.runInContext(Prefix+'\nResult={Deadline:Ownerˉdeadline,Prepare:Storageˉpreparation,Owned:Ownedˉonly,Shared:Sharedˉonly,Mode:process.env.WINDVALE_PREPARED_PRODUCTS_ONLY,Phase:process.argv[4]};',Context,{timeout:1000});return Context.Result;}
+function Arguments(Target,Seconds='1800'){return ['node','owner','windows','repo','--prepare-'+Target+'-storage','--maximum-seconds',Seconds];}
+function Refuse(Values,Environment){let Rejected=false;try{Run(Values,Environment);}catch(Error){
+    if(!['usage','refusal'].includes(Error.message))throw Error;Rejected=true;}if(!Rejected)throw Error('Invalid storage phase admitted.');}
+for(const Target of ['owned','shared']){
+    const Ordinary=Run(['node','owner','windows','repo','--'+Target+'-storage']);
+    if(Ordinary.Prepare||!Ordinary.Owned||Ordinary.Shared!==(Target==='shared')||Ordinary.Mode!=='1'||Ordinary.Deadline!==Now+600000)
+        throw Error('Storage behavior must refuse construction and keep its deadline.');
+    for(const Short of [false,true]){const Values=Arguments(Target);if(Short)Values.push('--deadline-ms',String(Now+500000));
+        const Prepared=Run(Values);if(!Prepared.Prepare||!Prepared.Owned||Prepared.Shared!==(Target==='shared')||Prepared.Mode!==undefined||
+            Prepared.Deadline!==Now+(Short?500000:1800000)||Prepared.Phase!=='--'+Target+'-storage')throw Error('Storage preparation lost its target or deadline.');}
+    if(Run(Arguments(Target,'30')).Deadline!==Now+30000)throw Error('Storage minimum deadline differs.');
+    for(const Seconds of ['0','29','1801','01','1.5'])Refuse(Arguments(Target,Seconds));
+    Refuse(Arguments(Target),{WINDVALE_PREPARED_PRODUCTS_ONLY:'1'});
+}
+Refuse(Arguments('owned').slice(0,5));
+Refuse([...Arguments('shared'),'--maximum-seconds','30']);
+Refuse([...Arguments('owned'),'--deadline-ms',String(Now)]);
+if(Cases!==23)throw Error('Storage argument case inventory differs.');
+process.stdout.write('native storage arguments status=Passed cases=23 construction=explicit\n');
+'@
+    $Output = @(& node --input-type=module -e $ArgumentTest storage-arguments `
+        (Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs') 2>&1)
+    if ($LASTEXITCODE -ne 0 -or ($Output -join "`n") -cne 'native storage arguments status=Passed cases=23 construction=explicit') {
+        throw "Storage argument boundary differs: $($Output -join '`n')"
+    }
+}
+Test-NativeStorageArguments
 & {
     # Exercise the actual website dispatch without building an unrelated site.
     $Tokens = $null
@@ -6837,7 +6878,7 @@ foreach ($SharedPath in @(
 )) {
     $SharedPlan = & $NativePlanner -ChangedPath $SharedPath -PassThru -Quiet `
         -InitializationCache $NativePlannerInitializationCache
-    if (!$SharedPlan.UseNativeSharedStorageDevelopment -or
+    if (!$SharedPlan.UseNativeStorageDevelopment -or $SharedPlan.NativeStorageDevelopmentTarget -cne 'shared' -or
         $SharedPlan.ExpectedSeconds -ne 540 -or $SharedPlan.MaximumSeconds -ne 600 -or
         $SharedPlan.Suites.Count -ne 1 -or $SharedPlan.Gaps.Count -ne 0) {
         throw "The focused shared-storage plan differs for '$SharedPath'."
@@ -6847,8 +6888,49 @@ $MixedSharedPlan = & $NativePlanner -ChangedPath @(
     'Runtime/Native/X64-Shared-Storage.wva',
     'Compiler/Windvale/Native-X64-Lowering-Core.wv'
 ) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
-if ($MixedSharedPlan.UseNativeSharedStorageDevelopment) {
+if ($MixedSharedPlan.UseNativeStorageDevelopment) {
     throw 'Private shared-storage routing suppressed compiler lowering coverage.'
+}
+foreach ($StoragePath in @(
+    'Runtime/Native/X64-Budgeted-Storage.wva',
+    'Runtime/Native/X64-Owned-Storage.wva',
+    'Runtime/Native/X64-Memory-Budget-Validation.wva',
+    'Compiler/Native/Allocator/Descriptor-Allocator.wva',
+    'Specifications/Windvale-Native-Budgeted-Storage.md',
+    'Specifications/Windvale-Native-Owned-Storage.md',
+    'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
+    'Tools/Native/Native-Owned-Storage-Cases.mjs',
+    'Tools/Native/Native-Storage-Fixture.mjs'
+)) {
+    $StoragePlan = & $NativePlanner -ChangedPath $StoragePath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    $StorageBudget = @($StoragePlan.OwnerBudgets | Where-Object Name -CEQ 'native-x64-lowering-development')
+    if (!$StoragePlan.UseNativeStorageDevelopment -or $StoragePlan.NativeStorageDevelopmentTarget -cne 'owned' -or
+        $StoragePlan.NativeSharedCompilerBehaviorRequired -or $StoragePlan.Gaps.Count -ne 0 -or
+        $StorageBudget.Count -ne 1 -or $StorageBudget[0].ExpectedSeconds -ne 540 -or
+        $StorageBudget[0].MaximumSeconds -ne 600) {
+        throw "The focused owned-storage plan differs for '$StoragePath'."
+    }
+}
+$StorageBatchPlan = & $NativePlanner -ChangedPath @(
+    'Runtime/Native/X64-Budgeted-Storage.wva', 'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
+    'Tools/Native/Native-Owned-Storage-Cases.mjs', 'Tools/Native/Native-Shared-Storage-Cases.mjs',
+    'Specifications/Windvale-Native-Budgeted-Storage.md', 'Tools/Verify/Verify-Changed.ps1',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1', 'Tools/Verify/Verify-Verification-Plan.ps1'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$StorageBatchPlan.UseNativeStorageDevelopment -or $StorageBatchPlan.NativeStorageDevelopmentTarget -cne 'owned' -or
+    $StorageBatchPlan.NativeSharedCompilerBehaviorRequired -or $StorageBatchPlan.ExpectedSeconds -ne 540 -or
+    $StorageBatchPlan.MaximumSeconds -ne 600 -or $StorageBatchPlan.Gaps.Count -ne 0) {
+    throw 'The coherent owned-storage batch lost its complete runtime selection.'
+}
+foreach ($CompilerPath in @('Compiler/Windvale/Native-X64-Lowering-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv')) {
+    $MixedStoragePlan = & $NativePlanner -ChangedPath @('Runtime/Native/X64-Budgeted-Storage.wva', $CompilerPath) `
+        -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+    if ($MixedStoragePlan.UseNativeStorageDevelopment -or !$MixedStoragePlan.NativeSharedCompilerBehaviorRequired) {
+        throw "Private storage routing suppressed compiler coverage for '$CompilerPath'."
+    }
 }
 foreach ($SharedCompilerPath in @(
     'Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv',
@@ -6922,7 +7004,7 @@ foreach ($SharedCompilerDependencyPaths in @(
 )) {
     $DependencyPlan = & $NativePlanner -ChangedPath $SharedCompilerDependencyPaths -PassThru -Quiet `
         -InitializationCache $NativePlannerInitializationCache
-    if ($DependencyPlan.UseNativeSharedCompilerDevelopment -or $DependencyPlan.UseNativeSharedStorageDevelopment -or
+    if ($DependencyPlan.UseNativeSharedCompilerDevelopment -or $DependencyPlan.UseNativeStorageDevelopment -or
         !$DependencyPlan.NativeSharedCompilerBehaviorRequired -or !$DependencyPlan.NativeSharedCompilerHostRecordRequired -or
         $DependencyPlan.NativeSharedCompilerBehaviorSelection -cne '--shared-compiler-values' -or
         $DependencyPlan.NativeSharedCompilerBehaviorExpectedSeconds -ne 4800 -or
@@ -7036,7 +7118,8 @@ if ($MixedVerifierLibraryPlan.UseFoundationLibraryDevelopment -or
     $MixedVerifierLibraryPlan.LibraryDevelopmentTarget -cne 'all') {
     throw 'Verifier routing suppressed an explicitly changed database library.'
 }
-foreach ($Marker in @('--shared-storage', 'if ($NativePlan.UseFoundationLibraryDevelopment) {',
+foreach ($Marker in @('$StorageArgument = ''--'' + $NativePlan.NativeStorageDevelopmentTarget + ''-storage''',
+    'if ($NativePlan.UseFoundationLibraryDevelopment) {',
     '--prepare-only --deadline-ms $FoundationPreparationDeadline',
     '--prepare --deadline-ms $FoundationVerifierDeadline')) {
     if (!$ChangedVerification.Contains($Marker, [StringComparison]::Ordinal)) {

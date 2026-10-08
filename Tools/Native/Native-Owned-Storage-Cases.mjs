@@ -13,9 +13,10 @@ export async function Prepareˉownedˉstorageˉobjects(Context) {
     const { Repository, Work, Target, Requireˉsuccess } = Context;
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
-    // Narrow bridge debugging reuses admitted objects. The complete owner still
+    // Focused runtime checks reuse admitted objects. The complete owner still
     // runs its independent repeated assembly and byte comparison below.
-    const Cache = Context.Valuesˉonly ? await Prepareˉassemblyˉobjectˉcache(Context.Deadline) : null;
+    const Cache = Context.Assemblyˉcache ??
+        (Context.Valuesˉonly ? await Prepareˉassemblyˉobjectˉcache(Context.Deadline) : null);
     const Objects = [];
     for (const [Name, Source] of [
         ['Owned', 'Runtime/Native/X64-Owned-Storage.wva'],
@@ -53,11 +54,17 @@ export async function Runˉownedˉstorageˉcases(Context) {
     const { Repository, Work, Target, Requireˉsuccess, Runˉprocess } = Context;
     const Extension = Target === 'windows' ? 'cmd' : 'sh';
     const Tool = Name => join(Repository, 'Tools', 'Native', `${Name}.${Extension}`);
-    const Objects = await Prepareˉownedˉstorageˉobjects({ ...Context, Includeˉshared: !Context.Domainˉonly });
+    const Cache = Context.Storageˉonly || Context.Valuesˉonly
+        ? await Prepareˉassemblyˉobjectˉcache(Context.Deadline) : null;
+    const Objects = await Prepareˉownedˉstorageˉobjects({ ...Context,
+        Assemblyˉcache: Cache, Includeˉshared: !Context.Domainˉonly });
     const Oracle = Context.Domainˉonly || Context.Sharedˉonly || Context.Valuesˉonly ? null : await Readˉbudgetˉoracle(Context);
     const Sharedˉcases = Context.Domainˉonly ? [] : Buildˉsharedˉstorageˉcases();
+    const Budgetedˉcases = Context.Domainˉonly || Context.Sharedˉonly || Context.Valuesˉonly
+        ? [] : Buildˉbudgetedˉstorageˉcases(Oracle);
+    const Mappedˉcases = Sharedˉcases.filter(Case => Case.Name.startsWith('shared-mapped-')).length;
     const Cases = Context.Valuesˉonly ? Buildˉsharedˉvalueˉcases() : Context.Sharedˉonly ? Sharedˉcases :
-        [...(Context.Domainˉonly ? [] : [...Buildˉcases(), ...Buildˉbudgetedˉstorageˉcases(Oracle),
+        [...(Context.Domainˉonly ? [] : [...Buildˉcases(), ...Budgetedˉcases,
             ...Sharedˉcases, ...Buildˉsharedˉvalueˉcases()]), ...Buildˉownedˉdomainˉcases(), ...Buildˉownedˉentryˉcases()];
     // Two independent fixtures bound concurrent tool memory. Drain both workers
     // on failure before the owner removes their shared temporary directory.
@@ -78,17 +85,20 @@ export async function Runˉownedˉstorageˉcases(Context) {
         while (Failure === null && Next < Cases.length) {
             const Index = Next++, Case = Cases[Index];
             try {
-                process.stdout.write(`native owned storage step=execute item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
+                process.stdout.write(`native owned storage step=${Context.Prepareˉstorage ? 'prepare' : 'execute'} item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
                 const Prefix = join(Work, `Owned-${Case.Name}`);
                 if (Buffer.byteLength(Case.Source) > 131_072) throw new Error('Owned storage fixture exceeds its source limit.');
                 const Source = Prefix + '.wva', Object = Prefix + '.wvo', Image = Prefix + '.bin';
                 const Application = Prefix + (Target === 'windows' ? '.exe' : '.elf');
                 await writeFile(Source, Case.Source);
-                if (Context.Valuesˉonly) {
-                    const Cache = await Prepareˉassemblyˉobjectˉcache(Context.Deadline);
+                if (Cache !== null) {
                     await Acquireˉassemblyˉobject(Cache, Source, Object);
                 } else {
                     await Requireˉsuccess(Tool('Assemble-Wva'), [Source, Object], `owned-${Case.Name}-assemble`);
+                }
+                if (Context.Prepareˉstorage) {
+                    process.stdout.write(`native storage products step=prepared item=${Index + 1}/${Cases.length} case=${Case.Name}\n`);
+                    continue;
                 }
                 const Providers = Objects.filter(Path =>
                     (Path !== join(Work, 'Entry.wvo') || Case.ExtraRuntime === 'Entry') &&
@@ -110,14 +120,17 @@ export async function Runˉownedˉstorageˉcases(Context) {
     }
     await Promise.all([Worker(), Worker()]);
     if (Failure !== null) throw Failure;
-    if (Context.Valuesˉonly) {
+    if (Cache !== null) await Cache.Requireˉunchanged();
+    if (Context.Prepareˉstorage) {
+        process.stdout.write(`native storage products status=Prepared target=${Context.Sharedˉonly ? 'shared' : 'owned'} runtime-objects=${Objects.length} fixture-objects=${Cases.length} behavior-cases=0 workers=2 qualification=false\n`);
+    } else if (Context.Valuesˉonly) {
         process.stdout.write(`native shared values status=Passed cases=${Cases.length} iterations=1,1000,32768 arena-bytes=64 peak-physical-charge=32 final-physical-charge=0 final-parent-available=48 metadata-bytes=8120 workers=2 generated-source=false qualification=false\n`);
     } else if (Context.Sharedˉonly) {
-        process.stdout.write(`native shared storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 request-bytes=128 iterations=1,1000,32768 stress-arena=64 stress-peak-charge=48 metadata-bytes=7928 mapped-v2-cases=4 mapped-slots=2 v2-state-bytes=2176 v2-metadata-bytes=8120 workers=2 qualification=false\n`);
+        process.stdout.write(`native shared storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 request-bytes=128 iterations=1,1000,32768 stress-arena=64 stress-peak-charge=48 metadata-bytes=7928 mapped-v2-cases=${Mappedˉcases} mapped-slots=2 v2-state-bytes=2176 v2-metadata-bytes=8120 workers=2 qualification=false\n`);
     } else if (Context.Domainˉonly) {
         process.stdout.write(`native owned domain status=Passed cases=${Cases.length} v1-cases=7 metadata-bytes=5952 request-bytes=112 pairs=15 snapshot-bytes=6144 v2-cases=9 v2-entry-cases=9 v2-metadata-bytes=8120 v2-request-bytes=192 v2-context-bytes=192 v2-pairs=45 workers=2 qualification=false\n`);
     } else {
-        process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=18 domain-cases=25 domain-v2-cases=9 domain-v2-entry-cases=9 shared-storage-cases=${Sharedˉcases.length} shared-value-cases=10 mapped-v2-cases=4 accounting-states=14 budgeted-metadata-bytes=5816 shared-metadata-bytes=7928 v2-metadata-bytes=8120 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
+        process.stdout.write(`native owned storage status=Passed cases=${Cases.length} slots=64 state-bytes=2112 budgeted-cases=${Budgetedˉcases.length} domain-cases=25 domain-v2-cases=9 domain-v2-entry-cases=9 shared-storage-cases=${Sharedˉcases.length} shared-value-cases=10 mapped-v2-cases=${Mappedˉcases} accounting-states=14 budgeted-metadata-bytes=5816 shared-metadata-bytes=7928 v2-metadata-bytes=8120 stress-iterations=32768 stress-arena=64 stress-peak-charge=48 replacement-iterations=1000 replacement-arena=112 replacement-peak-charge=112 workers=2\n`);
     }
     return Cases.length;
 }

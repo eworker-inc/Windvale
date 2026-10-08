@@ -51,6 +51,20 @@ handbook.
 
 ## Broad and cross-host claims
 
+Runtime-only physical allocator, budget-validator and budgeted-storage changes
+select the existing native lowering owner's `--owned-storage` mode. It runs the
+physical, canonical accounting, shared-storage, domain and entry fixtures,
+including complete refusal snapshots, within a 600-second maximum. Run the
+matching `--prepare-owned-storage` or `--prepare-shared-storage` mode with an
+explicit `--maximum-seconds` bound of 30 to 1800 before behavior. This separate
+phase admits assembly objects for exact source and tool identities and keeps
+completed checkpoints after failure. Behavior refuses a missing checkpoint
+without constructing it. The complete owner retains repeated assembly and byte
+comparison. Sharing-only changes may select `--shared-storage`. Neither runtime
+selection constructs the current shared compiler host. The accounting oracle
+still uses the existing prepared compiler tools. A mixed compiler, source-verifier
+or source-fixture change retains its compiler integration selection.
+
 - Managed Stage 0 source and tests are absent from `main`. Restore the exact
   recovery release in a separate workspace only for a named recovery, security,
   or historical differential investigation.

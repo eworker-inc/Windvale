@@ -2899,6 +2899,7 @@ foreach ($Path in $Paths) {
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
         'Tests/Native/X64-Paper-Buffer-Source.wva',
+        'Compiler/Native/Allocator/Descriptor-Allocator.wva',
         'Runtime/Native/X64-Owned-Storage.wva',
         'Runtime/Native/X64-Owned-Domain.wva',
         'Specifications/Windvale-Native-Owned-Domain.md',
@@ -5392,7 +5393,33 @@ $UseNativeSharedStorageDevelopment = $SelectedSuites.Contains('native-x64-loweri
         $_ -cnotin $NativeSharedStorageDevelopmentInputs -and
         $_ -cnotin $FoundationLibraryDevelopmentInputs
     }).Count -eq 0
-if ($UseNativeSharedStorageDevelopment) {
+$NativeOwnedStorageDevelopmentInputs = $NativeSharedStorageDevelopmentInputs + @(
+    'Runtime/Native/X64-Owned-Storage.wva',
+    'Runtime/Native/X64-Memory-Budget-Validation.wva',
+    'Compiler/Native/Allocator/Descriptor-Allocator.wva',
+    'Specifications/Windvale-Native-Owned-Storage.md',
+    'Tools/Native/Native-Storage-Fixture.mjs',
+    'Tools/Native/Native-Budgeted-Storage-Cases.mjs'
+)
+$UseNativeOwnedStorageDevelopment = $SelectedSuites.Contains('native-x64-lowering-development') -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cin @('Runtime/Native/X64-Budgeted-Storage.wva',
+            'Runtime/Native/X64-Owned-Storage.wva',
+            'Runtime/Native/X64-Memory-Budget-Validation.wva',
+            'Compiler/Native/Allocator/Descriptor-Allocator.wva',
+            'Specifications/Windvale-Native-Budgeted-Storage.md',
+            'Specifications/Windvale-Native-Owned-Storage.md',
+            'Tools/Native/Native-Budgeted-Storage-Cases.mjs',
+            'Tools/Native/Native-Owned-Storage-Cases.mjs',
+            'Tools/Native/Native-Storage-Fixture.mjs')
+    }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object {
+        $_ -cnotin $NativeOwnedStorageDevelopmentInputs
+    }).Count -eq 0
+$UseNativeStorageDevelopment = $UseNativeSharedStorageDevelopment -or $UseNativeOwnedStorageDevelopment
+$NativeStorageDevelopmentTarget = if ($UseNativeOwnedStorageDevelopment) { 'owned' } `
+    elseif ($UseNativeSharedStorageDevelopment) { 'shared' } else { 'none' }
+if ($UseNativeStorageDevelopment) {
     $StorageOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'native-x64-lowering-development'
     })[0]
@@ -5403,7 +5430,7 @@ if ($UseNativeSharedStorageDevelopment) {
 # avoids compiler execution. A path-name filter can select obsolete packaging
 # for verifier, library, specification or fixture changes in the same closure.
 $NativeSharedCompilerBehaviorRequired = $SelectedSuites.Contains('native-x64-lowering-development') -and
-    !$UseNativeSharedStorageDevelopment
+    !$UseNativeStorageDevelopment
 $NativeSharedCompilerBehaviorExpectedSeconds = [long]0
 $NativeSharedCompilerBehaviorMaximumSeconds = [long]0
 if ($NativeSharedCompilerBehaviorRequired) {
@@ -6092,7 +6119,10 @@ if (!$Quiet) {
     Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
     Write-Host "Library development target: $LibraryDevelopmentTarget"
     Write-Host "Foundation library prepared development: $($UseFoundationLibraryDevelopment.ToString().ToLowerInvariant())"
-    Write-Host "Native shared-storage development: $($UseNativeSharedStorageDevelopment.ToString().ToLowerInvariant())"
+    Write-Host "Native storage development: $NativeStorageDevelopmentTarget"
+    if ($UseNativeStorageDevelopment) {
+        Write-Host 'Native storage preparation: separate; maximum-seconds=1800; behavior-construction=forbidden'
+    }
     Write-Host "Native shared-compiler development: $($UseNativeSharedCompilerDevelopment.ToString().ToLowerInvariant())"
     if ($NativeSharedCompilerBehaviorRequired) {
         Write-Host "Native shared-compiler behavior expected seconds: $NativeSharedCompilerBehaviorExpectedSeconds"
@@ -6151,7 +6181,8 @@ if ($PassThru) {
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UsePublisherCurrentObjectDevelopment = $UsePublisherCurrentObjectDevelopment
         UseCurrentVerifierDevelopment = $UseCurrentVerifierDevelopment
-        UseNativeSharedStorageDevelopment = $UseNativeSharedStorageDevelopment
+        UseNativeStorageDevelopment = $UseNativeStorageDevelopment
+        NativeStorageDevelopmentTarget = $NativeStorageDevelopmentTarget
         UseNativeSharedCompilerDevelopment = $UseNativeSharedCompilerDevelopment
         NativeSharedCompilerBehaviorRequired = $NativeSharedCompilerBehaviorRequired
         NativeSharedCompilerBehaviorExpectedSeconds = $NativeSharedCompilerBehaviorExpectedSeconds

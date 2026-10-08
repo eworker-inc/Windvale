@@ -71,6 +71,16 @@ they still count zero-charge children. Inactive fields are checked together,
 preserving retired generations. This adds no cached trust or persistent state
 and does not increase the callee stack bound.
 
+Binding validation checks every physical and mapped binding against its current
+canonical generation, owned lease and charge. Only after those checks may a
+65-entry identity lookup detect a duplicate. Current-generation equality makes
+identity equality sufficient; a stale or forged generation still refuses before
+the lookup. Physical and mapped bindings share the same lookup, so cross-kind
+duplicates refuse as well. The lookup occupies 65 bytes of existing private
+scalar stack scratch, is cleared on every call and expires before that scratch
+is reused by an operation. This replaces repeated binding comparisons without
+changing the layouts, stack bound, refusal status or complete-state validation.
+
 An accounting token contains a 32-bit identity followed by a 32-bit generation.
 Odd generations own budgets; even generations own leases. A lease adds its
 64-bit maximum retained bytes, 64-bit current retained bytes and 32-bit alignment
