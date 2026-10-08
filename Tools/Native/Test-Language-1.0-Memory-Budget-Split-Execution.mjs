@@ -325,8 +325,8 @@ async function Main() {
     if (Vectorˉintegrationˉonly) {
         const Elapsed = Date.now() - Started;
         if (Elapsed > Maximumˉrunˉmilliseconds) Reject('Vector borrow integration exceeded its total budget during cleanup.', 124);
-        process.stdout.write('native Vector borrow integration status=Passed cases=594 ' +
-            'components=429 vector-groups=96 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
+        process.stdout.write('native Vector borrow integration status=Passed cases=608 ' +
+            'components=443 vector-groups=96 record-collection-groups=40 owned-payload-groups=19 runtime-groups=10 ' +
             `qualification=false elapsed-ms=${Elapsed}\n`);
     }
     if (Vectorˉmutationˉproductsˉonly && Date.now() - Started > Maximumˉrunˉmilliseconds) {
@@ -338,7 +338,7 @@ async function Main() {
             Reject('The focused Foundation borrow development budget expired during cleanup.', 124);
         }
         process.stdout.write(
-            `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 429 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 482 : Foundationˉsourceˉrunner === null ? 455 : 458) : Foundationˉplanˉonly ? 32 : Foundationˉdirectoriesˉonly ? 27 : 370} ` +
+            `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 443 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 496 : Foundationˉsourceˉrunner === null ? 469 : 472) : Foundationˉplanˉonly ? 32 : Foundationˉdirectoriesˉonly ? 27 : 384} ` +
             `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
             (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
             (Borrowˉcomponentˉbytes === null ? '' :
@@ -1603,7 +1603,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${618 + Growˉmalformedˉcases.length +
+        `cases=${632 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=26 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1616,7 +1616,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=32 foundation-borrow-directory-cases=32 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=41 foundation-borrow-stack-cases=145 foundation-borrow-lifetime-cases=51 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=32 foundation-borrow-directory-cases=32 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=25 foundation-borrow-metadata-cases=41 foundation-borrow-stack-cases=145 foundation-borrow-lifetime-cases=65 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=58 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         'foundation-source-ownership-cases=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +

@@ -527,33 +527,50 @@ export fn Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
             }
         }
         var Side: u32 = 0u32;
-        while Side < 2u32 {
+        while Count > 0u32 && Side < 2u32 {
             var Packed: bytes = Empty(Input);
+            var Any: bool = false;
+            var Zeroˉbytes: u32 = 0u32;
             var First: u32 = 0u32;
             while First < Count {
                 var Bits: u32 = 0u32;
                 var Bit: u32 = 0u32;
-                while Bit < 8u32 && First + Bit < Count {
+                while Bit < 32u32 && First + Bit < Count {
                     let Actual: u32 = Bytesˉreadˉu32ˉlittle(Recordˉtoˉlocal, (First + Bit) * 4u32);
                     let Live: u8 = Bytesˉreadˉu8(Rows, Row * Rowˉbytes + 4u32 +
                         Side * ((Locals + 7u32) / 8u32) + Actual / 8u32);
                     if (U32ˉfromˉu8(Live) & (1u32 << (Actual % 8u32))) != 0u32 {
                         Bits = Bits | (1u32 << Bit);
+                        Any = true;
                         if Bytesˉreadˉu8(Present, First + Bit) == 0u8 {
                             Present = Setˉbyte(Present, First + Bit, 1u8);
                         }
                     }
                     Bit = Bit + 1u32;
                 }
-                Packed = Bytesˉconcat(Packed, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Bits), 0u32, 1u32));
-                First = First + 8u32;
+                var Width: u32 = (Count - First + 7u32) / 8u32;
+                if Width > 4u32 { Width = 4u32; }
+                if Bits == 0u32 {
+                    Zeroˉbytes = Zeroˉbytes + Width;
+                } else {
+                    if Zeroˉbytes > 0u32 {
+                        Packed = Bytesˉconcat(Packed, Zeros(Input, Zeroˉbytes));
+                        Zeroˉbytes = 0u32;
+                    }
+                    var Encoded: bytes = Bytesˉfromˉu32ˉlittle(Bits);
+                    if Width < 4u32 { Encoded = Bytesˉslice(Encoded, 0u32, Width); }
+                    Packed = Bytesˉconcat(Packed, Encoded);
+                }
+                First = First + 32u32;
             }
+            if Any && Zeroˉbytes > 0u32 { Packed = Bytesˉconcat(Packed, Zeros(Input, Zeroˉbytes)); }
             var Value: u32 = 4294967295u32;
             if Side == 1u32 { Value = Store; }
-            Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Packed));
+            // An empty live set adds no edges, including for a stored record.
+            if Any { Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Packed)); }
             // A definition may not overwrite a root whose final borrowed use
             // is this store: ordinary last-use cleanup runs after the copy.
-            if Side == 0u32 && Store != 4294967295u32 {
+            if Any && Side == 0u32 && Store != 4294967295u32 {
                 Events = Bytesˉconcat(Events, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Store), Packed));
             }
             if Bytesˉlength(Events) >= 65536u32 {
@@ -564,19 +581,36 @@ export fn Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
         }
         Row = Row + 1u32;
     }
+    // Empty record directories still validate every row and store operand.
+    let Absent: bytes = Bytesˉfromˉu32ˉlittle(4294967295u32);
+    if Count == 0u32 {
+        return Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(
+            Repeatˉbytes(Input, Locals, Absent), 0u32);
+    }
     Interference = Allocation.Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(Interference, Events, Count);
     let Compact: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
         Allocation.Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(Input, Types, Present,
             Directory.Types, Interference, Count);
     if Compact.Fields == 4294967295u32 || Bytesˉlength(Compact.Offsets) != Count * 4u32 { return Invalid; }
     var Offsets: bytes = Empty(Input);
+    var Absentˉlocals: u32 = 0u32;
     Local = 0u32;
     while Local < Locals {
         let Selectedˉrecord: u32 = Bytesˉreadˉu32ˉlittle(Directory.Indices, Local * 4u32);
-        var Offset: u32 = 4294967295u32;
-        if Selectedˉrecord != 4294967295u32 { Offset = Bytesˉreadˉu32ˉlittle(Compact.Offsets, Selectedˉrecord * 4u32); }
-        Offsets = Bytesˉconcat(Offsets, Bytesˉfromˉu32ˉlittle(Offset));
+        if Selectedˉrecord == 4294967295u32 {
+            Absentˉlocals = Absentˉlocals + 1u32;
+        } else {
+            if Absentˉlocals > 0u32 {
+                Offsets = Bytesˉconcat(Offsets, Repeatˉbytes(Input, Absentˉlocals, Absent));
+                Absentˉlocals = 0u32;
+            }
+            Offsets = Bytesˉconcat(Offsets, Bytesˉfromˉu32ˉlittle(
+                Bytesˉreadˉu32ˉlittle(Compact.Offsets, Selectedˉrecord * 4u32)));
+        }
         Local = Local + 1u32;
+    }
+    if Absentˉlocals > 0u32 {
+        Offsets = Bytesˉconcat(Offsets, Repeatˉbytes(Input, Absentˉlocals, Absent));
     }
     return Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(Offsets, Compact.Fields);
 }

@@ -824,6 +824,31 @@ fn Containingˉblock(Blocks: bytes, Offset: u32) -> u32 {
     if Low == 0u32 { return INVALID_INDEX; }
     return Low - 1u32;
 }
+fn Pendingˉword(Values: bytes, Word: u32) -> u32 {
+    let First: u32 = Word * 4u32;
+    let Remaining: u32 = Bytesˉlength(Values) - First;
+    if Remaining >= 4u32 { return Bytesˉreadˉu32ˉlittle(Values, First); }
+    var Result: u32 = 0u32;
+    var Byte: u32 = 0u32;
+    while Byte < Remaining {
+        Result = Result | (U32ˉfromˉu8(Bytesˉreadˉu8(Values, First + Byte)) << (Byte * 8u32));
+        Byte = Byte + 1u32;
+    }
+    return Result;
+}
+fn Storeˉword(Values: bytes, Word: u32, Value: u32, Limit: u32) -> Buffer {
+    let Length: u32 = Bytesˉlength(Values);
+    let First: u32 = Word * 4u32;
+    if First >= Length || Limit < 16u32 { return Rejected(Values, 0u32); }
+    if Pendingˉword(Values, Word) == Value { return Buffer(true, Values, 16u32); }
+    let Cost: u32 = Length * 4u32 + 16u32;
+    if Cost > Limit { return Rejected(Values, 16u32); }
+    var Width: u32 = Length - First;
+    if Width > 4u32 { Width = 4u32; }
+    return Buffer(true, Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Values, 0u32, First),
+        Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, Width)),
+        Bytesˉslice(Values, First + Width, Length - First - Width)), Cost);
+}
 fn Localˉreachability(Events: bytes, Parents: bytes, Blocks: bytes,
     Zero: bytes, Local: u32, Limit: u32) -> Buffer {
     if Limit < 128u32 { return Rejected(Events, 0u32); }
@@ -863,32 +888,64 @@ fn Localˉreachability(Events: bytes, Parents: bytes, Blocks: bytes,
         if Limit - Work < 1u32 { return Rejected(Events, Work); }
         Work = Work + 1u32;
         if Live(Pending, Cursor) {
-            let Block: u32 = Cursor;
-            let Removed: Buffer = Setˉlive(Pending, Block, false, Limit - Work);
+            // Drain a 32-block queue word in scalar storage. Each block still
+            // enters once; nearby predecessors do not rebuild the bitmap.
+            if Limit - Work < 32u32 { return Rejected(Events, Work); }
+            Work = Work + 32u32;
+            let Word: u32 = Cursor / 32u32;
+            var Pendingˉbits: u32 = Pendingˉword(Pending, Word);
+            var Liveˉbits: u32 = Pendingˉword(Liveˉin, Word);
+            let Removed: Buffer = Storeˉword(Pending, Word, 0u32, Limit - Work);
             Work = Work + Removed.Work;
-            if !Removed.Valid || Limit - Work < 128u32 { return Rejected(Events, Work); }
+            if !Removed.Valid { return Rejected(Events, Work); }
             Pending = Removed.Value;
-            Work = Work + 128u32;
-            var Parent: u32 = Eventˉstart(Parents, Block);
-            let Parentˉend: u32 = Eventˉstart(Parents, Block + 1u32);
-            Cursor = Cursor + 1u32;
-            while Parent < Parentˉend {
-                if Limit - Work < 8u32 { return Rejected(Events, Work); }
-                Work = Work + 8u32;
-                let Candidate: u32 = Bytesˉreadˉu32ˉlittle(Parents, Parent * 12u32 + 4u32);
-                if !Live(Defined, Candidate) && !Live(Liveˉin, Candidate) {
-                    let Added: Buffer = Setˉlive(Liveˉin, Candidate, true, Limit - Work);
-                    Work = Work + Added.Work;
-                    if !Added.Valid { return Rejected(Events, Work); }
-                    Liveˉin = Added.Value;
-                    let Queued: Buffer = Setˉlive(Pending, Candidate, true, Limit - Work);
-                    Work = Work + Queued.Work;
-                    if !Queued.Valid { return Rejected(Events, Work); }
-                    Pending = Queued.Value;
-                    if Candidate < Cursor { Cursor = Candidate; }
+            var Nextˉcursor: u32 = (Word + 1u32) * 32u32;
+            if Nextˉcursor > Count { Nextˉcursor = Count; }
+            while Pendingˉbits != 0u32 {
+                var Bit: u32 = 0u32;
+                while (Pendingˉbits & (1u32 << Bit)) == 0u32 {
+                    if Limit - Work < 1u32 { return Rejected(Events, Work); }
+                    Work = Work + 1u32;
+                    Bit = Bit + 1u32;
                 }
-                Parent = Parent + 1u32;
+                Pendingˉbits = Pendingˉbits & (4294967295u32 - (1u32 << Bit));
+                let Block: u32 = Word * 32u32 + Bit;
+                if Block >= Count || Limit - Work < 128u32 { return Rejected(Events, Work); }
+                Work = Work + 128u32;
+                var Parent: u32 = Eventˉstart(Parents, Block);
+                let Parentˉend: u32 = Eventˉstart(Parents, Block + 1u32);
+                while Parent < Parentˉend {
+                    if Limit - Work < 8u32 { return Rejected(Events, Work); }
+                    Work = Work + 8u32;
+                    let Candidate: u32 = Bytesˉreadˉu32ˉlittle(Parents, Parent * 12u32 + 4u32);
+                    var Seen: bool = Live(Liveˉin, Candidate);
+                    if Candidate / 32u32 == Word {
+                        Seen = (Liveˉbits & (1u32 << (Candidate % 32u32))) != 0u32;
+                    }
+                    if !Live(Defined, Candidate) && !Seen {
+                        if Candidate / 32u32 == Word {
+                            Liveˉbits = Liveˉbits | (1u32 << (Candidate % 32u32));
+                            Pendingˉbits = Pendingˉbits | (1u32 << (Candidate % 32u32));
+                        } else {
+                            let Added: Buffer = Setˉlive(Liveˉin, Candidate, true, Limit - Work);
+                            Work = Work + Added.Work;
+                            if !Added.Valid { return Rejected(Events, Work); }
+                            Liveˉin = Added.Value;
+                            let Queued: Buffer = Setˉlive(Pending, Candidate, true, Limit - Work);
+                            Work = Work + Queued.Work;
+                            if !Queued.Valid { return Rejected(Events, Work); }
+                            Pending = Queued.Value;
+                            if Candidate < Nextˉcursor { Nextˉcursor = Candidate; }
+                        }
+                    }
+                    Parent = Parent + 1u32;
+                }
             }
+            let Stored: Buffer = Storeˉword(Liveˉin, Word, Liveˉbits, Limit - Work);
+            Work = Work + Stored.Work;
+            if !Stored.Valid { return Rejected(Events, Work); }
+            Liveˉin = Stored.Value;
+            Cursor = Nextˉcursor;
         } else { Cursor = Cursor + 1u32; }
     }
     return Buffer(true, Liveˉin, Work);
@@ -902,21 +959,23 @@ fn Resourceˉlocal(Types: bytes, Identities: bytes, Local: u32) -> bool {
     return (Type == 8u8 && Identity == 39u32) || (Type == 10u8 && Identity == 25u32);
 }
 fn Localˉmatrix(Events: bytes, Parents: bytes, Blocks: bytes, Zero: bytes,
-    Types: bytes, Identities: bytes,
+    Types: bytes, Identities: bytes, Allˉlocals: bool,
     First: u32, End: u32, Depth: u32, Limit: u32) -> Buffer {
     if Depth > 12u32 { return Rejected(Events, 0u32); }
     if First == End { return Buffer(true, Emptyˉbytes(Events), 0u32); }
     if End - First == 1u32 {
         if Limit < 8u32 { return Rejected(Events, 0u32); }
-        if !Resourceˉlocal(Types, Identities, First) { return Buffer(true, Zero, 8u32); }
+        if !Allˉlocals && !Resourceˉlocal(Types, Identities, First) {
+            return Buffer(true, Zero, 8u32);
+        }
         let Leaf: Buffer = Localˉreachability(Events, Parents, Blocks, Zero, First, Limit - 8u32);
         return Buffer(Leaf.Valid, Leaf.Value, Leaf.Work + 8u32);
     }
     let Middle: u32 = First + (End - First) / 2u32;
-    let Left: Buffer = Localˉmatrix(Events, Parents, Blocks, Zero, Types, Identities,
+    let Left: Buffer = Localˉmatrix(Events, Parents, Blocks, Zero, Types, Identities, Allˉlocals,
         First, Middle, Depth + 1u32, Limit);
     if !Left.Valid { return Left; }
-    let Right: Buffer = Localˉmatrix(Events, Parents, Blocks, Zero, Types, Identities,
+    let Right: Buffer = Localˉmatrix(Events, Parents, Blocks, Zero, Types, Identities, Allˉlocals,
         Middle, End, Depth + 1u32, Limit - Left.Work);
     let Work: u32 = Left.Work + Right.Work;
     if !Right.Valid { return Rejected(Events, Work); }
@@ -971,7 +1030,8 @@ fn Transposed(Matrix: bytes, Locals: u32, Blocks: u32,
     return Buffer(Result.Valid, Result.Value, Work + Result.Work);
 }
 fn Reachabilityˉentries(Input: bytes, Code: u32, Instructions: bytes, Offsets: bytes,
-    Types: bytes, Identities: bytes, Blocks: bytes, Edges: bytes, Limit: u32) -> Buffer {
+    Types: bytes, Identities: bytes, Allˉlocals: bool,
+    Blocks: bytes, Edges: bytes, Limit: u32) -> Buffer {
     let Locals: u32 = Bytesˉlength(Types);
     let Events: Buffer = Localˉevents(Input, Code, Instructions, Offsets, Locals,
         0u32, Bytesˉlength(Offsets) / 4u32, 0u32, Limit);
@@ -992,7 +1052,7 @@ fn Reachabilityˉentries(Input: bytes, Code: u32, Instructions: bytes, Offsets: 
     Work = Work + Zero.Work;
     if !Zero.Valid { return Rejected(Input, Work); }
     let Matrix: Buffer = Localˉmatrix(Ordered.Value, Parentˉorder.Value, Blocks, Zero.Value,
-        Types, Identities, 0u32, Locals, 0u32, Limit - Work);
+        Types, Identities, Allˉlocals, 0u32, Locals, 0u32, Limit - Work);
     Work = Work + Matrix.Work;
     if !Matrix.Valid { return Rejected(Input, Work); }
     let Entries: Buffer = Transposed(Matrix.Value, Locals, Count,
@@ -1085,18 +1145,17 @@ fn Buildˉrows(Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
         return Invalid(Input, Work);
     }
     let Edges: bytes = Control.Value;
-    var Entries: bytes = Emptyˉbytes(Input);
-    if Bytesˉlength(Roots.Dependencies) == 0u32 {
-        let Reached: Buffer = Reachabilityˉentries(Input, Codeˉoffset, Instructions,
-            Offsets, Localˉtypes, Localˉidentities, Blockˉoffsets, Edges, WORK_LIMIT - Work);
-        Work = Work + Reached.Work;
-        if !Reached.Valid { return Invalid(Input, Work); }
-        Entries = Reached.Value;
-    } else {
-        let Zero: Buffer = Zeroes(Input, Blocks * Packedˉbytes(Locals), WORK_LIMIT - Work);
-        Work = Work + Zero.Work;
-        if !Zero.Valid { return Invalid(Input, Work); }
-        Entries = Zero.Value;
+    let Hasˉdependencies: bool = Bytesˉlength(Roots.Dependencies) != 0u32;
+    // Ordinary liveness is a lower bound for dependency closure. Seed every
+    // local when refining loans, so scalar flow cannot cause full rescans of
+    // an already solved control graph. Only a complete fixed point is published.
+    let Reached: Buffer = Reachabilityˉentries(Input, Codeˉoffset, Instructions,
+        Offsets, Localˉtypes, Localˉidentities, Hasˉdependencies,
+        Blockˉoffsets, Edges, WORK_LIMIT - Work);
+    Work = Work + Reached.Work;
+    if !Reached.Valid { return Invalid(Input, Work); }
+    var Entries: bytes = Reached.Value;
+    if Hasˉdependencies {
         var Pass: u32 = 0u32;
         var Changed: bool = true;
         while Changed {
@@ -1191,14 +1250,14 @@ export fn Build(Input: bytes, Codeˉoffset: u32, Codeˉlength: u32,
         Controlˉedges, Borrowˉdirectory, Evidence(true, Emptyˉbytes(Input), 0u32), Work);
 }
 
-export fn Rowˉoffset(Value: Plan, Instruction: u32) -> u32 {
+export fn Rowˉoffset(Value: borrow Plan, Instruction: u32) -> u32 {
     if !Value.Valid || Value.Locals >= 2048u32 ||
         Value.Rowˉbytes != 4u32 + Packedˉbytes(Value.Locals) * 2u32 ||
         Bytesˉlength(Value.Rows) % Value.Rowˉbytes != 0u32 ||
         Instruction >= Bytesˉlength(Value.Rows) / Value.Rowˉbytes { return INVALID_INDEX; }
     return Bytesˉreadˉu32ˉlittle(Value.Rows, Instruction * Value.Rowˉbytes);
 }
-export fn Rowˉindex(Value: Plan, Offset: u32) -> u32 {
+export fn Rowˉindex(Value: borrow Plan, Offset: u32) -> u32 {
     if !Value.Valid || Value.Locals >= 2048u32 ||
         Value.Rowˉbytes != 4u32 + Packedˉbytes(Value.Locals) * 2u32 ||
         Bytesˉlength(Value.Rows) % Value.Rowˉbytes != 0u32 { return INVALID_INDEX; }
@@ -1206,20 +1265,20 @@ export fn Rowˉindex(Value: Plan, Offset: u32) -> u32 {
     var High: u32 = Bytesˉlength(Value.Rows) / Value.Rowˉbytes;
     while Low < High {
         let Middle: u32 = Low + (High - Low) / 2u32;
-        let Current: u32 = Rowˉoffset(Value, Middle);
+        let Current: u32 = Rowˉoffset(borrow Value, Middle);
         if Current == Offset { return Middle; }
         if Current < Offset { Low = Middle + 1u32; } else { High = Middle; }
     }
     return INVALID_INDEX;
 }
-export fn Liveˉbefore(Value: Plan, Instruction: u32, Local: u32) -> bool {
-    if Rowˉoffset(Value, Instruction) == INVALID_INDEX || Local >= Value.Locals { return false; }
+export fn Liveˉbefore(Value: borrow Plan, Instruction: u32, Local: u32) -> bool {
+    if Rowˉoffset(borrow Value, Instruction) == INVALID_INDEX || Local >= Value.Locals { return false; }
     let Offset: u32 = Instruction * Value.Rowˉbytes + 4u32;
     return (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Offset + Local / 8u32)) &
         (1u32 << (Local % 8u32))) != 0u32;
 }
-export fn Liveˉafter(Value: Plan, Instruction: u32, Local: u32) -> bool {
-    if Rowˉoffset(Value, Instruction) == INVALID_INDEX || Local >= Value.Locals { return false; }
+export fn Liveˉafter(Value: borrow Plan, Instruction: u32, Local: u32) -> bool {
+    if Rowˉoffset(borrow Value, Instruction) == INVALID_INDEX || Local >= Value.Locals { return false; }
     let Offset: u32 = Instruction * Value.Rowˉbytes + 4u32 + Packedˉbytes(Value.Locals);
     return (U32ˉfromˉu8(Bytesˉreadˉu8(Value.Rows, Offset + Local / 8u32)) &
         (1u32 << (Local % 8u32))) != 0u32;
@@ -1227,8 +1286,8 @@ export fn Liveˉafter(Value: Plan, Instruction: u32, Local: u32) -> bool {
 
 // A dead store also ends its new value, even when it was not live before.
 // Groups preserve local indices; callers release set bits in descending order.
-export fn Endingˉmask(Value: Plan, Instruction: u32, First: u32, Stored: u32) -> u32 {
-    if Rowˉoffset(Value, Instruction) == INVALID_INDEX || First % 32u32 != 0u32 ||
+export fn Endingˉmask(Value: borrow Plan, Instruction: u32, First: u32, Stored: u32) -> u32 {
+    if Rowˉoffset(borrow Value, Instruction) == INVALID_INDEX || First % 32u32 != 0u32 ||
         First >= Value.Locals { return 0u32; }
     let Packed: u32 = Packedˉbytes(Value.Locals);
     let Offset: u32 = Instruction * Value.Rowˉbytes + 4u32 + First / 8u32;
@@ -1253,9 +1312,9 @@ export fn Endingˉmask(Value: Plan, Instruction: u32, First: u32, Stored: u32) -
 
 // A branch keeps the union of its successors alive. Release the shares needed
 // only by another successor after selecting the actual edge.
-export fn Edgeˉendingˉmask(Value: Plan, Instruction: u32, Successor: u32, First: u32) -> u32 {
-    if Rowˉoffset(Value, Instruction) == INVALID_INDEX ||
-        Rowˉoffset(Value, Successor) == INVALID_INDEX || First % 32u32 != 0u32 ||
+export fn Edgeˉendingˉmask(Value: borrow Plan, Instruction: u32, Successor: u32, First: u32) -> u32 {
+    if Rowˉoffset(borrow Value, Instruction) == INVALID_INDEX ||
+        Rowˉoffset(borrow Value, Successor) == INVALID_INDEX || First % 32u32 != 0u32 ||
         First >= Value.Locals { return 0u32; }
     let Packed: u32 = Packedˉbytes(Value.Locals);
     let Source: u32 = Instruction * Value.Rowˉbytes + 4u32 + Packed + First / 8u32;

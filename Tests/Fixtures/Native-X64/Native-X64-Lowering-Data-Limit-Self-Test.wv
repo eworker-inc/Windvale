@@ -17,6 +17,7 @@ import Compilerˉnativeˉx64ˉloweringˉsharedˉlocalˉliveness as Liveness;
 import Compilerˉnativeˉx64ˉloweringˉsharedˉaggregates as Sharedˉaggregates;
 import Compilerˉnativeˉx64ˉloweringˉsharedˉbytes as Sharedˉbytes;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉallocation as Allocation;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉlocalˉliveness as Recordˉlocals;
 
 fn Exactˉdataˉsection() -> bytes {
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(1u32);
@@ -858,6 +859,44 @@ fn Repeatedˉbyte(Value: u8, Count: u32) -> bytes {
 fn Localˉinstruction(Opcode: u8, Operand: u32) -> bytes {
     return Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Operand));
 }
+fn Sharedˉrecordˉprojection(Count: u32) -> bool {
+    let Section: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Recordˉtypeˉentry());
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Section, 0u32, Bytesˉlength(Section));
+    var Indices: bytes = Repeatedˉbyte(255u8, 4u32);
+    var Local: u32 = 0u32;
+    while Local < Count {
+        Indices = Bytesˉconcat(Indices, Bytesˉfromˉu32ˉlittle(Local));
+        Local = Local + 1u32;
+    }
+    Indices = Bytesˉconcat(Indices, Repeatedˉbyte(255u8, 4u32));
+    let Directory: Recordˉlocals.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory =
+        Recordˉlocals.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory(Indices,
+            Repeatedˉbyte(Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(0u32), Count), Count);
+    let Width: u32 = (Count + 9u32) / 8u32;
+    let Rows: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉconcat(Repeatedˉbyte(255u8, Width * 2u32),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Repeatedˉbyte(0u8, Width * 2u32))));
+    let Input: bytes = Repeatedˉbyte(0u8, 2u32);
+    let Plan: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Recordˉlocals.Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
+            Input, 0u32, Directory, Types, Rows, Count + 2u32, 4u32 + Width * 2u32);
+    if Plan.Fields != Count || Bytesˉlength(Plan.Offsets) != (Count + 2u32) * 4u32 { return false; }
+    Local = 0u32;
+    while Local < Count + 2u32 {
+        var Expected: u32 = 4294967295u32;
+        if Local > 0u32 && Local <= Count { Expected = Local - 1u32; }
+        if Bytesˉreadˉu32ˉlittle(Plan.Offsets, Local * 4u32) != Expected { return false; }
+        Local = Local + 1u32;
+    }
+    // Even a zero-record plan must reject a store beyond its local directory.
+    let Rejected: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Recordˉlocals.Compilerˉnativeˉx64ˉplanˉsharedˉrecordˉlocalˉstorage(
+        Localˉinstruction(5u8, Count + 2u32), 0u32, Directory, Types,
+        Bytesˉslice(Rows, 0u32, 4u32 + Width * 2u32), Count + 2u32,
+        4u32 + Width * 2u32);
+    return Rejected.Fields == 4294967295u32;
+}
 fn Recordˉinterferenceˉwords() -> bool {
     var Case: u32 = 0u32;
     while Case < 11u32 {
@@ -872,6 +911,7 @@ fn Recordˉinterferenceˉwords() -> bool {
         if Case == 8u32 { Count = 128u32; }
         if Case == 9u32 { Count = 129u32; }
         if Case == 10u32 { Count = 1024u32; }
+        if Count <= 33u32 && !Sharedˉrecordˉprojection(Count) { return false; }
         let Rowˉbytes: u32 = (Count + 7u32) / 8u32;
         let Matrix: bytes = Repeatedˉbyte(16u8, Count * Rowˉbytes);
         var Events: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32), Repeatedˉbyte(85u8, Rowˉbytes));
@@ -929,13 +969,13 @@ fn Loopˉliveness() -> bool {
     let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 1u32,
         Repeatedˉbyte(6u8, 2u32), Repeatedˉbyte(255u8, 8u32), Instructions, Blocks, Edges, Emptyˉroots());
     if !Plan.Valid || Bytesˉlength(Plan.Rows) != 8u32 * 6u32 || Plan.Work > 65536u32 { return false; }
-    if !Liveness.Liveˉbefore(Plan, 0u32, 0u32) || Liveness.Liveˉbefore(Plan, 0u32, 1u32) ||
-        !Liveness.Liveˉafter(Plan, 1u32, 0u32) || !Liveness.Liveˉafter(Plan, 2u32, 1u32) ||
-        Liveness.Liveˉbefore(Plan, 6u32, 0u32) || !Liveness.Liveˉbefore(Plan, 6u32, 1u32) ||
-        Liveness.Liveˉafter(Plan, 6u32, 1u32) ||
-        Liveness.Edgeˉendingˉmask(Plan, 4u32, 5u32, 0u32) != 2u32 ||
-        Liveness.Edgeˉendingˉmask(Plan, 4u32, 6u32, 0u32) != 1u32 ||
-        Liveness.Edgeˉendingˉmask(Plan, 5u32, 1u32, 0u32) != 0u32 { return false; }
+    if !Liveness.Liveˉbefore(borrow Plan, 0u32, 0u32) || Liveness.Liveˉbefore(borrow Plan, 0u32, 1u32) ||
+        !Liveness.Liveˉafter(borrow Plan, 1u32, 0u32) || !Liveness.Liveˉafter(borrow Plan, 2u32, 1u32) ||
+        Liveness.Liveˉbefore(borrow Plan, 6u32, 0u32) || !Liveness.Liveˉbefore(borrow Plan, 6u32, 1u32) ||
+        Liveness.Liveˉafter(borrow Plan, 6u32, 1u32) ||
+        Liveness.Edgeˉendingˉmask(borrow Plan, 4u32, 5u32, 0u32) != 2u32 ||
+        Liveness.Edgeˉendingˉmask(borrow Plan, 4u32, 6u32, 0u32) != 1u32 ||
+        Liveness.Edgeˉendingˉmask(borrow Plan, 5u32, 1u32, 0u32) != 0u32 { return false; }
     let Invalidˉedges: bytes = Bytesˉconcat(Localˉinstruction(1u8, 6u32), Bytesˉslice(Edges, 5u32, 15u32));
     let Rejected: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 1u32,
         Repeatedˉbyte(6u8, 2u32), Repeatedˉbyte(255u8, 8u32), Instructions, Blocks, Invalidˉedges, Emptyˉroots());
@@ -962,14 +1002,14 @@ fn Recordˉbranchˉliveness() -> bool {
             let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 1u32,
                 Bytesˉfromˉu8(Type), Repeatedˉbyte(255u8, 4u32), Instructions, Blocks, Edges, Emptyˉroots());
             if !Plan.Valid || Bytesˉlength(Plan.Rows) != 42u32 || Plan.Work > 16384u32 ||
-                !Liveness.Liveˉafter(Plan, 0u32, 0u32) || !Liveness.Liveˉafter(Plan, 2u32, 0u32) ||
-                !Liveness.Liveˉbefore(Plan, 3u32, 0u32) || Liveness.Liveˉafter(Plan, 3u32, 0u32) ||
-                !Liveness.Liveˉbefore(Plan, 5u32, 0u32) || Liveness.Liveˉafter(Plan, 5u32, 0u32) ||
-                Liveness.Endingˉmask(Plan, 0u32, 0u32, 4294967295u32) != 0u32 ||
-                Liveness.Endingˉmask(Plan, 3u32, 0u32, 4294967295u32) != 1u32 ||
-                Liveness.Endingˉmask(Plan, 5u32, 0u32, 4294967295u32) != 1u32 ||
-                Liveness.Edgeˉendingˉmask(Plan, 2u32, 3u32, 0u32) != 0u32 ||
-                Liveness.Edgeˉendingˉmask(Plan, 2u32, 5u32, 0u32) != 0u32 { return false; }
+                !Liveness.Liveˉafter(borrow Plan, 0u32, 0u32) || !Liveness.Liveˉafter(borrow Plan, 2u32, 0u32) ||
+                !Liveness.Liveˉbefore(borrow Plan, 3u32, 0u32) || Liveness.Liveˉafter(borrow Plan, 3u32, 0u32) ||
+                !Liveness.Liveˉbefore(borrow Plan, 5u32, 0u32) || Liveness.Liveˉafter(borrow Plan, 5u32, 0u32) ||
+                Liveness.Endingˉmask(borrow Plan, 0u32, 0u32, 4294967295u32) != 0u32 ||
+                Liveness.Endingˉmask(borrow Plan, 3u32, 0u32, 4294967295u32) != 1u32 ||
+                Liveness.Endingˉmask(borrow Plan, 5u32, 0u32, 4294967295u32) != 1u32 ||
+                Liveness.Edgeˉendingˉmask(borrow Plan, 2u32, 3u32, 0u32) != 0u32 ||
+                Liveness.Edgeˉendingˉmask(borrow Plan, 2u32, 5u32, 0u32) != 0u32 { return false; }
         }
         Tag = Tag + 1u32;
     }
@@ -1009,11 +1049,11 @@ fn Wideˉbranchˉliveness() -> bool {
         var Local: u32 = 0u32;
         while Local < Locals {
             let Joined: bool = Local == 0u32 || Local == Last || Local == Middle;
-            if Liveness.Liveˉbefore(Plan, 0u32, Local) != Joined || Liveness.Liveˉafter(Plan, 1u32, Local) != Joined ||
-                Liveness.Liveˉbefore(Plan, 2u32, Local) != (Local == 0u32 || Local == Last) ||
-                Liveness.Liveˉbefore(Plan, 3u32, Local) != (Local == Last) ||
-                Liveness.Liveˉbefore(Plan, 5u32, Local) != (Local == Middle) ||
-                Liveness.Liveˉafter(Plan, 4u32, Local) || Liveness.Liveˉafter(Plan, 6u32, Local) { return false; }
+            if Liveness.Liveˉbefore(borrow Plan, 0u32, Local) != Joined || Liveness.Liveˉafter(borrow Plan, 1u32, Local) != Joined ||
+                Liveness.Liveˉbefore(borrow Plan, 2u32, Local) != (Local == 0u32 || Local == Last) ||
+                Liveness.Liveˉbefore(borrow Plan, 3u32, Local) != (Local == Last) ||
+                Liveness.Liveˉbefore(borrow Plan, 5u32, Local) != (Local == Middle) ||
+                Liveness.Liveˉafter(borrow Plan, 4u32, Local) || Liveness.Liveˉafter(borrow Plan, 6u32, Local) { return false; }
             Local = Local + 1u32;
         }
         Case = Case + 1u32;
@@ -1048,13 +1088,13 @@ fn Longˉliveness() -> bool {
         Bytesˉlength(Plan.Rows) != 83460u32 { return false; }
     var Row: u32 = 0u32;
     while Row < 320u32 {
-        if Liveness.Rowˉoffset(Plan, Row) != Row * 5u32 ||
-            !Liveness.Liveˉbefore(Plan, Row, 1023u32) ||
-            Liveness.Liveˉafter(Plan, Row, 1023u32) != (Row < 319u32) { return false; }
+        if Liveness.Rowˉoffset(borrow Plan, Row) != Row * 5u32 ||
+            !Liveness.Liveˉbefore(borrow Plan, Row, 1023u32) ||
+            Liveness.Liveˉafter(borrow Plan, Row, 1023u32) != (Row < 319u32) { return false; }
         Row = Row + 1u32;
     }
-    return !Liveness.Liveˉbefore(Plan, 320u32, 1023u32) &&
-        !Liveness.Liveˉafter(Plan, 320u32, 1023u32);
+    return !Liveness.Liveˉbefore(borrow Plan, 320u32, 1023u32) &&
+        !Liveness.Liveˉafter(borrow Plan, 320u32, 1023u32);
 }
 fn Borrowˉliveness() -> bool {
     let Code: bytes = Bytesˉconcat(Localˉinstruction(4u8, 1u32),
@@ -1074,10 +1114,79 @@ fn Borrowˉliveness() -> bool {
     let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, 7u32, 2u32,
         Bytesˉconcat(Bytesˉfromˉu8(6u8), Bytesˉfromˉu8(7u8)), Repeatedˉbyte(255u8, 8u32),
         Instructions, Bytesˉfromˉu32ˉlittle(0u32), Localˉinstruction(3u8, 0u32), Roots);
-    return Plan.Valid && Plan.Work < 65536u32 && Liveness.Liveˉbefore(Plan, 0u32, 0u32) &&
-        Liveness.Liveˉbefore(Plan, 0u32, 1u32) && Liveness.Liveˉafter(Plan, 0u32, 0u32) &&
-        Liveness.Liveˉbefore(Plan, 1u32, 0u32) && !Liveness.Liveˉafter(Plan, 1u32, 0u32) &&
-        !Liveness.Liveˉbefore(Plan, 2u32, 0u32);
+    return Plan.Valid && Plan.Work < 65536u32 && Liveness.Liveˉbefore(borrow Plan, 0u32, 0u32) &&
+        Liveness.Liveˉbefore(borrow Plan, 0u32, 1u32) && Liveness.Liveˉafter(borrow Plan, 0u32, 0u32) &&
+        Liveness.Liveˉbefore(borrow Plan, 1u32, 0u32) && !Liveness.Liveˉafter(borrow Plan, 1u32, 0u32) &&
+        !Liveness.Liveˉbefore(borrow Plan, 2u32, 0u32);
+}
+
+fn Longˉborrowˉliveness(Blockˉcount: u32) -> bool {
+    let Empty: bytes = Textˉtoˉutf8("");
+    let Five: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8), Repeatedˉbyte(0u8, 4u32));
+    var Code: bytes = Empty;
+    var Instructions: bytes = Empty;
+    var Blocks: bytes = Empty;
+    var Edges: bytes = Empty;
+    var Block: u32 = 0u32;
+    while Block < Blockˉcount {
+        Blocks = Bytesˉconcat(Blocks, Bytesˉfromˉu32ˉlittle(Block * 5u32));
+        if Block + 1u32 < Blockˉcount {
+            Code = Bytesˉconcat(Code, Localˉinstruction(48u8, (Block + 1u32) * 5u32));
+            Instructions = Bytesˉconcat(Instructions, Five);
+            Edges = Bytesˉconcat(Edges, Localˉinstruction(1u8, (Block + 1u32) * 5u32));
+        } else {
+            Code = Bytesˉconcat(Code, Bytesˉconcat(Localˉinstruction(4u8, 0u32),
+                Bytesˉconcat(Localˉinstruction(4u8, 1u32), Localˉinstruction(4u8, 1023u32))));
+            Instructions = Bytesˉconcat(Instructions, Bytesˉconcat(Five, Bytesˉconcat(Five, Five)));
+            Edges = Bytesˉconcat(Edges, Localˉinstruction(3u8, 0u32));
+        }
+        Block = Block + 1u32;
+    }
+    Code = Bytesˉconcat(Code, Bytesˉfromˉu8(81u8));
+    Instructions = Bytesˉconcat(Instructions, Bytesˉfromˉu8(1u8));
+    var Roots: bytes = Bytesˉconcat(Bytesˉslice(Emptyˉroots(), 0u32, 12u32), Bytesˉfromˉu32ˉlittle(1u32));
+    Roots = Bytesˉconcat(Roots, Repeatedˉbyte(0u8, 8u32));
+    Roots = Bytesˉconcat(Roots, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Code)));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉfromˉu32ˉlittle(1024u32)));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4096u32), Bytesˉfromˉu32ˉlittle(12u32)));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Repeatedˉbyte(255u8, 4088u32))));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Blockˉcount * 5u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(0u32))));
+    let Types: bytes = Bytesˉconcat(Bytesˉfromˉu8(6u8),
+        Bytesˉconcat(Bytesˉfromˉu8(7u8), Repeatedˉbyte(5u8, 1022u32)));
+    let Plan: Liveness.Plan = Liveness.Build(Code, 0u32, Bytesˉlength(Code), 2u32,
+        Types, Repeatedˉbyte(255u8, 4096u32), Instructions, Blocks, Edges, Roots);
+    if !Plan.Valid || Plan.Work > 8388608u32 ||
+        Bytesˉlength(Plan.Rows) != (Blockˉcount + 3u32) * 260u32 {
+        return false;
+    }
+    var Row: u32 = 0u32;
+    while Row < Blockˉcount {
+        if !Liveness.Liveˉbefore(borrow Plan, Row, 0u32) ||
+            !Liveness.Liveˉbefore(borrow Plan, Row, 1u32) ||
+            !Liveness.Liveˉbefore(borrow Plan, Row, 1023u32) { return false; }
+        Row = Row + 1u32;
+    }
+    return Liveness.Liveˉafter(borrow Plan, Blockˉcount - 1u32, 0u32) &&
+        !Liveness.Liveˉafter(borrow Plan, Blockˉcount, 0u32) &&
+        !Liveness.Liveˉafter(borrow Plan, Blockˉcount, 1u32) &&
+        !Liveness.Liveˉafter(borrow Plan, Blockˉcount + 1u32, 1023u32);
+}
+fn Borrowˉqueueˉboundaries() -> bool {
+    var Case: u32 = 0u32;
+    while Case < 7u32 {
+        var Blocks: u32 = 31u32;
+        if Case == 1u32 { Blocks = 32u32; }
+        if Case == 2u32 { Blocks = 33u32; }
+        if Case == 3u32 { Blocks = 63u32; }
+        if Case == 4u32 { Blocks = 64u32; }
+        if Case == 5u32 { Blocks = 65u32; }
+        if Case == 6u32 { Blocks = 320u32; }
+        if !Longˉborrowˉliveness(Blocks) { return false; }
+        Case = Case + 1u32;
+    }
+    return true;
 }
 
 fn Oversizedˉliveness() -> bool {
@@ -1265,29 +1374,29 @@ fn Endingˉmasks() -> bool {
             if Storeˉcase == 3u32 { Stored = Locals; }
             var First: u32 = 0u32;
             while First < Locals {
-                let Mask: u32 = Liveness.Endingˉmask(Plan, 0u32, First, Stored);
-                let Edgeˉmask: u32 = Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 1u32, First);
+                let Mask: u32 = Liveness.Endingˉmask(borrow Plan, 0u32, First, Stored);
+                let Edgeˉmask: u32 = Liveness.Edgeˉendingˉmask(borrow Edgeˉplan, 0u32, 1u32, First);
                 var Local: u32 = First;
                 while Local < Locals && Local - First < 32u32 {
-                    let Expected: bool = (Liveness.Liveˉbefore(Plan, 0u32, Local) || Stored == Local) &&
-                        !Liveness.Liveˉafter(Plan, 0u32, Local);
+                    let Expected: bool = (Liveness.Liveˉbefore(borrow Plan, 0u32, Local) || Stored == Local) &&
+                        !Liveness.Liveˉafter(borrow Plan, 0u32, Local);
                     if ((Mask & (1u32 << (Local - First))) != 0u32) != Expected { return false; }
-                    let Edgeˉexpected: bool = Liveness.Liveˉafter(Edgeˉplan, 0u32, Local) &&
-                        !Liveness.Liveˉbefore(Edgeˉplan, 1u32, Local);
+                    let Edgeˉexpected: bool = Liveness.Liveˉafter(borrow Edgeˉplan, 0u32, Local) &&
+                        !Liveness.Liveˉbefore(borrow Edgeˉplan, 1u32, Local);
                     if ((Edgeˉmask & (1u32 << (Local - First))) != 0u32) != Edgeˉexpected { return false; }
                     Local = Local + 1u32;
                 }
                 First = First + 32u32;
             }
-            if Liveness.Endingˉmask(Plan, 1u32, 0u32, Stored) != 0u32 ||
-                Liveness.Endingˉmask(Plan, 0u32, 1u32, Stored) != 0u32 ||
-                Liveness.Endingˉmask(Plan, 0u32, 2048u32, Stored) != 0u32 { return false; }
+            if Liveness.Endingˉmask(borrow Plan, 1u32, 0u32, Stored) != 0u32 ||
+                Liveness.Endingˉmask(borrow Plan, 0u32, 1u32, Stored) != 0u32 ||
+                Liveness.Endingˉmask(borrow Plan, 0u32, 2048u32, Stored) != 0u32 { return false; }
             Storeˉcase = Storeˉcase + 1u32;
         }
-        if Liveness.Edgeˉendingˉmask(Edgeˉplan, 2u32, 1u32, 0u32) != 0u32 ||
-            Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 2u32, 0u32) != 0u32 ||
-            Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 1u32, 1u32) != 0u32 ||
-            Liveness.Edgeˉendingˉmask(Edgeˉplan, 0u32, 1u32, 2048u32) != 0u32 { return false; }
+        if Liveness.Edgeˉendingˉmask(borrow Edgeˉplan, 2u32, 1u32, 0u32) != 0u32 ||
+            Liveness.Edgeˉendingˉmask(borrow Edgeˉplan, 0u32, 2u32, 0u32) != 0u32 ||
+            Liveness.Edgeˉendingˉmask(borrow Edgeˉplan, 0u32, 1u32, 1u32) != 0u32 ||
+            Liveness.Edgeˉendingˉmask(borrow Edgeˉplan, 0u32, 1u32, 2048u32) != 0u32 { return false; }
         Case = Case + 1u32;
     }
     return true;
@@ -1339,7 +1448,7 @@ export fn Main() -> i32 {
     if Created != 0 { return Created; }
     if !Loopˉliveness() || !Recordˉbranchˉliveness() || !Wideˉbranchˉliveness() { return 14; }
     if !Longˉliveness() || !Endingˉmasks() { return 15; }
-    if !Borrowˉliveness() { return 16; }
+    if !Borrowˉliveness() || !Borrowˉqueueˉboundaries() { return 16; }
     if !Oversizedˉliveness() { return 17; }
     if !Recordˉinterferenceˉwords() { return 18; }
     return 42;

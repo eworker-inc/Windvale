@@ -79,6 +79,15 @@ row, charging both reads and the union before the scan. A join that adds no
 bits retains the existing row and pending state. Only a changed join constructs
 and copies a replacement; its materialization remains charged before allocation.
 The dependency bytes, first-observation order and 16 MiB work bound are unchanged.
+After typed execution proves empty operand stacks at control-flow edges, the
+complete verifier uses compact loan-state rows. They retain borrowed parameters,
+locals read before a definition in a block, and root availability; temporary
+operand positions are reset at those proved empty edges. First arrival replaces
+an unvisited placeholder, and later arrivals retain the existing checked union.
+The block queue packs four two-bit statuses per byte. Read-only transfers retain
+the same state without copying it; changed state still charges its materialized
+extent before allocation. The full-row loan entry remains the focused comparison
+oracle, and nonempty edge stacks are rejected before the compact path.
 The native function reader separates parameter/return metadata from local
 storage tables. Signature-table construction and direct-call checks validate
 every local shape and code-metadata bound but retain only parameter tables;
@@ -86,8 +95,13 @@ body compilation retains the complete local tables. Both paths share the same
 parsers and preserve admission limits and failure diagnostics.
 Functions without E1 loan dependencies use reverse control-flow reachability
 for resource-bearing locals, stopping across definitions. Each reached block
-is processed once per resource local. Functions with loan dependencies retain
-the bounded fixed-point analysis. Its non-publishing instruction passes retain
+is processed once per resource local. Reachability drains one 32-block word
+in scalar storage, including a bounded partial final word; predecessors in
+that word update scalar pending and live bits before one checked bitmap write.
+Functions with loan dependencies first compute ordinary reachability for every local,
+then refine that lower bound through the bounded dependency fixed point.
+Scalar flow is therefore solved before loan refinement, and no incomplete
+fixed point may authorize release. Its non-publishing instruction passes retain
 one working live boundary instead of a recursive chain of prior boundaries.
 Publishing uses leaves of at most sixteen instructions and balanced row joins;
 all materialized copies remain charged to the same work limit. Boundary
@@ -115,13 +129,18 @@ ownership rows, and an incomplete analysis refuses instead of authorizing
 release. Before constructing row tables, the planner refuses a result larger
 than the 4 MiB byte-value profile. The focused owner includes a 320-block chain
 with 1,024 locals and
-an 8 MiB work threshold, loop/back-edge lifetimes and borrowed stack views.
+an 8 MiB work threshold, borrowed chains with a live scalar across 31, 32, 33,
+63, 64, 65 and 320 blocks, loop/back-edge lifetimes and borrowed stack views.
 An oversized 17,000-instruction case must refuse within 4 MiB of work without
 publishing rows. Unsupported owner-bearing fixed arrays, indirect borrowed
 calls, old context-10 collections
 and hosted provider families remain outside this initial candidate. Terminal
 traps close the enclosing domain; normal and typed failure returns perform the
 selected frame cleanup. The decision owns the exact supported shapes and limits.
+Lifetime observation helpers and record-storage planning borrow the retained
+immutable plan. Native measurement and emission keep one local owner for that
+plan while reading its rows, rather than acquiring and releasing another share
+of every plan field on each observation.
 
 For a direct helper returning a borrowed Slice, the complete verifier retains
 the evaluated byte argument's named owner in the lifetime evidence. A byte

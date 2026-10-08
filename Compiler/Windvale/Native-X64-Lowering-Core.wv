@@ -2145,7 +2145,7 @@ fn Compilerˉnativeˉx64ˉsharedˉlocalsˉdrop(Input: bytes, Initial: bytes,
 }
 fn Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input: bytes,
     Function: Compilerˉnativeˉx64ˉfunction, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    Liveness: Sharedˉlocalˉliveness.Plan, Instruction: u32, Offset: u32, Opcode: u8,
+    Liveness: borrow Sharedˉlocalˉliveness.Plan, Instruction: u32, Offset: u32, Opcode: u8,
     Successor: u32) -> u32 {
     if Opcode == 81u8 { return 0u32; }
     var Cost: u32 = 0u32;
@@ -2157,9 +2157,9 @@ fn Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input: bytes,
         let First: u32 = Group * 32u32;
         var Mask: u32 = 0u32;
         if Successor == 4294967295u32 {
-            Mask = Sharedˉlocalˉliveness.Endingˉmask(Liveness, Instruction, First, Stored);
+            Mask = Sharedˉlocalˉliveness.Endingˉmask(borrow Liveness, Instruction, First, Stored);
         } else {
-            Mask = Sharedˉlocalˉliveness.Edgeˉendingˉmask(Liveness, Instruction, Successor, First);
+            Mask = Sharedˉlocalˉliveness.Edgeˉendingˉmask(borrow Liveness, Instruction, Successor, First);
         }
         if Mask != 0u32 {
             var Local: u32 = First + 32u32;
@@ -2181,7 +2181,7 @@ fn Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input: bytes,
 }
 fn Compilerˉnativeˉx64ˉsharedˉcleanup(Input: bytes, Initial: bytes,
     Function: Compilerˉnativeˉx64ˉfunction, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    Liveness: Sharedˉlocalˉliveness.Plan, Instruction: u32, Offset: u32, Opcode: u8,
+    Liveness: borrow Sharedˉlocalˉliveness.Plan, Instruction: u32, Offset: u32, Opcode: u8,
     Successor: u32, Request: u32, Helper: u32, Codeˉbase: u32, Invalid: u32) -> bytes {
     if Opcode == 81u8 { return Initial; }
     let Prefix: u32 = Bytesˉlength(Initial);
@@ -2195,9 +2195,9 @@ fn Compilerˉnativeˉx64ˉsharedˉcleanup(Input: bytes, Initial: bytes,
         let First: u32 = Group * 32u32;
         var Mask: u32 = 0u32;
         if Successor == 4294967295u32 {
-            Mask = Sharedˉlocalˉliveness.Endingˉmask(Liveness, Instruction, First, Stored);
+            Mask = Sharedˉlocalˉliveness.Endingˉmask(borrow Liveness, Instruction, First, Stored);
         } else {
-            Mask = Sharedˉlocalˉliveness.Edgeˉendingˉmask(Liveness, Instruction, Successor, First);
+            Mask = Sharedˉlocalˉliveness.Edgeˉendingˉmask(borrow Liveness, Instruction, Successor, First);
         }
         if Mask != 0u32 {
             var Local: u32 = First + 32u32;
@@ -4667,7 +4667,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Types,
                 Blocks,
                 Leaders,
-                Sharedˉliveness
+                borrow Sharedˉliveness
             );
         Storage = Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorageˉdecode(
             Storageˉbytes
@@ -4703,26 +4703,26 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         var Chunk: bytes = Compilerˉnativeˉx64ˉempty(Input);
         var Instruction: u32 = 0u32;
         while Instruction < Instructionˉcount {
-            let Relative: u32 = Sharedˉlocalˉliveness.Rowˉoffset(Sharedˉliveness, Instruction);
+            let Relative: u32 = Sharedˉlocalˉliveness.Rowˉoffset(borrow Sharedˉliveness, Instruction);
             let Row: u32 = Instruction * 16u32;
             if Relative == 4294967295u32 || Bytesˉreadˉu32ˉlittle(Instructionˉsizes, Row) != Relative {
                 return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 14u32);
             }
             let Measuredˉcleanupˉopcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Relative);
             var Cleanup: u32 = Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input, Function, Types,
-                Sharedˉliveness, Instruction, Section.Payloadˉoffset + Relative, Measuredˉcleanupˉopcode,
+                borrow Sharedˉliveness, Instruction, Section.Payloadˉoffset + Relative, Measuredˉcleanupˉopcode,
                 4294967295u32);
             if Measuredˉcleanupˉopcode == 49u8 {
-                let Branchˉnextˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(Sharedˉliveness, Relative + 5u32);
-                let Branchˉtargetˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(Sharedˉliveness,
+                let Branchˉnextˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Sharedˉliveness, Relative + 5u32);
+                let Branchˉtargetˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Sharedˉliveness,
                     Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset + Relative + 1u32));
                 if Branchˉnextˉrow == 4294967295u32 || Branchˉtargetˉrow == 4294967295u32 {
                     return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 14u32);
                 }
                 let Branchˉnextˉcleanup: u32 = Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input, Function, Types,
-                    Sharedˉliveness, Instruction, 0u32, 49u8, Branchˉnextˉrow);
+                    borrow Sharedˉliveness, Instruction, 0u32, 49u8, Branchˉnextˉrow);
                 let Branchˉtargetˉcleanup: u32 = Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input, Function, Types,
-                    Sharedˉliveness, Instruction, 0u32, 49u8, Branchˉtargetˉrow);
+                    borrow Sharedˉliveness, Instruction, 0u32, 49u8, Branchˉtargetˉrow);
                 if Cleanup > 67108864u32 || Branchˉnextˉcleanup > 67108859u32 || Branchˉtargetˉcleanup > 67108859u32 {
                     return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 16u32);
                 }
@@ -6386,19 +6386,19 @@ export fn Compilerˉnativeˉx64ˉemitˉconditionalˉbranch(
 
 fn Compilerˉnativeˉx64ˉemitˉsharedˉconditionalˉbranch(Input: bytes, Initial: bytes,
     Function: Compilerˉnativeˉx64ˉfunction, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
-    Liveness: Sharedˉlocalˉliveness.Plan, Offset: u32, Next: u32, Target: u32,
+    Liveness: borrow Sharedˉlocalˉliveness.Plan, Offset: u32, Next: u32, Target: u32,
     Conditionˉslot: u32, Trueˉtarget: u32, Falseˉtarget: u32,
     Request: u32, Helper: u32, Codeˉbase: u32, Invalid: u32) -> bytes {
-    let Instruction: u32 = Sharedˉlocalˉliveness.Rowˉindex(Liveness, Offset);
-    let Trueˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(Liveness, Next);
-    let Falseˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(Liveness, Target);
+    let Instruction: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Liveness, Offset);
+    let Trueˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Liveness, Next);
+    let Falseˉrow: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Liveness, Target);
     if Instruction == 4294967295u32 || Trueˉrow == 4294967295u32 || Falseˉrow == 4294967295u32 {
         return Compilerˉnativeˉx64ˉempty(Input);
     }
     let Trueˉcleanup: u32 = Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input, Function, Types,
-        Liveness, Instruction, 0u32, 49u8, Trueˉrow);
+        borrow Liveness, Instruction, 0u32, 49u8, Trueˉrow);
     let Falseˉcleanup: u32 = Compilerˉnativeˉx64ˉsharedˉcleanupˉbytes(Input, Function, Types,
-        Liveness, Instruction, 0u32, 49u8, Falseˉrow);
+        borrow Liveness, Instruction, 0u32, 49u8, Falseˉrow);
     if Trueˉcleanup > 67108859u32 || Falseˉcleanup > 67108859u32 {
         return Compilerˉnativeˉx64ˉempty(Input);
     }
@@ -6416,12 +6416,12 @@ fn Compilerˉnativeˉx64ˉemitˉsharedˉconditionalˉbranch(Input: bytes, Initia
         Initial, Conditionˉslot, Trueˉbranch, Falseˉbranch);
     if Trueˉcleanup != 0u32 {
         Output = Compilerˉnativeˉx64ˉsharedˉcleanup(Input, Output, Function, Types,
-            Liveness, Instruction, 0u32, 49u8, Trueˉrow, Request, Helper, Codeˉbase, Invalid);
+            borrow Liveness, Instruction, 0u32, 49u8, Trueˉrow, Request, Helper, Codeˉbase, Invalid);
         Output = Compilerˉnativeˉx64ˉemitˉjump(Output, Trueˉtarget);
     }
     if Falseˉcleanup != 0u32 {
         Output = Compilerˉnativeˉx64ˉsharedˉcleanup(Input, Output, Function, Types,
-            Liveness, Instruction, 0u32, 49u8, Falseˉrow, Request, Helper, Codeˉbase, Invalid);
+            borrow Liveness, Instruction, 0u32, 49u8, Falseˉrow, Request, Helper, Codeˉbase, Invalid);
         Output = Compilerˉnativeˉx64ˉemitˉjump(Output, Falseˉtarget);
     }
     return Output;
@@ -8029,6 +8029,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> bytes {
+    // Keep one local owner for the plan borrowed throughout emission.
+    let Sharedˉliveness: Sharedˉlocalˉliveness.Plan = Analysis.Sharedˉliveness;
     var Ownedˉentryˉbase: u32 = 0u32;
     if Ownedˉcollections.Minorˉisˉsupported(Bytesˉreadˉu16ˉlittle(Input, 6u32)) {
         Ownedˉentryˉbase = Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Callˉdirectory, Compilerˉnativeˉx64ˉownedˉmain(Input));
@@ -8191,10 +8193,10 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
             Byteˉboundsˉoffset));
         }
         if Function.Sharedˉvalues && (Opcode == 48u8 || Opcode == 49u8) {
-            let Instruction: u32 = Sharedˉlocalˉliveness.Rowˉindex(Analysis.Sharedˉliveness, Cursor);
+            let Instruction: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Sharedˉliveness, Cursor);
             if Instruction == 4294967295u32 { return Compilerˉnativeˉx64ˉempty(Input); }
             Result = Compilerˉnativeˉx64ˉsharedˉcleanup(Input, Result, Function, Types,
-                Analysis.Sharedˉliveness, Instruction, Section.Payloadˉoffset + Cursor, Opcode,
+                borrow Sharedˉliveness, Instruction, Section.Payloadˉoffset + Cursor, Opcode,
                 4294967295u32,
                 Compilerˉnativeˉx64ˉsharedˉrequestˉslot(Function, Analysis), Helperˉglobalˉoffset,
                 Codeˉbase + Emittedˉprefixˉbytes,
@@ -8832,7 +8834,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                                     Blockˉoffsets, Branchˉfalseˉwvb), Emittedˉprefixˉbytes);
                             if Function.Sharedˉvalues {
                                 Result = Compilerˉnativeˉx64ˉemitˉsharedˉconditionalˉbranch(Input, Result,
-                                    Function, Types, Analysis.Sharedˉliveness, Cursor, Branchˉnextˉwvb,
+                                    Function, Types, borrow Sharedˉliveness, Cursor, Branchˉnextˉwvb,
                                     Branchˉfalseˉwvb, Branchˉconditionˉslot, Branchˉtrueˉtarget, Branchˉfalseˉtarget,
                                     Compilerˉnativeˉx64ˉsharedˉrequestˉslot(Function, Analysis), Helperˉglobalˉoffset,
                                     Codeˉbase + Emittedˉprefixˉbytes,
@@ -8950,10 +8952,10 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                 return Compilerˉnativeˉx64ˉempty(Input);
             }
             if Opcode != 48u8 && Opcode != 49u8 && Opcode != 81u8 {
-                let Cleanupˉinstruction: u32 = Sharedˉlocalˉliveness.Rowˉindex(Analysis.Sharedˉliveness, Cursor);
+                let Cleanupˉinstruction: u32 = Sharedˉlocalˉliveness.Rowˉindex(borrow Sharedˉliveness, Cursor);
                 if Cleanupˉinstruction == 4294967295u32 { return Compilerˉnativeˉx64ˉempty(Input); }
                 Result = Compilerˉnativeˉx64ˉsharedˉcleanup(Input, Result, Function, Types,
-                    Analysis.Sharedˉliveness, Cleanupˉinstruction, Section.Payloadˉoffset + Cursor, Opcode,
+                    borrow Sharedˉliveness, Cleanupˉinstruction, Section.Payloadˉoffset + Cursor, Opcode,
                     4294967295u32,
                     Compilerˉnativeˉx64ˉsharedˉrequestˉslot(Function, Analysis), Helperˉglobalˉoffset,
                     Codeˉbase + Emittedˉprefixˉbytes,

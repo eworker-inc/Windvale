@@ -382,6 +382,39 @@ fn Readˉwide(Value: bytes, First: bool) -> u64 {
     return 0u64;
 }
 record Borrowˉpair { First: bytes; Second: bytes; }
+record Borrowˉplan {
+    Valid: bool; Source: bytes; Borrowˉroots: bytes; Rows: bytes;
+    Virtualˉdependencies: bytes; Locals: u32; Rowˉbytes: u32; Work: u32;
+}
+fn Observeˉplan(Value: borrow Borrowˉplan) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 128u32 {
+        let Alias: bytes = Value.Rows;
+        if !Value.Valid || Value.Locals != 2u32 || Value.Rowˉbytes != 8u32 || Value.Work != 7u32 ||
+            Bytes.At(borrow Value.Source, 0u64) != 6u8 ||
+            Bytes.Length(borrow Value.Borrowˉroots) != 8u64 ||
+            Bytes.At(borrow Value.Virtualˉdependencies, 0u64) != 6u8 ||
+            Bytes.Length(borrow Alias) != 8u64 || Bytes.At(borrow Alias, 0u64) != 42u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+fn Forwardˉplan(Value: borrow Borrowˉplan) -> bool { return Observeˉplan(borrow Value); }
+fn Observeˉpairˉfields(Value: borrow Borrowˉpair, Read: bool) -> bool {
+    if !Read { return false; }
+    let Alias: bytes = Value.First;
+    var Index: u32 = 0u32;
+    while Index < 128u32 {
+        if Bytes.Length(borrow Value.First) != 8u64 ||
+            Bytes.At(borrow Value.Second, 0u64) != 42u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return Bytes.Length(borrow Alias) == 8u64 && Bytes.At(borrow Alias, 0u64) == 42u8;
+}
+fn Observeˉpair(Value: borrow Borrowˉpair) -> bool {
+    return Observeˉpairˉfields(borrow Value, true) &&
+        !Observeˉpairˉfields(borrow Value, false);
+}
 fn Observeˉexpressions(First: borrow bytes, Second: borrow bytes) -> bool {
     return Bytes.Length(borrow First) == 8u64 && Bytes.At(borrow First, 0u64) == 42u8 &&
         Bytes.Length(borrow Second) == 1u64 && Bytes.At(borrow Second, 0u64) == 42u8;
@@ -430,7 +463,9 @@ fn Buildˉandˉcopy(Parent: borrow mut Memory.Memoryˉbudget, Input: borrow byte
                         Readˉwide(Frozen, true) != 8u64 ||
                         Readˉwide(Frozen, false) != 18446744073709551615u64 { return Copyˉfailed; }
                     let Pair = Borrowˉpair { First: Frozen, Second: Frozen };
-                    if !Observeˉexpressions(borrow Pair.First, borrow Bytesˉslice(Pair.Second, 0u32, 1u32)) {
+                    let Plan = Borrowˉplan(true, Input, Frozen, Frozen, Input, 2u32, 8u32, 7u32);
+                    if !Forwardˉplan(borrow Plan) || !Observeˉpair(borrow Pair) ||
+                        !Observeˉexpressions(borrow Pair.First, borrow Bytesˉslice(Pair.Second, 0u32, 1u32)) {
                         return Copyˉfailed;
                     }
                     let View = Forwardˉslice(Range(borrow Frozen));

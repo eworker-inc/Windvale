@@ -657,7 +657,7 @@ fn Buildˉstorage(
     Scratchˉvalues: u32,
     Scratchˉblockˉoffsets: bytes,
     Instructions: u32,
-    Shared: Sharedˉliveness.Plan
+    Shared: borrow Sharedˉliveness.Plan
 ) -> bytes {
     var Persistent: Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
         Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(Empty(Input), 4294967295u32);
@@ -780,7 +780,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Blocks: u32,
     Leaders: bytes,
-    Shared: Sharedˉliveness.Plan
+    Shared: borrow Sharedˉliveness.Plan
 ) -> bytes {
     let Locals: u32 = Bytesˉlength(Localˉtypes);
     if Locals >= 2048u32 || Blocks == 0u32 || Blocks > 1024u32 {
@@ -1704,7 +1704,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         Scratchˉvalues,
         Scratchˉblockˉoffsets,
         Instructions,
-        Shared
+        borrow Shared
     );
 }
 
