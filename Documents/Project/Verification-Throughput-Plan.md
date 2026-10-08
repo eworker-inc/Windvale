@@ -81,6 +81,8 @@ Prepared compiler, frontend and assembly products were reused where valid.
 The source and Plan behavior runs overlapped on Debian. These are individual
 development measurements, including their required identity checks, not stable
 thresholds, complete cold costs or measurements of the broad lowering owner.
+Both measurements used a Windows Hyper-V guest; local Debian ran in WSL2
+inside that guest. They are not bare-metal timings.
 The staging consumer uses 4,178,300 bytes of intermediate output, leaving 16,004
 bytes under the unchanged 4 MiB profile. Native self-compilation, independent
 reconstruction without the projection, promotion and installed delivery remain
@@ -116,22 +118,47 @@ workloads before this scalar-read change. Current Windows timings of 58.2 and
 50.0 seconds are roughly unchanged from 57.6 and 53.2 seconds; both ordinary
 ABI-22 objects remain byte-identical and pass the existing object checker on
 both hosts. Debian measured 104.7 and 79.8 seconds during overlapping Plan
-packaging, compared with earlier 61.6 and 56.4 seconds. Those slower results
-need an isolated repeat before attributing the difference. These fixed-input
-probes do not complete self-compilation or establish a stable regression bound.
+packaging. An isolated repeat passed in 61.0 and 50.6 seconds, with identical
+objects and successful admission and closure. The overlapping timings do not
+establish a compiler regression. These fixed-input probes do not complete
+self-compilation or establish a stable regression bound.
+
+A separate Debian 12 guest running directly under Hyper-V reports the same
+Ryzen processor and twelve virtual CPUs. Two repetitions per input on its
+native ext4 test disk produced identical objects and passed the retained object
+checker:
+
+| Preserved compiler input | Local WSL2, isolated | Direct Debian Hyper-V guest |
+| --- | ---: | ---: |
+| Staging relocations | 61.0 seconds | 55.1 and 59.3 seconds |
+| Staging symbols | 50.6 seconds | 48.3 and 46.9 seconds |
+
+Mean native execution time was about 6% lower on the direct Debian guest.
+Observed child CPU time was close to elapsed time there, so substantial
+compiler computation remains. Existing QA services stayed running; physical
+host load was not controlled. This small comparison does not measure complete
+builds, qualification or a stable performance threshold.
 
 The preceding
 [focused GitHub run](https://github.com/eworker-inc/Windvale/actions/runs/37798569299)
 passed: its native-owner step took 9 minutes 22 seconds, plus a separate
 17-minute 40-second preparation job. This does not measure the broad compiler
-owner. An existing read-only Debian diagnostic also found slower warm access
-through Windows-mounted paths: a 57.7 MB image took about 1.03-1.06 seconds to
-read there versus 0.075-0.104 seconds on native ext4; 100 metadata pairs took
-1.288 versus 0.053 seconds. That diagnostic does not attribute the whole build
-cost. The native test location was on C, the cache remains on E, and no storage
-configuration was changed. Native Linux storage backed by E, current-workload
-profiling and reuse of unchanged compiler components remain useful next
-checkpoints.
+owner. The
+[current compiler run](https://github.com/eworker-inc/Windvale/actions/runs/37813201657)
+passed preparation, shared-source and Plan behavior, then failed the broader
+`implicit-vector-single` helper lowering with `Outputˉlimit`. Diagnose that
+specific failure before retrying; the broader gate is not passing.
+
+Warm access to the same 54.9 MB compiler image took 0.739-0.785 seconds through
+the local Windows-mounted path, versus 0.005-0.012 seconds on the direct Debian
+guest's native ext4 test disk. One hundred metadata pairs took 0.792 seconds
+versus less than one millisecond. This measures warm filesystem access, not
+physical SSD throughput or the complete verification owner. Use the QA guest's
+native Linux storage for Debian build and verification preparation, retain
+Windows work here and keep local WSL2 for narrow diagnostics. Existing caches
+and QA services remain intact. Current-workload profiling and reuse of unchanged
+compiler components remain necessary; moving execution does not close the
+self-compilation gate.
 
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing
