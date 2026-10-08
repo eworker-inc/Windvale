@@ -1,0 +1,3309 @@
+{
+  "Format": "windvale-toolchain-retirement-1",
+  "LastReviewed": "2026-10-07",
+  "Scope": "Tracked and non-ignored working source/project/host-tool files in the declared repository areas; module imports, owner paths/names and project inclusion of matching source consumers.",
+  "Limits": {
+    "MaximumFileBytes": 8388608,
+    "MaximumTotalBytes": 268435456
+  },
+  "Limitations": [
+    "References are a conservative review inventory, not proof that a runtime path executes or that deletion is safe.",
+    "Git-restored historical source and binary embedded dependencies remain covered by explicit bootstrap gates.",
+    "An absent syntactic reference does not authorize deletion."
+  ],
+  "Entries": [
+    {
+      "Id": "MEM-001",
+      "Status": "Migrating",
+      "Name": "Checkpoint and loop compaction for general byte/text lifetimes",
+      "Owners": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Records.wv",
+          "Anchor": "Compilerˉnativeˉx64ˉemitˉrecordˉcheckpoint",
+          "Status": "Migrating",
+          "DeletionScope": "Replace general value lifetime handling; keep unrelated record lowering and justified bounded scratch."
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+          "Anchor": "Reclaimˉprefix",
+          "Status": "Migrating",
+          "DeletionScope": "Replace general value lifetime handling; keep unrelated record lowering and justified bounded scratch."
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv",
+          "Anchor": "Loadˉcheckpoint",
+          "Status": "Migrating",
+          "DeletionScope": "Replace general value lifetime handling; keep unrelated record lowering and justified bounded scratch."
+        }
+      ],
+      "RetirementScope": "Replace general value lifetime handling; keep unrelated record lowering and justified bounded scratch.",
+      "Replacements": [
+        "Compiler/Windvale/Native-X64-Lowering-Shared-Bytes.wv",
+        "Compiler/Windvale/Native-X64-Lowering-Shared-Aggregates.wv",
+        "Runtime/Native/X64-Shared-Storage.wva"
+      ],
+      "Gates": [
+        "Track surviving aliases through copies, aggregates, calls and all exits.",
+        "Prove final-share reuse and fixed-live-state bounds on Windows and Debian.",
+        "Replace supported old ABI consumers before removing their required lowering."
+      ],
+      "ReferenceModules": [
+        "Compilerˉnativeˉx64ˉloweringˉrecords",
+        "Compilerˉnativeˉx64ˉloweringˉrecordˉreclamation",
+        "Compilerˉnativeˉx64ˉloweringˉliveˉstorage"
+      ],
+      "References": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Call-Instructions.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉrecords"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉrecords",
+            "import Compilerˉnativeˉx64ˉloweringˉliveˉstorage"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉrecords"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉrecords"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉrecords"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Records.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Record-Reclamation.wv",
+            "path Compiler/Windvale/Native-X64-Lowering-Live-Storage.wv"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "MEM-002",
+      "Status": "Migrating",
+      "Name": "Historical native byte concatenation and text/number allocation",
+      "Owners": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv",
+          "Anchor": "Bytesˉconcatˉtemplate",
+          "Status": "Migrating",
+          "DeletionScope": "Replace the older allocation/reuse mechanism, preserving required byte, text and formatting operations."
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Text-Concat-Service.wv",
+          "Anchor": "Arenaˉfailureˉtarget",
+          "Status": "Migrating",
+          "DeletionScope": "Replace the older allocation/reuse mechanism, preserving required byte, text and formatting operations."
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Integer-Format-Services.wv",
+          "Anchor": "Arenaˉfailureˉtarget",
+          "Status": "Migrating",
+          "DeletionScope": "Replace the older allocation/reuse mechanism, preserving required byte, text and formatting operations."
+        }
+      ],
+      "RetirementScope": "Replace the older allocation/reuse mechanism, preserving required byte, text and formatting operations.",
+      "Replacements": [
+        "Runtime/Native/X64-Owned-Storage.wva",
+        "Runtime/Native/X64-Budgeted-Storage.wva",
+        "Runtime/Native/X64-Shared-Storage.wva",
+        "Libraries/Foundation/Bytes/Bytes.wv"
+      ],
+      "Gates": [
+        "Provide equivalent operations with explicit charges, refusal and release.",
+        "Migrate every supported provider/profile or retain its named bootstrap edge.",
+        "Keep canonical serialized bytes and valid scratch arenas."
+      ],
+      "ReferenceModules": [
+        "Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation",
+        "Runtimeˉnativeˉx64ˉtextˉconcatˉservice",
+        "Runtimeˉnativeˉx64ˉintegerˉformatˉservices"
+      ],
+      "References": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Runtimeˉnativeˉx64ˉintegerˉformatˉservices"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Integer-Format-Services-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Runtimeˉnativeˉx64ˉtextˉconcatˉservice"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Text-Concat-Service-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-X64-Text-Concat-Service.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv",
+            "path Runtime/Windvale/Native-X64-Text-Concat-Service.wv",
+            "path Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv",
+            "path Runtime/Windvale/Native-X64-Text-Concat-Service.wv",
+            "path Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "MEM-003",
+      "Status": "Planned",
+      "Name": "Compiler working tables and stacks represented as rebuilt bytes",
+      "Owners": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "Anchor": "Stackˉtypes: bytes",
+          "Status": "Planned",
+          "DeletionScope": "Migrate mutable analysis state and stacks to typed owned collections. WVB/WVO bytes and bounded serialized indexes remain appropriate."
+        },
+        {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "Anchor": "module Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories",
+          "Status": "Planned",
+          "DeletionScope": "Migrate mutable analysis state and stacks to typed owned collections. WVB/WVO bytes and bounded serialized indexes remain appropriate."
+        }
+      ],
+      "RetirementScope": "Migrate mutable analysis state and stacks to typed owned collections. WVB/WVO bytes and bounded serialized indexes remain appropriate.",
+      "Replacements": [
+        "Libraries/Foundation/Collections/Collections.wv",
+        "Specifications/Windvale-Native-Owned-Collections.md"
+      ],
+      "Gates": [
+        "Inventory actual working-state fields before each coherent conversion.",
+        "Complete required collection operations, borrows and cleanup.",
+        "Preserve deterministic output and measure compiler-scale allocation and time."
+      ],
+      "ReferenceModules": [
+        "Compilerˉnativeˉx64ˉlowering",
+        "Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+      ],
+      "References": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Publication.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Staging-Admission-Tool.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Staging-Content.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Tool.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Native-X64-Lowering.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Compiler-Build-Driver.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Package-Bundle-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Wvb-Publisher.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Compilerˉnativeˉx64ˉlowering"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Bootstrap-Native-Compiler-Projection.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Change-Classification.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Compiler/Windvale/Native-X64-Lowering-Core.wv",
+            "path Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+          ]
+        },
+        {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+          ]
+        },
+        {
+          "Path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "MEM-004",
+      "Status": "Migrating",
+      "Name": "Historical byte-construction library consumers",
+      "Owners": [
+        {
+          "Path": "Foundation/Byte-Construction.wv",
+          "Anchor": "module Foundationˉbyteˉconstruction",
+          "Status": "Migrating",
+          "DeletionScope": "Migrate supported uses to canonical reserved builders; retire the old leaf when no named construction or recovery case requires it."
+        }
+      ],
+      "RetirementScope": "Migrate supported uses to canonical reserved builders; retire the old leaf when no named construction or recovery case requires it.",
+      "Replacements": [
+        "Libraries/Foundation/Bytes/Bytes.wv",
+        "Specifications/Foundation-Bytes.md"
+      ],
+      "ConvertedScopes": [
+        {
+          "Path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "Scope": "Signature and machine-code-directory writers",
+          "Status": "CandidateConverted",
+          "Anchors": [
+            "var Signatureˉbuilder: Foundationˉbytes.Bytesˉbuilder",
+            "var Directoryˉbuilder: Foundationˉbytes.Bytesˉbuilder"
+          ],
+          "Evidence": "Documents/Decisions/0980-Bind-Native-Shared-Values-To-Budgets-And-Tool-Entries.md"
+        }
+      ],
+      "Gates": [
+        "Map every remaining imported operation to its supported successor.",
+        "Prove reservation, unchanged-on-refusal, freeze, aliases and release.",
+        "Reconstruct and qualify required bootstrap consumers before deleting the leaf."
+      ],
+      "ReferenceModules": [
+        "Foundationˉbyteˉconstruction"
+      ],
+      "References": [
+        {
+          "Path": "Assembler/Windvale/Wva-Assembler-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Effect-Inference-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Effects-Artifact-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Effects-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Generic-Resolution-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Graph-Artifact-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Graph-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Symbols-Artifact-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Symbols-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Wir-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Wvb-Temporary-Slots-Artifact.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Compiler/Windvale/Source-Wvb-Temporary-Slots.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Foundation/Byte-Construction.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Foundation/Sha256-Streaming.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Linker/Windvale/Console-Application-Construction-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Linker/Windvale/Console-Application-Packager.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Linker/Windvale/Console-Application-Segmented-Recipe.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Linker/Windvale/Uefi-Application-Construction-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Linker/Windvale/Wv-Linker-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Projects/Assembler/Windvale-Wva-Assembler.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Analysis-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Bindings-Closures-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Bindings-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Callable-Types-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Closure-Captures-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Effects-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Emission-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Foreign-Binding-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Graph-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Symbols-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Wir-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Compiler/Windvale-Source-Wvb-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Foundation-Byte-Construction-Demo.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Compiler.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Bindings-Demo.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Bindings-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Graph-Demo.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Graph-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Symbols-Demo.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Symbols-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Wir-Demo.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Wir-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Examples/Windvale-Source-Wvb-Demo.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Bootstrap.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Commit-Batch.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Commit-Publication.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Depth-Three-Root-Growth.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Depth-Three-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Depth-Two-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Durable-Commit-Record.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Durable-Page.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Durable-Superblock.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Root-Split-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Single-Leaf-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Single-Writer-Commit.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Storage-Publication.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Storage-Recovery.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Ancestor-Groups.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Ancestor-Pages.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Branch-Pages.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Commit.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Groups.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Leaf-Pages.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Parent-Groups.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Paths.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Root-Growth.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Transaction-Tree-Completion.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Tree-Path-Delete.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Database-Tree-Path-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Database-Bootstrap.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Database-Engine.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Database-Lifecycle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Local-Get.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Local-Open.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Local-Root-Put.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Logical-Tree-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Persistent-Transaction-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Root-Split-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Root-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Storage-Executor.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Transaction-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Tree-Delete.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Tree-Path.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Tree-Reader.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Durable-Tree-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Local-Database-Contracts.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Local-Database-Control.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Local-Database-Get.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Local-Database-Put.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Libraries/Windvale-Library-Local-Database-Session.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Console-Application-Packager.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Construction.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Linux.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Planner-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Platform-Bytes-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Segment-Manifest-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Segment-Request-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Segment-Set-Admission-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Segmentation.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Segmenter-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Source-Set-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Container-Windows.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Container-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Platform-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Identity-Request-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Identity-Request.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Metadata-Producer-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Native-Uefi-Application-Construction.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Uefi-Application-Packager.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Linker/Windvale-Wv-Linker.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Object-Model/Windvale-Wvo-Export-Renamer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Object-Model/Windvale-Wvo-Object.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Container-Metadata-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Container-Runtime-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Service-Bundle-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Request.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata-Request-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Hosted-Verifier-Runtime.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Service-Bundle-Materialization.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Runtime/Windvale-Native-Streaming-Sha256-Evidence-Tool.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Language-1.0-Source-Analysis-Validation-Self-Test.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Reader.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Root-Split-Depth-Two-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Depth-Four.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups-Pages-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Portable.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Callable-Type-Catalog.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Effect-Semantics.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Lowering-Pairing.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Analysis-Publication.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Analysis-Validation.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Collection-Analysis-Publication.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Materialization.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Wvlb-Carrier.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir-Validation.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Named-Argument-Semantics.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Construction.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Reserved-Byte-Validation.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Compiler-Build-Driver.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Console-Application-Publisher.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Console-Application-Verifier.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Native-Hosted-Verifier-Publisher-Promoter.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-Hosted-Verifier-Runtime-Header-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Database/Database-Superblock-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Database/Wvdb-Test-Fixtures.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Closure-Capture-Semantics-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Generic-Analysis-Validation-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Materialization-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Wvlb-Carrier-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Reserved-Byte-Construction-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Reserved-Byte-Validation-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Source-Analysis-Validation-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import Foundationˉbyteˉconstruction"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Build-Source-Compiler-Product.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Build-Source-Compiler-Product.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Language-1.0-Front-Door.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Foundation/Byte-Construction.wv"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "MEM-005",
+      "Status": "Planned",
+      "Name": "Interpreter budgets and execution frames represented as rebuilt bytes",
+      "Owners": [
+        {
+          "Path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv",
+          "Anchor": "fn Replaceˉentry",
+          "Status": "Planned",
+          "DeletionScope": "Replace native interpreter working state with typed owned state and reserved buffers; preserve bytes for guest serialized formats."
+        },
+        {
+          "Path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Browser-Main.wv",
+          "Anchor": "var Frame: bytes",
+          "Status": "Planned",
+          "DeletionScope": "Replace native interpreter working state with typed owned state and reserved buffers; preserve bytes for guest serialized formats."
+        }
+      ],
+      "RetirementScope": "Replace native interpreter working state with typed owned state and reserved buffers; preserve bytes for guest serialized formats.",
+      "Replacements": [
+        "Libraries/Foundation/Collections/Collections.wv",
+        "Libraries/Foundation/Memory/Memory.wv"
+      ],
+      "Gates": [
+        "Prove native working-storage reclamation separately from guest accounting.",
+        "Close failure, return and terminal teardown paths.",
+        "Rebuild and qualify each supported interpreter generation before retiring its old state representation."
+      ],
+      "ReferenceModules": [
+        "WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore",
+        "WebAssemblyˉwvbˉscalarˉinterpreter"
+      ],
+      "References": [
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Budgeted-Storage-Accounting-Oracle.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tests/Windvale-Wvb-Scalar-Interpreter.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Browser-Main.wv"
+          ]
+        },
+        {
+          "Path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "Kind": "Project",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/Native-X64/Budgeted-Storage-Accounting-Oracle.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore"
+          ]
+        },
+        {
+          "Path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
+          ]
+        },
+        {
+          "Path": "Tools/Windvale.Run/Wvb-Runner-Tool.wv",
+          "Kind": "Source",
+          "Status": "NeedsReview",
+          "References": [
+            "import WebAssemblyˉwvbˉscalarˉinterpreter"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "BOOT-001",
+      "Status": "RequiredBootstrap",
+      "Name": "Temporary native compiler serializer projection and capacity bridge",
+      "Owners": [
+        {
+          "Path": "Tools/Native/Bootstrap-Native-Compiler-Projection.mjs",
+          "Anchor": "Readˉpreparedˉnativeˉprojection",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Retire the temporary historical serializer/layout construction edge after independent current compiler reconstruction works."
+        },
+        {
+          "Path": "Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs",
+          "Anchor": "Packageˉwithˉstagingˉcapacity",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Retire the temporary historical serializer/layout construction edge after independent current compiler reconstruction works."
+        }
+      ],
+      "RetirementScope": "Retire the temporary historical serializer/layout construction edge after independent current compiler reconstruction works.",
+      "Replacements": [
+        "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+        "Compiler/Windvale/Native-X64-Lowering-Publication-Session.wv"
+      ],
+      "Gates": [
+        "Complete exact native self-lowering and byte comparison on Windows and Debian.",
+        "Demonstrate independent reconstruction without this projection/capacity bridge.",
+        "Promote the replacement construction inputs and preserve immutable recovery provenance."
+      ],
+      "ReferenceModules": [],
+      "References": [
+        {
+          "Path": "Tools/Native/Build-Shared-Compiler-Host.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Bootstrap-Native-Compiler-Projection.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Bootstrap-Native-Compiler-Projection.mjs",
+            "path Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Changed.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Bootstrap-Native-Compiler-Projection.mjs",
+            "path Tools/Native/Native-Staging-Capacity-Bridge-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Bootstrap-Native-Compiler-Projection.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "BOOT-002",
+      "Status": "RequiredBootstrap",
+      "Name": "Predecessor and intermediate split compiler construction",
+      "Owners": [
+        {
+          "Path": "Tools/Native/Source-Edition-Predecessor-Core.mjs",
+          "Anchor": "Constructˉsourceˉeditionˉpredecessor",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Remove superseded construction edges after the selected successor builds full current source independently; keep current cache orchestration if still useful."
+        },
+        {
+          "Path": "Tools/Native/Direct-Condition-Analyzer-Intermediate-Core.mjs",
+          "Anchor": "direct-condition",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Remove superseded construction edges after the selected successor builds full current source independently; keep current cache orchestration if still useful."
+        }
+      ],
+      "RetirementScope": "Remove superseded construction edges after the selected successor builds full current source independently; keep current cache orchestration if still useful.",
+      "Replacements": [
+        "Compiler/Windvale/Source-Analysis-Core.wv",
+        "Compiler/Windvale/Source-Wir-Core.wv"
+      ],
+      "Gates": [
+        "Build the full current analyzer/emitter/admission set without the predecessor or intermediate.",
+        "Qualify the replacement generation on both hosts.",
+        "Audit normal commands, CI and clean installation before removing required inputs."
+      ],
+      "ReferenceModules": [],
+      "References": [
+        {
+          "Path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Source-Edition-Predecessor-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Build-Wvdb-Query-Package.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Source-Edition-Predecessor-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Source-Edition-Predecessor-Core.mjs",
+            "path Tools/Native/Direct-Condition-Analyzer-Intermediate-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Source-Edition-Predecessor-Core.mjs",
+            "path Tools/Native/Direct-Condition-Analyzer-Intermediate-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Source-Edition-Predecessor-Core.mjs"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Source-Edition-Predecessor-Core.mjs",
+            "path Tools/Native/Direct-Condition-Analyzer-Intermediate-Core.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "BOOT-003",
+      "Status": "RequiredBootstrap",
+      "Name": "Pinned inspection and execution front doors",
+      "Owners": [
+        {
+          "Path": "Tools/Native/Verify-Wvb.cmd",
+          "Anchor": "Verify",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs."
+        },
+        {
+          "Path": "Tools/Native/Verify-Wvb.sh",
+          "Anchor": "Verify",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs."
+        },
+        {
+          "Path": "Tools/Native/Inspect-Wvb.cmd",
+          "Anchor": "Inspect",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs."
+        },
+        {
+          "Path": "Tools/Native/Inspect-Wvb.sh",
+          "Anchor": "Inspect",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs."
+        },
+        {
+          "Path": "Tools/Native/Run-Wvb.cmd",
+          "Anchor": "Run",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs."
+        },
+        {
+          "Path": "Tools/Native/Run-Wvb.sh",
+          "Anchor": "Run",
+          "Status": "RequiredBootstrap",
+          "DeletionScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs."
+        }
+      ],
+      "RetirementScope": "Migrate ordinary dispatch to the selected supported generation, then retire redundant defaults and superseded products. Preserve named recovery inputs.",
+      "Replacements": [
+        "Tools/Native/Verify-Wvb.mjs",
+        "Documents/Runbooks/Native-Source-To-Wvb.md"
+      ],
+      "Gates": [
+        "Supply current inspection and interpreter delivery for every promised target/profile.",
+        "Migrate supported command and installation callers.",
+        "Preserve exact bootstrap/recovery evidence and retire active old routes only after qualification."
+      ],
+      "ReferenceModules": [],
+      "References": [
+        {
+          "Path": "Tools/Native/Construct-Wvb-To-Wvo-Reconstruction.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Construct-Wvb-To-Wvo-Reconstruction.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Lower-Os-Kernel-Wvb.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Lower-Os-Kernel-Wvb.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Compiler-Reconstruction.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Compiler-Reconstruction.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd",
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Language-1.0-Front-Door.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.sh",
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Application-Launch.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Application-Launch.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Kernel-Target.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Kernel-Target.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Provider-Launch-Transaction.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Provider-Launch-Transaction.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Resource-Domain.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Resource-Domain.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Services.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Os-Services.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Seed.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd",
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Seed.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.sh",
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Workspace-Project2.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Workspace-Project2.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvb-To-Wvo-Reconstruction.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvb-To-Wvo-Reconstruction.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Run-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvb-Unsafe-Rejections.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd",
+            "path Tools/Native/Inspect-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvb-Unsafe-Rejections.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.sh",
+            "path Tools/Native/Inspect-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvdb-Query-Native-Capability.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Inspect-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvdb-Query-Native-Capability.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Inspect-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvdb-Query-Package.cmd",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Inspect-Wvb.cmd"
+          ]
+        },
+        {
+          "Path": "Tools/Native/Test-Wvdb-Query-Package.sh",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Inspect-Wvb.sh"
+          ]
+        },
+        {
+          "Path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "Kind": "HostTool",
+          "Status": "NeedsReview",
+          "References": [
+            "path Tools/Native/Verify-Wvb.cmd",
+            "path Tools/Native/Verify-Wvb.sh"
+          ]
+        }
+      ]
+    }
+  ],
+  "BaseRevision": "8b8d89c40b074ef036d9d878bad6ec0437b2af0b"
+}

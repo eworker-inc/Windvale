@@ -10,6 +10,7 @@ $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.p
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'informative retirement registry'; Paths = @('Documents/Project/Toolchain-Retirement.json', 'Tools/Documentation/Inspect-Toolchain-Retirement.mjs'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'Language 1.0 paper source'; Paths = @('Documents/Project/Language-1.0-Paper-Corpus/11-Local-AI-Accelerator-Inference/Source/Inference-Application.wv'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
     @{ Name = 'Language 1.0 localization paper source'; Paths = @('Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Source/Test-Unicode-Admission.wv'); Scope = 'development'; Editor = $false; Areas = @('compiler') },
@@ -5035,6 +5036,20 @@ $NativeCases = @(
         Suites = @()
         Gaps = @()
         VerifyPlan = $true
+    },
+    @{
+        Name = 'informative toolchain retirement references'
+        Paths = @('Documents/Project/Toolchain-Retirement.json', 'Tools/Documentation/Inspect-Toolchain-Retirement.mjs')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'unrecognized neighboring retirement rules'
+        Paths = @('Documents/Project/Toolchain-Retirement-Runtime-Rules.json')
+        Suites = @()
+        Gaps = @('unmapped:Documents/Project/Toolchain-Retirement-Runtime-Rules.json')
+        VerifyPlan = $false
     },
     @{
         Name = 'native changed-file specification'

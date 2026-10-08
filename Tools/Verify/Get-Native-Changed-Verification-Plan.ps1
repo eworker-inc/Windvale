@@ -2178,6 +2178,7 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tools/Documentation/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Documents/Decisions/Decision-Catalog.json',
+            'Documents/Project/Toolchain-Retirement.json',
             'Documents/Decisions/Legacy-Missing-Status.txt',
             'Specifications/AGENTS.md',
             'Specifications/Legacy-Missing-Status.txt',

@@ -90,6 +90,12 @@ command/shell and Node tooling are explicit development dependencies. Replacing
 all host orchestration before useful Windvale libraries exist is not a delivery
 requirement. Do not treat browser JavaScript as source-language semantics.
 
+[The retirement checklist](Toolchain-Retirement.md) gives old memory mechanisms
+and required bootstrap paths stable markers, source anchors, consumer references,
+converted scopes and explicit removal gates. Update it during each migration;
+retire an old implementation only after its supported successor works and its
+remaining construction dependencies are resolved.
+
 ## Ordered delivery phases
 
 ### 1. Align scope and finish the finite dependency audit

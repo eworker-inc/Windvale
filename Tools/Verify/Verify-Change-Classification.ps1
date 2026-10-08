@@ -132,6 +132,26 @@ $Cases = @(
         Editor = $false
     },
     @{
+        Name = 'informative toolchain retirement registry'
+        Paths = @('Documents/Project/Toolchain-Retirement.json', 'Tools/Documentation/Inspect-Toolchain-Retirement.mjs')
+        Scope = 'lightweight'
+        Editor = $false
+        Documentation = $true
+    },
+    @{
+        Name = 'retirement registry with source semantics'
+        Paths = @('Documents/Project/Toolchain-Retirement.json', 'Compiler/Windvale/Source-Lexer-Core.wv')
+        Scope = 'development'
+        Editor = $true
+        Documentation = $true
+    },
+    @{
+        Name = 'unrecognized neighboring retirement data'
+        Paths = @('Documents/Project/Toolchain-Retirement-Runtime-Rules.json')
+        Scope = 'development'
+        Editor = $false
+    },
+    @{
         Name = 'generated documentation catalogs'
         Paths = @(
             'Documents/Decisions/Decision-Catalog.json',

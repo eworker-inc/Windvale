@@ -65,6 +65,7 @@ function Test-DocumentationRelevantPath {
         $Path.StartsWith('Tools/Documentation/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Documents/Decisions/Decision-Catalog.json',
+            'Documents/Project/Toolchain-Retirement.json',
             'Documents/Decisions/Legacy-Id-Collisions.txt',
             'Documents/Decisions/Legacy-Missing-Status.txt',
             'Specifications/Legacy-Missing-Status.txt',
@@ -199,6 +200,7 @@ function Test-LightweightPath {
             'Documents/Decisions/Legacy-Missing-Status.txt',
             'Specifications/Legacy-Status-Classifications.json',
             'Tools/Verify/Classify-Verification-Changes.ps1',
+            'Documents/Project/Toolchain-Retirement.json',
             'Tools/Verify/Verify-Changed.ps1',
             'Tools/Verify/Verify-Change-Classification.ps1',
             'Tools/Verify/Verify-Documentation.ps1',
