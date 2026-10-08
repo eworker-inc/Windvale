@@ -422,7 +422,7 @@ jobs:
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
           NATIVE_SHARED_COMPILER_SELECTION: ${{ runner.temp }}/windvale-native-development-cache/Native-Shared-Compiler-Host-Selection.windows-x64.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT -NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION -NativeDevelopmentShard ${{ matrix.shard }}
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -AllowLongRun -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT -NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION -NativeDevelopmentShard ${{ matrix.shard }}
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}
@@ -499,7 +499,7 @@ jobs:
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
           NATIVE_SHARED_COMPILER_SELECTION: ${{ runner.temp }}/windvale-native-development-cache/Native-Shared-Compiler-Host-Selection.linux-x64.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT -NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION -NativeDevelopmentShard ${{ matrix.shard }}
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -UsePreparedProducts -AllowLongRun -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT -NativeSharedCompilerHostSelectionPath $env:NATIVE_SHARED_COMPILER_SELECTION -NativeDevelopmentShard ${{ matrix.shard }}
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}

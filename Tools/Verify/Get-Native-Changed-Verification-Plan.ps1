@@ -194,6 +194,15 @@ if (!$LibraryDevelopmentTargetNames.SetEquals([string[]]@(
 }
 $LibraryDevelopmentContractTargets = @{
     'Tools/Native/Library-Foundation-Value-Cases.mjs' = 'foundation-values'
+    # Verifier edits need canonical Foundation admission, not compilation of
+    # parked applications through their independently retained toolchains.
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv' = 'foundation-values'
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv' = 'foundation-values'
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv' = 'foundation-values'
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv' = 'foundation-values'
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv' = 'foundation-values'
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv' = 'foundation-values'
+    'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv' = 'foundation-values'
     'Specifications/Read-Only-Directory-Capability.md' = 'read-only-wvdb'
     'Specifications/Random-Access-Storage-Capability.md' = 'page-storage'
     'Specifications/Windvale-Database-Durable-Commit.md' = 'durability'

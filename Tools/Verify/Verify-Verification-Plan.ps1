@@ -2184,6 +2184,8 @@ $NativeCases = @(
             'libraries'
         )
         Gaps = @()
+        LibraryDevelopment = $true
+        LibraryTarget = 'foundation-values'
         VerifyPlan = $false
     },
     @{
@@ -6995,6 +6997,45 @@ if ($LibraryWrapperPlan.UseFoundationLibraryDevelopment -or
     $LibraryWrapperPlan.LibraryDevelopmentTarget -ne 'all') {
     throw 'An unrelated library wrapper edit became Foundation-only verification.'
 }
+$VerifierLibraryPaths = [string[]]@(
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
+    'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
+)
+foreach ($VerifierPath in $VerifierLibraryPaths) {
+    $VerifierLibraryPlan = & $NativePlanner -ChangedPath $VerifierPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$VerifierLibraryPlan.UseFoundationLibraryDevelopment -or
+        !$VerifierLibraryPlan.UseLibraryDevelopment -or
+        $VerifierLibraryPlan.LibraryDevelopmentTarget -cne 'foundation-values' -or
+        $VerifierLibraryPlan.Suites -cnotcontains 'language-1-memory-budget-split-execution') {
+        throw "Verifier edit lost focused Foundation admission or memory coverage: '$VerifierPath'."
+    }
+}
+$VerifierBatchPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if (!$VerifierBatchPlan.UseFoundationLibraryDevelopment -or
+    $VerifierBatchPlan.LibraryDevelopmentTarget -cne 'foundation-values') {
+    throw 'The instruction-directory verifier batch selected parked library construction.'
+}
+$MixedVerifierLibraryPlan = & $NativePlanner -ChangedPath @(
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Libraries/Database/Wvdb-Reader.wv'
+) -PassThru -Quiet -InitializationCache $NativePlannerInitializationCache
+if ($MixedVerifierLibraryPlan.UseFoundationLibraryDevelopment -or
+    $MixedVerifierLibraryPlan.LibraryDevelopmentTarget -cne 'all') {
+    throw 'Verifier routing suppressed an explicitly changed database library.'
+}
 foreach ($Marker in @('--shared-storage', 'if ($NativePlan.UseFoundationLibraryDevelopment) {',
     '--prepare-only --deadline-ms $FoundationPreparationDeadline',
     '--prepare --deadline-ms $FoundationVerifierDeadline')) {
@@ -7675,8 +7716,8 @@ $RequiredWorkflowFragments = @(
     'key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-behavior',
     'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
     'git diff --check HEAD^ HEAD --',
-    '-AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT',
-    '-AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT',
+    '-AllowIncompleteInfrastructure -UsePreparedProducts -AllowLongRun -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT',
+    '-AllowIncompleteInfrastructure -UsePreparedProducts -AllowLongRun -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT',
     'Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS',
     '${{ runner.temp }}/windvale-development-timing-analysis.json',
     'uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1',

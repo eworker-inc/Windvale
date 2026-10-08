@@ -233,9 +233,9 @@ $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
     $Block = Get-JobBlock $Job
     $ExpectedTimingInvocation = if ($Job -eq 'windows-development') {
-        '-AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+        '-AllowIncompleteInfrastructure -UsePreparedProducts -AllowLongRun -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
     } else {
-        '-AllowIncompleteInfrastructure -UsePreparedProducts -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+        '-AllowIncompleteInfrastructure -UsePreparedProducts -AllowLongRun -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
     }
     Assert-Workflow ($Block.Contains('    needs: [classify-changes, native-development-preparation]')) `
         "Development job '$Job' does not depend on classification."
