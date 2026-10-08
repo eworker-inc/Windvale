@@ -1831,8 +1831,46 @@ async function Sourceˉplanˉproduct(Context) {
         'shared-plan-source', 16_777_216, 45) };
 }
 
+export function Buildˉsharedˉplanˉworkloads(Configuration) {
+    const Symbols = new Set(['symbol export function TestMain in .text']);
+    const Sections = [];
+    for (const Iterations of [0, 1, 1000]) {
+        // Configuration offset 56 names the combined entry. Preserve each
+        // load_address TestMain reference when naming the workload functions.
+        const Source = Buildˉsharedˉplanˉcompanion(Configuration, Iterations).Source
+            .replace('symbol export function TestMain in .text',
+                'symbol export function Plan_workload_' + Iterations + ' in .text')
+            .replace('define TestMain\n', 'define Plan_workload_' + Iterations + '\n')
+            .replaceAll('Snapshot_save', 'Plan_snapshot_save_' + Iterations)
+            .replaceAll('Snapshot_compare', 'Plan_snapshot_compare_' + Iterations);
+        const Body = [];
+        for (const Line of Source.split('\n')) {
+            if (Line === 'windvale-assembly 1' || Line === 'section code .text align 16' ||
+                Line === 'end section') continue;
+            if (Line.startsWith('symbol ')) {
+                Symbols.add(Line.replace('symbol export function Plan_workload_',
+                    'symbol local function Plan_workload_'));
+            } else Body.push(Line);
+        }
+        Sections.push(Body.join('\n'));
+    }
+    // Each function initializes and closes its own domain. Only packaging and
+    // the outer process are shared; no workload inherits another's live state.
+    const Entry = ['define TestMain',
+        'push rbx', 'move rbx rdx', 'subtract_i32 rsp 32'];
+    for (const Iterations of [0, 1, 1000]) Entry.push('move rdx rbx',
+        'call Plan_workload_' + Iterations, 'compare_i32 eax 42', 'branch not_equal Finished');
+    Entry.push('label Finished', 'add_i32 rsp 32', 'pop rbx', 'return', 'end define');
+    const Declarations = [...Symbols].sort((First, Second) => {
+        const A = First.split(' ')[3], B = Second.split(' ')[3];
+        return A < B ? -1 : A > B ? 1 : 0;
+    });
+    return { Source: ['windvale-assembly 1', ...Declarations, 'section code .text align 16',
+        ...Entry, ...Sections, 'end section', ''].join('\n'), Entry: 'TestMain' };
+}
+
 export async function Runˉsharedˉplanˉconsumer(Context) {
-    const { Work, Target, Runˉprocess, Deadline,
+    const { Work, Runˉprocess, Deadline,
         Compilerˉcheckpoint: Compiler, Preparedˉsharedˉhost: Prepared } = Context;
     Sourceˉproductˉcontext(Context);
     Sourceˉrequire(typeof Prepared?.Requireˉunchanged === 'function',
@@ -1840,36 +1878,37 @@ export async function Runˉsharedˉplanˉconsumer(Context) {
     await Prepared.Requireˉunchanged(); await Compiler.Requireˉunchanged();
     process.stdout.write('native shared plan step=source status=Started construction=segmented\n');
     const { Snapshots, Wvb, Bytecode } = await Sourceˉplanˉproduct(Context);
+    Sourceˉrequire(Date.now() < Deadline, 'Plan consumer owner deadline reached.');
+    await Compiler.Requireˉunchanged(); await Prepared.Requireˉunchanged();
+    const Product = await Buildˉsharedˉnativeˉconsumer({ Work, Deadline,
+        Input: { Path: Wvb, Sha256: Sourceˉhash(Bytecode) }, Preparedˉsharedˉhost: Prepared,
+        Companion: Buildˉsharedˉplanˉworkloads });
+    Sourceˉrequire(Date.now() < Deadline, 'Plan consumer owner deadline reached before execution.');
+    const Started = performance.now();
+    const Result = await Runˉprocess(Product.Path, [], Math.min(360_000, Deadline - Date.now()),
+        'shared-plan-execute-workloads');
+    const Metrics = [...Result.Output.matchAll(/^plan-physical-high-water=([0-9a-f]{8})\n/gmu)];
+    Sourceˉrequire(Result.Code === 42 && !Result.Exceeded && !Result.Timedˉout && Metrics.length === 3 &&
+        Metrics.map(Match => Match[0]).join('') === Result.Output,
+    'Actual plan consumer workloads, live cleanup or bounded physical metrics differ.');
     const Peaks = new Map();
-    let Stagedˉmodule;
-    for (const Iterations of [0, 1, 1000]) {
-        Sourceˉrequire(Date.now() < Deadline, 'Plan consumer owner deadline reached.');
-        await Compiler.Requireˉunchanged(); await Prepared.Requireˉunchanged();
-        const Product = await Buildˉsharedˉnativeˉconsumer({ Work, Deadline,
-            Input: { Path: Wvb, Sha256: Sourceˉhash(Bytecode) }, Preparedˉsharedˉhost: Prepared,
-            Companion: Configuration => Buildˉsharedˉplanˉcompanion(Configuration, Iterations), Stagedˉmodule });
-        Stagedˉmodule = Product.Stagedˉmodule;
-        Sourceˉrequire(Date.now() < Deadline, 'Plan consumer owner deadline reached before execution.');
-        const Started = performance.now();
-        const Result = await Runˉprocess(Product.Path, [], Math.min(120_000, Deadline - Date.now()),
-            'shared-plan-execute-' + Iterations);
-        const Match = /^plan-physical-high-water=([0-9a-f]{8})\n$/u.exec(Result.Output);
-        const Peak = Match === null ? 0 : Number.parseInt(Match[1], 16);
-        Sourceˉrequire(Result.Code === 42 && !Result.Exceeded && !Result.Timedˉout && Match !== null &&
-            Peak >= PLAN_APPLICATION_MAXIMUM && Peak <= PLAN_ARENA_BYTES,
-        'Actual plan consumer result, live cleanup or bounded physical metric differs.');
+    for (const [Index, Iterations] of [0, 1, 1000].entries()) {
+        const Peak = Number.parseInt(Metrics[Index][1], 16);
+        Sourceˉrequire(Peak >= PLAN_APPLICATION_MAXIMUM && Peak <= PLAN_ARENA_BYTES,
+            'Plan consumer physical metric exceeds its admitted bound.');
         Peaks.set(Iterations, Peak);
         process.stdout.write(`native shared plan iterations=${Iterations} status=Passed physical-high-water=${Peak} ` +
             `runtime-scratch-bound=${PLAN_RUNTIME_MAXIMUM} runtime-scratch-live=0 physical-live-before-close=0 ` +
             (Iterations === 0 ? 'staging-assertions=11 ' :
                 'serializer-reservation-bytes=192 reservation-refusals=95,96 late-refusal=Unsupportedˉmodule ') +
-            `elapsed-ms=${Math.round(performance.now() - Started)}\n`);
+            'execution=shared-process fresh-domain=true\n');
     }
-    Sourceˉrequire(Peaks.get(1) === Peaks.get(1000), 'Fixed-live PlanBuild high-water changed with1000iterations.');
+    Sourceˉrequire(Peaks.get(1) === Peaks.get(1000), 'Fixed-live PlanBuild high-water changed with 1000 iterations.');
     await Sourceˉsnapshotsˉunchanged(Snapshots, 4_194_304);
     await Compiler.Requireˉunchanged(); await Prepared.Requireˉunchanged();
-    process.stdout.write('native shared plan status=Passed cases=3 executions=3 iterations=0,1,1000 ' +
+    process.stdout.write('native shared plan status=Passed cases=3 executions=1 iterations=0,1,1000 ' +
         'source-consumer=actual-plan-build serializer-entry-bytes=76 physical-high-water=' + Peaks.get(1000) +
-        ' final-physical-charge=0 final-budget-charge=0 construction=segmented qualification=false\n');
-    return { Cases: 3, Executions: 3, Iterations: [0, 1, 1000], Physicalˉhighˉwater: Peaks.get(1000) };
+        ' final-physical-charge=0 final-budget-charge=0 construction=segmented ' +
+        `elapsed-ms=${Math.round(performance.now() - Started)} qualification=false\n`);
+    return { Cases: 3, Executions: 1, Iterations: [0, 1, 1000], Physicalˉhighˉwater: Peaks.get(1000) };
 }

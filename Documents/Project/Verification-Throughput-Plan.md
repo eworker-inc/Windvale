@@ -58,6 +58,18 @@ excludes unchanged assembly-only runtime fixtures while retaining generated-code
 and consumer checks. Its complete duration still needs measurement; the default
 full selection retains runtime coverage.
 
+The Plan consumer now packages its 0-, 1- and 1,000-iteration workloads once
+and runs all three in one process. Every workload initializes and closes its
+own memory domain. The eleven staging assertions, reservation refusals,
+cleanup checks and equal high-water requirement for 1 and 1,000 iterations
+remain. With current compiler hosts and frontend products already prepared,
+the focused Plan owner passed in 8 minutes 28 seconds on Windows and 12 minutes
+28 seconds on real Debian. The workloads themselves took 4.2 and 8.2 seconds;
+construction, packaging and admission still dominate. Both hosts measured
+608 bytes of physical high-water for 1 and 1,000 iterations and zero final
+physical and budget charges. This result does not remeasure the broad owner's
+80-minute estimate or complete the ordinary feedback-time goal.
+
 Shared-source preparation now retains its ten checked native objects under exact
 input, compiler, host and validation identities. Prepared behavior reuses those
 objects and repeats WVB admission and native object validation; a missing or
