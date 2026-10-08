@@ -215,6 +215,50 @@ function Buildˉcases() {
         Request(1, { Capacity: 1, Alignment: 1, Budget: 32 }); Call(6);
         Request(5); Call(); Check('r12', 56, 0); Check('r14', 0, 4096);
     });
+    Case('live-interval-order', 4096, ({ Emit, Set, Check, Request, Call, Reserve }) => {
+        Emit('move_u32 eax 64', 'store_memory_u32 rsp none 1 13000 eax', 'label Fill_intervals');
+        Reserve(1);
+        Emit('load_memory_u32 eax rsp none 1 13000', 'subtract_i32 eax 1',
+            'store_memory_u32 rsp none 1 13000 eax', 'branch not_equal Fill_intervals');
+        // Slot order is independent of physical address order. Equal capacities
+        // let these private valid-state fixtures isolate the interval proof.
+        Request(6); Call();
+        for (const Address of [Index => (Index * 17 + 31) % 64, Index => 63 - Index]) {
+            for (let Index = 0; Index < 64; Index++) Set('r12', 68 + Index * 32, Address(Index) * 32 + 1);
+            Request(6); Call();
+        }
+        Set('r12', 2084, 2017); Request(6); Call(5); Set('r12', 2084, 1);
+        Request(5); Call(); Check('r12', 52, 0); Check('r12', 56, 0); Check('r14', 0, 4096);
+    });
+    Case('interleaved-free-intervals', 3088, ({ Set, Check, Request, Call }) => {
+        // The maximum 65 free nodes alternate with 64 live intervals; all
+        // touching boundaries are valid and their total covers the whole arena.
+        for (let Index = 0; Index < 64; Index++) {
+            const Slot = 64 + Index * 32, Header = 16 + Index * 48;
+            for (const [Offset, Value] of [[0, 1], [4, Header + 1], [8, 1], [12, 1], [16, 32], [20, 16]])
+                Set('r12', Slot + Offset, Value);
+            for (const [Offset, Value] of [[0, 32], [4, 1], [8, 0], [12, 1279350359]])
+                Set('r14', Header + Offset, Value);
+        }
+        for (let Index = 0; Index <= 64; Index++) {
+            for (const [Offset, Value] of [[0, 16], [4, 0], [8, Index < 64 ? (Index + 1) * 48 + 1 : 0], [12, 1380341335]])
+                Set('r14', Index * 48 + Offset, Value);
+        }
+        Set('r12', 24, 2048); Set('r12', 52, 64); Set('r12', 56, 2048);
+        Request(6); Call();
+        Set('r14', 0, 64); Request(6); Call(5); Set('r14', 0, 16);
+        Set('r14', 8, 97); Request(6); Call(5); Set('r14', 8, 49);
+        Request(5); Call(); Check('r12', 52, 0); Check('r12', 56, 0); Check('r14', 0, 3088);
+    });
+    Case('forged-live-header', 144, ({ Set, Request, Call, Reserve }) => {
+        Reserve(64); Reserve(32, 2, 3);
+        // A valid-looking second header inside the first live payload must
+        // still fail, without changing the corrupt state or any arena byte.
+        for (const [Offset, Value] of [[0, 48], [4, 1], [8, 0], [12, 1279350359]])
+            Set('r14', 32 + Offset, Value);
+        Set('r12', 100, 33); Request(6); Call(5); Set('r12', 100, 81);
+        Request(6); Call(); Request(5); Call();
+    });
     Case('generation-retirement', 64, ({ Set, Check, Request, Call, Reserve, Release }) => {
         Set('r12', 64, 4294967294); Reserve(1); Check('r13', 28, -1); Release();
         Reserve(1, 2, 3); Check('r13', 24, 2); Check('r13', 28, 1);

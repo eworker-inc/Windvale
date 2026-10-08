@@ -28,8 +28,9 @@ push r13
 push r14
 push r10
 push r11
-# 32-byte call shadow, 40-byte private allocator request, 8-byte loop scratch.
-subtract_i32 rsp 80
+# 32-byte call shadow, 40-byte private allocator request, 8-byte loop scratch,
+# and 64 validated (start, end) pairs of 32-bit arena offsets.
+subtract_i32 rsp 592
 move r12 r8
 move r13 r9
 
@@ -232,27 +233,13 @@ load_memory_u32 ecx r11 none 1 12
 compare_i32 ecx 1279350359
 branch not_equal Corrupt_state
 
-# Distinct live leases cannot overlap, even if corrupt payload imitates a header.
-move_u32 ecx 64
-label Validate_overlap
-compare rcx rsi
-branch above_equal Validate_next
-load_memory_u32 edx r12 rcx 1 4
-test edx edx
-branch equal Validate_overlap_next
-subtract_i32 edx 1
-compare edx eax
-branch above_equal Validate_overlap_next
-load_memory_u32 r8d r12 rcx 1 16
-add edx r8d
-branch below Corrupt_state
-load_memory_u32 r8d r12 rsi 1 4
+# Store only fully validated intervals; sorting never touches caller state.
+move r8d r10d
 subtract_i32 r8d 1
-compare edx r8d
-branch above Corrupt_state
-label Validate_overlap_next
-add_i32 ecx 32
-jump_label Validate_overlap
+load_memory_u32 edx r12 rsi 1 4
+subtract_i32 edx 1
+store_memory_u32 rsp r8 8 80 edx
+store_memory_u32 rsp r8 8 84 eax
 label Validate_next
 add_i32 esi 32
 compare_i32 esi 2112
@@ -269,6 +256,79 @@ branch below Corrupt_state
 load_memory_u32 ecx r12 none 1 40
 compare eax ecx
 branch above Corrupt_state
+
+# Heap-sort at most 64 live intervals by start offset. This bounds the full
+# overlap proof by O(slots * log slots), independent of slot/address order.
+store_memory_u32 rsp none 1 72 r10d
+compare_i32 r10d 2
+branch below Validate_live_ranges
+move r9d r10d
+move r11d r10d
+shift_right r11d 1
+xor esi esi
+label Validate_heap_build
+subtract_i32 r11d 1
+move r8d r11d
+jump_label Validate_heap_sift
+label Validate_heap_sift
+move edx r8d
+shift_left edx 1
+add_i32 edx 1
+compare edx r9d
+branch above_equal Validate_heap_done
+load_memory_u32 eax rsp rdx 8 80
+move ecx edx
+add_i32 ecx 1
+compare ecx r9d
+branch above_equal Validate_heap_child
+load_memory_u32 r10d rsp rcx 8 80
+compare eax r10d
+branch above_equal Validate_heap_child
+move edx ecx
+move eax r10d
+label Validate_heap_child
+load_memory_u32 r10d rsp r8 8 80
+compare r10d eax
+branch above_equal Validate_heap_done
+load_memory_u64 rax rsp r8 8 80
+load_memory_u64 r10 rsp rdx 8 80
+store_memory_u64 rsp r8 8 80 r10
+store_memory_u64 rsp rdx 8 80 rax
+move r8d edx
+jump_label Validate_heap_sift
+label Validate_heap_done
+test esi esi
+branch not_equal Validate_heap_extract
+test r11d r11d
+branch not_equal Validate_heap_build
+move_u32 esi 1
+label Validate_heap_extract
+subtract_i32 r9d 1
+test r9d r9d
+branch equal Validate_live_ranges
+load_memory_u64 rax rsp none 1 80
+load_memory_u64 r10 rsp r9 8 80
+store_memory_u64 rsp none 1 80 r10
+store_memory_u64 rsp r9 8 80 rax
+xor r8d r8d
+jump_label Validate_heap_sift
+label Validate_live_ranges
+# Adjacent sorted ranges prove all live/live pairs disjoint, including duplicate
+# owner tokens and a forged allocation header inside another live payload.
+xor ecx ecx
+xor eax eax
+load_memory_u32 r10d rsp none 1 72
+label Validate_live_range
+compare ecx r10d
+branch above_equal Validate_live_ranges_end
+load_memory_u32 edx rsp rcx 8 80
+compare edx eax
+branch below Corrupt_state
+load_memory_u32 eax rsp rcx 8 84
+add_i32 ecx 1
+jump_label Validate_live_range
+label Validate_live_ranges_end
+xor r10d r10d
 
 # Validate the complete free inventory before any mutating allocator call.
 # At most 64 live blocks imply at most 65 coalesced free blocks. Ordered,
@@ -317,22 +377,22 @@ branch below Corrupt_state
 load_memory_u32 eax r12 none 1 40
 compare ecx eax
 branch above Corrupt_state
-move_u32 edx 64
+# Merge the ordered free list with the sorted live intervals. A live interval
+# is passed once; the current free node must end before the next live start.
 label Validate_free_overlap
-load_memory_u32 eax r12 rdx 1 4
-test eax eax
-branch equal Validate_free_overlap_next
-subtract_i32 eax 1
-compare eax ecx
-branch above_equal Validate_free_overlap_next
-load_memory_u32 r10d r12 rdx 1 16
-add eax r10d
+load_memory_u32 edx rsp none 1 72
+compare r10d edx
+branch above_equal Validate_free_overlap_end
+load_memory_u32 eax rsp r10 8 84
 compare eax esi
-branch above Corrupt_state
-label Validate_free_overlap_next
-add_i32 edx 32
-compare_i32 edx 2112
-branch below Validate_free_overlap
+branch above Validate_free_overlap_current
+add_i32 r10d 1
+jump_label Validate_free_overlap
+label Validate_free_overlap_current
+load_memory_u32 eax rsp r10 8 80
+compare eax ecx
+branch below Corrupt_state
+label Validate_free_overlap_end
 move r9d ecx
 load_memory_u32 esi r11 none 1 8
 jump_label Validate_free
@@ -651,7 +711,7 @@ xor eax eax
 label Return_status
 store_memory_u32 r13 none 1 40 eax
 label Return_registers
-add_i32 rsp 80
+add_i32 rsp 592
 pop r11
 pop r10
 pop r14

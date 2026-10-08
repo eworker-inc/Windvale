@@ -50,7 +50,7 @@ R8 points to the 16-byte-aligned state; R9 points to the 8-byte-aligned request.
 EAX returns status. All nonvolatile registers and the R10/R11 execution-budget
 registers survive. Other volatile registers and flags may change. The stack must
 follow the existing x64 native call convention, including 32 bytes of shadow
-space. The leaf uses 152 bytes below its entry stack pointer, plus the nested
+space. The leaf uses 664 bytes below its entry stack pointer, plus the nested
 descriptor allocator's bounded stack.
 
 State version 1 is exactly 2,112 bytes:
@@ -161,8 +161,11 @@ requires the mapped-extent precondition above. When several fields are invalid,
 validation order is implementation detail; no particular error takes precedence.
 
 Before mutation, validation checks slot bounds and metadata, each live header,
-pairwise live overlap, free-list ordering, alignment, headers, bounds, cycles,
-overlap with live blocks, complete arena coverage, current accounting and peak.
+live overlap, free-list ordering, alignment, headers, bounds, cycles, overlap
+with live blocks, complete arena coverage, current accounting and peak. It
+heap-sorts validated live intervals in private stack scratch, checks adjacent
+ranges, then merges the ordered free list with those live ranges. No caller
+state or arena byte changes while this complete overlap proof is established.
 No operation can follow an unchecked free-list link indefinitely. With 64 live
 slots there are at most 65 coalesced free blocks; the validator rejects more.
 The historical allocator's lazy-initialization path is not used. Initialization
@@ -171,9 +174,13 @@ and teardown therefore do not acquire resources while deciding whether to fail.
 ## Resource bounds and verification
 
 These are explicit limits of this runtime-private provider, not universal
-language collection limits. Validation visits 64 slots, at most 2016 live/live
-pairs, and at most 65 free nodes with 64 live-overlap comparisons each. Reserve
-zeros at most 4 MiB and resize at most the same committed capacity. Teardown
+language collection limits. Validation visits 64 slots and sorts at most 64
+eight-byte intervals in a fixed 512-byte scratch array included in its stack
+bound. Heap sorting takes `O(S log S)` work for `S` live slots, independent of
+slot/address order. The adjacent-range and free/live merge scans take
+`O(S + F)` work for at most 65 free nodes `F`; each live interval is passed at
+most once by the free-list scan. Reserve zeros at most 4 MiB and resize at most
+the same committed capacity. Teardown
 releases at most 64 blocks. All address and size arithmetic is checked or bounded
 before use. No operation grows the metadata or calls an external allocator.
 
@@ -182,6 +189,10 @@ twice and compares object bytes, validates their objects, and executes native
 cases for reuse, coalescing in both directions, fragmentation, slot exhaustion,
 generation retirement, epoch mismatch, zeroing, request/state corruption,
 unchanged refusal, register preservation, and multi-allocation teardown.
+Interval-proof cases also cover shuffled and reverse slot/address order,
+duplicate physical tokens, 64 live blocks interleaved with the maximum 65 free
+nodes, missing coverage, and a forged live header inside another live payload.
+Every malformed interval case checks complete unchanged-on-refusal snapshots.
 The repeated-reuse workload performs 32,768 reserve/release pairs with capacity
 17 inside a 64-byte arena and asserts peak physical charge 48 and final charge
 zero. Its fixed metadata is 2,112 bytes; process working set is a different
