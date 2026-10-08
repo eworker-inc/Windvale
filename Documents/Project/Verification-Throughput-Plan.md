@@ -104,8 +104,25 @@ owner. The [bounded verifier API](../Runbooks/Native-Source-To-Wvb.md#current-so
 has its own focused owner; its committed change passes GitHub development
 verification on both hosts. The larger compiler and consumer batch still needs
 its remaining integration evidence.
-Compiler-scale runtime validation and fresh native consumer execution remain
-the next performance work. Increasing a deadline does not close these items.
+Canonical native budget validation now accumulates child charges once instead
+of rescanning every child for each parent. Complete structure, ancestor and
+overflow checks remain; per-call scratch is bounded to 592 stack bytes. The
+same read-only adapter workload performs 100,000 validations with 1, 16 or 64
+live physical leases. Two warm executions after one initial execution measured:
+
+| Live leases | Windows before / after | Real Debian before / after |
+| --- | --- | --- |
+| 1 | 78–88 / 68–69 ms | 57–58 / 55–56 ms |
+| 16 | 139–141 / 91–94 ms | 109–115 / 85 ms |
+| 64 | 739–770 / 206–210 ms | 576–588 / 195–202 ms |
+
+These individual measurements isolate complete budgeted validation, including
+physical-binding checks. They do not establish a whole-compiler speedup or a
+stable regression threshold. The
+[budgeted-storage contract](../../Specifications/Windvale-Native-Budgeted-Storage.md)
+records the stack bound and unchanged refusal rules. Repackage the unchanged
+current compiler objects with this runtime before measuring native consumer
+execution. Self-compilation and the complete compiler owner remain open.
 
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing

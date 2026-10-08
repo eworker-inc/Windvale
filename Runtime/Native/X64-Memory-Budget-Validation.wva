@@ -4,6 +4,8 @@ windvale-assembly 1
 # native counterpart of Memory_budget_state_is_valid, not a second token format.
 # R8 points to a complete mapped state. EAX=0 valid, 5 invalid. Preserve all
 # nonvolatile registers and R10/R11. No allocation or host calls.
+# Per-call child totals use 592 scratch bytes; saved registers bring the leaf
+# stack extent to 632 bytes. No validation trust survives the call.
 symbol export function Windvale_memory_budget_validate in .text
 section code .text align 16
 define Windvale_memory_budget_validate
@@ -12,6 +14,7 @@ push rsi
 push rdi
 push r10
 push r11
+subtract_i32 rsp 592
 move rbx r8
 test rbx rbx
 branch equal Invalid
@@ -95,6 +98,58 @@ add_i32 rsi 40
 compare_i32 edi 65
 branch below_equal Structure
 
+# The complete structure pass proved every active parent index before lookup.
+# Accumulate each child's maximum and count once; all scratch expires here.
+compare_i32 r11d 1
+branch not_equal Aggregate
+# Every other entry is inactive; the root must have no children or reservation.
+load_memory_u64 rax rbx none 1 48
+load_memory_u32 ecx rbx none 1 36
+or rax rcx
+branch not_equal Invalid
+xor eax eax
+jump_label Finish
+label Aggregate
+xor eax eax
+xor ecx ecx
+move r10d r11d
+shift_left r10d 3
+label Clear_sums
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+compare ecx r10d
+branch below Clear_sums
+xor ecx ecx
+label Clear_counts
+store_memory_u64 rsp rcx 1 520 rax
+add_i32 ecx 8
+compare ecx r11d
+branch below Clear_counts
+move_u32 edi 2
+move rsi rbx
+add_i32 rsi 56
+label Accumulate_children
+compare edi r11d
+branch above Accounting_start
+load_memory_u32 eax rsi none 1 8
+test eax eax
+branch equal Accumulate_next
+load_memory_u32 edx rsi none 1 4
+subtract_i32 edx 1
+load_memory_u64 rax rsi none 1 24
+load_memory_u64 r8 rsp rdx 8 0
+add r8 rax
+branch below Invalid
+store_memory_u64 rsp rdx 8 0 r8
+xor ecx ecx
+load_memory_u8 cl rsp rdx 1 520
+add_i32 ecx 1
+store_memory_u8 rsp rdx 1 520 cl
+label Accumulate_next
+add_i32 edi 1
+add_i32 rsi 40
+jump_label Accumulate_children
+label Accounting_start
 move_u32 edi 1
 move rsi rbx
 add_i32 rsi 16
@@ -120,27 +175,11 @@ add eax r10d
 load_memory_u32 eax rbx rax 1 20
 jump_label Ancestors
 label Children
-xor r8d r8d
+move eax edi
+subtract_i32 eax 1
+load_memory_u64 r8 rsp rax 8 0
 xor ecx ecx
-move r9 rbx
-add_i32 r9 56
-move_u32 edx 2
-label Sum_children
-load_memory_u32 eax r9 none 1 8
-test eax eax
-branch equal Sum_next
-load_memory_u32 eax r9 none 1 4
-compare eax edi
-branch not_equal Sum_next
-load_memory_u64 rax r9 none 1 24
-add r8 rax
-branch below Invalid
-add_i32 ecx 1
-label Sum_next
-add_i32 r9 40
-add_i32 edx 1
-compare edx r11d
-branch below_equal Sum_children
+load_memory_u8 cl rsp rax 1 520
 load_memory_u64 rax rsi none 1 32
 compare rax r8
 branch not_equal Invalid
@@ -157,6 +196,7 @@ jump_label Finish
 label Invalid
 move_u32 eax 5
 label Finish
+add_i32 rsp 592
 pop r11
 pop r10
 pop rdi

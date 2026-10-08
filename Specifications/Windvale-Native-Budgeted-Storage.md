@@ -66,10 +66,16 @@ the header, all 65 entries, parent indices, active/owner flags, nonzero
 generations, acyclic ancestor chains, byte limits, child counts and checked
 64-bit sums of child maxima before the adapter can write either state.
 The complete structure pass also records the highest active entry. Later
-accounting scans stop there because every remaining entry was proved inactive;
-they still count zero-charge children. Inactive fields are checked together,
-preserving retired generations. This adds no cached trust or persistent state
-and does not increase the callee stack bound.
+accounting scans stop there because every remaining entry was proved inactive.
+One checked pass accumulates each active child's maximum and count into 65
+temporary totals, including zero-charge children. Each parent's complete
+ancestor chain and recorded totals are then checked without rescanning all
+children. A sole root still proves zero child count and reserved charge after
+the complete structure pass. Inactive fields are checked together, preserving
+retired generations. The totals use 592 bytes of per-call stack scratch; the
+validator's complete stack extent is 632 bytes including saved registers. No
+cached trust or persistent state is added. Layouts and refusal statuses are
+unchanged.
 
 Binding validation checks every physical and mapped binding against its current
 canonical generation, owned lease and charge. Only after those checks may a
@@ -112,8 +118,10 @@ All integer fields are unsigned and little-endian. R8 points to a
 16-byte-aligned 1,088-byte adapter state. R9 points to an 8-byte-aligned 96-byte
 request. EAX returns status; nonvolatile registers and R10/R11 survive. The
 existing native x64 shadow-space and stack-alignment requirements apply.
-The adapter uses 392 bytes below its entry stack pointer, plus the bounded
-nested validator or physical-leaf call, for a deepest path of 560 bytes.
+The adapter uses 392 bytes below its entry stack pointer. Its nested validator
+uses 632 bytes; the physical leaf uses 664 bytes and calls the stack-free
+descriptor allocator. Including nested return addresses, the deepest adapter
+path is 1,072 bytes, within its existing 8 KiB stack-exclusion window.
 Its temporary request and extent table
 are stack-owned and do not outlive the call.
 

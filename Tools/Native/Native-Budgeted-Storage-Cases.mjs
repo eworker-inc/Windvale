@@ -169,7 +169,34 @@ export function Buildˉbudgetedˉstorageˉcases(Oracle) {
         }
         Request(5); Call(); Check('rsp', 84, 0); Check('rsp', 88, 0);
     });
+    Case('late-parent-accounting', 64, ({ Entry, Field, Allocate, Release, Request, Set, Call }) => {
+        Entry(1, 1, 0, 4096, 1, 96); Entry(65, 1, 1, 96, 1, 48); Entry(2, 1, 65, 48);
+        Allocate(2, 1); Field(65, 20, 1); Field(65, 32, 48);
+        Release(); Field(65, 20, 0); Field(65, 32, 0); Field(1, 32, 96);
+        Request(7); Set('r13', 64, 65); Set('r13', 68, 1); Call();
+        Field(65, 8, 0); Field(1, 20, 0); Field(1, 32, 0);
+    });
+    Case('late-parent-u64-maximum', 64, ({ Entry, Field, Offset, Request, Set, Call, Check }) => {
+        Entry(1, 1, 0, 4294967295, 1, 4294967295);
+        Entry(65, 1, 1, 4294967295, 1, 4294967295); Entry(2, 1, 65, 4294967295);
+        for (const Identity of [1, 65, 2]) Set('rsp', Offset(Identity) + 28, 4294967295);
+        for (const Identity of [1, 65]) Set('rsp', Offset(Identity) + 36, 4294967295);
+        Request(8); Set('r13', 64, 1); Set('r13', 68, 1); Call();
+        Check('r13', 80, 0); Check('r13', 84, 0);
+        Request(8); Set('r13', 64, 2); Set('r13', 68, 1); Call();
+        Check('r13', 80, -1); Check('r13', 84, -1);
+        Request(7); Set('r13', 64, 2); Set('r13', 68, 1); Call();
+        Field(65, 20, 0); Field(65, 32, 0); Field(65, 36, 0);
+        Request(7); Set('r13', 64, 65); Set('r13', 68, 1); Call();
+        Field(1, 20, 0); Field(1, 32, 0); Field(1, 36, 0);
+    });
     Case('budget-corruption', 64, ({ Entry, Allocate, Offset, Set, Request, Call }) => {
+        // A sole root still proves zero child count and reserved charge.
+        for (const Field of [20, 32]) {
+            Set('rsp', Offset(1) + Field, 1);
+            Request(8); Set('r13', 64, 1); Set('r13', 68, 1); Call(5);
+            Set('rsp', Offset(1) + Field, 0);
+        }
         Entry(1, 1, 0, 4096, 1, 48); Entry(2, 1, 1, 48);
         // A zero-charge child in the final slot still contributes to the count.
         Entry(65, 1, 1, 0); Set('rsp', Offset(1) + 20, 2);
