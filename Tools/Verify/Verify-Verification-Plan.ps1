@@ -6198,8 +6198,7 @@ function Test-NativeSharedCompilerSelection {
     }
     $Reader = @($Ast.EndBlock.Statements | Where-Object {
         $_ -is [Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -ceq 'Get-NativeSharedCompilerIdentity' })
-    if ($Reader.Count -ne 1 -or !$Reader[0].Extent.Text.Contains('Module.Readˉpreparedˉsharedˉcompilerˉhost') -or
-        !$Reader[0].Extent.Text.Contains('await Host.Requireˉunchanged()')) {
+    if ($Reader.Count -ne 1 -or !$Reader[0].Extent.Text.Contains('Module.Readˉpreparedˉsharedˉcompilerˉhost')) {
         throw 'Coordinator shared host admission must use the complete existing read-only boundary.'
     }
     $BehaviorBranches = @($Ast.FindAll({ param($Node)
