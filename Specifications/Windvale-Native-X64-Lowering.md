@@ -142,6 +142,17 @@ immutable plan. Native measurement and emission keep one local owner for that
 plan while reading its rows, rather than acquiring and releasing another share
 of every plan field on each observation.
 
+For ABI 25, an admitted local record copy immediately followed by a scalar
+field read in the same basic block does not acquire shares of the unused
+fields. The scalar is copied through the existing inline record layout, then
+the complete temporary backing is cleared without releasing the owner's
+fields. This includes borrowed and ordinary record locals. The recognizer
+accepts only plain integer, Boolean and enum fields; byte/text, nested
+aggregate and opaque owner fields retain their ordinary ownership transfers.
+Moves and instructions separated by another operation use the ordinary path.
+Both bytecode instructions retain their instruction charge, and the scalar
+temporary never authorizes access to another field or crosses a block boundary.
+
 For a direct helper returning a borrowed Slice, the complete verifier retains
 the evaluated byte argument's named owner in the lifetime evidence. A byte
 result without a named owner clears the operand position's previous origin;
@@ -160,7 +171,7 @@ code therefore grows with the owned-local layout rather than its product with
 the number of returns. This candidate changes machine bytes, while retaining
 the ABI, frame limits and source release contract. The existing helper case
 exercises both narrow and full-width scalar return branches while releasing
-byte owners; execution against the reconstructed compiler remains pending.
+byte owners and passes with the reconstructed Windows and Debian compilers.
 
 Each shared-value operation initializes its complete 64-byte private request
 once. Wide stores combine version/size and the zero-extended action/flags;
@@ -217,8 +228,8 @@ uses a cleanup stub followed by a five-byte jump; measurement and emission
 include those same bytes. Borrowed parameters remain excluded, and borrowed
 root dependencies participate in the destination lifetime mask. Loop and
 record-branch cases cover both release and survival; a source case requires
-branch release to restore the budget before replacement allocation. Native
-execution of the reconstructed compiler with this correction remains pending.
+branch release to restore the budget before replacement allocation. These
+source cases pass with the reconstructed Windows and Debian compilers.
 Branch origins include the existing prefix;
 the emitted bytes and release order are unchanged. This bounds copying of the
 existing function during each request or cleanup operation, including the

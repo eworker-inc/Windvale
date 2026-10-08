@@ -384,15 +384,23 @@ fn Readˉwide(Value: bytes, First: bool) -> u64 {
     return 0u64;
 }
 record Borrowˉpair { First: bytes; Second: bytes; }
+enum Scalarˉchoice: i32 { Selected = 1073741824; }
 record Borrowˉplan {
     Valid: bool; Source: bytes; Borrowˉroots: bytes; Rows: bytes;
     Virtualˉdependencies: bytes; Locals: u32; Rowˉbytes: u32; Work: u32;
+    Negative: i32; Byte: u8; Unsigned: u32; Signed: i64; Wide: u64; Choice: Scalarˉchoice;
 }
+record Borrowˉenvelope { Plan: Borrowˉplan; }
+fn Readˉownedˉscalar(Value: Borrowˉplan) -> u64 { return Value.Wide; }
+fn Readˉnestedˉscalar(Value: borrow Borrowˉenvelope) -> u64 { return Value.Plan.Wide; }
 fn Observeˉplan(Value: borrow Borrowˉplan) -> bool {
     var Index: u32 = 0u32;
     while Index < 128u32 {
         let Alias: bytes = Value.Rows;
         if !Value.Valid || Value.Locals != 2u32 || Value.Rowˉbytes != 8u32 || Value.Work != 7u32 ||
+            Value.Negative != -42 || Value.Byte != 255u8 || Value.Unsigned != 4294967295u32 ||
+            Value.Signed != -4294967338i64 || Value.Wide != 18446744073709551615u64 ||
+            Value.Choice != Scalarˉchoice.Selected ||
             Bytes.At(borrow Value.Source, 0u64) != 6u8 ||
             Bytes.Length(borrow Value.Borrowˉroots) != 8u64 ||
             Bytes.At(borrow Value.Virtualˉdependencies, 0u64) != 6u8 ||
@@ -465,8 +473,12 @@ fn Buildˉandˉcopy(Parent: borrow mut Memory.Memoryˉbudget, Input: borrow byte
                         Readˉwide(Frozen, true) != 8u64 ||
                         Readˉwide(Frozen, false) != 18446744073709551615u64 { return Copyˉfailed; }
                     let Pair = Borrowˉpair { First: Frozen, Second: Frozen };
-                    let Plan = Borrowˉplan(true, Input, Frozen, Frozen, Input, 2u32, 8u32, 7u32);
+                    let Plan = Borrowˉplan(true, Input, Frozen, Frozen, Input, 2u32, 8u32, 7u32,
+                        -42, 255u8, 4294967295u32, -4294967338i64, 18446744073709551615u64, Scalarˉchoice.Selected);
+                    let Envelope = Borrowˉenvelope { Plan: Plan };
                     if !Forwardˉplan(borrow Plan) || !Observeˉpair(borrow Pair) ||
+                        Readˉownedˉscalar(Plan) != 18446744073709551615u64 ||
+                        Readˉnestedˉscalar(borrow Envelope) != 18446744073709551615u64 ||
                         !Observeˉexpressions(borrow Pair.First, borrow Bytesˉslice(Pair.Second, 0u32, 1u32)) {
                         return Copyˉfailed;
                     }

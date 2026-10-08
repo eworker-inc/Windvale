@@ -1336,6 +1336,68 @@ fn Nestedˉsharedˉfields() -> bool {
     return true;
 }
 
+fn Scalarˉprojections() -> bool {
+    let Header: bytes = Bytesˉslice(Appendˉresultˉsection(10u8, 10u8), 0u32, 12u32);
+    var Selection: u32 = 0u32;
+    while Selection < 12u32 {
+        var Kind: u8 = 1u8;
+        if Selection == 1u32 { Kind = 2u8; }
+        if Selection == 2u32 { Kind = 4u8; }
+        if Selection == 3u32 { Kind = 5u8; }
+        if Selection == 4u32 { Kind = 9u8; }
+        if Selection == 5u32 { Kind = 10u8; }
+        if Selection == 6u32 { Kind = 8u8; }
+        if Selection == 7u32 { Kind = 3u8; }
+        if Selection == 8u32 { Kind = 6u8; }
+        if Selection == 9u32 { Kind = 7u8; }
+        if Selection == 10u32 { Kind = 25u8; }
+        if Selection == 11u32 { Kind = 39u8; }
+        var Shape: bytes = Bytesˉfromˉu8(Kind);
+        if Kind == 8u8 { Shape = Bytesˉconcat(Shape, Bytesˉfromˉu32ˉlittle(2u32)); }
+        if Kind == 7u8 { Shape = Bytesˉconcat(Shape, Bytesˉfromˉu32ˉlittle(0u32)); }
+        var Parent: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Encodedˉname("Projection"));
+        Parent = Bytesˉconcat(Parent, Bytesˉfromˉu32ˉlittle(2u32));
+        Parent = Bytesˉconcat(Parent, Bytesˉconcat(Encodedˉname("Shared"), Bytesˉfromˉu8(6u8)));
+        Parent = Bytesˉconcat(Parent, Bytesˉconcat(Encodedˉname("Selected"), Shape));
+        var Input: bytes = Bytesˉconcat(Header, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(3u32),
+            Bytesˉconcat(Recordˉtypeˉentry(), Bytesˉconcat(Parent, Enumˉtypeˉentry()))));
+        let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+            Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Input, 12u32, Bytesˉlength(Input) - 12u32);
+        if !Types.Valid { return false; }
+        let Offset: u32 = Bytesˉlength(Input);
+        Input = Bytesˉconcat(Input, Bytesˉconcat(Bytesˉfromˉu8(4u8),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉconcat(Bytesˉfromˉu8(105u8),
+                Bytesˉfromˉu32ˉlittle(1u32)))));
+        let Locals: bytes = Bytesˉfromˉu8(Typeˉreader.Compilerˉnativeˉx64ˉrecordˉtype(1u32));
+        if Recordˉemitter.Scalarˉprojection(Input, Offset, 10u32, Locals, Types) !=
+            (Selection < 7u32) { return false; }
+        var Length: u32 = 0u32;
+        while Length < 10u32 {
+            if Recordˉemitter.Scalarˉprojection(Bytesˉslice(Input, 0u32, Offset + Length),
+                Offset, Length, Locals, Types) { return false; }
+            Length = Length + 1u32;
+        }
+        if Recordˉemitter.Scalarˉprojection(Input, Offset, 11u32, Locals, Types) ||
+            Recordˉemitter.Scalarˉprojection(Input, Bytesˉlength(Input) + 1u32, 10u32, Locals, Types) ||
+            Recordˉemitter.Scalarˉprojection(Input, Offset, 10u32, Bytesˉslice(Locals, 0u32, 0u32), Types) ||
+            Recordˉemitter.Scalarˉprojection(Input, Offset, 10u32, Bytesˉfromˉu8(1u8), Types) { return false; }
+        let Invalidˉfield: bytes = Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset + 6u32),
+            Bytesˉfromˉu32ˉlittle(2u32));
+        let Invalidˉlocal: bytes = Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset + 1u32),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉslice(Input, Offset + 5u32, 5u32)));
+        let Moved: bytes = Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉconcat(Bytesˉfromˉu8(205u8), Bytesˉslice(Input, Offset + 1u32, 9u32)));
+        let Separated: bytes = Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset + 5u32),
+            Bytesˉconcat(Bytesˉfromˉu8(80u8), Bytesˉslice(Input, Offset + 5u32, 5u32)));
+        if Recordˉemitter.Scalarˉprojection(Invalidˉfield, Offset, 10u32, Locals, Types) ||
+            Recordˉemitter.Scalarˉprojection(Invalidˉlocal, Offset, 10u32, Locals, Types) ||
+            Recordˉemitter.Scalarˉprojection(Moved, Offset, 10u32, Locals, Types) ||
+            Recordˉemitter.Scalarˉprojection(Separated, Offset, 11u32, Locals, Types) { return false; }
+        Selection = Selection + 1u32;
+    }
+    return true;
+}
+
 fn Endingˉmasks() -> bool {
     let Empty: bytes = Textˉtoˉutf8("");
     var Case: u32 = 0u32;
@@ -1451,5 +1513,6 @@ export fn Main() -> i32 {
     if !Borrowˉliveness() || !Borrowˉqueueˉboundaries() { return 16; }
     if !Oversizedˉliveness() { return 17; }
     if !Recordˉinterferenceˉwords() { return 18; }
+    if !Scalarˉprojections() { return 19; }
     return 42;
 }

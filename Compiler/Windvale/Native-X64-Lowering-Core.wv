@@ -1978,7 +1978,8 @@ fn Compilerˉnativeˉx64ˉsharedˉcreationˉoperands(Input: bytes, Offset: u32,
 }
 fn Compilerˉnativeˉx64ˉsharedˉtransitionˉbytes(Input: bytes, Offset: u32,
     Opcode: u8, Function: Compilerˉnativeˉx64ˉfunction,
-    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Before: bytes, After: bytes) -> u32 {
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Scalarˉprojection: bool,
+    Before: bytes, After: bytes) -> u32 {
     var Cost: u32 = 0u32;
     if Opcode == 4u8 || Opcode == 205u8 || Opcode == 225u8 {
         let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
@@ -1986,6 +1987,7 @@ fn Compilerˉnativeˉx64ˉsharedˉtransitionˉbytes(Input: bytes, Offset: u32,
         if Opcode == 225u8 { Type = Bytesˉreadˉu8(After, Bytesˉlength(After) - 1u32); }
         if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
             if Opcode == 205u8 { return Compilerˉnativeˉx64ˉsharedˉclearˉbytes(Input, Types, Type); }
+            if Scalarˉprojection { return 0u32; }
             let Shape: Sharedˉaggregates.Plan = Sharedˉaggregates.Build(Input, Types, Type, 0u32);
             if !Shape.Valid { return 4294967295u32; }
             return Sharedˉaggregates.Bytes(Shape);
@@ -2013,6 +2015,9 @@ fn Compilerˉnativeˉx64ˉsharedˉtransitionˉbytes(Input: bytes, Offset: u32,
     }
     if Opcode == 105u8 || Opcode == 153u8 || Opcode == 196u8 || Opcode == 152u8 {
         let Parent: u8 = Bytesˉreadˉu8(Before, Bytesˉlength(Before) - 1u32);
+        if Opcode == 105u8 && Scalarˉprojection {
+            return Compilerˉnativeˉx64ˉsharedˉclearˉbytes(Input, Types, Parent);
+        }
         Cost = Compilerˉnativeˉx64ˉsharedˉdropˉbytes(Input, Types, Parent, 0u32);
         if Cost == 4294967295u32 { return Cost; }
         if Opcode != 152u8 {
@@ -2029,7 +2034,8 @@ fn Compilerˉnativeˉx64ˉsharedˉtransitionˉbytes(Input: bytes, Offset: u32,
 }
 fn Compilerˉnativeˉx64ˉsharedˉtransition(Input: bytes, Initial: bytes, Offset: u32,
     Opcode: u8, Function: Compilerˉnativeˉx64ˉfunction,
-    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Before: bytes, Beforeˉslots: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes, Scalarˉprojection: bool,
+    Before: bytes, Beforeˉslots: bytes,
     After: bytes, Afterˉslots: bytes, Request: u32, Helper: u32, Codeˉbase: u32, Invalid: u32) -> bytes {
     var Output: bytes = Initial;
     if Opcode == 4u8 || Opcode == 205u8 || Opcode == 225u8 {
@@ -2037,6 +2043,7 @@ fn Compilerˉnativeˉx64ˉsharedˉtransition(Input: bytes, Initial: bytes, Offse
         let Type: u8 = Bytesˉreadˉu8(After, Bytesˉlength(After) - 1u32);
         if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
             if Opcode == 205u8 { return Compilerˉnativeˉx64ˉsharedˉclear(Input, Output, Types, Type, Local); }
+            if Scalarˉprojection { return Output; }
             return Sharedˉaggregates.Emit(Output, Sharedˉaggregates.Build(Input, Types, Type, 0u32),
                 Bytesˉreadˉu32ˉlittle(Afterˉslots, (Bytesˉlength(After) - 1u32) * 4u32), true,
                 Request, Helper, Codeˉbase, Invalid);
@@ -2064,6 +2071,11 @@ fn Compilerˉnativeˉx64ˉsharedˉtransition(Input: bytes, Initial: bytes, Offse
     if Opcode == 105u8 || Opcode == 153u8 || Opcode == 196u8 || Opcode == 152u8 {
         let Parent: u8 = Bytesˉreadˉu8(Before, Bytesˉlength(Before) - 1u32);
         let Parentˉslot: u32 = Bytesˉreadˉu32ˉlittle(Beforeˉslots, (Bytesˉlength(Before) - 1u32) * 4u32);
+        if Opcode == 105u8 && Scalarˉprojection {
+            // These cells never acquired shares. Clear the complete temporary
+            // after copying the scalar, without releasing the owner's fields.
+            return Compilerˉnativeˉx64ˉsharedˉclear(Input, Output, Types, Parent, Parentˉslot);
+        }
         if Opcode != 152u8 {
             let Selectedˉtype: u8 = Bytesˉreadˉu8(After, Bytesˉlength(After) - 1u32);
             var Width: u32 = 1u32;
@@ -3397,6 +3409,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
     var Terminator: u8 = 0u8;
     var Target: u32 = 0u32;
     var Cursor: u32 = Start;
+    var Previousˉscalarˉprojection: bool = false;
     var Instructionˉsizes: bytes = Compilerˉnativeˉx64ˉempty(Input);
     while Cursor < End {
         let Beforeˉbytes: u32 = Bodyˉbytes;
@@ -3409,6 +3422,11 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
         }
         let Next: u32 = Cursor + Size;
         if Next > End { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+        var Nextˉscalarˉprojection: bool = false;
+        if Function.Sharedˉvalues && Opcode == 4u8 {
+            Nextˉscalarˉprojection = Recordˉinstructions.Scalarˉprojection(Input,
+                Section.Payloadˉoffset + Cursor, End - Cursor, Function.Localˉtypes, Types);
+        }
         if Function.Sharedˉvalues && (Opcode == 5u8 || Opcode == 81u8) && Depth > 0u32 {
             var Expectedˉidentity: u32 = Function.Returnˉidentity;
             if Opcode == 5u8 {
@@ -4205,7 +4223,9 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                 Bodyˉbytes = Beforeˉbytes + Returnˉbytes;
             }
             let Transferˉbytes: u32 = Compilerˉnativeˉx64ˉsharedˉtransitionˉbytes(Input,
-                Section.Payloadˉoffset + Cursor, Opcode, Function, Types, Beforeˉstack, Stack);
+                Section.Payloadˉoffset + Cursor, Opcode, Function, Types,
+                Nextˉscalarˉprojection || (Opcode == 105u8 && Previousˉscalarˉprojection),
+                Beforeˉstack, Stack);
             if Transferˉbytes == 4294967295u32 { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
             Bodyˉbytes = Bodyˉbytes + Transferˉbytes;
             var Callˉreturn: u8 = 1u8;
@@ -4229,6 +4249,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                 Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Cursor), Bytesˉfromˉu32ˉlittle(Bodyˉbytes - Beforeˉbytes)),
                     Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Identity), Bytesˉfromˉu32ˉlittle(0u32))));
         }
+        Previousˉscalarˉprojection = Nextˉscalarˉprojection;
         Cursor = Next;
     }
     if Terminator == 0u8 {
@@ -8150,8 +8171,10 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     var Scratchˉbase: u32 = 0u32;
     var Callableˉenvironmentˉcursor: u32 = 0u32;
     var Cursor: u32 = 0u32;
+    var Previousˉscalarˉprojection: bool = false;
     while Cursor < Section.Payloadˉlength {
         if Bytesˉreadˉu8(Analysis.Leaders, Cursor) == 1u8 {
+            Previousˉscalarˉprojection = false;
             if Cursor > 0u32 { Emissionˉblock = Emissionˉblock + 1u32; }
             if Bytesˉlength(Analysis.Recordˉscratchˉblockˉoffsets) > 0u32 {
                 Scratchˉbase = Bytesˉreadˉu32ˉlittle(
@@ -8178,6 +8201,12 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
         let Beforeˉstack: bytes = Stackˉtypes;
         let Beforeˉslots: bytes = Stackˉslots;
+        var Nextˉscalarˉprojection: bool = false;
+        if Function.Sharedˉvalues && Opcode == 4u8 && Section.Payloadˉlength - Cursor >= 10u32 &&
+            Bytesˉreadˉu8(Analysis.Leaders, Cursor + 5u32) == 0u8 {
+            Nextˉscalarˉprojection = Recordˉinstructions.Scalarˉprojection(Input,
+                Section.Payloadˉoffset + Cursor, Section.Payloadˉlength - Cursor, Function.Localˉtypes, Types);
+        }
         Result = Compilerˉnativeˉx64ˉemitˉcharge(
             Result,
             Compilerˉnativeˉx64ˉrelativeˉu32(
@@ -8943,7 +8972,9 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         }
         if Function.Sharedˉvalues {
             Result = Compilerˉnativeˉx64ˉsharedˉtransition(Input, Result,
-                Section.Payloadˉoffset + Cursor, Opcode, Function, Types, Beforeˉstack, Beforeˉslots,
+                Section.Payloadˉoffset + Cursor, Opcode, Function, Types,
+                Nextˉscalarˉprojection || (Opcode == 105u8 && Previousˉscalarˉprojection),
+                Beforeˉstack, Beforeˉslots,
                 Stackˉtypes, Stackˉslots, Compilerˉnativeˉx64ˉsharedˉrequestˉslot(Function, Analysis),
                 Helperˉglobalˉoffset, Codeˉbase + Emittedˉprefixˉbytes,
                 Compilerˉnativeˉx64ˉrelativeˉu32(Runtimeˉserviceˉoffset, Emittedˉprefixˉbytes));
@@ -8974,6 +9005,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                     Bytesˉslice(Analysis.Instructionˉsizes, Row + 8u32, 4u32));
             } else { Stackˉidentities = Bytesˉslice(Stackˉidentities, 0u32, Stackˉdepth * 4u32); }
         }
+        Previousˉscalarˉprojection = Nextˉscalarˉprojection;
         Cursor = Cursor + Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
         // Keep immutable code assembly bounded while preserving function-relative offsets.
         if Bytesˉlength(Result) >= 4096u32 {

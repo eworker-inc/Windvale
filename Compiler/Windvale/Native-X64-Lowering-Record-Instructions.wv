@@ -44,6 +44,30 @@ export record Compilerˉnativeˉx64ˉrecordˉstate {
     Nextˉrecord: u32;
 }
 
+// A copied local followed immediately by a scalar field read needs no shares
+// of the unused fields. The caller proves both instructions belong to one
+// admitted block; each instruction still consumes its ordinary fuel.
+export fn Scalarˉprojection(Input: bytes, Offset: u32, Remaining: u32,
+    Localˉtypes: bytes, Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes) -> bool {
+    if !Types.Valid || Offset > Bytesˉlength(Input) || Remaining < 10u32 ||
+        Remaining > Bytesˉlength(Input) - Offset { return false; }
+    if Bytesˉreadˉu8(Input, Offset) != 4u8 ||
+        Bytesˉreadˉu8(Input, Offset + 5u32) != 105u8 { return false; }
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+    if Local >= Bytesˉlength(Localˉtypes) { return false; }
+    let Parent: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
+    if !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Parent) { return false; }
+    let Field: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉshape(Input, Types,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Types, Parent),
+            Bytesˉreadˉu32ˉlittle(Input, Offset + 6u32));
+    if !Field.Valid || Field.Borrowˉkind != 0u8 { return false; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Field.Type) { return true; }
+    return Field.Identity == 4294967295u32 &&
+        (Field.Type == 1u8 || Field.Type == 2u8 || Field.Type == 4u8 ||
+         Field.Type == 5u8 || Field.Type == 9u8 || Field.Type == 10u8);
+}
+
 fn Valueˉslot(
     Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
     Type: u8,

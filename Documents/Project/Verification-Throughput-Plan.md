@@ -40,115 +40,98 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
-Equivalent WVB version predicates now use bounded ranges instead of repeated
-comparisons. Construction and strict WVB admission of the current compiler and
-development staging consumer pass on Windows and real Debian. The staging
-consumer uses 4,169,004 bytes of intermediate output, leaving 25,300 bytes under
-the unchanged 4 MiB profile. The combined construction checks took 4 minutes
-55 seconds on Windows and 6 minutes 27 seconds on Debian using prepared compiler
-checkpoints. Native execution, reconstruction cost and the complete
-lowering-owner duration remain separate obligations.
-
-Native compiler verification still exceeds the ordinary development target.
+Changing the native compiler still exceeds the ordinary development target.
 The broad prepared lowering owner retains an 80-minute planning estimate;
-compiler reconstruction is a separate cost. Do not interpret earlier focused
-improvements as proof that this complete path now takes a few minutes.
-The [compiler-only selection](../Runbooks/Native-Tests.md#separate-current-compiler-preparation)
-excludes unchanged assembly-only runtime fixtures while retaining generated-code
-and consumer checks. Its complete duration still needs measurement; the default
-full selection retains runtime coverage.
+compiler reconstruction is a separate cost. Its complete duration has not been
+remeasured. The
+[compiler-only selection](../Runbooks/Native-Tests.md#separate-current-compiler-preparation)
+retains generated-code and consumer checks while excluding unchanged
+assembly-only runtime fixtures. Keep the default full selection's runtime
+coverage and measure each selected path before reducing its estimate.
 
-The Plan consumer now packages its 0-, 1- and 1,000-iteration workloads once
-and runs all three in one process. Every workload initializes and closes its
-own memory domain. The eleven staging assertions, reservation refusals,
-cleanup checks and equal high-water requirement for 1 and 1,000 iterations
-remain. With current compiler hosts and frontend products already prepared,
-the focused Plan owner passed in 8 minutes 28 seconds on Windows and 12 minutes
-28 seconds on real Debian. The workloads themselves took 4.2 and 8.2 seconds;
-construction, packaging and admission still dominate. Both hosts measured
-608 bytes of physical high-water for 1 and 1,000 iterations and zero final
-physical and budget charges. This result does not remeasure the broad owner's
-80-minute estimate or complete the ordinary feedback-time goal.
+The candidate compiler now reads an adjacent scalar record field without
+temporarily retaining and releasing all of that record's shared fields.
+It preserves scalar copies, instruction charges, ordinary transfers and
+block boundaries. The existing data-limit fixture covers recognition and
+refusal boundaries; the existing source cases cover integer widths, Boolean
+and enum values, owning and borrowed records, aliases, refusal and cleanup.
+These checks pass on Windows and real Debian. The
+[lowering specification](../../Specifications/Windvale-Native-X64-Lowering.md)
+owns the exact supported shapes.
 
-Shared-source preparation now retains its ten checked native objects under exact
-input, compiler, host and validation identities. Prepared behavior reuses those
-objects and repeats WVB admission and native object validation; a missing or
-corrupt product refuses instead of starting compilation. Preparation also retains
-the assembled admission-provider harness; behavior still executes its 21 cases.
-A batch materializes one prepared current verifier and admits every input
-afresh. Full native-host construction provenance is checked at entry and close;
-nested operations retain exact execution and configuration checks. This avoids
-repeatedly traversing the same recovery construction graph for each fixture.
-The coordinator passes the already validated host identity to the owner instead
-of repeating full construction checks immediately before owner entry.
+Both compiler hosts have been reconstructed and admitted through the accepted
+[temporary projection](../Decisions/0981-Bootstrap-The-Current-Native-Compiler-With-A-Temporary-Serializer-Projection.md).
+Their 50 compiler object chunks match byte for byte, as do the ten source-case
+inputs and native objects. The compiler object is 54,811,652 bytes, about 4.7%
+smaller than before this scalar-read change. This is an object-size result;
+it does not establish a whole-compiler speedup or a memory reduction.
 
-The source-object cache now has a causal route through the existing source-only
-owner: eight minutes expected, ten minutes maximum for prepared behavior.
-Explicit preparation selects source products only. Mixed compiler, runtime,
-host-construction and consumer changes retain their broader coverage. This
-removes unrelated Plan-consumer packaging from a cache-only edit; it does not
-reduce the broad compiler owner's declared duration.
-
-The 8 October current-compiler measurements separate preparation from behavior:
+The 8 October development measurements separate construction from behavior:
 
 | Work | Windows | Real Debian |
 | --- | --- | --- |
-| Prepare ten source objects | 2 minutes 43 seconds | 10 minutes 4 seconds |
-| Execute prepared source behavior | 1 minute 18 seconds | 7 minutes 57 seconds |
-| Reconstruct the current compiler host | 15 minutes 26 seconds | 40 minutes 28 seconds |
+| Build and admit compiler/staging WVB | 4 minutes 27 seconds | 5 minutes 54 seconds |
+| Existing data-limit self-test | 1 minute 26 seconds | 2 minutes 20 seconds |
+| Reconstruct and admit compiler host | 14 minutes 59 seconds | 37 minutes 1 second |
+| Prepare ten native source objects | 1 minute 49 seconds | 7 minutes 59 seconds |
+| Execute prepared source behavior | 1 minute 7 seconds | 7 minutes 20 seconds |
+| Construct and execute Plan workloads | 9 minutes 21 seconds | 16 minutes 3 seconds |
 
-Frontend, analysis and assembly products were already prepared for the source
-selection. Behavior includes sixteen cache lifecycle cases, 21 provider cases
-and four publication cases. Each host reused all ten source objects without
-invoking their native lowerer; publication retains five separate compiler
-executions. The exact WVB inputs and generated native objects match across
-hosts. The Windows changed-file dispatcher also passed this source-only
-selection in 1 minute 21 seconds.
+Prepared compiler, frontend and assembly products were reused where valid.
+The source and Plan behavior runs overlapped on Debian. These are individual
+development measurements, including their required identity checks, not stable
+thresholds, complete cold costs or measurements of the broad lowering owner.
+The staging consumer uses 4,178,300 bytes of intermediate output, leaving 16,004
+bytes under the unchanged 4 MiB profile. Native self-compilation, independent
+reconstruction without the projection, promotion and installed delivery remain
+separate obligations. The changed Windows compiler again reached its
+fifteen-minute self-compilation limit without producing output; that result is
+incomplete and requires diagnosis before another attempt.
 
-The reconstructed compiler's 52 native object chunks match across hosts. Windows
-self-compilation reached its fifteen-minute compilation limit without producing
-output. Self-compilation and the broader compiler gate remain incomplete; an
-unchanged retry is not the next performance step.
+The Plan consumer packages its 0-, 1- and 1,000-iteration workloads once and
+runs them in one process. Every workload initializes and closes its own memory
+domain. Eleven staging assertions, reservation refusals, cleanup checks and
+the equal high-water requirement remain. The current workloads took 5.0 seconds
+to execute on Windows and 15.4 seconds on Debian. Both hosts measured 608 bytes
+of physical high-water at both 1 and 1,000 iterations and zero final physical
+and budget charges. Construction, packaging and admission remain the main
+costs of this focused check.
 
-These are individual development measurements, not stable benchmark thresholds,
-cold compiler-reconstruction costs or the duration of the complete lowering
-owner. The [bounded verifier API](../Runbooks/Native-Source-To-Wvb.md#current-source-verification)
-has its own focused owner; its committed change passes GitHub development
-verification on both hosts. The larger compiler and consumer batch still needs
-its remaining integration evidence.
-Canonical native budget validation now accumulates child charges once instead
-of rescanning every child for each parent. Complete structure, ancestor and
-overflow checks remain; per-call scratch is bounded to 592 stack bytes. The
-same read-only adapter workload performs 100,000 validations with 1, 16 or 64
-live physical leases. Two warm executions after one initial execution measured:
+Shared-source preparation retains its ten checked native objects under exact
+input, compiler, host and validation identities. Prepared behavior repeats WVB
+admission and object validation while reusing all ten objects; a missing or
+corrupt product refuses before compilation. Both hosts pass sixteen cache
+lifecycle cases, 21 provider cases and four publication cases. Publication
+retains five separate compiler executions. Complete native-host construction
+provenance is checked at entry and close, with exact execution and configuration
+checks inside the batch. Cache-only edits have a causal source-only route with
+eight minutes expected and ten minutes maximum for prepared behavior; mixed
+compiler, runtime and consumer changes retain their affected coverage.
 
-| Live leases | Windows before / after | Real Debian before / after |
-| --- | --- | --- |
-| 1 | 78–88 / 68–69 ms | 57–58 / 55–56 ms |
-| 16 | 139–141 / 91–94 ms | 109–115 / 85 ms |
-| 64 | 739–770 / 206–210 ms | 576–588 / 195–202 ms |
+The earlier
+[budget-validation optimization](https://github.com/eworker-inc/Windvale/commit/c184f80f4334397edd88bc6826336290e607a8ed)
+retains complete structure, ancestor, overflow and physical-binding checks with
+592 bytes of bounded stack scratch. It improved the two preserved compiler
+workloads before this scalar-read change. Current Windows timings of 58.2 and
+50.0 seconds are roughly unchanged from 57.6 and 53.2 seconds; both ordinary
+ABI-22 objects remain byte-identical and pass the existing object checker on
+both hosts. Debian measured 104.7 and 79.8 seconds during overlapping Plan
+packaging, compared with earlier 61.6 and 56.4 seconds. Those slower results
+need an isolated repeat before attributing the difference. These fixed-input
+probes do not complete self-compilation or establish a stable regression bound.
 
-These individual measurements isolate complete budgeted validation, including
-physical-binding checks. They do not establish a whole-compiler speedup or a
-stable regression threshold. The
-[budgeted-storage contract](../../Specifications/Windvale-Native-Budgeted-Storage.md)
-records the stack bound and unchanged refusal rules.
-
-Both current compiler hosts have been repackaged with this runtime, reusing the
-same 52 compiler object chunks. Packaging and complete admission took 5 minutes
-2 seconds on Windows and 12 minutes 11 seconds on Debian. Two preserved WVB
-workloads produce the same native objects before and after, on both hosts:
-
-| Compiler workload | Windows before / after | Real Debian before / after |
-| --- | --- | --- |
-| Staging relocations | 104.0 / 57.6 seconds | 115.3 / 61.6 seconds |
-| Staging symbols | 89.3 / 53.2 seconds | 85.9 / 56.4 seconds |
-
-These are individual fixed-input development measurements of the
-[runtime optimization](https://github.com/eworker-inc/Windvale/commit/c184f80f4334397edd88bc6826336290e607a8ed).
-Process peak memory is recorded separately; no memory reduction is claimed.
-Self-compilation, complete compiler-owner timing and installed-toolchain
-promotion remain open. The broad owner's declared estimate is unchanged.
+The preceding
+[focused GitHub run](https://github.com/eworker-inc/Windvale/actions/runs/37798569299)
+passed: its native-owner step took 9 minutes 22 seconds, plus a separate
+17-minute 40-second preparation job. This does not measure the broad compiler
+owner. An existing read-only Debian diagnostic also found slower warm access
+through Windows-mounted paths: a 57.7 MB image took about 1.03-1.06 seconds to
+read there versus 0.075-0.104 seconds on native ext4; 100 metadata pairs took
+1.288 versus 0.053 seconds. That diagnostic does not attribute the whole build
+cost. The native test location was on C, the cache remains on E, and no storage
+configuration was changed. Native Linux storage backed by E, current-workload
+profiling and reuse of unchanged compiler components remain useful next
+checkpoints.
 
 The development build path now separates compiler preparation from project
 compilation. Ordinary split-project and Project 4 builds reject a missing
