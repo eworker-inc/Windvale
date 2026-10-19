@@ -1,21 +1,28 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 6 October 2026
+> Status: Current project direction; implementation snapshot as of 6 October 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-10-06
+> Last reviewed: 2026-10-19
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
-Windvale is building directly toward the integrated 1.0 host product. The signed
-`v0.1.0` preview remains the completed public foundation; no `v0.2.0` product
-release is planned. Windvale OS continues on its own qualification path and is
-not an undeclared requirement for the Windows and Linux 1.0 product.
+Windvale development is moving to a new repository for Windvale 2.0. The
+maintainer expects carrying the work forward there to take less time than
+completing the full 1.0 transition within this codebase. A link to the new
+repository is expected here within one to two weeks of the 19 October 2026
+[announcement](../../README.md#project-status).
+
+This repository retains Windvale Seed, the signed `v0.1.0` preview and the
+unfinished 1.0 implementation. The 2.0 name marks the next generation of
+development. The implementation snapshot below records this repository's
+standing and remaining 1.0 gates as of 6 October 2026; it does not establish a
+completed 1.0 product or implementation standing for the new repository.
 
 The [language and essential-library scope decision](../Decisions/0976-Focus-Windvale-1.0-On-The-Language-And-Essential-Libraries.md)
-now selects a usable language/compiler/runtime first, using the compiler and its
-tools as primary library consumers. WVDB, secondary applications and broader
-OS/2.0 work are outside this critical path. Preserve earlier exact evidence;
-the current product scope does not rewrite its original claims.
+records the earlier 1.0 delivery scope, using the compiler and its tools as
+primary library consumers. Its remaining work and the linked roadmap describe
+the existing implementation. Earlier qualification evidence retains its exact
+recorded scope.
 
 This page answers three questions: what works now, what is still missing, and
 what result comes next. The [roadmap](Roadmap.md) owns forward gates. The

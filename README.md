@@ -1,5 +1,19 @@
 # Windvale
 
+## Project status
+
+**Windvale development is moving to a new repository for Windvale 2.0.**
+
+This repository contains Windvale Seed, the working v0.1.0 preview, and substantial development toward Windvale 1.0. These milestones established a working language and computing stack, while also revealing the changes needed for the next generation.
+
+We believe carrying this work forward into a fresh repository will take less time than completing the full 1.0 transition within the existing codebase. We have therefore decided to begin Windvale 2.0 in a new repository, building on the implementation, experience, and lessons gained here.
+
+Windvale 1.0 remains unfinished. The 2.0 name marks the next generation of development.
+
+We expect to add a link to the new repository here within the next one to two weeks. The existing source, preview release, and development history remain available in this repository.
+
+## About Windvale
+
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) AI-led research and development project building a coherent computing and assurance stack from the ground up. The stack is designed to remain understandable, independently inspectable, reproducible, and useful at each layer.
 
 AI systems perform most research, design, implementation, documentation, test construction, diagnosis, and technical review. Humans establish purpose and constraints, direct the work, review selected and risk-sensitive results, decide what the project accepts and publishes, and remain responsible for stewardship and publication. Acceptance does not imply that a human inspected every generated line; Windvale records exact review and verification evidence instead. [Decision 0849](Documents/Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) defines this operating model.
@@ -10,21 +24,21 @@ The longer-term ambition is an independently implementable specification and ref
 
 **[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://windvale.ca/playground/)** · **[Support Windvale](https://windvale.ca/support/)**
 
-## Project status
+## Existing implementation
 
-Windvale is under active pre-1.0 development. The signed `v0.1.0` preview
+The signed `v0.1.0` preview
 completed the initial feasibility phase and remains the released baseline.
 The forward compiler implements the accepted Language 1.0 source contract
 within its qualified scope; general memory management, complete essential
 libraries and installed promotion remain unfinished.
 
-The current priority is one usable language, compiler/runtime and essential
-library set on Windows and Debian/Linux, with the compiler and its tools as
-maintained consumers. WVDB, secondary applications and broader OS/2.0 work are
-outside this delivery's critical path. The
+The unfinished 1.0 work focused on one usable language, compiler/runtime and
+essential library set on Windows and Debian/Linux, with the compiler and its
+tools as maintained consumers. The
 [completion plan](Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md)
-records the supported toolchain, remaining memory work and replacement gates.
-This README is the stable public overview; detailed standing lives with its owners:
+records the toolchain, remaining memory work and replacement gates for that
+implementation. Detailed implementation standing and the earlier 1.0 goals
+remain documented with their owners:
 
 - [Progress dashboard](Documents/Project/Progress.md) — authoritative current implementation and qualification snapshot
 - [Development roadmap](Documents/Project/Roadmap.md) — forward product workstreams, dependencies, and completion gates
@@ -73,8 +87,8 @@ The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) an
 
 ## Quick start
 
-These installation commands use the released preview. Current Language 1.0
-development uses the separately prepared compiler described in the
+These installation commands use the released preview. The unfinished Language 1.0
+implementation uses the separately prepared compiler described in the
 [native source build runbook](Documents/Runbooks/Native-Source-To-Wvb.md);
 the newer generation is not yet promoted into this installer.
 

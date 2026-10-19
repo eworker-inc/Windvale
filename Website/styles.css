@@ -623,6 +623,34 @@ h1 {
     font-size: 18px;
 }
 
+.project-announcement {
+    margin: 28px 0;
+    padding: clamp(20px, 3vw, 32px);
+    border: 1px solid var(--line-strong);
+    border-radius: 17px;
+    background: var(--blue-soft);
+}
+
+.project-announcement h2 {
+    max-width: 1000px;
+    margin-bottom: 18px;
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+.project-announcement p:not(.kicker) {
+    max-width: 1000px;
+    margin-bottom: 14px;
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.project-announcement p:last-child {
+    margin-bottom: 0;
+}
+
 .progress-strip {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
